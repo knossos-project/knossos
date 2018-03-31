@@ -757,7 +757,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glDisable(GL_DEPTH_TEST);// render first raw slice below everything
     glPolygonMode(GL_FRONT, GL_FILL);
 
-    if (!options.nodePicking && !state->viewerState->layerVisibility.empty() && state->viewerState->layerVisibility[0]) {
+    if (!options.nodePicking && !state->viewerState->layerRenderSettings.empty() && state->viewerState->layerRenderSettings[0].visible) {
         if (Dataset::datasets.size() <= 3 || Dataset::datasets[2].isOverlay()) {// FIXME: not rgb dataset
             slice(texture, 0);
         }
@@ -783,7 +783,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     }
     if (!options.nodePicking) {
         for (std::size_t i = 0; i < texture.texHandle.size(); ++i) {
-            if (state->viewerState->layerVisibility[i]) {
+            if (state->viewerState->layerRenderSettings[i].visible) {
                 if (options.drawOverlay || !Dataset::datasets[i].isOverlay()) {
                     if (Dataset::datasets[i].isOverlay()) {
                         glColor4f(1, 1, 1, 1);
@@ -1817,7 +1817,7 @@ void Viewport3D::renderArbitrarySlicePane(ViewportOrtho & vp, const RenderOption
     const float dataPxY = vp.displayedIsoPx;
 
     for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
-        if (state->viewerState->layerVisibility[layerId] && (!Dataset::datasets[layerId].isOverlay() || options.drawOverlay)) {
+        if (state->viewerState->layerRenderSettings[layerId].visible && (!Dataset::datasets[layerId].isOverlay() || options.drawOverlay)) {
             state->viewer->vpGenerateTexture(vp, layerId);// update texture before use
             auto & texture = vp.texture;
             texture.texHandle[layerId].bind();

@@ -1266,11 +1266,11 @@ void Viewer::resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge, co
     while (newTexEdgeLength < cubeEdge * superCubeEdge) {
         newTexEdgeLength *= 2;
     }
-    if (newTexEdgeLength != state->viewerState->texEdgeLength || layerCount != viewerState.layerVisibility.size()) {
+    if (newTexEdgeLength != state->viewerState->texEdgeLength || layerCount != viewerState.layerRenderSettings.size()) {
         qDebug() << QString("cubeEdge = %1, sCubeEdge = %2, newTex = %3 (%4)").arg(cubeEdge).arg(superCubeEdge).arg(newTexEdgeLength).arg(state->viewerState->texEdgeLength).toStdString().c_str();
         viewerState.texEdgeLength = newTexEdgeLength;
-        if (layerCount != viewerState.layerVisibility.size()) {
-            viewerState.layerVisibility = decltype(viewerState.layerVisibility)(layerCount, true);
+        if (layerCount != viewerState.layerRenderSettings.size()) {
+            viewerState.layerRenderSettings = decltype(viewerState.layerRenderSettings)(layerCount);
         }
         window->resetTextureProperties();
         window->forEachOrthoVPDo([layerCount](ViewportOrtho & vp) {
@@ -1278,8 +1278,8 @@ void Viewer::resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge, co
         });
         recalcTextureOffsets();
     }
-    for (auto tup : boost::combine(viewerState.layerVisibility, Dataset::datasets)) {
-        tup.get<0>() = tup.get<1>().loadingEnabled;// TODO multi layer
+    for (auto tup : boost::combine(viewerState.layerRenderSettings, Dataset::datasets)) {
+        tup.get<0>().visible = tup.get<1>().loadingEnabled;// TODO multi layer
     }
 }
 
@@ -1330,7 +1330,7 @@ QColor Viewer::getNodeColor(const nodeListElement & node) const {
 }
 
 void Viewer::setLayerVisibility(const int index, const bool enabled) {
-    viewerState.layerVisibility.at(index) = enabled;
+    viewerState.layerRenderSettings.at(index).visible = enabled;
     emit layerVisibilityChanged(index);
 }
 

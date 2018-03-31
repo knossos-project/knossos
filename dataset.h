@@ -90,12 +90,6 @@ struct Dataset {
     QString token;
     bool allocationEnabled{true};
     bool loadingEnabled{true};
-    // Layer parameters
-    QString layerName{"unnamed"};
-    float opacity{1.0f};
-    float rangeDelta;
-    float bias;
-    bool linearFiltering;
 
     static Dataset::list_t datasets;
     static auto & current() {

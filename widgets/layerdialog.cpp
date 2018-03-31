@@ -47,10 +47,11 @@ QVariant LayerItemModel::headerData(int section, Qt::Orientation orientation, in
 QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
     if(index.isValid()) {
         const auto& data = Dataset::datasets[ordered_i(index.row())];
+        auto& layerSettings = state->viewerState->layerRenderSettings[ordered_i(index.row())];
         if (role == Qt::DisplayRole || role == Qt::EditRole) {
             switch(index.column()) {
-            case 1: return QString::number(data.opacity * 100.0f) + (role == Qt::EditRole ? "" : "%");
-            case 2: return data.layerName;
+            case 1: return QString::number(layerSettings.opacity * 100.0f) + (role == Qt::EditRole ? "" : "%");
+            case 2: return layerSettings.layerName;
             case 3:
                 switch(data.type) {
                 case Dataset::CubeType::RAW_UNCOMPRESSED:
@@ -91,7 +92,7 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
             }
         } else if(role == Qt::CheckStateRole) {
             if(index.column() == 0) {
-                auto visible = state->viewerState->layerVisibility[ordered_i(index.row())];
+                auto visible = state->viewerState->layerRenderSettings[ordered_i(index.row())].visible;
                 return visible ? Qt::Checked : Qt::Unchecked;
             }
         }
@@ -102,18 +103,19 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
 bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, int role) {
     if(index.isValid()) {
         auto& data = Dataset::datasets[ordered_i(index.row())];
+        auto& layerSettings = state->viewerState->layerRenderSettings[ordered_i(index.row())];
         if (role == Qt::EditRole) {
             switch(index.column()) {
             case 1:
-                data.opacity = std::min(value.toFloat() / 100.0f, 1.0f);
+                layerSettings.opacity = std::min(value.toFloat() / 100.0f, 1.0f);
                 break;
             case 2:
-                data.layerName = value.toString();
+                layerSettings.layerName = value.toString();
                 break;
             }
         } else if(role == Qt::CheckStateRole) {
             if(index.column() == 0) {
-                state->viewerState->layerVisibility[ordered_i(index.row())] = value.toBool();
+                layerSettings.visible = value.toBool();
             }
         }
     }
@@ -242,7 +244,8 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         if(currentIndex.isValid()) {
             std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
             auto& selectedData = Dataset::datasets[ordered_index];
-            selectedData.opacity = static_cast<float>(value) / opacitySlider.maximum();
+            auto& layerSettings = state->viewerState->layerRenderSettings[ordered_index];
+            layerSettings.opacity = static_cast<float>(value) / opacitySlider.maximum();
             const auto& changeIndex = currentIndex.sibling(currentIndex.row(), 1); // todo: enum the 1
             emit itemModel.dataChanged(changeIndex, changeIndex, QVector<int>(Qt::EditRole));
         }
@@ -253,7 +256,8 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         if(currentIndex.isValid()) {;
             std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
             auto& data = Dataset::datasets[ordered_index];
-            data.rangeDelta = static_cast<float>(value) / rangeDeltaSlider.maximum();
+            auto& layerSettings = state->viewerState->layerRenderSettings[ordered_index];
+            layerSettings.rangeDelta = static_cast<float>(value) / rangeDeltaSlider.maximum();
         }
     });
 
@@ -262,16 +266,17 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         if(currentIndex.isValid()) {
             std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
             auto& data = Dataset::datasets[ordered_index];
-            data.bias = static_cast<float>(value) / biasSlider.maximum();
+            auto& layerSettings = state->viewerState->layerRenderSettings[ordered_index];
+            layerSettings.bias = static_cast<float>(value) / biasSlider.maximum();
         }
     });
 
-    QObject::connect(&linearFilteringCheckBox, &QCheckBox::stateChanged, [this](int state){
+    QObject::connect(&linearFilteringCheckBox, &QCheckBox::stateChanged, [this](int checkstate){
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if(currentIndex.isValid()) {
             std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
-            auto& data = Dataset::datasets[ordered_index];
-            data.linearFiltering = (state == Qt::Checked) ? true : false;
+            auto& layerSettings = state->viewerState->layerRenderSettings[ordered_index];
+            layerSettings.linearFiltering = (checkstate == Qt::Checked) ? true : false;
         }
     });
 
@@ -289,10 +294,11 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
 void LayerDialogWidget::updateLayerProperties() {
     std::size_t ordered_index = itemModel.ordered_i(treeView.selectionModel()->currentIndex().row());
     auto& data = Dataset::datasets[ordered_index];
-    opacitySlider.setValue(static_cast<int>(data.opacity * opacitySlider.maximum()));
-    rangeDeltaSlider.setValue(static_cast<int>(data.rangeDelta * rangeDeltaSlider.maximum()));
-    biasSlider.setValue(static_cast<int>(data.bias * biasSlider.maximum()));
-    linearFilteringCheckBox.setChecked(data.linearFiltering);
+    auto& layerSettings = state->viewerState->layerRenderSettings[ordered_index];
+    opacitySlider.setValue(static_cast<int>(layerSettings.opacity * opacitySlider.maximum()));
+    rangeDeltaSlider.setValue(static_cast<int>(layerSettings.rangeDelta * rangeDeltaSlider.maximum()));
+    biasSlider.setValue(static_cast<int>(layerSettings.bias * biasSlider.maximum()));
+    linearFilteringCheckBox.setChecked(layerSettings.linearFiltering);
 }
 
 LayerLoadWidget::LayerLoadWidget(QWidget *parent) : QDialog(parent) {
