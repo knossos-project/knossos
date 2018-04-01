@@ -85,6 +85,7 @@ endif()
 
 set(pythonqt Qt5Python27 CACHE STRING "PythonQt flavour to search for")
 find_package(Boost 1.50 REQUIRED) # 1.50 added hash_value of std::tuple for Coordinate hash specialization
+find_package(gflags REQUIRED) # because gflags config is shit for transitive deps
 find_package(glog REQUIRED)
 find_package(OpenGL REQUIRED) # GLU
 find_package(${pythonqt} REQUIRED)
@@ -192,6 +193,7 @@ target_link_libraries(${PROJECT_NAME}
     ${GAPI_LIB_DIR}/libgoogleapis_utils.a
     ${GAPI_LIB_DIR}/libgoogleapis_internal.a
     jsoncpp
+    gflags_static
     glog::glog
     Dbghelp
     ${LINUXLINKER}
