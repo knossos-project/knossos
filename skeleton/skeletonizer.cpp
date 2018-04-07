@@ -1900,7 +1900,7 @@ void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeI
     std::vector<int> vertex_face_count(verts.size() / 3);
     try {
         for(unsigned int indice : indices) {
-            ++vertex_face_count.at(indice);
+            ++vertex_face_count.at(indice); // use at() to be able to throw out_of_range exception
         }
     } catch (const std::out_of_range & ex) {
         throw std::runtime_error(tr("Ply file contains triangle index greater than number of vertices: %1").arg(ex.what()).toStdString());
