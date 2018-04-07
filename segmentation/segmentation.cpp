@@ -594,8 +594,8 @@ void Segmentation::mergelistLoad(QTextStream & stream) {
             std::istringstream coordColorLineStream(stream.readLine().toStdString());
 
             uint64_t objId;
-            bool todo = false;
-            bool immutable = false;
+            bool todo;
+            bool immutable;
             Coordinate location;
             uint r; uint g; uint b;
             uint64_t initialVolume;
