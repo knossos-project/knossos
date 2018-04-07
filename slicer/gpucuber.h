@@ -53,7 +53,7 @@ public:
     QOpenGLTexture cube{QOpenGLTexture::Target3D};
     std::vector<floatCoordinate> vertices;
     gpu_raw_cube(const int gpucubeedge, const bool index = false);
-    virtual ~gpu_raw_cube() {}
+    virtual ~gpu_raw_cube() = default;
     std::vector<char> prepare(boost::multi_array_ref<std::uint8_t, 3>::const_array_view<3>::type view);
     void upload(const std::vector<char> & data);
     void generate(boost::multi_array_ref<std::uint8_t, 3>::const_array_view<3>::type view);

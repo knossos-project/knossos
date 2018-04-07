@@ -467,7 +467,7 @@ std::vector<std::reference_wrapper<Segmentation::Object>> Segmentation::todolist
     std::vector<std::reference_wrapper<Segmentation::Object>> todolist;
     for (auto & obj : objects) {
         if(obj.todo) {
-            todolist.push_back(obj);
+            todolist.emplace_back(obj);
         }
     }
     std::sort(todolist.begin(), todolist.end());

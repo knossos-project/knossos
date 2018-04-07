@@ -31,7 +31,7 @@ class SegmentListDecorator : public QObject
 {
     Q_OBJECT
 public:
-    explicit SegmentListDecorator(QObject *parent = 0);
+    explicit SegmentListDecorator(QObject *parent = nullptr);
 
 signals:
 

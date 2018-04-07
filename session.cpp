@@ -33,7 +33,7 @@ class Session::ActivityEventFilter : public QObject {
     bool & timeSliceActivity;
 public:
     ActivityEventFilter(Session & session) : QObject(&session), timeSliceActivity(session.timeSliceActivity) {}
-    bool eventFilter(QObject *object, QEvent *event) {
+    virtual bool eventFilter(QObject *object, QEvent *event) override {
         // mark time slice as valid on any user actions except just moving the mouse
         int type = event->type();
         if (type == QEvent::MouseButtonPress || type == QEvent::KeyPress || type == QEvent::Wheel) {

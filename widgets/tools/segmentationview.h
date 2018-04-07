@@ -49,7 +49,7 @@ class CategoryDelegate : public QStyledItemDelegate {
     mutable PreventDeferredDelete<QComboBox> box;
 public:
     CategoryDelegate(class CategoryModel & categoryModel);
-    QWidget * createEditor(QWidget * parent, const QStyleOptionViewItem & option, const QModelIndex & index) const override;
+    virtual QWidget * createEditor(QWidget * parent, const QStyleOptionViewItem & option, const QModelIndex & index) const override;
 };
 
 class SegmentationObjectModel : public QAbstractListModel {

@@ -80,7 +80,7 @@ class NodesTab : public QWidget {
     void saveSettings(QSettings &settings) const;
     void loadSettings(const QSettings &settings);
 public:
-    explicit NodesTab(QWidget *parent = 0);
+    explicit NodesTab(QWidget *parent = nullptr);
     void updateProperties(const QSet<QString> & properties, const QSet<QString> & textProperties);
 };
 

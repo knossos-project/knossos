@@ -123,7 +123,7 @@ Viewer::Viewer() : evilHack{[this](){ state->viewer = this; return true; }()} {
             }
         }
     });
-    QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](){
+    QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [](){
         state->viewerState->regenVertBuffer = true;
     });
 
@@ -334,7 +334,7 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxI
 
         const int sliceIndex = 4 * ( s + *t  *  cubeEdgeLen * state->M);
         const int dcIndex = currentPxInDc.x + currentPxInDc.y * cubeEdgeLen + currentPxInDc.z * state->cubeSliceArea;
-        if(datacube == NULL) {
+        if(datacube == nullptr) {
             slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = 0;
         } else {
             if(useCustomLUT) {

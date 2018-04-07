@@ -63,7 +63,7 @@ public:
     void saveSettings();
     void loadSettings();
     explicit CommentsTab(QWidget *parent = nullptr);
-    ~CommentsTab();
+    virtual ~CommentsTab() override;
 
 signals:
 

@@ -144,7 +144,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
     QString line;
     while (!(line = stream.readLine()).isNull()) {
         const QStringList tokenList = line.split(QRegularExpression("( = |,)"));
-        const QString token = tokenList.front();
+        const QString & token = tokenList.front();
         if (token.startsWith("[Dataset")) {
             infos.emplace_back();
             infos.back().api = API::PyKnossos;

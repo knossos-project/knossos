@@ -89,7 +89,7 @@ class NavigationTab : public QWidget {
 
     void updateMovementArea();
 public:
-    explicit NavigationTab(QWidget *parent = 0);
+    explicit NavigationTab(QWidget *parent = nullptr);
     void loadSettings(const QSettings &settings);
     void saveSettings(QSettings &settings);
 };

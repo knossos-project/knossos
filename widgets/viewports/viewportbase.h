@@ -259,7 +259,7 @@ public:
     static bool oglDebug;
 
     explicit ViewportBase(QWidget *parent, ViewportType viewportType);
-    virtual ~ViewportBase();
+    virtual ~ViewportBase() override;
 
     //This is a bit confusing..the screen coordinate system has always
     //x on the horizontal and y on the verical axis, but the displayed

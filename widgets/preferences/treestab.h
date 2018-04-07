@@ -93,7 +93,7 @@ class TreesTab : public QWidget
     void saveSettings(QSettings & settings) const;
     void loadSettings(const QSettings & settings);
 public:
-    explicit TreesTab(QWidget *parent = 0);
+    explicit TreesTab(QWidget *parent = nullptr);
 
 signals:
 

@@ -101,7 +101,7 @@ std::deque<floatCoordinate> Remote::getLastNodes() {
                 }
             }
         }
-        nodelist.push_back(node->position);
+        nodelist.emplace_back(node->position);
     }
 
     return nodelist;

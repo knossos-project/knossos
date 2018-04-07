@@ -39,7 +39,7 @@ class TaskManagementWidget : public DialogVisibilityNotify {
     Q_OBJECT
     friend class TaskLoginWidget;
     const QString api{"/api/2"};
-    void saveAndLoadFile(const QString & filename, const QByteArray content);
+    void saveAndLoadFile(const QString & filename, const QByteArray & content);
 public:
     explicit TaskManagementWidget(QWidget *parent = nullptr);
 

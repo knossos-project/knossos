@@ -50,6 +50,7 @@
 #include <queue>
 #include <type_traits>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 SkeletonState::SkeletonState() : skeletonCreatedInVersion{KREVISION} {}
@@ -1898,8 +1899,8 @@ void Skeletonizer::saveMesh(QIODevice & file, const treeListElement & tree) {
 void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeID)> treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, QVector<std::uint8_t> & colors, int draw_mode, bool swap_xy) {
     std::vector<int> vertex_face_count(verts.size() / 3);
     try {
-        for(int i = 0; i < indices.size(); ++i) {
-            ++vertex_face_count.at(indices[i]); // use at() to be able to throw out_of_range exception
+        for(const auto indice : indices) {
+            ++vertex_face_count.at(indice); // use at() to be able to throw out_of_range exception
         }
     } catch (const std::out_of_range & ex) {
         throw std::runtime_error(tr("Ply file contains triangle index greater than number of vertices: %1").arg(ex.what()).toStdString());

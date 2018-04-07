@@ -31,7 +31,7 @@ class FloatCoordinateDecorator : public QObject
 {
     Q_OBJECT
 public:
-    explicit FloatCoordinateDecorator(QObject *parent = 0);    
+    explicit FloatCoordinateDecorator(QObject *parent = nullptr);
 
 signals:
 
