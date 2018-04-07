@@ -99,11 +99,11 @@ void PythonProxy::coord_cubes_mark_changed_proxy(QVector<int> cubeChangeSetList)
 }
 
 quint64 PythonProxy::read_overlay_voxel(QList<int> coord) {
-    return readVoxel(std::move(coord));
+    return readVoxel(coord);
 }
 
 bool PythonProxy::write_overlay_voxel(QList<int> coord, quint64 val) {
-    return writeVoxel(std::move(coord), val);
+    return writeVoxel(coord, val);
 }
 
 void PythonProxy::set_position(QList<int> coord) {
@@ -115,7 +115,7 @@ void PythonProxy::reset_movement_area() {
 }
 
 void PythonProxy::set_movement_area(QList<int> minCoord, QList<int> maxCoord) {
-    Session::singleton().updateMovementArea(std::move(minCoord),std::move(maxCoord));
+    Session::singleton().updateMovementArea(minCoord,maxCoord);
 }
 
 QList<int> PythonProxy::get_movement_area() {
@@ -131,7 +131,7 @@ void PythonProxy::set_work_mode(const int mode) {
 }
 
 void PythonProxy::oc_reslice_notify_all(QList<int> coord) {
-    state->viewer->reslice_notify_all(Segmentation::singleton().layerId, Coordinate(std::move(coord)));
+    state->viewer->reslice_notify_all(Segmentation::singleton().layerId, Coordinate(coord));
 }
 
 int PythonProxy::loader_loading_nr() {

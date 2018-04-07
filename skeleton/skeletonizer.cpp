@@ -1777,7 +1777,7 @@ void Skeletonizer::toggleNodeSelection(const QSet<nodeListElement*> & nodeSet) {
 }
 
 void Skeletonizer::selectNodes(QSet<nodeListElement*> nodeSet) {
-    select(std::move(nodeSet));
+    select(nodeSet);
 }
 
 void Skeletonizer::selectTrees(const std::vector<treeListElement*> & trees) {

@@ -70,7 +70,7 @@ public:
         emit dtorSignal(dtorCtx);
     }
 public slots:
-    void dtorSetCtx(QVariant ctx) { dtorCtx = std::move(ctx);}
+    void dtorSetCtx(QVariant ctx) { dtorCtx = ctx;}
 signals:
     void dtorSignal(QVariant);
 private:
