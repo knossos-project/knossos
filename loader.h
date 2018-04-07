@@ -118,7 +118,7 @@ public://matsch
     void flushIntoSnappyCache();
     void broadcastProgress(bool startup = false);
     Worker(const decltype(datasets) &);
-    ~Worker() override;
+    virtual ~Worker() override;
 signals:
     void progress(bool incremented, int count);
 public slots:
@@ -138,7 +138,7 @@ public:
         return loader;
     }
     void suspendLoader();
-    ~Controller() override;
+    virtual ~Controller() override;
     void unloadCurrentMagnification();
 
     template<typename... Args>

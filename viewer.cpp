@@ -123,7 +123,7 @@ Viewer::Viewer() : evilHack{[this](){ state->viewer = this; return true; }()} {
             }
         }
     });
-    QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this](){
+    QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [](){
         state->viewerState->regenVertBuffer = true;
     });
 

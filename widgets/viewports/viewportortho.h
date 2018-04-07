@@ -74,7 +74,7 @@ protected:
     virtual void renderMeshBufferIds(Mesh &buf) override;
 public:
     explicit ViewportOrtho(QWidget *parent, ViewportType viewportType);
-    ~ViewportOrtho() override;
+    virtual ~ViewportOrtho() override;
     void resetTexture(const std::size_t layerCount);
     void setTextureFilter(const QOpenGLTexture::Filter textureFilter);
     static bool showNodeComments;
@@ -96,8 +96,8 @@ public:
     virtual float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const;
 
 public slots:
-    void zoomIn() override { zoom(zoomStep()); }
-    void zoomOut() override { zoom(1.f/zoomStep()); }
+    virtual void zoomIn() override { zoom(zoomStep()); }
+    virtual void zoomOut() override { zoom(1.f/zoomStep()); }
 };
 
 #endif // VIEWPORTORTHO_H

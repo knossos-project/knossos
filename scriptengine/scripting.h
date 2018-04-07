@@ -66,7 +66,7 @@ public:
     EmitOnCtorDtor(SignalType signalName, Class instance, Args && ...args) {
         emit std::mem_fn(signalName)(instance, this, std::forward<Args>(args)...);
     }
-    ~EmitOnCtorDtor() override {
+    virtual ~EmitOnCtorDtor() override {
         emit dtorSignal(dtorCtx);
     }
 public slots:

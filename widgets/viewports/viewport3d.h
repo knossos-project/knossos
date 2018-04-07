@@ -61,14 +61,14 @@ public:
     double zoomFactor{1.0};
     QMatrix4x4 rotation;
     explicit Viewport3D(QWidget *parent, ViewportType viewportType);
-    ~Viewport3D() override;
+    virtual ~Viewport3D() override;
     virtual void showHideButtons(bool isShow) override;
     void updateVolumeTexture();
     static bool showBoundariesInUm;
 
 public slots:
-    void zoomIn() override { zoom(zoomStep()); }
-    void zoomOut() override { zoom(1.f/zoomStep()); }
+    virtual void zoomIn() override { zoom(zoomStep()); }
+    virtual void zoomOut() override { zoom(1.f/zoomStep()); }
 };
 
 #endif // VIEWPORT3D_H

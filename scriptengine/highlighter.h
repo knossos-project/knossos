@@ -43,7 +43,7 @@ public:
 signals:
 
 public slots:
-    void highlightBlock(const QString &text) override;
+    virtual void highlightBlock(const QString &text) override;
 
 
 };

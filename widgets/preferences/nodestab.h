@@ -44,8 +44,8 @@ class PropertyModel : public QAbstractListModel {
     int numberPropertySize{0};
 public:
     PropertyModel();
-    int rowCount(const QModelIndex &) const override;
-    QVariant data(const QModelIndex & index, int role) const override;
+    virtual int rowCount(const QModelIndex &) const override;
+    virtual QVariant data(const QModelIndex & index, int role) const override;
     void recreate(const QSet<QString> & numberProperties, const QSet<QString> & textProperties);
 };
 
