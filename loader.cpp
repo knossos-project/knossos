@@ -89,11 +89,10 @@ void Loader::Controller::markOcCubeAsModified(const CoordOfCube &cubeCoord, cons
 
 decltype(Loader::Worker::snappyCache) Loader::Controller::getAllModifiedCubes() {
     if (worker != nullptr) {
-        worker->snappyMutex.lock();
+        QMutexLocker locker(&worker->snappyMutex);
         //signal to run in loader thread
         QTimer::singleShot(0, worker.get(), &Loader::Worker::flushIntoSnappyCache);
         worker->snappyFlushCondition.wait(&worker->snappyMutex);
-        worker->snappyMutex.unlock();
         return worker->snappyCache;
     } else {
         return decltype(Loader::Worker::snappyCache)();//{} is not working
@@ -344,8 +343,7 @@ void Loader::Worker::snappyCacheClear() {
 }
 
 void Loader::Worker::flushIntoSnappyCache() {
-    snappyMutex.lock();
-
+    QMutexLocker locker(&snappyMutex);
     for (std::size_t mag = 0; mag < OcModifiedCacheQueue.size(); ++mag) {
         for (const auto & cubeCoord : OcModifiedCacheQueue[mag]) {
             state->protectCube2Pointer.lock();
@@ -360,7 +358,6 @@ void Loader::Worker::flushIntoSnappyCache() {
     }
 
     snappyFlushCondition.wakeAll();
-    snappyMutex.unlock();
 }
 
 void Loader::Worker::moveToThread(QThread *targetThread) {
