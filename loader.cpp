@@ -549,9 +549,9 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     const auto cubeCoord = globalCoord.cube(dataset.cubeEdgeLength, dataset.magnification);
                     state->protectCube2Pointer.lock();
                     const auto currentSlotIt = cubeHash.find(cubeCoord);
+                    auto * currentSlot = currentSlotIt != std::end(cubeHash) ? currentSlotIt->second : freeSlots.front();
                     cubeHash.erase(cubeCoord);
                     state->protectCube2Pointer.unlock();
-                    auto * currentSlot = currentSlotIt != std::end(cubeHash) ? currentSlotIt->second : freeSlots.front();
                     if (currentSlot == freeSlots.front()) {
                         freeSlots.pop_front();
                     }
