@@ -1108,6 +1108,7 @@ void MainWindow::clearSkeletonSlot() {
 }
 
 void MainWindow::loadCustomPreferences(const QString & fileName) {
+    saveSettings();
     QSettings globalSettings;
     QSettings settingsToLoad(fileName, QSettings::IniFormat);
     for (auto && key : settingsToLoad.allKeys()) {

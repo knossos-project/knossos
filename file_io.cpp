@@ -78,17 +78,14 @@ void annotationFileLoad(const QString & filename, const bool mergeSkeleton, cons
             }
         };
         getSpecificFile("settings.ini", [&archive](auto & file){
-            QString fileName;
-            {
-                QTemporaryFile tempFile;
-                if (tempFile.open()) {
-                    tempFile.write(Session::singleton().extraFiles[archive.getCurrentFileName()] = file.readAll());
-                    fileName = tempFile.fileName();
-                } else {
-                    throw std::runtime_error("couldn’t store custom settings from annotation file to a temporary file");
-                }
+            QTemporaryFile tempFile;
+            if (file.open(QIODevice::ReadOnly | QIODevice::Text) && tempFile.open()) {
+                tempFile.write(Session::singleton().extraFiles[archive.getCurrentFileName()] = file.readAll());
+                tempFile.close();// QSettings wants to reopen it
+                state->mainWindow->loadCustomPreferences(tempFile.fileName());
+            } else {
+                throw std::runtime_error("couldn’t store custom settings.ini from annotation file to a temporary file");
             }
-            state->mainWindow->loadCustomPreferences(fileName);
         });
         getSpecificFile("mergelist.txt", [](auto & file){
             Segmentation::singleton().mergelistLoad(file);
