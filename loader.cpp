@@ -504,8 +504,6 @@ void Loader::Worker::broadcastProgress(bool startup) {
 }
 
 void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset::list_t & changedDatasets) {
-    QTime time;
-    time.start();
     datasets = changedDatasets;
     cleanup(center);
     decltype(Dataset::magnification) magnification = datasets.front().magnification;
@@ -513,21 +511,14 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     const auto cubeEdgeLen = datasets.front().cubeEdgeLength;
     const auto Dcoi = DcoiFromPos(center.cube(cubeEdgeLen, magnification), userMoveType, direction);//datacubes of interest prioritized around the current position
     //split dcoi into slice planes and rest
-    std::vector<Coordinate> allCubes;
-    std::vector<Coordinate> visibleCubes;
-    std::vector<Coordinate> cacheCubes;
+    std::vector<std::pair<std::size_t, Coordinate>> allCubes;
     for (auto && todo : Dcoi) {
         const Coordinate globalCoord = todo.cube2Global(cubeEdgeLen, magnification);
         QMutexLocker locker(&state->protectCube2Pointer);
         for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
             // only queue downloads which are necessary
             if (Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer, layerId, loaderMagnification, globalCoord.cube(cubeEdgeLen, magnification)) == nullptr) {
-                allCubes.emplace_back(globalCoord);
-                if (currentlyVisibleWrap(center, datasets[layerId])(globalCoord)) {
-                    visibleCubes.emplace_back(globalCoord);
-                } else {
-                    cacheCubes.emplace_back(globalCoord);
-                }
+                allCubes.emplace_back(layerId, globalCoord);
             }
         }
     }
@@ -680,15 +671,13 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     };
 
     const auto workaroundProcessLocalImmediately = datasets[0].url.scheme() == "file" ? [](){QCoreApplication::processEvents();} : [](){};
-    for (auto globalCoord : allCubes) {
+    for (auto [layerId, globalCoord] : allCubes) {
         if (loadingNr == Loader::Controller::singleton().loadingNr) {
-            for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
-                if (datasets[layerId].loadingEnabled) {
-                    try {
-                        startDownload(layerId, datasets[layerId], globalCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer.at(layerId).at(loaderMagnification));
-                    } catch (const std::out_of_range &) {}
-                    workaroundProcessLocalImmediately();//https://bugreports.qt.io/browse/QTBUG-45925
-                }
+            if (datasets[layerId].loadingEnabled) {
+                try {
+                    startDownload(layerId, datasets[layerId], globalCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer.at(layerId).at(loaderMagnification));
+                } catch (const std::out_of_range &) {}
+                workaroundProcessLocalImmediately();//https://bugreports.qt.io/browse/QTBUG-45925
             }
         }
     }
