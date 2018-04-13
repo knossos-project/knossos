@@ -51,7 +51,7 @@ SignalRelay::SignalRelay() {
 }
 
 auto PythonQtInit = []() {
-    PythonQt::init(PythonQt::RedirectStdOut);
+    PythonQt::init();
 #ifdef QtAll
     PythonQt_QtAll::init();
 #endif
