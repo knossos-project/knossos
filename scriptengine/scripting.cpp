@@ -81,6 +81,20 @@ Scripting::Scripting() : _ctx{PythonQtInit()} {
     // as ipython does not export it's sys paths after the installation we refer to that site-package
     evalScript("sys.path.append('/Library/Python/2.7/site-packages')");
 #endif
+    evalScript("try: import site\nexcept ImportError: nosite = True\nelse:\n    nosite = False", Py_single_input);
+    if (evalScript("nosite", Py_eval_input).toBool()) {
+        QMessageBox box;
+        box.setIcon(QMessageBox::Critical);
+        box.setText("Python 2.7 installation misconfigured.");
+        box.setInformativeText("Couldn’t »import site« which means that Python 2.7 couldn’t find its default library files \n"
+                               "and using most Python libraries – and plugins depending on those – wont work. \n"
+                               "\n"
+                               "Un- and reinstallation of a system wide Python 2.7 is advised. \n"
+                               "(Alternatively try to fix it manually: registry, environment variables)");
+        box.setDetailedText(evalScript("sys.version", Py_eval_input).toString());
+        box.addButton("Ignore", QMessageBox::AcceptRole);
+        box.exec();
+    }
     PythonQt::self()->createModuleFromScript(SCRIPTING_KNOSSOS_MODULE);
     evalScript(QString("import %1").arg(SCRIPTING_KNOSSOS_MODULE));
 
