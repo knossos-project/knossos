@@ -55,9 +55,24 @@ auto PythonQtInit = []() {
 #ifdef QtAll
     PythonQt_QtAll::init();
 #endif
-    const auto redirect = [](const QString & outMsg){ qDebug() << outMsg; };
-    QObject::connect(PythonQt::self(), &PythonQt::pythonStdOut, redirect);
-    QObject::connect(PythonQt::self(), &PythonQt::pythonStdErr, redirect);
+    QObject::connect(PythonQt::self(), &PythonQt::pythonStdOut, [](const QString & outMsg){
+        static QString text;
+        text += outMsg;
+        if (text.endsWith('\n')) {
+            text.chop(1);
+            qDebug() << text.toUtf8().constData();
+            text.clear();
+        }
+    });
+    QObject::connect(PythonQt::self(), &PythonQt::pythonStdErr, [](const QString & outMsg){
+        static QString text;
+        text += outMsg;
+        if (text.endsWith('\n')) {
+            text.chop(1);
+            qWarning() << text.toUtf8().constData();
+            text.clear();
+        }
+    });
     return PythonQt::self()->getMainModule();
 };
 
