@@ -87,7 +87,11 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext &
     if (type != QtDebugMsg || --file_debug_output_limit > 0) {
         outFile << txt.toStdString() << std::endl;
     }
-    std::cout << txt.toStdString() << std::endl;
+    if (type == QtWarningMsg || type == QtCriticalMsg || type == QtFatalMsg) {
+        std::cerr << txt.toLocal8Bit().constData() << std::endl;
+    } else {
+        std::cout << txt.toLocal8Bit().constData() << std::endl;
+    }
 
     if (type == QtFatalMsg) {
         std::abort();
