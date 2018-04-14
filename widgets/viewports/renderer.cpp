@@ -783,13 +783,14 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     }
     if (!options.nodePicking) {
         for (std::size_t i = 0; i < texture.texHandle.size(); ++i) {
+            auto& layerSettings = state->viewerState->layerRenderSettings[i];
             if (state->viewerState->layerRenderSettings[i].visible) {
                 if (options.drawOverlay || !Dataset::datasets[i].isOverlay()) {
                     if (Dataset::datasets[i].isOverlay()) {
-                        glColor4f(1, 1, 1, 1);
+                        glColor4f(1, 1, 1, layerSettings.opacity);
                     }
                     if (i < 3 && Dataset::datasets.size() >= 3 && !Dataset::datasets[2].isOverlay()) {// FIXME: rgb dataset
-                        glColor4f(i == 0, i == 1, i == 2, 1);
+                        glColor4f(i == 0, i == 1, i == 2, layerSettings.opacity);
                     } else {
                         glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
                     }
