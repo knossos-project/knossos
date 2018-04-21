@@ -8,18 +8,14 @@
 #include "viewer.h"
 
 std::size_t LayerItemModel::ordered_i(std::size_t index) const {
-    return datasetOrder[index];
+    return state->viewerState->layerOrder[index];
 }
 
 LayerItemModel::LayerItemModel() {
-    for(std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
-        datasetOrder.emplace_back(i);
-    }
-
-    QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this]() {
+    QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, []() {
         // adjust datasetOrder size to fit all elements in dataset
-        for(std::size_t i = datasetOrder.size(); i < Dataset::datasets.size(); ++i) {
-            datasetOrder.emplace_back(i);
+        for(std::size_t i = state->viewerState->layerOrder.size(); i < Dataset::datasets.size(); ++i) {
+            state->viewerState->layerOrder.emplace_back(i);
         }
     });
 
@@ -143,7 +139,7 @@ void LayerItemModel::moveItem(const QModelIndex &index, int offset) {
         auto row = index.row();
         if(row + offset >= 0 && row + offset < rowCount()) {
             beginMoveRows(QModelIndex(), row, row, QModelIndex(), row + ((offset > 0) ? offset + 1 : offset)); // because moving is done into between rows
-            std::swap(datasetOrder[row], datasetOrder[row + offset]);
+            std::swap(state->viewerState->layerOrder[row], state->viewerState->layerOrder[row + offset]);
             endMoveRows();
         }
     }

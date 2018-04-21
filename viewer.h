@@ -181,6 +181,7 @@ struct ViewerState {
     bool showArbplane{true};
     bool showVpDecorations{true};
     std::vector<LayerRenderSettings> layerRenderSettings;
+    std::vector<std::size_t> layerOrder;
     double meshAlphaFactor3d{1};
     double meshAlphaFactorSlicing{0.5};
     bool MeshPickingEnabled{true};

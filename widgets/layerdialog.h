@@ -56,7 +56,6 @@ class LayerItemModel : public QAbstractListModel {
 Q_OBJECT
 protected:
     const std::vector<QString> header{"visible", "opacity", "name", "cubetype", "api", "mag", "edgelength", "experiment"};
-    std::vector<std::size_t> datasetOrder;
 
 public:
     LayerItemModel();

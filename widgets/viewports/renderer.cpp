@@ -757,9 +757,12 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glDisable(GL_DEPTH_TEST);// render first raw slice below everything
     glPolygonMode(GL_FRONT, GL_FILL);
 
-    if (!options.nodePicking && !state->viewerState->layerRenderSettings.empty() && state->viewerState->layerRenderSettings[0].visible) {
-        if (Dataset::datasets.size() <= 3 || Dataset::datasets[2].isOverlay()) {// FIXME: not rgb dataset
-            slice(texture, 0);
+    std::size_t firstVisibleRawDataset = 0;
+    for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
+        if (!Dataset::datasets[state->viewerState->layerOrder[i]].isOverlay()) {
+            firstVisibleRawDataset = state->viewerState->layerOrder[i];
+            slice(texture, firstVisibleRawDataset);
+            break;
         }
     }
 
@@ -776,25 +779,27 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glPopMatrix();
     }
 
-    glColor4f(1, 1, 1, 0.6);// second raw slice is semi transparent, with one direction of the skeleton showing through and the other above rendered above
-
     if (Dataset::datasets.size() >= 3 && !Dataset::datasets[2].isOverlay()) {// FIXME: rgb dataset
         glBlendFunc(GL_ONE, GL_ONE);
     }
     if (!options.nodePicking) {
         for (std::size_t i = 0; i < texture.texHandle.size(); ++i) {
-            auto& layerSettings = state->viewerState->layerRenderSettings[i];
-            if (state->viewerState->layerRenderSettings[i].visible) {
-                if (options.drawOverlay || !Dataset::datasets[i].isOverlay()) {
-                    if (Dataset::datasets[i].isOverlay()) {
+            auto ordered_i = state->viewerState->layerOrder[i];
+            auto& layerSettings = state->viewerState->layerRenderSettings[ordered_i];
+            if (layerSettings.visible) {
+                if (options.drawOverlay || !Dataset::datasets[ordered_i].isOverlay()) {
+                    if (Dataset::datasets[ordered_i].isOverlay()) {
                         glColor4f(1, 1, 1, layerSettings.opacity);
                     }
+                    if (ordered_i == firstVisibleRawDataset) {
+                        glColor4f(1, 1, 1, 0.6 * layerSettings.opacity);// second raw slice is semi transparent, with one direction of the skeleton showing through and the other above rendered above
+                    }
                     if (i < 3 && Dataset::datasets.size() >= 3 && !Dataset::datasets[2].isOverlay()) {// FIXME: rgb dataset
-                        glColor4f(i == 0, i == 1, i == 2, layerSettings.opacity);
+                        glColor4f(ordered_i == 0, ordered_i == 1, ordered_i == 2, layerSettings.opacity);
                     } else {
                         glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
                     }
-                    slice(texture, i, n);
+                    slice(texture, ordered_i, n);
                 }
             }
         }
