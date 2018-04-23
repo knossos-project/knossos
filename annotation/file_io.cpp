@@ -57,6 +57,8 @@ QString annotationFileDefaultPath() {
 }
 
 void annotationFileLoad(const QString & filename, const bool mergeSkeleton, const QString & treeCmtOnMultiLoad) {
+    QElapsedTimer time;
+    time.start();
     QSet<QString> nonExtraFiles;
     QRegularExpression cubeRegEx(R"regex(.*mag(?P<mag>[0-9]+)x(?P<x>[0-9]+)y(?P<y>[0-9]+)z(?P<z>[0-9]+)(\.seg\.sz|\.segmentation\.snappy))regex");
     QFile f(filename);
@@ -154,6 +156,7 @@ void annotationFileLoad(const QString & filename, const bool mergeSkeleton, cons
     } else {
         throw std::runtime_error(QObject::tr("opening %1 for reading failed").arg(filename).toStdString());
     }
+    qDebug() << "annotationFileLoad took" << time.nsecsElapsed() / 1e9 << "s";
 }
 
 void annotationFileSave(const QString & filename, const bool onlySelectedTrees, const bool saveTime, const bool saveDatasetPath) {
