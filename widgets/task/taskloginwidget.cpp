@@ -26,11 +26,13 @@
 #include "session.h"
 #include "widgets/GuiConstants.h"
 
+#include <QApplication>
 #include <QDir>
 #include <QIcon>
 #include <QPushButton>
 #include <QSettings>
 #include <QStandardPaths>
+#include <QStyle>
 
 TaskLoginWidget::TaskLoginWidget(QWidget * parent) : QDialog(parent) {
     setWindowFlag(Qt::WindowContextHelpButtonHint, false);
@@ -68,6 +70,9 @@ TaskLoginWidget::TaskLoginWidget(QWidget * parent) : QDialog(parent) {
     formLayout.addRow(&box);
 
     setLayout(&formLayout);
+
+    urlField.setMinimumWidth(160);
+    usernameField.setFocus();
 }
 
 void TaskLoginWidget::saveSettings() {
