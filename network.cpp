@@ -188,7 +188,9 @@ QPair<bool, QPair<QString, QByteArray>> Network::getPost(const QUrl & url) {
     QHttpMultiPart multipart(QHttpMultiPart::FormDataType);
     multipart.append(addFormDataPart("csrfmiddlewaretoken", getCSRF(cookieJar.cookiesForUrl(url))));
     multipart.append(addFormDataPart("data", QString("<currentTask>%1</currentTask>").arg("foo").toUtf8()));
-    auto & reply = *manager.post(QNetworkRequest(url), &multipart);
+    QNetworkRequest request(url);
+    request.setRawHeader("Referer", url.toString(QUrl::PrettyDecoded | QUrl::RemovePath).toUtf8());
+    auto & reply = *manager.post(request, &multipart);
     return blockDownloadExtractFilenameAndData(reply);
 }
 
@@ -213,7 +215,9 @@ QPair<bool, QString> Network::submitHeidelbrain(const QUrl & url, const QString 
     multipart.append(addFormDataPart("submit_comment", comment.toUtf8()));
     multipart.append(addFormDataPart("submit_work_is_final", final ? "True" : "False"));
 
-    auto & reply = *manager.post(QNetworkRequest(url), &multipart);
+    QNetworkRequest request(url);
+    request.setRawHeader("Referer", url.toString(QUrl::PrettyDecoded | QUrl::RemovePath).toUtf8());
+    auto & reply = *manager.post(request, &multipart);
     return blockDownloadExtractData(reply);
 }
 
