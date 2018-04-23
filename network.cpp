@@ -47,7 +47,7 @@ Network::Network(const QObject *) {
     manager.setRedirectPolicy(QNetworkRequest::NoLessSafeRedirectPolicy);// default is manual redirect
 }
 
-QVariantList Network::getCookiesForHost(const QString & host) {
+QVariantList Network::getCookiesForHost(const QUrl & host) {
     QVariantList cookies;
     for (const auto & cookie : cookieJar.cookiesForUrl(host)) {
         cookies.append(cookie.toRawForm());

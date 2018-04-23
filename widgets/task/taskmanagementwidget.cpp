@@ -39,6 +39,8 @@ TaskManagementWidget::TaskManagementWidget(QWidget *parent) : DialogVisibilityNo
     setWindowIcon(QIcon(":/resources/icons/tasks-management.png"));
     setWindowTitle("Task Management");
 
+    baseUrl = taskLoginWidget.host.toString() + api;// loginwidget is child and therefore already alive
+
     for (auto && label : {&statusLabel, &categoryDescriptionLabel, &taskCommentLabel}) {
         label->setWordWrap(true);
         label->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
@@ -104,9 +106,8 @@ bool TaskManagementWidget::handleError(const QPair<bool, QString> & res, const Q
 }
 
 void TaskManagementWidget::updateAndRefreshWidget() {
-    const auto url = taskLoginWidget.host + api + "/session/";
     setCursor(Qt::BusyCursor);
-    const auto res = Network::singleton().refresh(url);
+    const auto res = Network::singleton().refresh(baseUrl + "/session/");
     setCursor(Qt::ArrowCursor);
 
     const auto jmap = QJsonDocument::fromJson(res.second.toUtf8()).object();
@@ -150,10 +151,13 @@ void TaskManagementWidget::updateAndRefreshWidget() {
     }
 }
 
-void TaskManagementWidget::loginButtonClicked(const QString & host, const QString & username, const QString & password) {
-    const auto url = host + api + "/login/";
+void TaskManagementWidget::loginButtonClicked(QUrl host, const QString & username, const QString & password) {
+    if (host.scheme().isEmpty()) {// qnam cannot handle url without protocol
+        host = "https://" + taskLoginWidget.urlField.text();
+    }
+    baseUrl = host.toString() + api;// host changed, update url
     setCursor(Qt::BusyCursor);
-    const auto res = Network::singleton().login(url, username, password);
+    const auto res = Network::singleton().login(baseUrl + "/login/", username, password);
     setCursor(Qt::ArrowCursor);
 
     if (res.first) {
@@ -171,9 +175,8 @@ void TaskManagementWidget::logoutButtonClicked() {
         return;
     }
 
-    const auto url = taskLoginWidget.host + api + "/logout/";
     setCursor(Qt::BusyCursor);
-    const auto res = Network::singleton().refresh(url);
+    const auto res = Network::singleton().refresh(baseUrl + "/logout/");
     setCursor(Qt::ArrowCursor);
 
     if (handleError(res)) {
@@ -203,9 +206,8 @@ void TaskManagementWidget::saveAndLoadFile(const QString & filename, const QByte
 }
 
 void TaskManagementWidget::loadLastSubmitButtonClicked() {
-    const auto url = taskLoginWidget.host + api + "/current_file/";
     setCursor(Qt::BusyCursor);
-    const auto res = Network::singleton().getFile(url);
+    const auto res = Network::singleton().getFile(baseUrl + "/current_file/");
 
     if (handleError({res.first, res.second.second})) {
         saveAndLoadFile(res.second.first, res.second.second);
@@ -214,9 +216,8 @@ void TaskManagementWidget::loadLastSubmitButtonClicked() {
 }
 
 void TaskManagementWidget::startNewTaskButtonClicked() {
-    const auto url = taskLoginWidget.host + api + "/new_task/";
     setCursor(Qt::BusyCursor);
-    const auto res = Network::singleton().getPost(url);
+    const auto res = Network::singleton().getPost(baseUrl + "/new_task/");
 
     if (handleError({res.first, res.second.second})) {
         updateAndRefreshWidget();//task infos changed
@@ -235,10 +236,9 @@ void TaskManagementWidget::submitFinal() {
 bool TaskManagementWidget::submit(const bool final) {
     state->viewer->window->save();//save file to submit
 
-    const auto url = taskLoginWidget.host + api + "/submit/";
     setCursor(Qt::BusyCursor);
     setEnabled(false);// disable until upload has finished
-    auto res = Network::singleton().submitHeidelbrain(url, Session::singleton().annotationFilename, submitCommentEdit.text(), final);
+    auto res = Network::singleton().submitHeidelbrain(baseUrl + "/submit/", Session::singleton().annotationFilename, submitCommentEdit.text(), final);
     setEnabled(true);
     setCursor(Qt::ArrowCursor);
 

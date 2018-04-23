@@ -29,7 +29,7 @@
 #include <QFrame>
 #include <QLabel>
 #include <QLineEdit>
-#include <QString>
+#include <QUrl>
 
 class TaskLoginWidget : public QDialog {
     Q_OBJECT
@@ -42,7 +42,7 @@ class TaskLoginWidget : public QDialog {
     QLabel passwordLabel{"Password"};
     QDialogButtonBox box;
 public:
-    QString host;
+    QUrl host;
     QLineEdit urlField;
     QLineEdit usernameField;
     QLineEdit passwordField;

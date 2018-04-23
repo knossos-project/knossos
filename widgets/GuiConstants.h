@@ -165,7 +165,7 @@ const QString PYTHON_WORKING_DIRECTORY = "python_working_directory";
 
 // Heidelbrain Integration
 const QString HEIDELBRAIN_COOKIES = "heidelbrain_cookies";
-const QString HEIDELBRAIN_HOST = "heidelbrain_host";
+const QString HEIDELBRAIN_HOST = "heidelbrain_host_v2";
 
 // Snapshot settings
 const QString SAVE_DIR = "save_dir";

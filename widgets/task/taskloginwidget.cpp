@@ -44,11 +44,11 @@ TaskLoginWidget::TaskLoginWidget(QWidget * parent) : QDialog(parent) {
     //load settings
     QSettings settings;
     settings.beginGroup(HEIDELBRAIN_INTEGRATION);
-    host = settings.value(HEIDELBRAIN_HOST, "http://heidelbrain.org").toString();
+    host = settings.value(HEIDELBRAIN_HOST, "https://heidelbrain.org").toString();
     Network::singleton().setCookies(settings.value(HEIDELBRAIN_COOKIES).toList());
     settings.endGroup();
 
-    urlField.setText(host);
+    urlField.setText(host.toString());
     passwordField.setEchoMode(QLineEdit::Password);
 
     line.setFrameShape(QFrame::HLine);
@@ -71,15 +71,9 @@ TaskLoginWidget::TaskLoginWidget(QWidget * parent) : QDialog(parent) {
 }
 
 void TaskLoginWidget::saveSettings() {
-    if (!host.startsWith("http://")) {//qnam cannot handle url without protocol
-        host = "http://" + host;
-    }
-    if (!host.endsWith("/")) {//cookies only apply with slash
-        host += "/";
-    }
     QSettings settings;
     settings.beginGroup(HEIDELBRAIN_INTEGRATION);
-    settings.setValue(HEIDELBRAIN_HOST, host);
+    settings.setValue(HEIDELBRAIN_HOST, host.toString());
     settings.setValue(HEIDELBRAIN_COOKIES, Network::singleton().getCookiesForHost(host));
     settings.endGroup();
 }

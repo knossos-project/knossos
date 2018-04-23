@@ -36,7 +36,7 @@ class Network : public QObject {
 public:
     explicit Network(const QObject *parent = nullptr);
     void setCookies(const QVariantList & setting);
-    QVariantList getCookiesForHost(const QString & host);
+    QVariantList getCookiesForHost(const QUrl & host);
 
     static Network & singleton() {
         static Network & network = *new Network;

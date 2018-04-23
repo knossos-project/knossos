@@ -39,6 +39,7 @@ class TaskManagementWidget : public DialogVisibilityNotify {
     Q_OBJECT
     friend class TaskLoginWidget;
     const QString api{"/api/2"};
+    QString baseUrl;
     void saveAndLoadFile(const QString & filename, const QByteArray & content);
 public:
     explicit TaskManagementWidget(QWidget *parent = nullptr);
@@ -78,7 +79,7 @@ public slots:
 
     void startNewTaskButtonClicked();
     void loadLastSubmitButtonClicked();
-    void loginButtonClicked(const QString &host, const QString & username, const QString & password);
+    void loginButtonClicked(QUrl host, const QString & username, const QString & password);
     void logoutButtonClicked();
 
 private:
