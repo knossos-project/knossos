@@ -141,7 +141,6 @@ public:
     virtual ~Controller() override;
     void unloadCurrentMagnification();
 
-    template<typename... Args>
     void restart(const decltype(Dataset::datasets) & datasets) {
         suspendLoader();
         if (worker != nullptr) {
