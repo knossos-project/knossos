@@ -297,13 +297,15 @@ void ViewportBase::resizeGL(int width, int height) {
     state->viewer->recalcTextureOffsets();
 }
 
-void ViewportBase::enterEvent(QEvent *) {
+void ViewportBase::enterEvent(QEvent * event) {
     hasCursor = true;
+    QOpenGLWidget::enterEvent(event);
 }
 
-void ViewportBase::leaveEvent(QEvent *) {
+void ViewportBase::leaveEvent(QEvent * event) {
     hasCursor = false;
     emit cursorPositionChanged(Coordinate(), VIEWPORT_UNDEFINED);
+    QOpenGLWidget::leaveEvent(event);
 }
 
 void ViewportBase::keyPressEvent(QKeyEvent *event) {
