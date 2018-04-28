@@ -16,7 +16,7 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
             Qt.QApplication.setOverrideCursor(QtGui.QCursor(Qt.Qt.WaitCursor))
             Qt.QApplication.processEvents()
             return
-        
+
         def __del__(self):
             Qt.QApplication.restoreOverrideCursor()
             Qt.QApplication.processEvents()
@@ -140,7 +140,7 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
         for (signal, slot) in self.signalConns:
             signal.connect(slot)
         return
-    
+
     def signalsDisonnect(self):
         for (signal, slot) in self.signalConns:
             signal.disconnect(slot)
@@ -164,7 +164,7 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
     def setTableHeaders(self, table, columnNames):
         columnNum = len(columnNames)
         table.setColumnCount(columnNum)
-        for i in xrange(columnNum):
+        for i in range(columnNum):
             twi = QtGui.QTableWidgetItem(columnNames[i])
             table.setHorizontalHeaderItem(i, twi)
         return
@@ -183,7 +183,7 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
     def addTableRow(self, table, columnTexts, isSlack):
         rowIndex = 0
         table.insertRow(rowIndex)
-        for i in xrange(len(columnTexts)):
+        for i in range(len(columnTexts)):
             twi = QtGui.QTableWidgetItem(columnTexts[i])
             twi.setFlags(twi.flags() & (~Qt.Qt.ItemIsEditable))
             self.curFont.setItalic(isSlack)
@@ -193,22 +193,22 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
         return
 
     def str2tripint(self, s):
-        tripint = map(long, re.findall(r"[\w']+", s))
+        tripint = list(map(int, re.findall(r"[\w']+", s)))
         assert(len(tripint) == 3)
         return tripint
 
     def nextId(self):
-        return max(self.mapIdToCoord.keys() + [self.baseSubObjId - 1]) + 1
+        return max(list(self.mapIdToCoord.keys()) + [self.baseSubObjId - 1]) + 1
 
     def IdFromRow(self, row):
         table = self.subObjTable
         if (row > table.rowCount) or (row < 0):
             return self.invalidId
-        return long(table.item(row,0).text())
+        return int(table.item(row,0).text())
 
     def RowFromId(self, Id):
         table = self.subObjTable
-        for row in xrange(table.rowCount):
+        for row in range(table.rowCount):
             if self.IdFromRow(row) == Id:
                 return row
         return self.invalidRow
@@ -216,7 +216,7 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
     def getTableSelectedRow(self):
         table = self.subObjTable
         return [x.row() for x in table.selectionModel().selectedRows()]
-    
+
     def TreeIdById(self,Id):
         if Id in self.mapIdToTreeId:
             return self.mapIdToTreeId[Id]
@@ -278,13 +278,13 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
         table = self.subObjTable
         self.clearTable()
         for (Id,coord) in self.getSortedMapItems():
-            self.addTableRow(table, [str(Id), str(self.displayCoord(coord)), str(map(self.displayCoord,self.mapIdToMoreCoords[Id]))], self.mapIdToSlack[Id])
+            self.addTableRow(table, [str(Id), str(self.displayCoord(coord)), str(list(map(self.displayCoord,self.mapIdToMoreCoords[Id])))], self.mapIdToSlack[Id])
         return
 
     def updateFinishButton(self):
         self.finishButton.enabled = len(self.nonSlacks()) > 1
         return
-    
+
     def removeSeeds(self,Ids):
         if len(Ids) == 0:
             return
@@ -309,7 +309,7 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
         return
 
     def getSortedMapItems(self):
-        IdCoordTuples = self.mapIdToCoord.items()
+        IdCoordTuples = list(self.mapIdToCoord.items())
         IdCoordTuples.sort()
         return IdCoordTuples
 
@@ -325,7 +325,7 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
 
     def nonSlacks(self):
         h = self.mapIdToSlack
-        return filter(lambda x: not h[x], h)
+        return [x for x in h if not h[x]]
 
     def calcWS(self):
         busyScope = self.BusyCursorScope()
@@ -355,7 +355,7 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
         self.memPredPad = numpy.pad(self.WS_mask,((pad,pad),)*3,'constant',constant_values=((False,False),)*3)
         self.writeMatrix(self.WS_masked)
         return
-    
+
     def handleMouseReleaseMiddle(self, eocd, clickedCoord, vpId, event):
         coord = tuple(clickedCoord.vector())
         if not self.active:
@@ -412,7 +412,7 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
     def commonEnd(self):
         self.active = False
         self.clearTable()
-        for treeId in self.mapIdToTreeId.values():
+        for treeId in list(self.mapIdToTreeId.values()):
             KnossosModule.skeleton.delete_tree(treeId)
         self.guiEnd()
         self.endMatrices()
@@ -423,7 +423,7 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
         if KnossosModule.segmentation.isRenderAllObjs():
             KnossosModule.segmentation.setRenderAllObjs(self.prevRenderAllObjs)
         return
-    
+
     def guiBegin(self):
         self.resetButton.enabled = True
         self.show()
@@ -466,7 +466,7 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
         coord = self.mapIdToCoord[Id]
         KnossosModule.segmentation.subobjectFromId(Id, coord)
         return KnossosModule.segmentation.largestObjectContainingSubobject(Id,(0,0,0))
-    
+
     def resetSubObjs(self):
         for Id in self.nonSlacks():
             KnossosModule.segmentation.removeObject(self.ObjIndexFromId(Id))
@@ -497,12 +497,12 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
         try:
             self.loadConfig()
             self.applyGuiConfig()
-            self.invalidId = 0L
+            self.invalidId = 0
             self.invalidRow = -1
             self.pad = 1
             # parse edits
             self.dims_arr = numpy.array(self.str2tripint(str(self.workAreaSizeEdit.text)))
-            self.baseSubObjId = long(str(self.baseSubObjIdEdit.text))
+            self.baseSubObjId = int(str(self.baseSubObjIdEdit.text))
             self.markerRadius = int(self.markerRadiusEdit.text)
             movementArea_arr = numpy.array(KnossosModule.knossos.getMovementArea())
             self.movementAreaBegin_arr, self.movementAreaEnd_arr = movementArea_arr[:3], movementArea_arr[3:]+1
@@ -531,7 +531,7 @@ class watershedSplitterHybridModeWidget(QtGui.QWidget):
             QtGui.QMessageBox.information(0, "Error", "Exception caught!\n" + inf)
             retVal = False
         return retVal
-    
+
     def resetButtonClicked(self):
         self.resetSubObjs()
         self.writeMatrix(self.orig)
