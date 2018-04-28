@@ -414,20 +414,7 @@ void ViewportBase::renderViewportFrontFace() {
 
 void ViewportOrtho::renderViewportFrontFace() {
     ViewportBase::renderViewportFrontFace();
-    switch(viewportType) {
-    case VIEWPORT_XY:
-        glColor4f(0.7, 0., 0., 1.);
-        break;
-    case VIEWPORT_XZ:
-        glColor4f(0., 0.7, 0., 1.);
-        break;
-    case VIEWPORT_ZY:
-        glColor4f(0., 0., 0.7, 1.);
-        break;
-    default:
-        glColor4f(std::abs(n.z), std::abs(n.y), std::abs(n.x), 1);
-        break;
-    }
+    glColor4f(0.7f * std::abs(n.z), 0.7f * std::abs(n.y), 0.7f * std::abs(n.x), 1);
     glLineWidth(2.);
     glBegin(GL_LINES);
         glVertex3d(1, 1, -1);
