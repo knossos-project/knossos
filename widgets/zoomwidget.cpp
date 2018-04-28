@@ -255,7 +255,7 @@ void ZoomWidget::applyZoom(const float newScreenPxXPerDataPx) {
 }
 
 void ZoomWidget::reinitializeOrthoZoomWidgets() {
-    const auto mags = int_log(state->viewer->highestMag()) - int_log(state->viewer->lowestMag()) + 1;
+    const auto mags = static_cast<std::size_t>(std::log2(state->viewer->highestMag() / state->viewer->lowestMag())) + 1;
     const auto interval = 50;
 
     zoomStep = std::pow(2, 1./interval);

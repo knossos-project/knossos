@@ -64,7 +64,7 @@ void Network::setCookies(const QVariantList & setting) {
 std::pair<int, int> Network::checkOnlineMags(const QUrl & url) {
     int lowestAvailableMag = NUM_MAG_DATASETS;
     int highestAvailableMag = 0;
-    const int maxMagCount = int_log(NUM_MAG_DATASETS) + 1;
+    const auto maxMagCount = static_cast<std::size_t>(std::log2(NUM_MAG_DATASETS)) + 1;
 
     std::vector<qint64> bytesReceivedAll(maxMagCount);
     std::vector<qint64> bytesTotalAll(maxMagCount);
@@ -76,7 +76,7 @@ std::pair<int, int> Network::checkOnlineMags(const QUrl & url) {
         QUrl magUrl = url;
         magUrl.setPath(QString("%1/mag%2/knossos.conf").arg(url.path()).arg(currMag));
         auto * replyPtr = manager.get(QNetworkRequest{magUrl});
-        replies[int_log(currMag)] = decltype(replies)::value_type{replyPtr};
+        replies[static_cast<std::size_t>(std::log2(currMag))] = decltype(replies)::value_type{replyPtr};
         ++downloadCounter;
         QObject::connect(replyPtr, &QNetworkReply::finished, [magUrl, &pause, &downloadCounter, currMag, replyPtr, &lowestAvailableMag, &highestAvailableMag]() {
             auto & reply = *replyPtr;
@@ -89,8 +89,8 @@ std::pair<int, int> Network::checkOnlineMags(const QUrl & url) {
             }
         });
         auto processProgress = [this, currMag, &bytesReceivedAll, &bytesTotalAll](qint64 bytesReceived, qint64 bytesTotal){
-            bytesReceivedAll[int_log(currMag)] = bytesReceived;
-            bytesTotalAll[int_log(currMag)] = bytesTotal;
+            bytesReceivedAll[static_cast<std::size_t>(std::log2(currMag))] = bytesReceived;
+            bytesTotalAll[static_cast<std::size_t>(std::log2(currMag))] = bytesTotal;
             const auto received = std::accumulate(std::begin(bytesReceivedAll), std::end(bytesReceivedAll), qint64{0});
             const auto total = std::accumulate(std::begin(bytesTotalAll), std::end(bytesTotalAll), qint64{0});
             emit Network::progressChanged(received, total);

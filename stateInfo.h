@@ -41,16 +41,6 @@ extern stateInfo * state;
 // Bytes for an object ID.
 #define OBJID_BYTES sizeof(uint64_t)
 
-//custom tail recursive constexpr log implementation
-//required for the following array declarations/accesses: (because std::log2 isn’t required to be constexpr yet)
-//  magPaths, magNames, magBoundaries, Dc2Pointer, Oc2Pointer
-//TODO to be removed when the above mentioned variables vanish
-//integral return value for castless use in subscripts
-template<typename T>
-constexpr std::size_t int_log(const T val, const T base = 2, const std::size_t res = 0) {
-    return val < base ? res : int_log(val/base, base, res+1);
-}
-
 /**
   * @stateInfo
   * @brief stateInfo holds everything we need to know about the current instance of Knossos

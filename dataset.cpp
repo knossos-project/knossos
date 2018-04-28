@@ -402,7 +402,7 @@ QUrl Dataset::googleCubeUrl(const Coordinate coord) const {
     } else if (type == Dataset::CubeType::RAW_JPG) {
         path += "/format=singleimage";
     }
-    path += "/scale=" + QString::number(int_log(magnification));// >= 0
+    path += "/scale=" + QString::number(static_cast<std::size_t>(std::log2(magnification)));// >= 0
     path += "/size=" + QString("%1,%1,%1").arg(cubeEdgeLength);// <= 128³
     path += "/corner=" + QString("%1,%2,%3").arg(coord.x).arg(coord.y).arg(coord.z);
 
@@ -419,7 +419,7 @@ QUrl Dataset::googleCubeUrl(const Coordinate coord) const {
 QUrl Dataset::openConnectomeCubeUrl(Coordinate coord) const {
     auto path = url.path();
 
-    path += (!path.endsWith('/') ? "/" : "") + QString::number(int_log(magnification));// >= 0
+    path += (!path.endsWith('/') ? "/" : "") + QString::number(static_cast<std::size_t>(std::log2(magnification)));// >= 0
     coord.x /= magnification;
     coord.y /= magnification;
     coord.z += 1;//offset

@@ -22,7 +22,6 @@
 
 #include "loader.h"
 
-#include "functions.h"
 #include "network.h"
 #include "segmentation/segmentation.h"
 #include "session.h"
@@ -286,11 +285,11 @@ void Loader::Worker::unloadCurrentMagnification() {
 }
 
 void Loader::Worker::markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification) {
-    OcModifiedCacheQueue[std::log2(magnification)].emplace(cubeCoord);
+    OcModifiedCacheQueue[static_cast<std::size_t>(std::log2(magnification))].emplace(cubeCoord);
 }
 
 void Loader::Worker::snappyCacheSupplySnappy(const CoordOfCube cubeCoord, const int magnification, const std::string cube) {
-    const auto cubeMagnification = std::log2(magnification);
+    const auto cubeMagnification = static_cast<std::size_t>(std::log2(magnification));
     if (cubeMagnification >= snappyCache.size()) {
         qWarning() << QObject::tr("ignored snappy cube (%1, %2, %3) for higher than available mag %4 ((log2(%4) = %5) ≥ %6)")
                       .arg(cubeCoord.x).arg(cubeCoord.y).arg(cubeCoord.z).arg(magnification).arg(cubeMagnification).arg(snappyCache.size());
@@ -507,7 +506,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     datasets = changedDatasets;
     cleanup(center);
     decltype(Dataset::magnification) magnification = datasets.front().magnification;
-    loaderMagnification = std::log2(magnification);
+    loaderMagnification = static_cast<std::size_t>(std::log2(magnification));
     const auto cubeEdgeLen = datasets.front().cubeEdgeLength;
     const auto Dcoi = DcoiFromPos(center.cube(cubeEdgeLen, magnification), userMoveType, direction);//datacubes of interest prioritized around the current position
     //split dcoi into slice planes and rest
@@ -603,7 +602,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             QByteArray payload;
             if (dataset.api == Dataset::API::WebKnossos) {
                 request.setRawHeader("Content-Type", "application/json");
-                payload = QString{R"json([{"position":[%1,%2,%3],"zoomStep":%4,"cubeSize":%5,"fourBit":false}])json"}.arg(globalCoord.x).arg(globalCoord.y).arg(globalCoord.z).arg(int_log(dataset.magnification)).arg(dataset.cubeEdgeLength).toUtf8();
+                payload = QString{R"json([{"position":[%1,%2,%3],"zoomStep":%4,"cubeSize":%5,"fourBit":false}])json"}.arg(globalCoord.x).arg(globalCoord.y).arg(globalCoord.z).arg(static_cast<std::size_t>(std::log2(dataset.magnification))).arg(dataset.cubeEdgeLength).toUtf8();
             }
             //request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
             //request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
