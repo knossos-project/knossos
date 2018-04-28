@@ -258,15 +258,14 @@ Each version component has to be the pythonic string representation of a number.
 
     def getUrl(self, url):
         try:
-            return urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': 'Mozilla'})).read().decode('utf-8')
+            return urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': 'KNOSSOS'})).read().decode('utf-8')
         except:
             self.showError("network", "error fetching URL: " + url)
             raise
 
     def splitStrip(self, s):
         elems = s.split("\n")
-        for x in elems : x.rstrip("\r\n")
-        return elems
+        return [x.rstrip("\r\n") for x in elems]
 
     def parseMetadata(self, content):
         metadata = {}
@@ -376,11 +375,11 @@ Each version component has to be the pythonic string representation of a number.
         return
 
     def listRepos(self, repoListURL):
-        #try:
-        repoListContent = self.getUrl(repoListURL)
-        #except:
-        #    self.showError("repo", "error getting repo list from URL " + repoListURL)
-        #    return
+        try:
+            repoListContent = self.getUrl(repoListURL)
+        except:
+            self.showError("repo", "error getting repo list from URL " + repoListURL)
+            return
         try:
             h = self.parseHeaderedList(repoListContent, "Name")
         except:
