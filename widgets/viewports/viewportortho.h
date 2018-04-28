@@ -77,6 +77,7 @@ public:
     virtual ~ViewportOrtho() override;
     void resetTexture(const std::size_t layerCount);
     void setTextureFilter(const QOpenGLTexture::Filter textureFilter);
+    void setTextureFilter(std::size_t layerId, const QOpenGLTexture::Filter textureFilter);
     static bool showNodeComments;
 
     void sendCursorPosition();

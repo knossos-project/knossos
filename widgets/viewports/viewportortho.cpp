@@ -149,14 +149,18 @@ void ViewportOrtho::resetTexture(const std::size_t layerCount) {
 
 void ViewportOrtho::setTextureFilter(const QOpenGLTexture::Filter textureFilter) {
     for (std::size_t layerId{0}; layerId < texture.texHandle.size(); ++layerId) {
-        auto & elem = texture.texHandle[layerId];
-        if (elem.isCreated()) {
-            if (!Dataset::datasets[layerId].isOverlay()) {
-                elem.setMinMagFilters(textureFilter, textureFilter);
-            } else {// overlay shall have sharp edges
-                elem.setMinMagFilters(QOpenGLTexture::Nearest, QOpenGLTexture::Nearest);
-            }
+        if (!Dataset::datasets[layerId].isOverlay()) {
+            setTextureFilter(layerId, textureFilter);
+        } else { // overlay should have sharp edges by default
+            setTextureFilter(layerId, QOpenGLTexture::Nearest);
         }
+    }
+}
+
+void ViewportOrtho::setTextureFilter(std::size_t layerId, const QOpenGLTexture::Filter textureFilter) {
+    auto & elem = texture.texHandle[layerId];
+    if (elem.isCreated()) {
+        elem.setMinMagFilters(textureFilter, textureFilter);
     }
 }
 
