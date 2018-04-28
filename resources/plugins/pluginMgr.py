@@ -1,6 +1,6 @@
 from PythonQt import QtGui, Qt, QtCore
 import KnossosModule
-import urllib, urllib2, os, urlparse, glob, time, inspect, tempfile
+import glob, inspect, os, tempfile, time, urllib.error, urllib.request, urllib.parse
 
 #KNOSSOS_PLUGIN	Version	1
 #KNOSSOS_PLUGIN	Description	Plugin manager is a plugin manager
@@ -187,11 +187,11 @@ Each version component has to be the pythonic string representation of a number.
                     """)
         instructionsWidget.show()
         return
-    
+
     def setTableHeaders(self, table, columnNames):
         columnNum = len(columnNames)
         table.setColumnCount(columnNum)
-        for i in xrange(columnNum):
+        for i in range(columnNum):
             twi = QtGui.QTableWidgetItem(columnNames[i])
             table.setHorizontalHeaderItem(i, twi)
             self.twiHeadersList.append(twi)
@@ -213,7 +213,7 @@ Each version component has to be the pythonic string representation of a number.
         if atEnd:
             rowIndex = table.rowCount
         table.insertRow(rowIndex)
-        for i in xrange(len(columnTexts)):
+        for i in range(len(columnTexts)):
             twi = QtGui.QTableWidgetItem(columnTexts[i])
             twi.setFlags(twi.flags() & (~Qt.Qt.ItemIsEditable))
             self.twiHash.setdefault(table,[]).append(twi)
@@ -233,7 +233,7 @@ Each version component has to be the pythonic string representation of a number.
         rl = []
         for row in range(table.rowCount):
             cl = []
-            for col in xrange(table.columnCount):
+            for col in range(table.columnCount):
                 cl.append(str(table.item(row,col).text()))
             rl.append("\t".join(cl))
         open(fn,"wt").write("\n".join(rl))
@@ -258,16 +258,16 @@ Each version component has to be the pythonic string representation of a number.
 
     def getUrl(self, url):
         try:
-            req = urllib2.Request(url, headers={'User-Agent' : "KNOSSOS"})
-            return urllib2.urlopen(req).read()
+            return urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': 'Mozilla'})).read().decode('utf-8')
         except:
             self.showError("network", "error fetching URL: " + url)
             raise
 
     def splitStrip(self, s):
         elems = s.split("\n")
-        return map(lambda x: x.rstrip("\r\n"), elems)
-    
+        for x in elems : x.rstrip("\r\n")
+        return elems
+
     def parseMetadata(self, content):
         metadata = {}
         lines = self.splitStrip(content)
@@ -275,7 +275,7 @@ Each version component has to be the pythonic string representation of a number.
             elems = line.split("\t")
             if len(elems) < 3:
                 continue
-            if elems[0] <> self.METADATA_KEYWORD:
+            if elems[0] != self.METADATA_KEYWORD:
                 continue
             metadata[elems[1]] = elems[2]
         return metadata
@@ -284,11 +284,13 @@ Each version component has to be the pythonic string representation of a number.
         lines = self.splitStrip(s)
         sep = "\t"
         fields = lines[0].split(sep)
+        print(lines)
+        print(fields)
         h = {}
         for line in lines[1:]:
             cur_h = {}
             elems = line.split(sep)
-            for i in xrange(len(elems)):
+            for i in range(len(elems)):
                 cur_h[fields[i]] = elems[i]
             keyVal = cur_h[key]
             h[keyVal] = cur_h
@@ -300,7 +302,7 @@ Each version component has to be the pythonic string representation of a number.
             for comp in s.split("."):
                 compInt = int(comp)
                 compStr = str(compInt)
-                if compStr <> comp:
+                if compStr != comp:
                     raise
                 l.append(compInt)
             return l
@@ -314,7 +316,7 @@ Each version component has to be the pythonic string representation of a number.
             return False
         if local == "":
             return True
-        localList,remoteList = map(self.parseVersion, [local,remote])
+        localList,remoteList = list(map(self.parseVersion, [local,remote]))
         if localList < remoteList:
             return True
         return (localList == remoteList) and self.overwriteSameCheckBox.isChecked()
@@ -328,13 +330,14 @@ Each version component has to be the pythonic string representation of a number.
         return h
 
     def getLocalRepo(self):
-        return "\n".join(["URL"] + [("file:" + urllib.pathname2url(fn)) for fn in glob.glob(os.path.join(self.pluginDir, "*.py"))])
+        return "\n".join(["URL"] + [("file:" + urllib.request.pathname2url(fn)) for fn in glob.glob(os.path.join(self.pluginDir, "*.py"))])
 
     def validateFields(self,fields):
         necessary = ["Version","Description"]
         for field in necessary:
             if not field in fields:
-                self.showError("field","missing obligatory field: " + field)
+                self.showError("field", "missing obligatory field: " + field)
+                print(fields)
                 raise
         self.parseVersion(fields["Version"])
         return
@@ -348,10 +351,10 @@ Each version component has to be the pythonic string representation of a number.
             raise
         for url in h:
             try:
-                fn = os.path.basename(urlparse.urlsplit(url).path)
+                fn = os.path.basename(urllib.parse.urlsplit(url).path)
                 name,ext = os.path.splitext(fn)
                 curRepo = self.plugins.get(name,{"Repo":self.LOCAL_REPO})["Repo"]
-                if curRepo <> self.LOCAL_REPO:
+                if curRepo != self.LOCAL_REPO:
                     self.showError("list","plugin " + name + " already present in repo " + curRepo)
                     raise
                 cur_h = self.plugins.get(name, self.newPlugin(name))
@@ -373,11 +376,11 @@ Each version component has to be the pythonic string representation of a number.
         return
 
     def listRepos(self, repoListURL):
-        try:
-            repoListContent = self.getUrl(repoListURL)
-        except:
-            self.showError("repo", "error getting repo list from URL " + repoListURL)
-            return
+        #try:
+        repoListContent = self.getUrl(repoListURL)
+        #except:
+        #    self.showError("repo", "error getting repo list from URL " + repoListURL)
+        #    return
         try:
             h = self.parseHeaderedList(repoListContent, "Name")
         except:
@@ -420,16 +423,16 @@ Each version component has to be the pythonic string representation of a number.
     def saveOverwriteSame(self):
         self.saveSetting(self.SETTING_NAMES["SETTING_OVERWRITE_SAME_NAME"], int(self.overwriteSameCheckBox.isChecked()))
         return
-    
+
     def loadOverwriteSame(self):
         v = self.loadSetting(self.SETTING_NAMES["SETTING_OVERWRITE_SAME_NAME"], int(False))
         self.overwriteSameCheckBox.setChecked(bool(int(v)))
         return
-    
+
     def saveQuietMode(self):
         self.saveSetting(self.SETTING_NAMES["SETTING_QUIET_MODE_NAME"], int(self.quietModeCheckBox.isChecked()))
         return
-    
+
     def loadQuietMode(self):
         v = self.loadSetting(self.SETTING_NAMES["SETTING_QUIET_MODE_NAME"], int(True))
         self.quietModeCheckBox.setChecked(bool(int(v)))
@@ -438,7 +441,7 @@ Each version component has to be the pythonic string representation of a number.
     def saveOfflineMode(self):
         self.saveSetting(self.SETTING_NAMES["SETTING_OFFLINE_MODE_NAME"], int(self.offlineModeCheckBox.isChecked()))
         return
-    
+
     def loadOfflineMode(self):
         v = self.loadSetting(self.SETTING_NAMES["SETTING_OFFLINE_MODE_NAME"], int(False))
         self.offlineModeCheckBox.setChecked(bool(int(v)))
@@ -455,23 +458,23 @@ Each version component has to be the pythonic string representation of a number.
 
     def splitter2sizestr(self,splitter):
         return ";".join(map(str,splitter.sizes()))
-    
+
     def sizestr2splitter(self,sizestr):
-        return tuple(map(long,sizestr.split(";")))
-    
+        return tuple(map(int,sizestr.split(";")))
+
     def savePluginTableSplitSize(self):
         self.saveSetting(self.SETTING_NAMES["SETTING_PLUGIN_TABLE_SPLIT_SIZES_NAME"], self.splitter2sizestr(self.tableSplit))
         return
-    
+
     def loadPluginTableSplitSize(self):
         v = self.loadSetting(self.SETTING_NAMES["SETTING_PLUGIN_TABLE_SPLIT_SIZES_NAME"], "300L;100L")
         self.tableSplit.setSizes(self.sizestr2splitter(v))
         return
-    
+
     def savePanelSplitSize(self):
         self.saveSetting(self.SETTING_NAMES["SETTING_PANEL_SPLIT_SIZES_NAME"], self.splitter2sizestr(self.panelSplit))
         return
-    
+
     def loadPanelSplitSize(self):
         v = self.loadSetting(self.SETTING_NAMES["SETTING_PANEL_SPLIT_SIZES_NAME"], "400L;200L;100L")
         self.panelSplit.setSizes(self.sizestr2splitter(v))
@@ -489,7 +492,7 @@ Each version component has to be the pythonic string representation of a number.
     def savePluginDir(self):
         KnossosModule.scripting.setPluginDir(self.pluginDir)
         return
-    
+
     def loadPluginDir(self):
         self.pluginDir = str(KnossosModule.scripting.getPluginDir())
         self.pluginDirLabel.setText(self.PLUGIN_DIR_LABEL_PREFIX + self.pluginDir)
@@ -504,7 +507,7 @@ Each version component has to be the pythonic string representation of a number.
         self.saveQuietMode()
         self.saveRepoListURL()
         return
-    
+
     def loadSettings(self):
         self.loadOverwriteSame()
         self.loadQuietMode()
@@ -545,7 +548,7 @@ Each version component has to be the pythonic string representation of a number.
     def getSelectedPlugins(self):
         l = []
         t = self.pluginTable
-        for row in xrange(t.rowCount):
+        for row in range(t.rowCount):
             ti = t.item(row, self.PLUGIN_NAME_COLUMN_INDEX)
             if ti.isSelected():
                 l.append(ti.text())
@@ -556,17 +559,17 @@ Each version component has to be the pythonic string representation of a number.
         return
 
     def updateAllButtonClicked(self):
-        self.updatePlugins(self.plugins.keys())
+        self.updatePlugins(list(self.plugins.keys()))
         return
 
     def refreshPluginNames(self):
-        local_names = filter(self.isLocal, self.plugins.keys())
+        local_names = list(filter(self.isLocal, list(self.plugins.keys())))
         local_names.sort()
         KnossosModule.scripting.setPluginNames(";".join(local_names))
         return
 
     def isLocal(self,name):
-        return self.plugins[name]["Local"] <> ""
+        return self.plugins[name]["Local"] != ""
 
     def reloadButtonClicked(self):
         self.showMessage("re-evaluate", "re-evaluating plugin...")
@@ -602,14 +605,14 @@ Each version component has to be the pythonic string representation of a number.
 
     def pluginDirButtonClicked(self):
         browse_dir = QtGui.QFileDialog.getExistingDirectory(self, "Select Plugin Directory", self.pluginDir, QtGui.QFileDialog.ShowDirsOnly)
-        if "" <> browse_dir:
+        if "" != browse_dir:
             self.showMessage("dir", "selected plugin dir " + browse_dir)
             self.changePluginDir(browse_dir)
         return
 
     def defaultsButtonClicked(self):
         self.showMessage("default", "restoring defaults")
-        for setting in self.SETTING_NAMES.values():
+        for setting in list(self.SETTING_NAMES.values()):
             self.saveSetting(setting,"")
         self.loadSettings()
         self.changePluginDir(str(KnossosModule.scripting.getDefaultPluginDir()))
@@ -625,11 +628,11 @@ Each version component has to be the pythonic string representation of a number.
         table = self.pluginTable
         table.setVisible(False)
         try:
-            names = self.plugins.keys()
+            names = list(self.plugins.keys())
             names.sort()
             for name in names:
                 cur_h = self.plugins[name]
-                self.addTableRow(table,map(lambda col_name: cur_h[col_name], self.PLUGIN_COLUMN_NAMES), True)
+                self.addTableRow(table,[cur_h[col_name] for col_name in self.PLUGIN_COLUMN_NAMES], True)
         except:
             pass
         table.setVisible(True)
@@ -641,13 +644,13 @@ Each version component has to be the pythonic string representation of a number.
         table = self.metaDataTable
         self.clearTable(table)
         metadata = self.plugins[name]["Metadata"]
-        metadatas = metadata.items()
+        metadatas = list(metadata.items())
         metadatas.sort()
         for [key, val] in metadatas:
             self.addTableRow(table, [key, val], True)
         self.resizeTable(table)
         return
-    
+
     def pluginTableCellDoubleClicked(self, row, col):
         name = self.pluginTable.item(row, self.PLUGIN_NAME_COLUMN_INDEX).text()
         self.showMessage("open", "opening plugin " + name)

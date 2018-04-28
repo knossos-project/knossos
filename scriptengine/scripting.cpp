@@ -514,6 +514,7 @@ bool Scripting::showPlugin(const QString &pluginName, bool isQuiet) {
     }
     if (!isPluginActive(pluginName)) {
         evalScript(QString("%1.activateWindow()").arg(instanceInContainer));
+        QCoreApplication::processEvents();
         if (!isPluginActive(pluginName)) {
             return pluginActionError(actionStr, pluginName, "still not active", isQuiet);
         }
