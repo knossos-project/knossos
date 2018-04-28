@@ -20,6 +20,7 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
+#include "dataset.h"
 #include "functions.h"
 
 #include <boost/math/constants/constants.hpp>
@@ -46,9 +47,9 @@ bool insideCurrentSupercube(const Coordinate & coord, const Coordinate & center,
 
 bool currentlyVisible(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const int & cubeSize) {
     const bool valid = insideCurrentSupercube(coord, center, cubesPerDimension, cubeSize);
-    const int xmin = center.x - center.x % cubeSize;
-    const int ymin = center.y - center.y % cubeSize;
-    const int zmin = center.z - center.z % cubeSize;
+    const int xmin = std::max(0, std::min(Dataset::current().boundary.x, center.x - center.x % cubeSize));
+    const int ymin = std::max(0, std::min(Dataset::current().boundary.x, center.y - center.y % cubeSize));
+    const int zmin = std::max(0, std::min(Dataset::current().boundary.x, center.z - center.z % cubeSize));
     const bool xvalid = valid & inRange(coord.x, xmin, xmin + cubeSize);
     const bool yvalid = valid & inRange(coord.y, ymin, ymin + cubeSize);
     const bool zvalid = valid & inRange(coord.z, zmin, zmin + cubeSize);
