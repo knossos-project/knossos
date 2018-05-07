@@ -30,7 +30,7 @@
 #include "stateInfo.h"
 #include "viewer.h"
 
-#include <quazipfile.h>
+#include <quazip5/quazipfile.h>
 
 #include <QDateTime>
 #include <QDir>

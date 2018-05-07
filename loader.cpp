@@ -30,8 +30,8 @@
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 
-#include <quazip.h>
-#include <quazipfile.h>
+#include <quazip5/quazip.h>
+#include <quazip5/quazipfile.h>
 
 #include <snappy.h>
 

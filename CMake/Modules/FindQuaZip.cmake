@@ -36,7 +36,9 @@ if(QUAZIP_FOUND)
     add_library(QuaZip::QuaZip UNKNOWN IMPORTED)
     set_target_properties(QuaZip::QuaZip PROPERTIES
         IMPORTED_LOCATION ${QUAZIP_LIBRARY}
-        INTERFACE_INCLUDE_DIRECTORIES ${QUAZIP_INCLUDE_DIR}
+        # workaround conflicting crypt.h header
+        # use #include <quazip5/*>
+#        INTERFACE_INCLUDE_DIRECTORIES ${QUAZIP_INCLUDE_DIR}
         INTERFACE_LINK_LIBRARIES ZLIB::ZLIB
     )
     if(NOT ${QUAZIP_LIBRARY} MATCHES ".so" AND NOT ${QUAZIP_LIBRARY} MATCHES ".dll")
