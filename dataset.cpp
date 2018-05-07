@@ -299,7 +299,6 @@ Dataset::list_t Dataset::fromLegacyConf(const QUrl & configUrl, QString config) 
         } else if (token == "cube_edge_length") {
             info.cubeEdgeLength = tokenList.at(1).toInt();
         } else if (token == "ftp_mode") {
-            info.remote = true;
             auto maybeUrl = tokenList.at(1);
             if (QUrl{maybeUrl}.scheme().isEmpty()) {
                 maybeUrl.prepend("http://");

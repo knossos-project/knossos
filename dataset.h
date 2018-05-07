@@ -82,7 +82,6 @@ struct Dataset {
     // So N cannot be larger than 10.
     // Edge length of one cube in pixels: 2^N
     int cubeEdgeLength{128};
-    bool remote{false};
     // Current dataset identifier string
     QString experimentname;
     QString fileextension;

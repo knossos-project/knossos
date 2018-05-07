@@ -176,7 +176,7 @@ void DatasetLoadWidget::updateDatasetInfo() {
     adaptMemoryConsumption();
 
     QString infotext = tr("<b>%1 Dataset</b><br />%2");
-    if (datasetinfo.remote) {
+    if (!datasetinfo.url.isLocalFile()) {
         infotext = infotext.arg("Remote").arg("URL: <a href=\"%1\">%1</a><br />").arg(datasetinfo.url.toString());
     } else {
         infotext = infotext.arg("Local").arg("");
