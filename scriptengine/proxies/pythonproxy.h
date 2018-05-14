@@ -54,6 +54,7 @@ public slots:
     void annotation_load(const QString & filename, const bool merge = false);
     void annotation_save(const QString & filename);
     void annotation_add_file(const QString & name, const QByteArray & content);
+    QString annotation_filename();
     QByteArray annotation_get_file(const QString & name);
     int annotation_time();
     void set_annotation_time(int ms);

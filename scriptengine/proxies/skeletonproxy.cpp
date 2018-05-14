@@ -33,6 +33,7 @@
 #include <QApplication>
 #include <QDir>
 #include <QFile>
+#include <QMessageBox>
 
 treeListElement & treeFromId(decltype(treeListElement::treeID) treeId) {
     if (auto * tree = Skeletonizer::findTreeByTreeID(treeId)) {
@@ -59,6 +60,10 @@ void SkeletonProxy::move_to_next_tree() {
 
 void SkeletonProxy::move_to_previous_tree() {
     state->viewer->mainWindow.widgetContainer.annotationWidget.skeletonTab.jumpToNextTree(false);
+}
+
+bool SkeletonProxy::extract_connected_component(quint64 node_id) {
+    return Skeletonizer::singleton().extractConnectedComponent(node_id);
 }
 
 treeListElement *SkeletonProxy::find_tree_by_id(quint64 tree_id) {
@@ -165,8 +170,11 @@ bool SkeletonProxy::set_position(const quint64 node_id, const QVector3D & positi
     return false;
 }
 
-QString SkeletonProxy::skeleton_filename() {
-    return Session::singleton().annotationFilename;
+void SkeletonProxy::skeleton_filename() {
+    QMessageBox box;
+    box.setIcon(QMessageBox::Warning);
+    box.setText("skeleton.skeleton_filename() has been removed. Use knossos.annotation_filename() instead.");
+    box.exec();
 }
 
 void SkeletonProxy::clear_skeleton() {

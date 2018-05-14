@@ -59,6 +59,10 @@ QByteArray PythonProxy::annotation_get_file(const QString & name) {
     return Session::singleton().extraFiles[name];
 }
 
+QString PythonProxy::annotation_filename() {
+    return Session::singleton().annotationFilename;
+}
+
 QString PythonProxy::get_knossos_version() {
     return KREVISION;
 }
