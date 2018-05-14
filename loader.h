@@ -25,7 +25,6 @@
 
 #include "coordinate.h"
 #include "dataset.h"
-#include "hashtable.h"
 #include "segmentation/segmentation.h"
 #include "usermove.h"
 

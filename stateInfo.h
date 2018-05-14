@@ -24,19 +24,29 @@
 #define STATE_INFO_H
 
 #include "coordinate.h"
-#include "hashtable.h"
 
 #include <QElapsedTimer>
 #include <QMutex>
 #include <QString>
 #include <QWaitCondition>
 
+#include <unordered_map>
 #include <vector>
 
 class stateInfo;
 extern stateInfo * state;
 
 #define NUM_MAG_DATASETS 65536
+
+using coord2bytep_map_t = std::vector<std::vector<std::unordered_map<CoordOfCube, void *>>>;
+
+inline void * cubeQuery(const coord2bytep_map_t &h, const std::size_t layerId, const std::size_t magindex, const CoordOfCube &c) {
+    try {
+        return h.at(layerId).at(magindex).at(c);
+    } catch (const std::out_of_range &) {
+        return nullptr;
+    }
+}
 
 // Bytes for an object ID.
 #define OBJID_BYTES sizeof(uint64_t)

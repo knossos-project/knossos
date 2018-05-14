@@ -309,7 +309,7 @@ void Loader::Worker::snappyCacheSupplySnappy(const CoordOfCube cubeCoord, const 
         }
         QMutexLocker locker(&state->protectCube2Pointer);
         const auto coord = cubeCoord;
-        auto cubePtr = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer, snappyLayerId, loaderMagnification, coord);
+        auto cubePtr = cubeQuery(state->cube2Pointer, snappyLayerId, loaderMagnification, coord);
         if (cubePtr != nullptr) {
             freeSlots[snappyLayerId].emplace_back(cubePtr);
             state->cube2Pointer[snappyLayerId][loaderMagnification].erase(coord);
@@ -346,7 +346,7 @@ void Loader::Worker::flushIntoSnappyCache() {
     for (std::size_t mag = 0; mag < OcModifiedCacheQueue.size(); ++mag) {
         for (const auto & cubeCoord : OcModifiedCacheQueue[mag]) {
             state->protectCube2Pointer.lock();
-            auto cube = Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer, snappyLayerId, mag, {cubeCoord.x, cubeCoord.y, cubeCoord.z});
+            auto cube = cubeQuery(state->cube2Pointer, snappyLayerId, mag, {cubeCoord.x, cubeCoord.y, cubeCoord.z});
             state->protectCube2Pointer.unlock();
             if (cube != nullptr) {
                 snappyCacheBackupRaw(cubeCoord, cube);
@@ -505,8 +505,8 @@ void Loader::Worker::broadcastProgress(bool startup) {
 void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset::list_t & changedDatasets) {
     datasets = changedDatasets;
     cleanup(center);
-    decltype(Dataset::magnification) magnification = datasets.front().magnification;
-    loaderMagnification = static_cast<std::size_t>(std::log2(magnification));
+    const auto magnification = datasets.front().magnification;
+    loaderMagnification = datasets.front().magIndex;
     const auto cubeEdgeLen = datasets.front().cubeEdgeLength;
     const auto Dcoi = DcoiFromPos(center.cube(cubeEdgeLen, magnification), userMoveType, direction);//datacubes of interest prioritized around the current position
     //split dcoi into slice planes and rest
@@ -516,7 +516,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         QMutexLocker locker(&state->protectCube2Pointer);
         for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
             // only queue downloads which are necessary
-            if (Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer, layerId, loaderMagnification, globalCoord.cube(cubeEdgeLen, magnification)) == nullptr) {
+            if (cubeQuery(state->cube2Pointer, layerId, loaderMagnification, globalCoord.cube(cubeEdgeLen, magnification)) == nullptr) {
                 allCubes.emplace_back(layerId, globalCoord);
             }
         }

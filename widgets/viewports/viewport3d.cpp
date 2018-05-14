@@ -151,7 +151,7 @@ void Viewport3D::updateVolumeTexture() {
     static Profiler tex_transfer_profiler;
 
     tex_gen_profiler.start(); // ----------------------------------------------------------- profiling
-    auto currentPosDc = state->viewerState->currentPosition / Dataset::current().magnification / Dataset::current().cubeEdgeLength;
+    const auto currentPosDc = state->viewerState->currentPosition.cube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
     int cubeLen = Dataset::current().cubeEdgeLength;
     int M = state->M;
     int M_radius = (M - 1) / 2;
@@ -166,10 +166,9 @@ void Viewport3D::updateVolumeTexture() {
     for(int y = 0; y < M; ++y)
     for(int x = 0; x < M; ++x) {
         auto cubeIndex = z*M*M + y*M + x;
-        Coordinate cubeCoordRelative{x - M_radius, y - M_radius, z - M_radius};
-        rawcubes[cubeIndex] = reinterpret_cast<uint64_t*>(
-            Coordinate2BytePtr_hash_get_or_fail(state->cube2Pointer, Segmentation::singleton().layerId, static_cast<std::size_t>(std::log2(Dataset::current().magnification)),
-            {currentPosDc.x + cubeCoordRelative.x, currentPosDc.y + cubeCoordRelative.y, currentPosDc.z + cubeCoordRelative.z}));
+        const CoordOfCube cubeCoordRelative{x - M_radius, y - M_radius, z - M_radius};
+        rawcubes[cubeIndex] = reinterpret_cast<uint64_t*>(cubeQuery(state->cube2Pointer
+            , Segmentation::singleton().layerId, Dataset::current().magIndex, currentPosDc + cubeCoordRelative));
     }
     dcfetch_profiler.end(); // ----------------------------------------------------------- profiling
 

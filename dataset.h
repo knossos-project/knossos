@@ -74,6 +74,7 @@ struct Dataset {
     // but its value is copied over to loaderMagnification.
     // This is locked for thread safety.
     // do not change to uint, it causes bugs in the display of higher mag datasets
+    std::size_t magIndex{0};
     int magnification{1};
     int lowestAvailableMag{1};
     int highestAvailableMag{1};
