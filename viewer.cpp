@@ -111,14 +111,12 @@ Viewer::Viewer() : evilHack{[this](){ state->viewer = this; return true; }()} {
 
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, [this](){
         updateCurrentPosition();
-        for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
-            reslice_notify_visible(layerId);
-        }
+        reslice_notify();
     });
     QObject::connect(this, &Viewer::movementAreaFactorChangedSignal, [this](){
         for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
             if (!Dataset::datasets[layerId].isOverlay()) {
-                reslice_notify_visible(layerId);
+                reslice_notify(layerId);
             }
         }
     });
@@ -885,9 +883,7 @@ bool Viewer::updateDatasetMag(const int mag) {
         }
     }
     //clear the viewports
-    for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
-        reslice_notify_visible(layerId);
-    }
+    reslice_notify();
 
     loader_notify();//start loading
     emit zoomChanged();
@@ -1037,9 +1033,7 @@ void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, 
     const auto newPosition_gpudc = viewerState.currentPosition.cube(gpucubeedge, Dataset::current().magnification);
 
     if (newPosition_dc != lastPosition_dc) {
-        for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
-            reslice_notify_visible(layerId);
-        }
+        reslice_notify();
         // userMoveType How user movement was generated
         // Direction of user movement in case of drilling,
         // or normal to viewport plane in case of horizontal movement.
@@ -1108,9 +1102,21 @@ void Viewer::calculateMissingOrthoGPUCubes(TextureLayer & layer) {
     }
 }
 
+void Viewer::reslice_notify() {
+    for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
+        reslice_notify(layerId);
+    }
+}
+
+void Viewer::reslice_notify(const std::size_t layerId) {
+    reslice_notify_all(layerId, viewerState.currentPosition);
+}
+
 void Viewer::reslice_notify_all(const std::size_t layerId, const Coordinate coord) {
     if (currentlyVisibleWrapWrap(state->viewerState->currentPosition, coord)) {
-        reslice_notify_visible(layerId);
+        window->forEachOrthoVPDo([layerId](ViewportOrtho & vpOrtho) {
+            vpOrtho.resliceNecessary[layerId] = true;
+        });
     }
     window->viewportArb->resliceNecessary[layerId] = true;//arb visibility is not tested
     if (layerId == Segmentation::singleton().layerId) {
@@ -1119,14 +1125,8 @@ void Viewer::reslice_notify_all(const std::size_t layerId, const Coordinate coor
     }
 }
 
-void Viewer::reslice_notify_visible(const std::size_t layerId) {
-    window->forEachOrthoVPDo([layerId](ViewportOrtho & vpOrtho) {
-        vpOrtho.resliceNecessary[layerId] = true;
-    });
-}
-
 void Viewer::segmentation_changed() {
-    reslice_notify_visible(Segmentation::singleton().layerId);
+    reslice_notify(Segmentation::singleton().layerId);
 }
 
 void Viewer::recalcTextureOffsets() {
@@ -1214,7 +1214,7 @@ void Viewer::datasetColorAdjustmentsChanged() {
     }
     state->viewerState->datasetAdjustmentOn = state->viewerState->datasetColortableOn || state->viewerState->luminanceBias > 0 || state->viewerState->luminanceRangeDelta < MAX_COLORVAL;
 
-    reslice_notify_visible(0);// FIXME
+    reslice_notify(0);// FIXME
 }
 
 /** Global interfaces  */
