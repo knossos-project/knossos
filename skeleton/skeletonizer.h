@@ -329,6 +329,8 @@ signals:
     void nodeRemovedSignal(const std::uint64_t nodeID);
     void jumpedToNodeSignal(const nodeListElement & node);
     void propertiesChanged(const QSet<QString> & numberProperties, const QSet<QString> & textProperties);
+    void segmentAdded(const quint64 sourceID, const quint64 targetID);
+    void segmentRemoved(const quint64 sourceID, const quint64 targetID);
     void treeAddedSignal(const treeListElement & tree);
     void treeChangedSignal(const treeListElement & tree);
     void treeRemovedSignal(const std::uint64_t treeID);

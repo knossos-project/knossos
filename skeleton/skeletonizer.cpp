@@ -780,6 +780,7 @@ bool Skeletonizer::delSegment(std::list<segmentListElement>::iterator segToDelIt
     updateCircRadius(&source);
     updateCircRadius(&target);
     Session::singleton().unsavedChanges = true;
+    emit segmentRemoved(source.nodeID, target.nodeID);
     return true;
 }
 
@@ -1102,7 +1103,7 @@ bool Skeletonizer::addSegment(nodeListElement & sourceNode, nodeListElement & ta
     updateCircRadius(&targetNode);
 
     Session::singleton().unsavedChanges = true;
-
+    emit segmentAdded(sourceNode.nodeID, targetNode.nodeID);
     return true;
 }
 
