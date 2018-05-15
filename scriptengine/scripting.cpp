@@ -42,6 +42,7 @@
 #include <QApplication>
 #include <QDir>
 #include <QFileInfoList>
+#include <QIODevice>
 #include <QMessageBox>
 #include <QSettings>
 #include <QStandardPaths>
@@ -257,13 +258,16 @@ void Scripting::addPresetCustomPythonPaths() {
 
 void Scripting::runFile(const QString &filename) {
     QFile pyFile(filename);
-    pyFile.open(QIODevice::ReadOnly);
-    QString s;
-    QTextStream textStream(&pyFile);
-    s.append(textStream.readAll());
-    pyFile.close();
+    runFile(pyFile);
+}
 
-    evalScript(s, Py_file_input);
+void Scripting::runFile(QIODevice & pyFile) {
+    if(!pyFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        throw std::runtime_error("runFile open failed");
+    }
+    QTextStream textStream(&pyFile);
+    evalScript(textStream.readAll(), Py_file_input);
+    pyFile.close();
 }
 
 void Scripting::moveSymbolIntoKnossosModule(const QString& name) {

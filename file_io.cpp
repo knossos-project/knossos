@@ -24,6 +24,7 @@
 
 #include "loader.h"
 #include "widgets/mainwindow.h"
+#include "scriptengine/scripting.h"
 #include "segmentation/segmentation.h"
 #include "session.h"
 #include "skeleton/skeletonizer.h"
@@ -128,6 +129,9 @@ void annotationFileLoad(const QString & filename, const bool mergeSkeleton, cons
         for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) {
             if (!nonExtraFiles.contains(archive.getCurrentFileName())) {
                 QuaZipFile file(&archive);
+                if (archive.getCurrentFileName().endsWith(".py")) {
+                    state->scripting->runFile(file);
+                }
                 file.open(QIODevice::ReadOnly);
                 Session::singleton().extraFiles[archive.getCurrentFileName()] = file.readAll();
             }

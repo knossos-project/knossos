@@ -103,6 +103,7 @@ class Scripting : public QObject
 public:
     explicit Scripting();
     void runFile(const QString &filename);
+    void runFile(QIODevice & pyFile);
     void addObject(const QString& name, QObject* object);
     void addVariable(const QString& name, const QVariant& v);
     SkeletonProxy skeletonProxy;
