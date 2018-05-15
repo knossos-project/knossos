@@ -373,8 +373,10 @@ QUrl Dataset::knossosCubeUrl(const Coordinate coord) const {
             .arg(cubeCoord.y, 4, 10, QChar('0'))
             .arg(cubeCoord.z, 4, 10, QChar('0'));
 
-    if (type == Dataset::CubeType::RAW_UNCOMPRESSED || type == Dataset::CubeType::RAW_PNG) {
+    if (type == Dataset::CubeType::RAW_UNCOMPRESSED) {
         filename = filename.arg(".raw");
+    } else if (type == Dataset::CubeType::RAW_PNG) {
+        filename = filename.arg(".png");
     } else if (type == Dataset::CubeType::RAW_JPG) {
         filename = filename.arg(".jpg");
     } else if (type == Dataset::CubeType::RAW_J2K) {
