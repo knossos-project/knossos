@@ -103,6 +103,7 @@ public:
 signals:
     void annotationTimeChanged(const QString & timeString);
     void autoSaveSignal();
+    void clearedAnnotation();
     void movementAreaChanged();
 };
 

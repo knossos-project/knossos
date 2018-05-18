@@ -66,6 +66,7 @@ void Session::clearAnnotation() {
     setAnnotationTime(0);
     annotationFilename = "";
     extraFiles.clear();
+    emit clearedAnnotation();
     unsavedChanges = false;
 }
 

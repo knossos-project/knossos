@@ -125,6 +125,7 @@ Scripting::Scripting() : _ctx{PythonQtInit()} {
     addObject("knossos_global_mainwindow", state->viewer->window);
     addObject("knossos_global_skeletonizer", &Skeletonizer::singleton());
     addObject("knossos_global_segmentation", &Segmentation::singleton());
+    addObject("knossos_global_session", &Session::singleton());
     addObject("knossos_global_loader", &Loader::Controller::singleton());
     addVariable("Mode_Tracing", AnnotationMode::Mode_Tracing);
     addVariable("Mode_TracingAdvanced", AnnotationMode::Mode_TracingAdvanced);
