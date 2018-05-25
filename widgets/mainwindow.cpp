@@ -1295,7 +1295,12 @@ void MainWindow::resizeEvent(QResizeEvent *) {
 void MainWindow::dropEvent(QDropEvent *event) {
     QStringList files;
     for (auto && url : event->mimeData()->urls()) {
-        files.append(url.toLocalFile());
+        const auto localPath = url.toLocalFile();
+        if (localPath.endsWith(".conf")) {
+            widgetContainer.datasetLoadWidget.loadDataset(boost::none, url);
+        } else {
+            files.append(localPath);
+        }
     }
     QTimer::singleShot(0, [this, files](){
         openFileDispatch(files);
@@ -1304,14 +1309,17 @@ void MainWindow::dropEvent(QDropEvent *event) {
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
+    const std::vector<QString> validExtensions = {".k.zip", ".nml", ".k.conf", "knossos.conf", "ariadne.conf", ".pyknossos.conf"};
     if(event->mimeData()->hasUrls()) {
         QList<QUrl> urls = event->mimeData()->urls();
         for (auto && url : urls) {
             qDebug() << url;//in case its no working
             if (url.isLocalFile()) {
                 const auto fileName(url.toLocalFile());
-                if (fileName.endsWith(".k.zip") || fileName.endsWith(".nml")) {
-                    event->accept();
+                for (const auto extension : validExtensions) {
+                    if (fileName.endsWith(extension)) {
+                        event->accept();
+                    }
                 }
             }
         }
