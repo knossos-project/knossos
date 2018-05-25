@@ -2,6 +2,28 @@
 
 #include <QApplication>
 #include <QClipboard>
+#include <QKeyEvent>
+#include <QLineEdit>
+
+CoordinateSpin::CoordinateSpin(const QString & prefix, QWidget * parent) : QSpinBox(parent) {
+    setPrefix(prefix);
+    setRange(0, 1000000);//allow min 0 as bogus value, we don’t adjust the max anyway
+    setValue(0 + 1);//inintialize for {0, 0, 0}
+}
+
+void CoordinateSpin::fixup(QString & input) const {
+    input = QString::number(0);//let viewer reset the value
+}
+
+void CoordinateSpin::keyPressEvent(QKeyEvent *event) {
+    if (event->matches(QKeySequence::Copy) && lineEdit()->selectedText().isEmpty()) {
+        copySignal();
+    }
+    if (event->matches(QKeySequence::Paste)) {
+        pasteSignal();
+    }
+    QSpinBox::keyPressEvent(event);
+}
 
 CoordinateSpins::CoordinateSpins(QObject * parent) : QObject(parent) {
     copyButton.setMinimumSize(25, 25);
@@ -35,6 +57,13 @@ CoordinateSpins::CoordinateSpins(QObject * parent) : QObject(parent) {
         }
         emit coordinatesChanged();
     });
+
+    QObject::connect(&xSpin, &CoordinateSpin::copySignal, [this](){ copyButton.click(); });
+    QObject::connect(&ySpin, &CoordinateSpin::copySignal, [this](){ copyButton.click(); });
+    QObject::connect(&zSpin, &CoordinateSpin::copySignal, [this](){ copyButton.click(); });
+    QObject::connect(&xSpin, &CoordinateSpin::pasteSignal, [this](){ pasteButton.click(); });
+    QObject::connect(&ySpin, &CoordinateSpin::pasteSignal, [this](){ pasteButton.click(); });
+    QObject::connect(&zSpin, &CoordinateSpin::pasteSignal, [this](){ pasteButton.click(); });
 }
 
 Coordinate CoordinateSpins::get() const {
