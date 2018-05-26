@@ -1242,7 +1242,6 @@ void MainWindow::loadSettings() {
     widgetContainer.pythonInterpreterWidget.loadSettings();
     widgetContainer.pythonPropertyWidget.loadSettings();
     widgetContainer.snapshotWidget.loadSettings();
-    widgetContainer.layerDialogWidget.layerLoadWidget.loadSettings();
 
     show();
     activateWindow();// prevent mainwin in background in gnome when other widgets are also visible

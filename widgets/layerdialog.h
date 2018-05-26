@@ -21,37 +21,6 @@
 #include <QFormLayout>
 #include <QSpinBox>
 
-class LayerLoadWidget : public QDialog {
-Q_OBJECT
-public:
-    LayerLoadWidget(QWidget * parent = nullptr);
-
-    void loadSettings();
-    void updateDatasetInfo();
-    void adaptMemoryConsumption();
-
-    QVBoxLayout mainLayout;
-    QGridLayout listLayout;
-    QHBoxLayout buttonLayout;
-
-    QToolButton loadButton;
-    QToolButton cancelButton;
-
-    QListWidget datasetLoadList;
-    QLabel datasetLoadLabel{"datasetLoadLabel"};
-    QLabel infoLabel{"info"};
-    QListWidget sessionLayerList;
-    QLabel sessionLayerLabel{"layerLoadLabel"};
-
-    QGroupBox datasetSettingsGroup;
-    QFormLayout datasetSettingsLayout;
-    QCheckBox segmentationOverlayCheckbox{"load segmentation overlay"};
-    QLabel reloadRequiredLabel{tr("Reload dataset for changes to take effect.")};
-    QLabel superCubeSizeLabel;
-    QSpinBox cubeEdgeSpin;
-    FOVSpinBox fovSpin;
-};
-
 class LayerItemModel : public QAbstractListModel {
 Q_OBJECT
 protected:
@@ -101,8 +70,6 @@ public:
     QToolButton moveDownButton;
     QToolButton addLayerButton;
     QToolButton removeLayerButton;
-
-    LayerLoadWidget layerLoadWidget;
 
 private:
     void updateLayerProperties();
