@@ -66,7 +66,8 @@ Viewer::Viewer() : evilHack{[this](){ state->viewer = this; return true; }()} {
     QObject::connect(&Segmentation::singleton(), &Segmentation::renderOnlySelectedObjsChanged, this, &Viewer::segmentation_changed);
 
     static auto regVBuff = [](){
-        state->viewerState->regenVertBuffer = true;
+        state->viewerState->AllTreesBuffers.regenVertBuffer = true;
+        state->viewerState->selectedTreesBuffers.regenVertBuffer = true;
     };
 
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::guiModeLoaded, regVBuff);
@@ -78,15 +79,16 @@ Viewer::Viewer() : evilHack{[this](){ state->viewer = this; return true; }()} {
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeChangedSignal, regVBuff);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeRemovedSignal, regVBuff);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treesMerged, regVBuff);
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, [this]() {
-        if(state->skeletonState->selectedNodes.size() == 1 && !state->viewerState->regenVertBuffer) {
-            auto& svp = state->viewerState->pointVertBuffer;
+
+    static auto updateSelectionColor = [this](GLBuffers & glBuffers) {
+        if(!glBuffers.regenVertBuffer) {
+            auto & svp = glBuffers.pointVertBuffer;
 
             //restore old node color
             size_t offset = svp.colorBufferOffset[svp.lastSelectedNode];
             QColor color = getNodeColor(*state->skeletonState->nodesByNodeID[svp.lastSelectedNode]);
 
-            svp.colors[offset] =  decltype(state->viewerState->lineVertBuffer.colors)::value_type{{static_cast<std::uint8_t>(color.red()), static_cast<std::uint8_t>(color.green()), static_cast<std::uint8_t>(color.blue()), static_cast<std::uint8_t>(color.alpha())}};
+            svp.colors[offset] = decltype(glBuffers.lineVertBuffer.colors)::value_type{{static_cast<std::uint8_t>(color.red()), static_cast<std::uint8_t>(color.green()), static_cast<std::uint8_t>(color.blue()), static_cast<std::uint8_t>(color.alpha())}};
 
             svp.color_buffer.bind();
             svp.color_buffer.write(static_cast<int>(offset * sizeof(svp.colors[offset])), &svp.colors[offset], sizeof(svp.colors[offset]));
@@ -97,13 +99,19 @@ Viewer::Viewer() : evilHack{[this](){ state->viewer = this; return true; }()} {
             offset = svp.colorBufferOffset[svp.lastSelectedNode];
 
             color = Qt::green;
-            decltype(state->viewerState->lineVertBuffer.colors)::value_type activeNodeColor{{static_cast<std::uint8_t>(color.red()), static_cast<std::uint8_t>(color.green()), static_cast<std::uint8_t>(color.blue()), static_cast<std::uint8_t>(color.alpha())}};
+            decltype(glBuffers.lineVertBuffer.colors)::value_type activeNodeColor{{static_cast<std::uint8_t>(color.red()), static_cast<std::uint8_t>(color.green()), static_cast<std::uint8_t>(color.blue()), static_cast<std::uint8_t>(color.alpha())}};
 
             svp.color_buffer.bind();
             svp.color_buffer.write(static_cast<int>(offset * sizeof(activeNodeColor)), &activeNodeColor, sizeof(activeNodeColor));
             svp.color_buffer.release();
         } else {
-            state->viewerState->regenVertBuffer = true;
+            glBuffers.regenVertBuffer = true;
+        }
+    };
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, []() {
+        if (state->skeletonState->selectedNodes.size() == 1) {
+            updateSelectionColor(state->viewerState->AllTreesBuffers);
+            updateSelectionColor(state->viewerState->selectedTreesBuffers);
         }
     });
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeSelectionChangedSignal, regVBuff);
@@ -121,7 +129,8 @@ Viewer::Viewer() : evilHack{[this](){ state->viewer = this; return true; }()} {
         }
     });
     QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [](){
-        state->viewerState->regenVertBuffer = true;
+        state->viewerState->AllTreesBuffers.regenVertBuffer = true;
+        state->viewerState->selectedTreesBuffers.regenVertBuffer = true;
     });
 
     keyRepeatTimer.start();

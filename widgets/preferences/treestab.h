@@ -23,6 +23,7 @@
 #ifndef TREESTAB_H
 #define TREESTAB_H
 
+#include <QButtonGroup>
 #include <QCheckBox>
 #include <QDoubleSpinBox>
 #include <QFormLayout>
@@ -80,14 +81,18 @@ class TreesTab : public QWidget
     QDoubleSpinBox depthCutoffSpin;
     QComboBox renderQualityCombo;
     // tree visibility
-    QGroupBox visibilityGroup{tr("Visibility")};
+    QGroupBox visibilityGroup{tr("Tree Visibility")};
     QVBoxLayout visibilityLayout;
-    QRadioButton allTreesRadio{tr("Show all trees")};
-    QRadioButton selectedTreesRadio{tr("Show only selected trees")};
-    QGroupBox skeletonGroup{tr("Show skeleton in")};
-    QVBoxLayout skelGroupLayout;
-    QCheckBox skeletonInOrthoVPsCheck{tr("Orthogonal viewports")};
-    QCheckBox skeletonIn3DVPCheck{tr("3D viewport")};
+    QGroupBox vp3dGroup{tr("In 3D viewport")};
+    QVBoxLayout vp3dLayout;
+    QButtonGroup vp3dButtonGroup;
+    QRadioButton vp3dAllTreesRadio{tr("Show all trees")};
+    QRadioButton vp3dSelectedTreesRadio{tr("Show only selected trees")};
+    QGroupBox vpOrthoGroup{tr("In othogonal viewports")};
+    QVBoxLayout vpOrthoLayout;
+    QButtonGroup vpOrthoButtonGroup;
+    QRadioButton vpOrthoAllTreesRadio{tr("Show all trees")};
+    QRadioButton vpOrthoSelectedTreesRadio{tr("Show only selected trees")};
 
     void loadTreeLUTButtonClicked(QString path = "");
     void saveSettings(QSettings & settings) const;

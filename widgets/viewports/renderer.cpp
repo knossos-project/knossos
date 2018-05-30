@@ -766,7 +766,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
 
-    if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(TreeDisplay::ShowInOrthoVPs)) {
+    if (options.drawSkeleton && state->viewerState->skeletonDisplayVPOrtho.testFlag(TreeDisplay::ShowInOrthoVPs)) {
         glPushMatrix();
         if (viewportType != VIEWPORT_ARBITRARY) {// arb already is at the pixel center
             const auto halfPixelOffset = 0.5 * (v1 - v2) * Dataset::current().scale;
@@ -1205,7 +1205,8 @@ void ViewportBase::renderMesh() {
     std::vector<std::reference_wrapper<Mesh>> translucentMeshes;
     for (const auto & tree : state->skeletonState->trees) {
         const bool validMesh = tree.mesh != nullptr && tree.mesh->vertex_count > 0;
-        const bool selectionFilter = !state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected) || tree.selected;
+        const auto displayFlags = (viewportType == VIEWPORT_SKELETON) ? state->viewerState->skeletonDisplayVP3D : state->viewerState->skeletonDisplayVPOrtho;
+        const bool selectionFilter = !displayFlags.testFlag(TreeDisplay::OnlySelected) || tree.selected;
         if (tree.render && selectionFilter && validMesh) {
             const auto hasTranslucentFirstVertexColor = [](Mesh & mesh){
                 mesh.color_buf.bind();
@@ -1298,7 +1299,8 @@ void ViewportBase::pickMeshIdAtPosition() {
     std::uint32_t id_counter = 1;
     for (auto & tree : state->skeletonState->trees) {
         const bool pickableMesh = tree.mesh != nullptr && tree.mesh->render_mode == GL_TRIANGLES;
-        const bool selectionFilter = state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected) && !tree.selected;
+        const auto displayFlags = (viewportType == VIEWPORT_SKELETON) ? state->viewerState->skeletonDisplayVP3D : state->viewerState->skeletonDisplayVPOrtho;
+        const bool selectionFilter = displayFlags.testFlag(TreeDisplay::OnlySelected) && !tree.selected;
         if (selectionFilter || !pickableMesh) {
             continue;
         }
@@ -1656,7 +1658,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         }
     }
 
-    if (options.drawSkeleton && state->viewerState->skeletonDisplay.testFlag(TreeDisplay::ShowIn3DVP)) {
+    if (options.drawSkeleton && state->viewerState->skeletonDisplayVP3D.testFlag(TreeDisplay::ShowIn3DVP)) {
         glPushMatrix();
         updateFrustumClippingPlanes();// should update on vp view translate, rotate or scale
         renderSkeleton(options);
@@ -1890,14 +1892,15 @@ hash_list<nodeListElement *> ViewportBase::pickNodes(int centerX, int centerY, i
     return foundNodes;
 }
 
-std::pair<bool, bool> darkenOrHideTree(treeListElement & currentTree) {
+std::pair<bool, bool> darkenOrHideTree(treeListElement & currentTree, const ViewportType vpType) {
     const auto * activeTree = state->skeletonState->activeTree;
     const auto * activeNode = state->skeletonState->activeNode;
     const auto * activeSynapse = (activeNode && activeNode->isSynapticNode) ? activeNode->correspondingSynapse :
                                  (activeTree && activeTree->isSynapticCleft) ? activeTree->correspondingSynapse :
                                                                                nullptr;
     const bool synapseBuilding = state->skeletonState->synapseState != Synapse::State::PreSynapse;
-    const bool onlySelected = state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected);
+    const auto displayFlags = (vpType == VIEWPORT_SKELETON) ? state->viewerState->skeletonDisplayVP3D : state->viewerState->skeletonDisplayVPOrtho;
+    const bool onlySelected = displayFlags.testFlag(TreeDisplay::OnlySelected);
 
     const bool darken = (synapseBuilding && currentTree.correspondingSynapse != &state->skeletonState->temporarySynapse)
             || (activeSynapse && activeSynapse->getCleft() != &currentTree);
@@ -1908,7 +1911,7 @@ std::pair<bool, bool> darkenOrHideTree(treeListElement & currentTree) {
 }
 
 template<typename Func>
-void synapseLoop(Func func){
+void synapseLoop(Func func, const ViewportType vpType){
     for (auto & synapse : state->skeletonState->synapses) {
         const auto * activeTree = state->skeletonState->activeTree;
         const auto * activeNode = state->skeletonState->activeNode;
@@ -1917,7 +1920,8 @@ void synapseLoop(Func func){
 
         if (synapseCreated) {
             const auto synapseHidden = !synapse.getPreSynapse()->correspondingTree->render && !synapse.getPostSynapse()->correspondingTree->render;
-            if (synapseHidden == false && (state->viewerState->skeletonDisplay.testFlag(TreeDisplay::OnlySelected) == false || synapseSelected)) {
+            const auto displayFlags = (vpType == VIEWPORT_SKELETON) ? state->viewerState->skeletonDisplayVP3D : state->viewerState->skeletonDisplayVPOrtho;
+            if (synapseHidden == false && (displayFlags.testFlag(TreeDisplay::OnlySelected) == false || synapseSelected)) {
                 segmentListElement virtualSegment(*synapse.getPostSynapse(), *synapse.getPreSynapse());
                 QColor color = Qt::black;
                 if (synapseSelected == false) {
@@ -1929,49 +1933,49 @@ void synapseLoop(Func func){
     }
 }
 
-void ViewportBase::generateSkeletonGeometry(const RenderOptions &options) {
-    state->viewerState->regenVertBuffer = false;
-    state->viewerState->lineVertBuffer.clear();
-    state->viewerState->pointVertBuffer.clear();
-    state->viewerState->colorPickingBuffer24.clear();
-    state->viewerState->colorPickingBuffer48.clear();
-    state->viewerState->colorPickingBuffer64.clear();
+void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &options, const ViewportType viewportType) {
+    glBuffers.regenVertBuffer = false;
+    glBuffers.lineVertBuffer.clear();
+    glBuffers.pointVertBuffer.clear();
+    glBuffers.colorPickingBuffer24.clear();
+    glBuffers.colorPickingBuffer48.clear();
+    glBuffers.colorPickingBuffer64.clear();
 
     auto arrayFromQColor = [](QColor color){
-        return decltype(state->viewerState->lineVertBuffer.colors)::value_type{{static_cast<std::uint8_t>(color.red()), static_cast<std::uint8_t>(color.green()), static_cast<std::uint8_t>(color.blue()), static_cast<std::uint8_t>(color.alpha())}};
+        return decltype(glBuffers.lineVertBuffer.colors)::value_type{{static_cast<std::uint8_t>(color.red()), static_cast<std::uint8_t>(color.green()), static_cast<std::uint8_t>(color.blue()), static_cast<std::uint8_t>(color.alpha())}};
     };
 
-    auto addSegment = [arrayFromQColor](const segmentListElement & segment, const QColor & color) {
+    auto addSegment = [arrayFromQColor, &glBuffers](const segmentListElement & segment, const QColor & color) {
         const auto isoBase = Dataset::current().scale.componentMul(segment.source.position);
         const auto isoTop = Dataset::current().scale.componentMul(segment.target.position);
 
-        state->viewerState->lineVertBuffer.emplace_back(isoBase, arrayFromQColor(color));
-        state->viewerState->lineVertBuffer.emplace_back(isoTop, arrayFromQColor(color));
+        glBuffers.lineVertBuffer.emplace_back(isoBase, arrayFromQColor(color));
+        glBuffers.lineVertBuffer.emplace_back(isoTop, arrayFromQColor(color));
     };
 
-    auto addNode = [arrayFromQColor, options](const nodeListElement & node) {
+    auto addNode = [arrayFromQColor, options, &glBuffers](const nodeListElement & node) {
         auto color = state->viewer->getNodeColor(node);
 
         if (node.selected && options.highlightSelection) {// highlight selected nodes
             auto selectedNodeColor = QColor(Qt::green);
 //            selectedNodeColor.setAlphaF(0.5f);// results in half-transparent nodes in low mode
             color = selectedNodeColor;
-            state->viewerState->pointVertBuffer.lastSelectedNode = node.nodeID;
+            glBuffers.pointVertBuffer.lastSelectedNode = node.nodeID;
         }
 
         const auto isoPos = Dataset::current().scale.componentMul(node.position);
 
-        state->viewerState->colorPickingBuffer24.emplace_back(arrayFromQColor(getPickingColor(node, RenderOptions::SelectionPass::NodeID0_24Bits)));
-        state->viewerState->colorPickingBuffer48.emplace_back(arrayFromQColor(getPickingColor(node, RenderOptions::SelectionPass::NodeID24_48Bits)));
-        state->viewerState->colorPickingBuffer64.emplace_back(arrayFromQColor(getPickingColor(node, RenderOptions::SelectionPass::NodeID48_64Bits)));
-        state->viewerState->pointVertBuffer.emplace_back(isoPos, arrayFromQColor(color));
-        state->viewerState->pointVertBuffer.colorBufferOffset[node.nodeID] = static_cast<unsigned int>(state->viewerState->pointVertBuffer.vertices.size()-1);
+        glBuffers.colorPickingBuffer24.emplace_back(arrayFromQColor(getPickingColor(node, RenderOptions::SelectionPass::NodeID0_24Bits)));
+        glBuffers.colorPickingBuffer48.emplace_back(arrayFromQColor(getPickingColor(node, RenderOptions::SelectionPass::NodeID24_48Bits)));
+        glBuffers.colorPickingBuffer64.emplace_back(arrayFromQColor(getPickingColor(node, RenderOptions::SelectionPass::NodeID48_64Bits)));
+        glBuffers.pointVertBuffer.emplace_back(isoPos, arrayFromQColor(color));
+        glBuffers.pointVertBuffer.colorBufferOffset[node.nodeID] = static_cast<unsigned int>(glBuffers.pointVertBuffer.vertices.size()-1);
     };
 
     for (auto & currentTree : Skeletonizer::singleton().skeletonState.trees) {
         // focus on synapses, darken rest of skeleton
         bool darken, hide;
-        std::tie(darken, hide) = darkenOrHideTree(currentTree);
+        std::tie(darken, hide) = darkenOrHideTree(currentTree, viewportType);
         if (hide) {
             continue;
         }
@@ -1998,7 +2002,7 @@ void ViewportBase::generateSkeletonGeometry(const RenderOptions &options) {
 
     synapseLoop([&addSegment](const auto &, const auto & virtualSegment, const auto & color){
         addSegment(virtualSegment, color);
-    });
+    }, viewportType);
 
     const auto uploadVertexData = [](auto & buf, const auto & vertices){
         buf.destroy();
@@ -2007,11 +2011,11 @@ void ViewportBase::generateSkeletonGeometry(const RenderOptions &options) {
         buf.allocate(vertices.data(), static_cast<int>(vertices.size() * sizeof(vertices.front())));
         buf.release();
     };
-    uploadVertexData(state->viewerState->pointVertBuffer.color_buffer, state->viewerState->pointVertBuffer.colors);
-    uploadVertexData(state->viewerState->pointVertBuffer.vertex_buffer, state->viewerState->pointVertBuffer.vertices);
+    uploadVertexData(glBuffers.pointVertBuffer.color_buffer, glBuffers.pointVertBuffer.colors);
+    uploadVertexData(glBuffers.pointVertBuffer.vertex_buffer, glBuffers.pointVertBuffer.vertices);
 
-    uploadVertexData(state->viewerState->lineVertBuffer.color_buffer, state->viewerState->lineVertBuffer.colors);
-    uploadVertexData(state->viewerState->lineVertBuffer.vertex_buffer, state->viewerState->lineVertBuffer.vertices);
+    uploadVertexData(glBuffers.lineVertBuffer.color_buffer, glBuffers.lineVertBuffer.colors);
+    uploadVertexData(glBuffers.lineVertBuffer.vertex_buffer, glBuffers.lineVertBuffer.vertices);
 }
 
 /*
@@ -2054,15 +2058,16 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     //if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
 
     glPushMatrix();
-
-    if(state->viewerState->regenVertBuffer) {
-        generateSkeletonGeometry(options);
+    const auto displayFlag = (viewportType == VIEWPORT_SKELETON) ? state->viewerState->skeletonDisplayVP3D : state->viewerState->skeletonDisplayVPOrtho;
+    auto & glBuffers = displayFlag.testFlag(TreeDisplay::OnlySelected) ? state->viewerState->selectedTreesBuffers : state->viewerState->AllTreesBuffers;
+    if(glBuffers.regenVertBuffer) {
+        generateSkeletonGeometry(glBuffers, options, viewportType);
     }
     if(!state->viewerState->onlyLinesAndPoints) {
         for (auto & currentTree : Skeletonizer::singleton().skeletonState.trees) {
             // focus on synapses, darken rest of skeleton
             bool darken, hide;
-            std::tie(darken, hide) = darkenOrHideTree(currentTree);
+            std::tie(darken, hide) = darkenOrHideTree(currentTree, viewportType);
             if (hide) {
                 continue;
             }
@@ -2168,7 +2173,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                 renderCylinder(arrowbase, Skeletonizer::singleton().radius(*synapse.getPreSynapse()) * 3.0f
                     , synapse.getPostSynapse()->position
                     , Skeletonizer::singleton().radius(*synapse.getPostSynapse()) * state->viewerState->segRadiusToNodeRadius, color, options);
-            });
+            }, viewportType);
         }
     }
 
@@ -2184,15 +2189,15 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         glEnableClientState(GL_COLOR_ARRAY);
 
         /* draw all segments */
-        state->viewerState->lineVertBuffer.vertex_buffer.bind();
+        glBuffers.lineVertBuffer.vertex_buffer.bind();
         glVertexPointer(3, GL_FLOAT, 0, nullptr);
-        state->viewerState->lineVertBuffer.vertex_buffer.release();
+        glBuffers.lineVertBuffer.vertex_buffer.release();
 
-        state->viewerState->lineVertBuffer.color_buffer.bind();
+        glBuffers.lineVertBuffer.color_buffer.bind();
         glColorPointer(4, GL_UNSIGNED_BYTE, 0, nullptr);
-        state->viewerState->lineVertBuffer.color_buffer.release();
+        glBuffers.lineVertBuffer.color_buffer.release();
 
-        glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(state->viewerState->lineVertBuffer.vertices.size()));
+        glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(glBuffers.lineVertBuffer.vertices.size()));
 
         glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
@@ -2205,25 +2210,25 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     glEnableClientState(GL_COLOR_ARRAY);
 
     /* draw all nodes */
-    state->viewerState->pointVertBuffer.vertex_buffer.bind();
+    glBuffers.pointVertBuffer.vertex_buffer.bind();
     glVertexPointer(3, GL_FLOAT, 0, nullptr);
-    state->viewerState->pointVertBuffer.vertex_buffer.release();
+    glBuffers.pointVertBuffer.vertex_buffer.release();
 
     if(options.nodePicking) {
         if(options.selectionPass == RenderOptions::SelectionPass::NodeID0_24Bits) {
-            glColorPointer(4, GL_UNSIGNED_BYTE, 0, state->viewerState->colorPickingBuffer24.data());
+            glColorPointer(4, GL_UNSIGNED_BYTE, 0, glBuffers.colorPickingBuffer24.data());
         } else if(options.selectionPass == RenderOptions::SelectionPass::NodeID24_48Bits) {
-            glColorPointer(4, GL_UNSIGNED_BYTE, 0, state->viewerState->colorPickingBuffer48.data());
+            glColorPointer(4, GL_UNSIGNED_BYTE, 0, glBuffers.colorPickingBuffer48.data());
         } else if(options.selectionPass == RenderOptions::SelectionPass::NodeID48_64Bits) {
-            glColorPointer(4, GL_UNSIGNED_BYTE, 0, state->viewerState->colorPickingBuffer64.data());
+            glColorPointer(4, GL_UNSIGNED_BYTE, 0, glBuffers.colorPickingBuffer64.data());
         }
     } else {
-        state->viewerState->pointVertBuffer.color_buffer.bind();
+        glBuffers.pointVertBuffer.color_buffer.bind();
         glColorPointer(4, GL_UNSIGNED_BYTE, 0, nullptr);
-        state->viewerState->pointVertBuffer.color_buffer.release();
+        glBuffers.pointVertBuffer.color_buffer.release();
     }
 
-    glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(state->viewerState->pointVertBuffer.vertices.size()));
+    glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.pointVertBuffer.vertices.size()));
 
     glDisableClientState(GL_COLOR_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);

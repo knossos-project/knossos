@@ -71,13 +71,15 @@ const QString HIGHLIGHT_ACTIVE_TREE = "hightlight_active_tree";
 const QString HIGHLIGHT_INTERSECTIONS = "highlight_intersections";
 const QString LIGHT_EFFECTS = "light_effects";
 const QString MSAA_SAMPLES = "samples";
-const QString ONLY_SELECTED_TREES = "only_selected_trees";
+const QString ONLY_SELECTED_TREES_3DVP = "only_selected_trees_3dvp";
+const QString ONLY_SELECTED_TREES_ORTHOVPS = "only_selected_trees_orthovps";
 const QString RENDERING_QUALITY = "rendering_quality";
+const QString SHOW_SKELETON_3DVP = "show_skeleton_3dvp";
 const QString SHOW_SKELETON_ORTHOVPS = "show_skeleton_orthovps";
-const QString SHOW_SKELETON_3DVP = "Show_skeleton_3dvp";
 const QString TREE_LUT_FILE = "tree_lut_file";
 const QString TREE_LUT_FILE_USED = "tree_lut_file_used";
-const QString WHOLE_SKELETON = "whole_skeleton";
+const QString TREE_VISIBILITY_3DVP = "tree_visibility_3dvp";
+const QString TREE_VISIBILITY_ORTHOVPS = "tree_visibility_orthovps";
 
 // Preferensces Meshes Tab
 const QString SHOW_MESH_ORTHOVPS = "show_mesh_orthovps";

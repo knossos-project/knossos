@@ -60,6 +60,36 @@ enum class RotationCenter {
     CurrentPosition
 };
 
+struct GLBuffers {
+    bool regenVertBuffer{true};
+
+    // vertex buffers that are available for rendering
+    struct RenderBuffer {
+        std::vector<floatCoordinate> vertices;
+        std::vector<std::array<std::uint8_t, 4>> colors;
+        std::unordered_map<size_t, unsigned int> colorBufferOffset;
+        QOpenGLBuffer vertex_buffer{QOpenGLBuffer::VertexBuffer};
+        QOpenGLBuffer color_buffer{QOpenGLBuffer::VertexBuffer};
+
+        size_t lastSelectedNode{0};
+
+        void clear() {
+            vertices.clear();
+            colors.clear();
+            colorBufferOffset.clear();
+        }
+
+        template<typename T, typename U>
+        void emplace_back(T&& coord, U&& color) {
+            vertices.emplace_back(std::forward<T>(coord));
+            colors.emplace_back(std::forward<U>(color));
+        }
+    } lineVertBuffer, pointVertBuffer;
+    std::vector<std::array<std::uint8_t, 4>> colorPickingBuffer24, colorPickingBuffer48, colorPickingBuffer64;
+};
+
+
+
 struct ViewerState {
     ViewerState();
 
@@ -98,8 +128,6 @@ struct ViewerState {
     float cumDistRenderThres{7.f};
 
     bool onlyLinesAndPoints{false};
-    bool regenVertBuffer{true};
-
     bool defaultVPSizeAndPos{true};
 
     //In pennmode right and left click are switched
@@ -117,7 +145,8 @@ struct ViewerState {
     bool datasetAdjustmentOn{false};
     // skeleton rendering options
     float depthCutOff{5.f};
-    QFlags<TreeDisplay> skeletonDisplay{TreeDisplay::ShowIn3DVP, TreeDisplay::ShowInOrthoVPs};
+    QFlags<TreeDisplay> skeletonDisplayVP3D{TreeDisplay::ShowIn3DVP};
+    QFlags<TreeDisplay> skeletonDisplayVPOrtho{TreeDisplay::ShowInOrthoVPs};
     QFlags<TreeDisplay> meshDisplay{TreeDisplay::ShowIn3DVP, TreeDisplay::ShowInOrthoVPs};
     QFlags<IdDisplay> idDisplay{IdDisplay::None};
     int highlightActiveTree{true};
@@ -149,30 +178,8 @@ struct ViewerState {
     double meshAlphaFactorSlicing{0.5};
     bool MeshPickingEnabled{true};
 
-    // vertex buffers that are available for rendering
-    struct {
-        std::vector<floatCoordinate> vertices;
-        std::vector<std::array<std::uint8_t, 4>> colors;
-        std::unordered_map<size_t, unsigned int> colorBufferOffset;
-        QOpenGLBuffer vertex_buffer{QOpenGLBuffer::VertexBuffer};
-        QOpenGLBuffer color_buffer{QOpenGLBuffer::VertexBuffer};
-
-        size_t lastSelectedNode{0};
-
-        void clear() {
-            vertices.clear();
-            colors.clear();
-            colorBufferOffset.clear();
-        }
-
-        template<typename T, typename U>
-        void emplace_back(T&& coord, U&& color) {
-            vertices.emplace_back(std::forward<T>(coord));
-            colors.emplace_back(std::forward<U>(color));
-        }
-    } lineVertBuffer, pointVertBuffer;
-
-    std::vector<std::array<std::uint8_t, 4>> colorPickingBuffer24, colorPickingBuffer48, colorPickingBuffer64;
+    GLBuffers AllTreesBuffers;
+    GLBuffers selectedTreesBuffers;
 };
 
 /**

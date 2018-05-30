@@ -43,6 +43,12 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
                                      "<b>Default:</b> Dynamical adjustment of details depending on zoom level. <br/>"
                                      "<b>Low:</b> Skeleton rendered as lines and points. Details decrease drastically when zoomed out. Very fast even for large skeletons. <br/>"));
 
+    vp3dGroup.setCheckable(true);
+    vp3dButtonGroup.addButton(&vp3dAllTreesRadio, static_cast<int>(!TreeDisplay::OnlySelected));
+    vp3dButtonGroup.addButton(&vp3dSelectedTreesRadio, static_cast<int>(TreeDisplay::OnlySelected));
+    vpOrthoGroup.setCheckable(true);
+    vpOrthoButtonGroup.addButton(&vpOrthoAllTreesRadio, static_cast<int>(!TreeDisplay::OnlySelected));
+    vpOrthoButtonGroup.addButton(&vpOrthoSelectedTreesRadio, static_cast<int>(TreeDisplay::OnlySelected));
     // trees
     renderingLayout.setAlignment(Qt::AlignTop);
     renderingLayout.addRow(&highlightActiveTreeCheck);
@@ -55,13 +61,15 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     renderingGroup.setLayout(&renderingLayout);
     visibilityLayout.setAlignment(Qt::AlignTop);
 
-    skelGroupLayout.addWidget(&skeletonInOrthoVPsCheck);
-    skelGroupLayout.addWidget(&skeletonIn3DVPCheck);
-    skeletonGroup.setLayout(&skelGroupLayout);
+    vp3dLayout.addWidget(&vp3dAllTreesRadio);
+    vp3dLayout.addWidget(&vp3dSelectedTreesRadio);
+    vp3dGroup.setLayout(&vp3dLayout);
 
-    visibilityLayout.addWidget(&allTreesRadio);
-    visibilityLayout.addWidget(&selectedTreesRadio);
-    visibilityLayout.addWidget(&skeletonGroup);
+    vpOrthoLayout.addWidget(&vpOrthoAllTreesRadio);
+    vpOrthoLayout.addWidget(&vpOrthoSelectedTreesRadio);
+    vpOrthoGroup.setLayout(&vpOrthoLayout);
+    visibilityLayout.addWidget(&vpOrthoGroup);
+    visibilityLayout.addWidget(&vp3dGroup);
     visibilityGroup.setLayout(&visibilityLayout);
 
     mainLayout.addWidget(&renderingGroup);
@@ -71,11 +79,13 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     // trees render options
     QObject::connect(&highlightActiveTreeCheck, &QCheckBox::clicked, [](const bool on) {
         state->viewerState->highlightActiveTree = on;
-        state->viewerState->regenVertBuffer = true;
+        state->viewerState->AllTreesBuffers.regenVertBuffer = true;
+        state->viewerState->selectedTreesBuffers.regenVertBuffer = true;
     });
     QObject::connect(&highlightIntersectionsCheck, &QCheckBox::clicked, [](const bool checked) {
         state->viewerState->showIntersections = checked;
-        state->viewerState->regenVertBuffer = true;
+        state->viewerState->AllTreesBuffers.regenVertBuffer = true;
+        state->viewerState->selectedTreesBuffers.regenVertBuffer = true;
     });
     QObject::connect(&lightEffectsCheck, &QCheckBox::clicked, [](const bool on) { state->viewerState->lightOnOff = on; });
     QObject::connect(&msaaSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](const int samples){
@@ -119,29 +129,26 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     });
 
     // tree visibility
-    QObject::connect(&allTreesRadio, &QRadioButton::clicked, [](const bool checked) {
-        state->viewerState->skeletonDisplay.setFlag(TreeDisplay::OnlySelected, !checked);
-        state->viewerState->regenVertBuffer = true;
+    QObject::connect(&vp3dGroup, &QGroupBox::clicked, [](const bool checked) {
+        state->viewerState->skeletonDisplayVP3D.setFlag(TreeDisplay::ShowIn3DVP, checked);
     });
-    QObject::connect(&selectedTreesRadio, &QRadioButton::clicked, [](const bool checked) {
-        state->viewerState->skeletonDisplay.setFlag(TreeDisplay::OnlySelected, checked);
-        state->viewerState->regenVertBuffer = true;
+    QObject::connect(&vpOrthoGroup, &QGroupBox::clicked, [](const bool checked) {
+        state->viewerState->skeletonDisplayVPOrtho.setFlag(TreeDisplay::ShowInOrthoVPs, checked);
     });
-    QObject::connect(&skeletonInOrthoVPsCheck, &QCheckBox::clicked, [](const bool checked) {
-        state->viewerState->skeletonDisplay.setFlag(TreeDisplay::ShowInOrthoVPs, checked);
+    QObject::connect(&vp3dButtonGroup, static_cast<void(QButtonGroup::*)(int id)>(&QButtonGroup::buttonClicked), [](const auto buttonID) {
+        state->viewerState->skeletonDisplayVP3D.setFlag(TreeDisplay::OnlySelected, static_cast<TreeDisplay>(buttonID) == TreeDisplay::OnlySelected);
     });
-    QObject::connect(&skeletonIn3DVPCheck, &QCheckBox::clicked, [](const bool checked) {
-        state->viewerState->skeletonDisplay.setFlag(TreeDisplay::ShowIn3DVP, checked);
+    QObject::connect(&vpOrthoButtonGroup, static_cast<void(QButtonGroup::*)(int id)>(&QButtonGroup::buttonClicked), [](const auto buttonID) {
+        state->viewerState->skeletonDisplayVPOrtho.setFlag(TreeDisplay::OnlySelected, static_cast<TreeDisplay>(buttonID) == TreeDisplay::OnlySelected);
     });
-
     createGlobalAction(state->mainWindow, Qt::CTRL + Qt::Key_T, [this](){// T for trees
-        if (allTreesRadio.isChecked()) {
-            selectedTreesRadio.setChecked(true);
+        if (vp3dAllTreesRadio.isChecked()) {
+            vp3dSelectedTreesRadio.setChecked(true);
         } else {
-            allTreesRadio.setChecked(true);
+            vp3dAllTreesRadio.setChecked(true);
         }
-        allTreesRadio.clicked(allTreesRadio.isChecked());
-        selectedTreesRadio.clicked(selectedTreesRadio.isChecked());
+        vp3dAllTreesRadio.clicked(vp3dAllTreesRadio.isChecked());
+        vp3dSelectedTreesRadio.clicked(vp3dSelectedTreesRadio.isChecked());
     });
 }
 
@@ -164,18 +171,19 @@ void TreesTab::loadTreeLUTButtonClicked(QString path) {
 }
 
 void TreesTab::saveSettings(QSettings & settings) const {
-    settings.setValue(LIGHT_EFFECTS, lightEffectsCheck.isChecked());
-    settings.setValue(MSAA_SAMPLES, msaaSpin.value());
+    settings.setValue(DEPTH_CUTOFF, depthCutoffSpin.value());
     settings.setValue(HIGHLIGHT_ACTIVE_TREE, highlightActiveTreeCheck.isChecked());
     settings.setValue(HIGHLIGHT_INTERSECTIONS, highlightIntersectionsCheck.isChecked());
-    settings.setValue(TREE_LUT_FILE_USED, ownTreeColorsCheck.isChecked());
-    settings.setValue(TREE_LUT_FILE, lutFilePath);
-    settings.setValue(DEPTH_CUTOFF, depthCutoffSpin.value());
+    settings.setValue(LIGHT_EFFECTS, lightEffectsCheck.isChecked());
+    settings.setValue(MSAA_SAMPLES, msaaSpin.value());
+    settings.setValue(ONLY_SELECTED_TREES_ORTHOVPS, vpOrthoSelectedTreesRadio.isChecked());
     settings.setValue(RENDERING_QUALITY, renderQualityCombo.currentIndex());
-    settings.setValue(WHOLE_SKELETON, allTreesRadio.isChecked());
-    settings.setValue(ONLY_SELECTED_TREES, selectedTreesRadio.isChecked());
-    settings.setValue(SHOW_SKELETON_ORTHOVPS, skeletonInOrthoVPsCheck.isChecked());
-    settings.setValue(SHOW_SKELETON_3DVP, skeletonIn3DVPCheck.isChecked());
+    settings.setValue(SHOW_SKELETON_3DVP, vp3dGroup.isChecked());
+    settings.setValue(SHOW_SKELETON_ORTHOVPS, vpOrthoGroup.isChecked());
+    settings.setValue(TREE_LUT_FILE, lutFilePath);
+    settings.setValue(TREE_LUT_FILE_USED, ownTreeColorsCheck.isChecked());
+    settings.setValue(TREE_VISIBILITY_3DVP, vp3dButtonGroup.checkedId());
+    settings.setValue(TREE_VISIBILITY_ORTHOVPS, vpOrthoButtonGroup.checkedId());
 }
 
 void TreesTab::loadSettings(const QSettings & settings) {
@@ -199,12 +207,14 @@ void TreesTab::loadSettings(const QSettings & settings) {
     //it’s impotant to populate the checkbox after loading the path-string, because emitted signals depend on the lut // TODO VP settings: is that true?
     ownTreeColorsCheck.setChecked(settings.value(TREE_LUT_FILE_USED, false).toBool());
     ownTreeColorsCheck.clicked(ownTreeColorsCheck.isChecked());
-    allTreesRadio.setChecked(settings.value(WHOLE_SKELETON, true).toBool());
-    allTreesRadio.clicked(allTreesRadio.isChecked());
-    selectedTreesRadio.setChecked(settings.value(ONLY_SELECTED_TREES, false).toBool());
-    selectedTreesRadio.clicked(selectedTreesRadio.isChecked());
-    skeletonInOrthoVPsCheck.setChecked(settings.value(SHOW_SKELETON_ORTHOVPS, true).toBool());
-    skeletonInOrthoVPsCheck.clicked(skeletonInOrthoVPsCheck.isChecked());
-    skeletonIn3DVPCheck.setChecked(settings.value(SHOW_SKELETON_3DVP, true).toBool());
-    skeletonIn3DVPCheck.clicked(skeletonIn3DVPCheck.isChecked());
+    auto buttonId = settings.value(TREE_VISIBILITY_3DVP, !TreeDisplay::OnlySelected).toInt();
+    vp3dButtonGroup.button(buttonId)->setChecked(true);
+    vp3dButtonGroup.buttonClicked(buttonId);
+    buttonId = settings.value(TREE_VISIBILITY_ORTHOVPS, !TreeDisplay::OnlySelected).toInt();
+    vpOrthoButtonGroup.button(buttonId)->setChecked(true);
+    vpOrthoButtonGroup.buttonClicked(buttonId);
+    vp3dGroup.setChecked(settings.value(SHOW_SKELETON_3DVP, true).toBool());
+    vp3dGroup.clicked(vp3dGroup.isChecked());
+    vpOrthoGroup.setChecked(settings.value(SHOW_SKELETON_ORTHOVPS, true).toBool());
+    vpOrthoGroup.clicked(vpOrthoGroup.isChecked());
 }
