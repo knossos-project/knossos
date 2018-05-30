@@ -152,6 +152,17 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     });
 }
 
+void TreesTab::setTreeVisibility(const bool showIn3d, const bool onlySelectedIn3d, const bool showInOrtho, const bool onlySelectedInOrtho) {
+    vp3dButtonGroup.button(onlySelectedIn3d? static_cast<int>(TreeDisplay::OnlySelected) : !TreeDisplay::OnlySelected)->setChecked(true);
+    vp3dButtonGroup.buttonClicked(vp3dButtonGroup.checkedId());
+    vp3dGroup.setChecked(showIn3d);
+    vp3dGroup.clicked(showIn3d);
+    vpOrthoButtonGroup.button(onlySelectedInOrtho? static_cast<int>(TreeDisplay::OnlySelected) : !TreeDisplay::OnlySelected)->setChecked(true);
+    vpOrthoButtonGroup.buttonClicked(vpOrthoButtonGroup.checkedId());
+    vpOrthoGroup.setChecked(showInOrtho);
+    vpOrthoGroup.clicked(showInOrtho);
+}
+
 void TreesTab::loadTreeLUTButtonClicked(QString path) {
     if (path.isEmpty()) {
         path = state->viewer->suspend([this]{
