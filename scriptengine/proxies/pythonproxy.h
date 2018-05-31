@@ -63,6 +63,7 @@ public slots:
     void set_annotation_time(int ms);
     QString get_knossos_version();
     QString get_knossos_revision();
+    QString get_knossos_revision_date() const;
     int get_cube_edge_length();
     QList<int> get_position();
     QList<float> get_scale();

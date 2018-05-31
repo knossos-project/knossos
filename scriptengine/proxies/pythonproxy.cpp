@@ -71,6 +71,10 @@ QString PythonProxy::get_knossos_revision() {
     return KREVISION;
 }
 
+QString PythonProxy::get_knossos_revision_date() const {
+    return KREVISIONDATE;
+}
+
 int PythonProxy::get_cube_edge_length() {
     return Dataset::current().cubeEdgeLength;
 }
