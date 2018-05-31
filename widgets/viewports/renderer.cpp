@@ -1377,8 +1377,8 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         state->viewerState->rotationCenter = previousRotation;
 
         const auto translate = Dataset::current().scale.componentMul(state->viewerState->currentPosition);
-        state->skeletonState->translateX = translate.x;
-        state->skeletonState->translateY = translate.y;
+        translateX = translate.x;
+        translateY = translate.y;
     } else if (state->skeletonState->definedSkeletonVpView == SKELVP_R90 || state->skeletonState->definedSkeletonVpView == SKELVP_R180) {
         state->skeletonState->rotdx = 10;
         state->skeletonState->rotationcounter++;
@@ -1390,8 +1390,8 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
     } else if (state->skeletonState->definedSkeletonVpView == SKELVP_RESET) {
         state->skeletonState->definedSkeletonVpView = SKELVP_CUSTOM;
-        state->skeletonState->translateX = 0;
-        state->skeletonState->translateY = 0;
+        translateX = 0;
+        translateY = 0;
         zoomFactor = 1;
         emit updateZoomWidget();
 
@@ -1403,8 +1403,8 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         rotateMe(0, -15);
         rotateMe(-15, 0);
         state->viewerState->rotationCenter = previousRotationCenter;
-        state->skeletonState->translateX = 0.5 * scaledBoundary.x;
-        state->skeletonState->translateY = 0.5 * scaledBoundary.y;
+        translateX = 0.5 * scaledBoundary.x;
+        translateY = 0.5 * scaledBoundary.y;
     }
 
     const auto zoomedHalfBoundary = 0.5 * state->skeletonState->volBoundary() / zoomFactor;
@@ -1414,10 +1414,10 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     edgeLength = vp[2]/devicePixelRatio(); // retrieve adjusted size for snapshot
     displayedlengthInNmX = 2.0 * zoomedHalfBoundary;
     screenPxXPerDataPx = edgeLength / displayedlengthInNmX;
-    const auto left = state->skeletonState->translateX - zoomedHalfBoundary;
-    const auto right = state->skeletonState->translateX + zoomedHalfBoundary;
-    const auto bottom = state->skeletonState->translateY + zoomedHalfBoundary;
-    const auto top = state->skeletonState->translateY - zoomedHalfBoundary;
+    const auto left = translateX - zoomedHalfBoundary;
+    const auto right = translateX + zoomedHalfBoundary;
+    const auto bottom = translateY + zoomedHalfBoundary;
+    const auto top = translateY - zoomedHalfBoundary;
     const auto nears = -state->skeletonState->volBoundary();
     const auto fars = state->skeletonState->volBoundary();
     const auto nearVal = -nears;

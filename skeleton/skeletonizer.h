@@ -168,9 +168,6 @@ struct SkeletonState {
     float rotdy{0};
     int rotationcounter{0};
 
-    float translateX{0};
-    float translateY{0};
-
     int definedSkeletonVpView{SKELVP_RESET};
 
     // Stores the model view matrix for user performed VP rotations.

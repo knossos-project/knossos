@@ -302,8 +302,8 @@ void Viewport3D::handleMouseMotionLeftHold(const QMouseEvent *event) {
             seg.volume_mouse_move_x -= xrel(event->x());
             seg.volume_mouse_move_y -= yrel(event->y());
         } else {
-            state->skeletonState->translateX += -xrel(event->x()) / screenPxXPerDataPx;
-            state->skeletonState->translateY += -yrel(event->y()) / screenPxXPerDataPx;
+            translateX += -xrel(event->x()) / screenPxXPerDataPx;
+            translateY += -yrel(event->y()) / screenPxXPerDataPx;
         }
     }
     ViewportBase::handleMouseMotionLeftHold(event);
@@ -511,8 +511,8 @@ void Viewport3D::handleWheelEvent(const QWheelEvent *event) {
             applyZoom(event);
             const auto oldFactor = state->skeletonState->volBoundary() / oldZoom;
             const auto newFactor = state->skeletonState->volBoundary() / zoomFactor;
-            state->skeletonState->translateX += mouseRel.x() * (oldFactor - newFactor) / width();
-            state->skeletonState->translateY += mouseRel.y() * (oldFactor - newFactor) / height();
+            translateX += mouseRel.x() * (oldFactor - newFactor) / width();
+            translateY += mouseRel.y() * (oldFactor - newFactor) / height();
         }
     }
     ViewportBase::handleWheelEvent(event);

@@ -60,6 +60,8 @@ protected:
 public:
     double zoomFactor{1.0};
     QMatrix4x4 rotation;
+    float translateX{0};
+    float translateY{0};
     explicit Viewport3D(QWidget *parent, ViewportType viewportType);
     virtual ~Viewport3D() override;
     virtual void showHideButtons(bool isShow) override;

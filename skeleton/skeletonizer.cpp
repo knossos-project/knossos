@@ -259,8 +259,8 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml) const {
     for (int j = 0; j < 16; ++j) {
         xml.writeAttribute(QString("E%1").arg(j), QString::number(state->skeletonState->skeletonVpModelView[j]));
     }
-    xml.writeAttribute("translateX", QString::number(state->skeletonState->translateX));
-    xml.writeAttribute("translateY", QString::number(state->skeletonState->translateY));
+    xml.writeAttribute("translateX", QString::number(state->viewer->window->viewport3D->translateX));
+    xml.writeAttribute("translateY", QString::number(state->viewer->window->viewport3D->translateY));
     xml.writeEndElement();
 
     xml.writeStartElement("vpSettingsZoom");
