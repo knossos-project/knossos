@@ -65,6 +65,7 @@ public:
     explicit Viewport3D(QWidget *parent, ViewportType viewportType);
     virtual ~Viewport3D() override;
     virtual void showHideButtons(bool isShow) override;
+    void refocus(const boost::optional<Coordinate> position = boost::none);
     void updateVolumeTexture();
     static bool showBoundariesInUm;
 

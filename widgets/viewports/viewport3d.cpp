@@ -125,6 +125,21 @@ void Viewport3D::paintGL() {
     renderViewportFrontFace();
 }
 
+void Viewport3D::refocus(const boost::optional<Coordinate> position) {
+    const auto pos = position ? position.get() : state->viewerState->currentPosition;
+    const auto scaledPos = Dataset::current().scale.componentMul(pos);
+    translateX = scaledPos.x;
+    translateY = scaledPos.y;
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixf(QMatrix4x4().data());
+    glTranslatef(scaledPos.x, scaledPos.y, scaledPos.z);
+    std::array<float, 16> rotationState;
+    rotation.copyDataTo(rotationState.data()); // transforms to row-major matrix
+    glMultMatrixf(rotationState.data());
+    glTranslatef(-scaledPos.x, -scaledPos.y, -scaledPos.z);
+    glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
+}
+
 void Viewport3D::updateVolumeTexture() {
     if (!Segmentation::singleton().enabled) {
         return;

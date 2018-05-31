@@ -633,7 +633,7 @@ void MainWindow::createMenus() {
 
     auto viewMenu = menuBar()->addMenu("&Navigation");
 
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Jump to Active Node"), &Skeletonizer::singleton(), []() {
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Jump to Active Node"), &Skeletonizer::singleton(), [this]() {
         auto meshPriority = !state->skeletonState->meshLastClickCurrentlyVisited || !state->skeletonState->activeNode;
         if (state->skeletonState->meshLastClickInformation && meshPriority) {
             state->viewer->setPosition(state->skeletonState->meshLastClickInformation.get().coord);
@@ -642,6 +642,7 @@ void MainWindow::createMenus() {
             Skeletonizer::singleton().jumpToNode(*state->skeletonState->activeNode);
             state->skeletonState->meshLastClickCurrentlyVisited = false;
         }
+        viewport3D->refocus();
     }, Qt::Key_S);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Forward-traverse Tree"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(NodeGenerator::Direction::Forward); }, Qt::Key_X);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Backward-traverse Tree"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(NodeGenerator::Direction::Backward); }, Qt::SHIFT + Qt::Key_X);
@@ -1429,11 +1430,11 @@ void MainWindow::refreshPluginMenu() {
         }
         auto pluginSubMenu = pluginMenu->addMenu(pluginName);
         QObject::connect(pluginSubMenu->addAction("Open"), &QAction::triggered,
-                         [pluginName](){state->scripting->openPlugin(pluginName,false);});
+                         [pluginName](){state->scripting->openPlugin(pluginName,true);});
         QObject::connect(pluginSubMenu->addAction("Close"), &QAction::triggered,
                          [pluginName](){state->scripting->closePlugin(pluginName,false);});
         QObject::connect(pluginSubMenu->addAction("Show"), &QAction::triggered,
-                         [pluginName](){state->scripting->showPlugin(pluginName,false);});
+                         [pluginName](){state->scripting->showPlugin(pluginName,true);});
         QObject::connect(pluginSubMenu->addAction("Hide"), &QAction::triggered,
                          [pluginName](){state->scripting->hidePlugin(pluginName,false);});
         QObject::connect(pluginSubMenu->addAction("Reload"), &QAction::triggered,

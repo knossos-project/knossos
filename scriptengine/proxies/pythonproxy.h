@@ -75,6 +75,7 @@ public slots:
     void coord_cubes_mark_changed_proxy(QVector<int> cubeChangeSetList);
     void set_movement_area(QList<int> minCoord, QList<int> maxCoord);
     void set_work_mode(const int mode);
+    void refocus_viewport3d(const int x = 0, const int y = 0, const int z = 0);
     void reset_movement_area();
     QList<int> get_movement_area();
     float get_outside_movement_area_factor();

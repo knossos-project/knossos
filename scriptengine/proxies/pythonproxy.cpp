@@ -114,6 +114,10 @@ void PythonProxy::set_position(QList<int> coord) {
     state->viewer->setPosition({static_cast<float>(coord[0]), static_cast<float>(coord[1]), static_cast<float>(coord[2])});
 }
 
+void PythonProxy::refocus_viewport3d(const int x, const int y, const int z) {
+    state->viewer->mainWindow.viewport3D->refocus((x > 0 && y > 0 && z > 0) ? Coordinate(x, y, z) : boost::optional<Coordinate>());
+}
+
 void PythonProxy::reset_movement_area() {
     Session::singleton().resetMovementArea();
 }
