@@ -1349,7 +1349,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         singleRotation.rotate(y, {0, 1, 0});
         singleRotation.rotate(x, {1, 0, 0});
         std::array<float, 16> rotationState;
-        (rotation *= singleRotation).copyDataTo(rotationState.data());
+        (rotation *= singleRotation).copyDataTo(rotationState.data()); // transforms to row-major matrix
         // apply complete rotation
         glMultMatrixf(rotationState.data());
         glTranslatef(-rotationCenter.x, -rotationCenter.y, -rotationCenter.z);
