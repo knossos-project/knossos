@@ -10,6 +10,8 @@
 #include "vtkMarchingCubesTriangleCases.h"
 
 #include <QApplication>
+#include <QProgressDialog>
+#include <QObject>
 
 #include <snappy.h>
 
@@ -22,7 +24,12 @@ void generateMeshForFirstSubobjectOfFirstSelectedObject() {
     std::size_t idCounter{0};
 
     const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
+    QProgressDialog progress(QObject::tr("Generating Meshes for data value=%1 …").arg(value), "Cancel", 0, cubes[0].size(), QApplication::activeWindow());
+    progress.setWindowModality(Qt::WindowModal);
     for (const auto & pair : cubes[0]) {
+        if (progress.wasCanceled()) {
+            break;
+        }
         const std::size_t cubeEdgeLen = 128;
         const std::size_t size = std::pow(cubeEdgeLen, 3);
 
@@ -142,7 +149,7 @@ void generateMeshForFirstSubobjectOfFirstSelectedObject() {
                 }
             }
         }
-        qDebug() <<  points.size() << faces.size() / 3;
+        progress.setValue(progress.value() + 1);
     }
     QVector<float> verts(3 * points.size());
     for (auto && pair : points) {
