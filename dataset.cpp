@@ -274,8 +274,7 @@ Dataset::list_t Dataset::fromLegacyConf(const QUrl & configUrl, QString config) 
         QString token = tokenList.front();
 
         if (token == "experiment") {
-            token = tokenList.at(2);
-            info.experimentname = token.remove('\"');
+            info.experimentname = line.split("\"")[1];
         } else if (token == "scale") {
             token = tokenList.at(1);
             if(token == "x") {
