@@ -23,6 +23,7 @@
 #include "segmentationview.h"
 
 #include "action_helper.h"
+#include "mesh/mesh_generation.h"
 #include "model_helper.h"
 #include "stateInfo.h"
 #include "viewer.h"
@@ -452,6 +453,12 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         copyAction(contextMenu, table);
         addDisabledSeparator(contextMenu);
         QObject::connect(contextMenu.addAction("Merge"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::mergeSelectedObjects);
+        QObject::connect(contextMenu.addAction("Generate mesh"), &QAction::triggered, [](){
+            QElapsedTimer time;
+            time.start();
+            generateMeshForFirstSubobjectOfFirstSelectedObject();
+            qDebug() << "mesh generation" << time.nsecsElapsed() / 1e9;
+        });
         QObject::connect(contextMenu.addAction("Restore default color"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::restoreDefaultColorForSelectedObjects);
         deleteAction(contextMenu, table, "Delete", &Segmentation::singleton(), &Segmentation::deleteSelectedObjects);
         contextMenu.setDefaultAction(contextMenu.actions().front());
@@ -470,6 +477,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         contextMenu.actions().at(copyActionIndex = i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// copy selected contents
         ++i;// separator
         contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 1);// mergeAction
+        contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() >= 1);// generate meshes
         contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// restoreColorAction
         contextMenu.actions().at(deleteActionIndex = i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// deleteAction
         ++i;// separator
