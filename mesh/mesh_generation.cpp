@@ -23,25 +23,25 @@ void generateMeshForFirstSubobjectOfFirstSelectedObject() {
 
     const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
     for (const auto & pair : cubes[0]) {
-        const auto cubeEdgeLen = 128;
-        const auto cubeCoord = Dataset::current().scale.componentMul(pair.first.cube2Global(cubeEdgeLen, 1));
+        const std::size_t cubeEdgeLen = 128;
         const std::size_t size = std::pow(cubeEdgeLen, 3);
-        const auto triCases = vtkMarchingCubesTriangleCases::GetCases();
+
+        std::vector<std::uint64_t> data(size);
+        if (!snappy::RawUncompress(pair.second.c_str(), pair.second.size(), reinterpret_cast<char *>(data.data()))) {
+            continue;
+        }
+
+        const auto cubeCoord = Dataset::current().scale.componentMul(pair.first.cube2Global(cubeEdgeLen, 1));
 
         const std::array<double, 3> dims{{cubeEdgeLen, cubeEdgeLen, cubeEdgeLen}};
         const std::array<double, 3> origin{{cubeCoord.x, cubeCoord.y, cubeCoord.z}};
         const std::array<double, 3> spacing{{Dataset::current().scale.x, Dataset::current().scale.y, Dataset::current().scale.z}};
         const std::array<double, 6> extent{{0, dims[0], 0, dims[1], 0, dims[2]}};
 
-        static int CASE_MASK[8]{1,2,4,8,16,32,64,128};
-        static int edges[12][2]{{0,1}, {1,2}, {3,2}, {0,3}, {4,5}, {5,6}, {7,6}, {4,7}, {0,4}, {1,5}, {3,7}, {2,6}};
+        const auto triCases = vtkMarchingCubesTriangleCases::GetCases();
 
-        std::array<std::uint64_t, 8> cubeVals;
-
-        std::vector<std::uint64_t> data(size);
-        if (!snappy::RawUncompress(pair.second.c_str(), pair.second.size(), reinterpret_cast<char *>(data.data()))) {
-            continue;
-        }
+        static const std::array<int, 8> CASE_MASK{1,2,4,8,16,32,64,128};
+        static const std::array<std::array<int, 2>, 12> edges{{{0,1}, {1,2}, {3,2}, {0,3}, {4,5}, {5,6}, {7,6}, {4,7}, {0,4}, {1,5}, {3,7}, {2,6}}};
 
         const auto rowSize = dims[0];
         const auto sliceSize = rowSize * dims[1];
@@ -58,6 +58,7 @@ void generateMeshForFirstSubobjectOfFirstSelectedObject() {
                 for (std::size_t x = 0; x < (dims[0] - 1); ++x) {
                     // get scalar values
                     const auto idx = x + yOffset + zOffset;
+                    std::array<std::uint64_t, 8> cubeVals;
                     cubeVals[0] = data[idx];
                     cubeVals[1] = data[idx+1];
                     cubeVals[2] = data[idx+1 + dims[0]];
@@ -112,25 +113,24 @@ void generateMeshForFirstSubobjectOfFirstSelectedObject() {
                         continue;
                     }
 
-                    const auto triCase = triCases + index;
-                    for (auto edge = triCase->edges; edge[0] > -1; edge += 3) {
-                        std::size_t ptIds[3];
-                        std::array<float, 3> vertex;
+                    const auto & triCase = triCases[index];
+                    for (auto edge = triCase.edges; edge[0] > -1; edge += 3) {
+                        std::array<std::size_t, 3> ptIds;
                         for (std::size_t vi = 0; vi < 3; vi++) {// insert triangle
                             const auto vert = edges[edge[vi]];
                             // for discrete marching cubes, the interpolation point is always 0.5.
                             const auto t = 0.5;
                             const auto x1 = pts[vert[0]];
                             const auto x2 = pts[vert[1]];
+                            std::array<float, 3> vertex;
                             vertex[0] = x1[0] + t * (x2[0] - x1[0]);
                             vertex[1] = x1[1] + t * (x2[1] - x1[1]);
                             vertex[2] = x1[2] + t * (x2[2] - x1[2]);
-
-                            // add point
-                            if (points.find({vertex[0], vertex[1], vertex[2]}) == std::end(points)) {
-                                points[{vertex[0], vertex[1], vertex[2]}] = ptIds[vi] = idCounter++;
+                            floatCoordinate coord{vertex[0], vertex[1], vertex[2]};
+                            if (points.find(coord) == std::end(points)) {
+                                points[coord] = ptIds[vi] = idCounter++;// add point
                             } else {
-                                ptIds[vi] = points[{vertex[0], vertex[1], vertex[2]}];
+                                ptIds[vi] = points[coord];
                             }
                         }
                         if (ptIds[0] != ptIds[1] && ptIds[0] != ptIds[2] && ptIds[1] != ptIds[2] ) {// check for degenerate triangle
@@ -146,7 +146,7 @@ void generateMeshForFirstSubobjectOfFirstSelectedObject() {
     }
     QVector<float> verts(3 * points.size());
     for (auto && pair : points) {
-        verts[3 * pair.second] = pair.first.x;
+        verts[3 * pair.second    ] = pair.first.x;
         verts[3 * pair.second + 1] = pair.first.y;
         verts[3 * pair.second + 2] = pair.first.z;
     }
