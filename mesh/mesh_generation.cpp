@@ -166,18 +166,18 @@ void generateMeshForFirstSubobjectOfFirstSelectedObject() {
 
         marchingCubes(points, faces, idCounter, extractedCubeForCoord(pair.first), value, origin, dims, spacing, extent);
         for (std::size_t i = 0; i < 6; ++i) {
-            const std::array<double, 3> dims{{i < 2 ? 2.0 : cubeEdgeLen, i % 4 < 2 ? cubeEdgeLen : 2.0, i < 4 ? cubeEdgeLen : 2.0}};
-            const floatCoordinate origin(pair.first.cube2Global(cubeEdgeLen, 1) + floatCoordinate(i == 0 ? -1 : i == 1 ? 127 : 0, i == 2 ? -1 : i == 3 ? 127 : 0, i == 4 ? -1 : i == 5 ? 127 : 0));
+            const std::array<double, 3> dims{{i < 2 ? 2.0 : cubeEdgeLen + 2, i % 4 < 2 ? cubeEdgeLen + 2 : 2.0, i < 4 ? cubeEdgeLen + 2: 2.0}};
+            const floatCoordinate unscaledOrigin(pair.first.cube2Global(cubeEdgeLen, 1) + floatCoordinate(i == 0 ? -1 : i == 1 ? 128 : -1, i == 2 ? -1 : i == 3 ? 128 : -1, i == 4 ? -1 : i == 5 ? 128 : -1));
             const std::array<double, 6> extent{{0, dims[0], 0, dims[1], 0, dims[2]}};
 
-            std::vector<std::uint64_t> data(2 * std::pow(cubeEdgeLen, 2));
+            std::vector<std::uint64_t> data(2 * std::pow(cubeEdgeLen + 2, 2));
 
             const auto rowSize = dims[0];
             const auto sliceSize = rowSize * dims[1];
             for (std::size_t z = 0; z < dims[2]; ++z) {
                 for (std::size_t y = 0; y < dims[1]; ++y) {
                     for (std::size_t x = 0; x < dims[0]; ++x) {
-                        const Coordinate globalPos = origin + Coordinate(x, y, z);
+                        const Coordinate globalPos = unscaledOrigin + Coordinate(x, y, z);
                         if (globalPos.x < 0 || globalPos.y < 0 || globalPos.z < 0) {
                             continue;
                         }
@@ -188,7 +188,7 @@ void generateMeshForFirstSubobjectOfFirstSelectedObject() {
                     }
                 }
             }
-            const auto scaledOrigin = Dataset::current().scale.componentMul(origin);
+            const auto scaledOrigin = Dataset::current().scale.componentMul(unscaledOrigin);
             marchingCubes(points, faces, idCounter, data, value, {{scaledOrigin.x, scaledOrigin.y, scaledOrigin.z}}, dims, spacing, extent);
         }
         progress.setValue(progress.value() + 1);
