@@ -126,16 +126,12 @@ void marchingCubes(std::unordered_map<floatCoordinate, int> & points, QVector<un
     }
 }
 
-void generateMeshForFirstSubobjectOfFirstSelectedObject() {
-    const auto value = Segmentation::singleton().subobjectIdOfFirstSelectedObject({});
+void generateMeshForSubobjectID(const std::uint64_t value, const Loader::Worker::SnappyCache & cubes, QProgressDialog & progress) {
     std::unordered_map<floatCoordinate, int> points;
     QVector<unsigned int> faces;
     std::size_t idCounter{0};
 
-    const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
-    QProgressDialog progress(QObject::tr("Generating Meshes for data value %1 …").arg(value), "Cancel", 0, cubes[0].size(), QApplication::activeWindow());
-    progress.setWindowModality(Qt::WindowModal);
-    for (const auto & pair : cubes[0]) {
+    for (const auto & pair : cubes) {
         if (progress.wasCanceled()) {
             break;
         }
@@ -149,8 +145,8 @@ void generateMeshForFirstSubobjectOfFirstSelectedObject() {
             auto & cube = extractedCubes[diff.x * 4 + diff.y * 2 + diff.z];
             if (cube.empty()) {
                 cube.resize(size);
-                auto findIt = cubes[0].find(coord);
-                if (findIt == std::end(cubes[0]) || !snappy::RawUncompress(findIt->second.c_str(), findIt->second.size(), reinterpret_cast<char *>(cube.data()))) {
+                auto findIt = cubes.find(coord);
+                if (findIt == std::end(cubes) || !snappy::RawUncompress(findIt->second.c_str(), findIt->second.size(), reinterpret_cast<char *>(cube.data()))) {
                     std::fill(std::begin(cube), std::end(cube), 0);// dummy data for missing or broken cubes in snappy cache
                 }
             }
@@ -203,5 +199,15 @@ void generateMeshForFirstSubobjectOfFirstSelectedObject() {
     QVector<std::uint8_t> colors;
     Skeletonizer::singleton().addMeshToTree(value, verts, normals, faces, colors, GL_TRIANGLES);
 
-    qDebug() << points.size() << faces.size() / 3;
+    qDebug() << value << ':' << points.size() << "→" << faces.size() / 3;
+}
+
+void generateMeshesForFirstSubobjectsOfSelectedObjects() {
+    const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
+    QProgressDialog progress(QObject::tr("Generating Meshes …"), "Cancel", 0, Segmentation::singleton().selectedObjectsCount() * cubes[0].size(), QApplication::activeWindow());
+    progress.setWindowModality(Qt::WindowModal);
+    qDebug() << "Generating meshes for" << Segmentation::singleton().selectedObjectsCount() << "objects over" << cubes[0].size() << "cubes";
+    for (const auto & objectIndex : Segmentation::singleton().selectedObjectIndices) {
+        generateMeshForSubobjectID(Segmentation::singleton().objects[objectIndex].subobjects.front().get().id, cubes[0], progress);
+    }
 }

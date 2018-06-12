@@ -456,7 +456,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         QObject::connect(contextMenu.addAction("Generate mesh"), &QAction::triggered, [](){
             QElapsedTimer time;
             time.start();
-            generateMeshForFirstSubobjectOfFirstSelectedObject();
+            generateMeshesForFirstSubobjectsOfSelectedObjects();
             qDebug() << "mesh generation" << time.nsecsElapsed() / 1e9;
         });
         QObject::connect(contextMenu.addAction("Restore default color"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::restoreDefaultColorForSelectedObjects);
