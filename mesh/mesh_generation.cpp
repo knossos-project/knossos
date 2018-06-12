@@ -142,10 +142,20 @@ void generateMeshForFirstSubobjectOfFirstSelectedObject() {
         const std::size_t cubeEdgeLen = Dataset::current().cubeEdgeLength;
         const std::size_t size = std::pow(cubeEdgeLen, 3);
 
-        std::vector<std::uint64_t> data(size);
-        if (!snappy::RawUncompress(pair.second.c_str(), pair.second.size(), reinterpret_cast<char *>(data.data()))) {
-            continue;
-        }
+        std::array<std::vector<std::uint64_t>, 27> extractedCubes;// local lookup
+        auto extractedCubeForCoord = [&cubes, &pair, &extractedCubes, size](const auto & coord) -> decltype(extractedCubes)::value_type & {
+            const auto ref = pair.first - CoordOfCube{1, 1, 1};
+            const auto diff = coord - ref;
+            auto & cube = extractedCubes[diff.x * 4 + diff.y * 2 + diff.z];
+            if (cube.empty()) {
+                cube.resize(size);
+                auto findIt = cubes[0].find(coord);
+                if (findIt == std::end(cubes[0]) || !snappy::RawUncompress(findIt->second.c_str(), findIt->second.size(), reinterpret_cast<char *>(cube.data()))) {
+                    std::fill(std::begin(cube), std::end(cube), 0);// dummy data for missing or broken cubes in snappy cache
+                }
+            }
+            return cube;
+        };
 
         const auto cubeCoord = Dataset::current().scale.componentMul(pair.first.cube2Global(cubeEdgeLen, 1));
 
@@ -154,7 +164,7 @@ void generateMeshForFirstSubobjectOfFirstSelectedObject() {
         const std::array<double, 3> spacing{{Dataset::current().scale.x, Dataset::current().scale.y, Dataset::current().scale.z}};
         const std::array<double, 6> extent{{0, dims[0], 0, dims[1], 0, dims[2]}};
 
-        marchingCubes(points, faces, idCounter, data, value, origin, dims, spacing, extent);
+        marchingCubes(points, faces, idCounter, extractedCubeForCoord(pair.first), value, origin, dims, spacing, extent);
         progress.setValue(progress.value() + 1);
     }
     QVector<float> verts(3 * points.size());
