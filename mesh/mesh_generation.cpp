@@ -126,7 +126,7 @@ void marchingCubes(std::unordered_map<floatCoordinate, int> & points, QVector<un
     }
 }
 
-void generateMeshForSubobjectID(const std::uint64_t value, const Loader::Worker::SnappyCache & cubes, QProgressDialog & progress) {
+auto generateMeshForSubobjectID(const std::uint64_t value, const Loader::Worker::SnappyCache & cubes, QProgressDialog & progress) {
     std::unordered_map<floatCoordinate, int> points;
     QVector<unsigned int> faces;
     std::size_t idCounter{0};
@@ -189,17 +189,7 @@ void generateMeshForSubobjectID(const std::uint64_t value, const Loader::Worker:
         }
         progress.setValue(progress.value() + 1);
     }
-    QVector<float> verts(3 * points.size());
-    for (auto && pair : points) {
-        verts[3 * pair.second    ] = pair.first.x;
-        verts[3 * pair.second + 1] = pair.first.y;
-        verts[3 * pair.second + 2] = pair.first.z;
-    }
-    QVector<float> normals;
-    QVector<std::uint8_t> colors;
-    Skeletonizer::singleton().addMeshToTree(value, verts, normals, faces, colors, GL_TRIANGLES);
-
-    qDebug() << value << ':' << points.size() << "→" << faces.size() / 3;
+    return std::make_tuple(points, faces);
 }
 
 void generateMeshesForFirstSubobjectsOfSelectedObjects() {
@@ -208,6 +198,20 @@ void generateMeshesForFirstSubobjectsOfSelectedObjects() {
     progress.setWindowModality(Qt::WindowModal);
     qDebug() << "Generating meshes for" << Segmentation::singleton().selectedObjectsCount() << "objects over" << cubes[0].size() << "cubes";
     for (const auto & objectIndex : Segmentation::singleton().selectedObjectIndices) {
-        generateMeshForSubobjectID(Segmentation::singleton().objects[objectIndex].subobjects.front().get().id, cubes[0], progress);
+        const auto oid = Segmentation::singleton().objects[objectIndex].id;
+        const auto soid = Segmentation::singleton().objects[objectIndex].subobjects.front().get().id;
+        auto [points, faces] = generateMeshForSubobjectID(soid, cubes[0], progress);
+
+        QVector<float> verts(3 * points.size());
+        for (auto && pair : points) {
+            verts[3 * pair.second    ] = pair.first.x;
+            verts[3 * pair.second + 1] = pair.first.y;
+            verts[3 * pair.second + 2] = pair.first.z;
+        }
+        QVector<float> normals;
+        QVector<std::uint8_t> colors;
+        Skeletonizer::singleton().addMeshToTree(oid, verts, normals, faces, colors, GL_TRIANGLES);
+
+        qDebug() << oid << soid << ':' << points.size() << "→" << faces.size() / 3;
     }
 }
