@@ -515,8 +515,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                     if (name.isEmpty() == false && type.isEmpty() == false) {
                         if (type == "number") {
                             numberProperties.insert(name);
-                        }
-                        else {
+                        } else {
                             textProperties.insert(name);
                         }
                     }
@@ -629,7 +628,6 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                                 } else if (name != "comment") { // comments are added later in the comments section
                                     const auto property = name.toString();
                                     properties.insert(property, value.toString());
-                                    textProperties.insert(property);
                                 }
                             }
 
@@ -1067,6 +1065,17 @@ boost::optional<nodeListElement &> Skeletonizer::addNode(boost::optional<std::ui
     updateSubobjectCountFromProperty(tempNode);
 
     state->skeletonState->nodesByNodeID.emplace(nodeID.get(), &tempNode);
+
+    bool isPropertiesChanged = false;
+    for (auto & property : properties.keys()) {
+        if (!numberProperties.contains(property) && !textProperties.contains(property)) {
+            textProperties.insert(property);
+            isPropertiesChanged = true;
+        }
+    }
+    if (isPropertiesChanged) {
+        emit propertiesChanged(numberProperties, textProperties);
+    }
 
     if (nodeID == state->skeletonState->nextAvailableNodeID) {
         skeletonState.nextAvailableNodeID = findNextAvailableID(skeletonState.nextAvailableNodeID, skeletonState.nodesByNodeID);
