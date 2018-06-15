@@ -10,15 +10,18 @@
 #include "vtkMarchingCubesTriangleCases.h"
 
 #include <QApplication>
+#include <QFuture>
+#include <QFutureWatcher>
 #include <QProgressDialog>
 #include <QObject>
+#include <QtConcurrentMap>
 
 #include <snappy.h>
 
 #include <unordered_map>
 
 template<typename T>
-void marchingCubes(std::unordered_map<floatCoordinate, int> & points, QVector<unsigned int> & faces, std::size_t & idCounter, const std::vector<T> & data, const std::unordered_set<T> & values
+void marchingCubes(std::unordered_map<floatCoordinate, int> & points, std::vector<unsigned int> & faces, std::size_t & idCounter, const std::vector<T> & data, const std::unordered_set<T> & values
     , const std::array<double, 3> & origin, const std::array<double, 3> & dims, const std::array<double, 3> & spacing, const std::array<double, 6> & extent) {
     const auto triCases = vtkMarchingCubesTriangleCases::GetCases();
 
@@ -116,9 +119,9 @@ void marchingCubes(std::unordered_map<floatCoordinate, int> & points, QVector<un
                         }
                     }
                     if (ptIds[0] != ptIds[1] && ptIds[0] != ptIds[2] && ptIds[1] != ptIds[2] ) {// check for degenerate triangle
-                        faces.push_back(ptIds[0]);
-                        faces.push_back(ptIds[1]);
-                        faces.push_back(ptIds[2]);
+                        faces.emplace_back(ptIds[0]);
+                        faces.emplace_back(ptIds[1]);
+                        faces.emplace_back(ptIds[2]);
                     }
                 }
             }
@@ -127,14 +130,14 @@ void marchingCubes(std::unordered_map<floatCoordinate, int> & points, QVector<un
 }
 
 auto generateMeshForSubobjectID(const std::unordered_set<std::uint64_t> & values, const Loader::Worker::SnappyCache & cubes, QProgressDialog & progress) {
-    std::unordered_map<floatCoordinate, int> points;
-    QVector<unsigned int> faces;
-    std::size_t idCounter{0};
-
-    for (const auto & pair : cubes) {
-        if (progress.wasCanceled()) {
-            break;
-        }
+    std::vector<std::unordered_map<floatCoordinate, int>> totalpoints(cubes.size());
+    std::vector<std::vector<unsigned int>> totalfaces(cubes.size());
+    const auto processCube = [&](const auto & val){
+        const auto id = val.first;
+        const auto & pair = *val.second;
+        auto & points = totalpoints[id];
+        auto & faces = totalfaces[id];
+        std::size_t idCounter{0};
         const std::size_t cubeEdgeLen = Dataset::current().cubeEdgeLength;
         const std::size_t size = std::pow(cubeEdgeLen, 3);
 
@@ -146,7 +149,11 @@ auto generateMeshForSubobjectID(const std::unordered_set<std::uint64_t> & values
             if (cube.empty()) {
                 cube.resize(size);
                 auto findIt = cubes.find(coord);
-                if (findIt == std::end(cubes) || !snappy::RawUncompress(findIt->second.c_str(), findIt->second.size(), reinterpret_cast<char *>(cube.data()))) {
+                if (findIt != std::end(cubes)) {
+                    if (!snappy::RawUncompress(findIt->second.c_str(), findIt->second.size(), reinterpret_cast<char *>(cube.data()))) {
+                        std::runtime_error("failed to extract snappy cube in generateMeshForSubobjectID");
+                    }
+                } else {
                     std::fill(std::begin(cube), std::end(cube), 0);// dummy data for missing or broken cubes in snappy cache
                 }
             }
@@ -187,9 +194,45 @@ auto generateMeshForSubobjectID(const std::unordered_set<std::uint64_t> & values
             const auto scaledOrigin = Dataset::current().scale.componentMul(unscaledOrigin);
             marchingCubes(points, faces, idCounter, data, values, {{scaledOrigin.x, scaledOrigin.y, scaledOrigin.z}}, dims, spacing, extent);
         }
-        progress.setValue(progress.value() + 1);
+    };
+    std::string s;
+    std::vector<std::pair<std::size_t, decltype(std::cbegin(cubes))>> threadids;
+    std::size_t i = 0;
+    for (auto it = std::begin(cubes); it != std::end(cubes); ++it) {
+        threadids.emplace_back(i, it);
+        ++i;
     }
-    return std::make_tuple(points, faces);
+
+    QEventLoop pause;
+    QFutureWatcher<void> watcher;
+    QObject::connect(&watcher, &decltype(watcher)::progressRangeChanged, &progress, &QProgressDialog::setRange);
+    QObject::connect(&watcher, &decltype(watcher)::progressValueChanged, &progress, &QProgressDialog::setValue);
+    QObject::connect(&watcher, &decltype(watcher)::finished, [&pause](){ pause.exit();} );
+    QObject::connect(&progress, &QProgressDialog::canceled, &watcher, &decltype(watcher)::cancel);
+    watcher.setFuture(QtConcurrent::map(threadids, processCube));
+    pause.exec();
+
+    QVector<float> verts;
+    std::vector<std::size_t> offsets;
+    for (const auto & elempoints : totalpoints) {
+        const auto offset = verts.size();
+        offsets.emplace_back(offset / 3);
+        verts.resize(offset + 3 * elempoints.size());
+        for (const auto & pair : elempoints) {
+            verts[offset + 3 * pair.second    ] = pair.first.x;
+            verts[offset + 3 * pair.second + 1] = pair.first.y;
+            verts[offset + 3 * pair.second + 2] = pair.first.z;
+        }
+    }
+    QVector<unsigned int> faces;
+    std::size_t offseti{0};
+    for (const auto & elemfaces : totalfaces) {
+        for (const auto & elem : elemfaces) {
+            faces.push_back(offsets[offseti] + elem);
+        }
+        ++offseti;
+    }
+    return std::make_tuple(verts, faces);
 }
 
 void generateMeshesForSubobjectsOfSelectedObjects() {
@@ -203,18 +246,12 @@ void generateMeshesForSubobjectsOfSelectedObjects() {
         for (const auto & elem : Segmentation::singleton().objects[objectIndex].subobjects) {
             soids.emplace(elem.get().id);
         }
-        auto [points, faces] = generateMeshForSubobjectID(soids, cubes[0], progress);
+        auto [verts, faces] = generateMeshForSubobjectID(soids, cubes[0], progress);
 
-        QVector<float> verts(3 * points.size());
-        for (auto && pair : points) {
-            verts[3 * pair.second    ] = pair.first.x;
-            verts[3 * pair.second + 1] = pair.first.y;
-            verts[3 * pair.second + 2] = pair.first.z;
-        }
         QVector<float> normals;
         QVector<std::uint8_t> colors;
         Skeletonizer::singleton().addMeshToTree(oid, verts, normals, faces, colors, GL_TRIANGLES);
 
-        qDebug() << oid << ':' << points.size() << "→" << faces.size() / 3;
+        qDebug() << oid << ':' << (verts.size() / 3) << "→" << faces.size() / 3;
     }
 }
