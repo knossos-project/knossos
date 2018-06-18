@@ -248,8 +248,10 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
 
         QVector<float> normals;
         QVector<std::uint8_t> colors;
+        QSignalBlocker blocker(Skeletonizer::singleton());
         Skeletonizer::singleton().addMeshToTree(oid, verts, normals, faces, colors, GL_TRIANGLES);
     }
+    Skeletonizer::singleton().resetData();
 }
 
 void generateMeshesForSubobjectsOfSelectedObjects() {
