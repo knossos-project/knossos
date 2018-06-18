@@ -117,6 +117,7 @@ void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row)
     };
 
     QPushButton *addDatasetButton = new QPushButton("…");
+    addDatasetButton->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
     addDatasetButton->setToolTip(tr("Select a dataset from file…"));
     QObject::connect(addDatasetButton, &QPushButton::clicked, [this, rowFromCell, addDatasetButton](){
         const auto selectedFile = state->viewer->suspend([this]{
@@ -130,6 +131,7 @@ void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row)
     });
 
     QPushButton *removeDatasetButton = new QPushButton("×");
+    removeDatasetButton->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
     removeDatasetButton->setToolTip(tr("Remove this dataset from the list"));
     QObject::connect(removeDatasetButton, &QPushButton::clicked, [this, rowFromCell, removeDatasetButton](){
         const int row = rowFromCell(2, removeDatasetButton);
