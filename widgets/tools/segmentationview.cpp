@@ -454,10 +454,12 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         addDisabledSeparator(contextMenu);
         QObject::connect(contextMenu.addAction("Merge"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::mergeSelectedObjects);
         QObject::connect(contextMenu.addAction("Generate mesh"), &QAction::triggered, [](){
-            QElapsedTimer time;
-            time.start();
-            generateMeshesForSubobjectsOfSelectedObjects();
-            qDebug() << "mesh generation" << time.nsecsElapsed() / 1e9;
+            state->viewer->suspend([](){
+                QElapsedTimer time;
+                time.start();
+                generateMeshesForSubobjectsOfSelectedObjects();
+                return qDebug() << "mesh generation" << time.nsecsElapsed() / 1e9;
+            });
         });
         QObject::connect(contextMenu.addAction("Restore default color"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::restoreDefaultColorForSelectedObjects);
         deleteAction(contextMenu, table, "Delete", &Segmentation::singleton(), &Segmentation::deleteSelectedObjects);

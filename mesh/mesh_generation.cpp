@@ -218,7 +218,15 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
     watcher.setFuture(QtConcurrent::map(threadids, processCube));
     pause.exec();
 
+    progress.setLabelText(progress.labelText() + QObject::tr("\nFinalizing …"));
+    progress.setRange(0, objects.size());
+    int value{0};
+
     for (const auto oid : objects) {
+        if (progress.wasCanceled()) {
+            break;
+        }
+
         QVector<float> verts;
         std::vector<std::size_t> offsets;
         for (const auto & elempoints : obj2totalpoints) {
@@ -250,15 +258,17 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
         QVector<std::uint8_t> colors;
         QSignalBlocker blocker(Skeletonizer::singleton());
         Skeletonizer::singleton().addMeshToTree(oid, verts, normals, faces, colors, GL_TRIANGLES);
+        progress.setValue(++value);
     }
     Skeletonizer::singleton().resetData();
 }
 
 void generateMeshesForSubobjectsOfSelectedObjects() {
     const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
-    QProgressDialog progress(QObject::tr("Generating Meshes …"), "Cancel", 0, Segmentation::singleton().selectedObjectsCount() * cubes[0].size(), QApplication::activeWindow());
+    const auto msg = QObject::tr("Generating meshes for %1 objects over %2 cubes").arg(Segmentation::singleton().selectedObjectsCount()).arg(cubes[0].size());
+    QProgressDialog progress(msg, "Cancel", 0, Segmentation::singleton().selectedObjectsCount() * cubes[0].size(), QApplication::activeWindow());
     progress.setWindowModality(Qt::WindowModal);
-    qDebug() << "Generating meshes for" << Segmentation::singleton().selectedObjectsCount() << "objects over" << cubes[0].size() << "cubes";
+    qDebug() << msg;
 
     std::unordered_map<std::size_t, std::uint64_t> soids;
     std::vector<std::uint64_t> oids;
