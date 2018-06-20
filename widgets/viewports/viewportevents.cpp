@@ -677,7 +677,7 @@ void Viewport3D::focusOutEvent(QFocusEvent * event) {
 
 Coordinate getCoordinateFromOrthogonalClick(const QPointF pos, ViewportOrtho & vp) {
     const auto leftUpper = floatCoordinate{state->viewerState->currentPosition} - (vp.v1 * vp.edgeLength / vp.screenPxXPerDataPx - vp.v2 * vp.edgeLength / vp.screenPxYPerDataPx) * 0.5;
-    return leftUpper + static_cast<float>((pos.x() / vp.screenPxXPerDataPx)) * vp.v1 - static_cast<float>((pos.y() / vp.screenPxYPerDataPx)) * vp.v2;
+    return leftUpper + vp.v1 * (pos.x() / vp.screenPxXPerDataPx - 0.5) - vp.v2 * (pos.y() / vp.screenPxYPerDataPx - 0.5);
 }
 
 QSet<nodeListElement*> ViewportBase::nodeSelection(int x, int y) {
