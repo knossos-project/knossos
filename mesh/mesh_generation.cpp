@@ -166,11 +166,12 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
             return cube;
         };
 
-        const auto cubeCoord = Dataset::current().scale.componentMul(pair.first.cube2Global(cubeEdgeLen, 1));
+        const auto scale = Dataset::current().scale * Dataset::current().magnification;
+        const auto cubeCoord = scale.componentMul(pair.first.cube2Global(cubeEdgeLen, 1));
 
         const std::array<double, 3> dims{{cubeEdgeLen * 1.0, cubeEdgeLen * 1.0, cubeEdgeLen * 1.0}};
         const std::array<double, 3> origin{{cubeCoord.x, cubeCoord.y, cubeCoord.z}};
-        const std::array<double, 3> spacing{{Dataset::current().scale.x, Dataset::current().scale.y, Dataset::current().scale.z}};
+        const std::array<double, 3> spacing{{scale.x, scale.y, scale.z}};
         const std::array<double, 6> extent{{0, dims[0], 0, dims[1], 0, dims[2]}};
 
         marchingCubes(obj2points, obj2faces, obj2idCounter, extractedCubeForCoord(pair.first), soid2oid, origin, dims, spacing, extent);
@@ -197,7 +198,7 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
                     }
                 }
             }
-            const auto scaledOrigin = Dataset::current().scale.componentMul(unscaledOrigin);
+            const auto scaledOrigin = scale.componentMul(unscaledOrigin);
             marchingCubes(obj2points, obj2faces, obj2idCounter, data, soid2oid, {{scaledOrigin.x, scaledOrigin.y, scaledOrigin.z}}, dims, spacing, extent);
         }
     };
@@ -268,7 +269,7 @@ void generateMeshesForSubobjectsOfSelectedObjects() {
     const auto msg = QObject::tr("Generating meshes for %1 objects over %2 cubes").arg(Segmentation::singleton().selectedObjectsCount()).arg(cubes[0].size());
     QProgressDialog progress(msg, "Cancel", 0, Segmentation::singleton().selectedObjectsCount() * cubes[0].size(), QApplication::activeWindow());
     progress.setWindowModality(Qt::WindowModal);
-    qDebug() << msg;
+    qDebug() << msg.toUtf8().constData();
 
     std::unordered_map<std::size_t, std::uint64_t> soids;
     std::vector<std::uint64_t> oids;
@@ -279,5 +280,5 @@ void generateMeshesForSubobjectsOfSelectedObjects() {
         }
         oids.emplace_back(oid);
     }
-    generateMeshForSubobjectID(soids, oids, cubes[0], progress);
+    generateMeshForSubobjectID(soids, oids, cubes[Dataset::current().magIndex], progress);
 }
