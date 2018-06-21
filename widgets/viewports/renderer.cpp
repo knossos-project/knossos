@@ -843,6 +843,8 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glLoadIdentity();
         glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, -(0.5), -(-state->skeletonState->volBoundary()));
         glMatrixMode(GL_MODELVIEW);
+        const auto halfPixelOffset = (1 + (viewportType == VIEWPORT_ARBITRARY)) * 0.25 * (v1 - v2) * Dataset::current().scale;
+        glTranslatef(halfPixelOffset.x(), halfPixelOffset.y(), halfPixelOffset.z());
 
         glEnable(GL_DEPTH_TEST);
         glDisable(GL_BLEND);
@@ -1047,7 +1049,6 @@ void Viewport3D::renderViewport(const RenderOptions &options) {
 void ViewportBase::renderMeshBuffer(Mesh & buf) {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(0.5, 0.5, 0.5);
 
     // get modelview and projection matrices
     GLfloat modelview_mat[4][4];
@@ -1122,7 +1123,6 @@ void ViewportBase::renderMeshBuffer(Mesh & buf) {
 void Viewport3D::renderMeshBufferIds(Mesh &buf) {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(0.5, 0.5, 0.5);
     ViewportBase::renderMeshBufferIds(buf);
     glPopMatrix();
 }
