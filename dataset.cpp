@@ -170,6 +170,9 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
             info.api = tokenList.at(1) == "1" ? API::OpenConnectome : API::PyKnossos;
         } else if (token == "_BaseExt") {
             info.fileextension = tokenList.at(1);
+            if (info.fileextension == ".seg.sz.zip") {
+                info.type = CubeType::SEGMENTATION_SZ_ZIP;
+            }
         } else if (token == "_DataScale") {
             for (int i = 3; i < tokenList.size() - tokenList.back().isEmpty(); i += 3) {
                 info.scales.emplace_back(tokenList.at(i-2).toFloat(), tokenList.at(i-1).toFloat(), tokenList.at(i).toFloat());
