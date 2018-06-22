@@ -167,7 +167,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         } else if (token == "_Password") {
             info.url.setPassword(tokenList.at(1));
         } else if (token == "_ServerFormat") {
-            info.api = tokenList.at(1) == "1" ? API::OpenConnectome : API::PyKnossos;
+            info.api = tokenList.at(1) == "knossos" ? API::Heidelbrain : tokenList.at(1) == "1" ? API::OpenConnectome : API::PyKnossos;
         } else if (token == "_BaseExt") {
             info.fileextension = tokenList.at(1);
             if (info.fileextension == ".seg.sz.zip") {
