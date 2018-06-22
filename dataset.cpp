@@ -183,7 +183,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         } else if (token == "_FileType") {
             const auto type = tokenList.at(1).toInt();
             if (type == 1) {
-                qWarning() << "_FileType = 1 not supported, loading as 2";
+                qWarning() << "_FileType = 1 (PNG, rotated) not supported, loading as 2 (PNG)";
             }
             info.type = type == 3 ? CubeType::RAW_JPG : type == 0 ? CubeType::RAW_UNCOMPRESSED : CubeType::RAW_PNG;
         } else if (token == "_Extent") {
