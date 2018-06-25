@@ -37,7 +37,19 @@
 #include <QTextStream>
 #include <QUrlQuery>
 
+#include <boost/assign.hpp>
+#include <boost/bimap.hpp>
+
 Dataset::list_t Dataset::datasets;
+
+static boost::bimap<QString, Dataset::CubeType> typeMap = boost::assign::list_of<decltype(typeMap)::relation>
+        (".raw", Dataset::CubeType::RAW_UNCOMPRESSED)
+        (".png", Dataset::CubeType::RAW_PNG)
+        (".jpg", Dataset::CubeType::RAW_JPG)
+        (".j2k", Dataset::CubeType::RAW_J2K)
+        (".6.jp2", Dataset::CubeType::RAW_JP2_6)
+        (".seg.sz.zip", Dataset::CubeType::SEGMENTATION_SZ_ZIP)
+        (".seg", Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64);
 
 QString Dataset::compressionString() const {
     switch (type) {
@@ -170,9 +182,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
             info.api = tokenList.at(1) == "knossos" ? API::Heidelbrain : tokenList.at(1) == "1" ? API::OpenConnectome : API::PyKnossos;
         } else if (token == "_BaseExt") {
             info.fileextension = tokenList.at(1);
-            if (info.fileextension == ".seg.sz.zip") {
-                info.type = CubeType::SEGMENTATION_SZ_ZIP;
-            }
+            info.type = typeMap.left.find(info.fileextension)->second;
         } else if (token == "_DataScale") {
             for (int i = 3; i < tokenList.size() - tokenList.back().isEmpty(); i += 3) {
                 info.scales.emplace_back(tokenList.at(i-2).toFloat(), tokenList.at(i-1).toFloat(), tokenList.at(i).toFloat());
@@ -373,27 +383,10 @@ QUrl Dataset::knossosCubeUrl(const Coordinate coord) const {
             .arg(magnification)
             .arg(cubeCoord.x, 4, 10, QChar('0'))
             .arg(cubeCoord.y, 4, 10, QChar('0'))
-            .arg(cubeCoord.z, 4, 10, QChar('0'));
-
-    if (type == Dataset::CubeType::RAW_UNCOMPRESSED) {
-        filename = filename.arg(".raw");
-    } else if (type == Dataset::CubeType::RAW_PNG) {
-        filename = filename.arg(".png");
-    } else if (type == Dataset::CubeType::RAW_JPG) {
-        filename = filename.arg(".jpg");
-    } else if (type == Dataset::CubeType::RAW_J2K) {
-        filename = filename.arg(".j2k");
-    } else if (type == Dataset::CubeType::RAW_JP2_6) {
-        filename = filename.arg(".6.jp2");
-    } else if (type == Dataset::CubeType::SEGMENTATION_SZ_ZIP) {
-        filename = filename.arg(".seg.sz.zip");
-    } else if (type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64) {
-        filename = filename.arg(".seg");
-    }
-
+            .arg(cubeCoord.z, 4, 10, QChar('0'))
+            .arg(typeMap.right.find(type)->second);
     auto base = url;
     base.setPath(url.path() + pos + filename);
-
     return base;
 }
 
