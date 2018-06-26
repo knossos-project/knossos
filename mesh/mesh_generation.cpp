@@ -271,7 +271,7 @@ void generateMeshesForSubobjectsOfSelectedObjects() {
     progress.setWindowModality(Qt::WindowModal);
     qDebug() << msg.toUtf8().constData();
 
-    std::unordered_map<std::size_t, std::uint64_t> soids;
+    std::unordered_map<std::uint64_t, std::uint64_t> soids;
     std::vector<std::uint64_t> oids;
     for (const auto objectIndex : Segmentation::singleton().selectedObjectIndices) {
         const auto oid = Segmentation::singleton().objects[objectIndex].id;
