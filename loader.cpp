@@ -658,7 +658,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                         state->viewer->reslice_notify_all(layerId, globalCoord);
                     } else {
                         if (reply->error() != QNetworkReply::OperationCanceledError) {
-                            qCritical() << layerId << globalCoord << static_cast<int>(dataset.type) << reply->errorString() << reply->readAll();
+                            qCritical() << layerId << globalCoord << static_cast<int>(dataset.type) << reply->request().url() << reply->errorString() << reply->readAll();
                         }
                     }
                     reply->deleteLater();
