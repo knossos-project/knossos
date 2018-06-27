@@ -262,13 +262,13 @@ std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> loadLookupTable(const QString
             }
         } else {//json
             QJsonDocument json_conf = QJsonDocument::fromJson(overlayLutFile.readAll());
-            auto jarray = json_conf.array();
+            const auto jarray = json_conf.array();
             if (!json_conf.isArray() || jarray.size() != 256) {//dataset adjustment currently requires 256 values
                 kill();
             }
             table.resize(jarray.size());
             for (int i = 0; i < jarray.size(); ++i) {
-                table[i] = std::make_tuple(jarray[i].toArray()[0].toInt(), jarray[i].toArray()[1].toInt(), (jarray[i].toArray()[2].toInt()));
+                table[i] = std::make_tuple(jarray[i][0].toInt(), jarray[i][1].toInt(), (jarray[i][2].toInt()));
             }
         }
     } else {

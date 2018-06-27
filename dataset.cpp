@@ -99,14 +99,14 @@ Dataset::list_t Dataset::parseGoogleJson(const QString & json_raw) {
     info.api = API::GoogleBrainmaps;
     const auto jmap = QJsonDocument::fromJson(json_raw.toUtf8()).object();
 
-    const auto boundary_json = jmap["geometry"].toArray()[0].toObject()["volumeSize"].toObject();
+    const auto boundary_json = jmap["geometry"][0]["volumeSize"];
     info.boundary = {
         boundary_json["x"].toString().toInt(),
         boundary_json["y"].toString().toInt(),
         boundary_json["z"].toString().toInt(),
     };
 
-    const auto scale_json = jmap["geometry"].toArray()[0].toObject()["pixelSize"].toObject();
+    const auto scale_json = jmap["geometry"][0]["pixelSize"];
     info.scale = {
         static_cast<float>(scale_json["x"].toDouble()),
         static_cast<float>(scale_json["y"].toDouble()),
@@ -127,24 +127,24 @@ Dataset::list_t Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QSt
     info.url = infoUrl;
     info.url.setPath(info.url.path().replace(QRegularExpression{R"regex(\/info\/?)regex"}, "/image/jpeg/"));
     const auto jdoc = QJsonDocument::fromJson(json_raw.toUtf8()).object();
-    info.experimentname = jdoc["project"].toObject()["name"].toString();
-    const auto dataset = jdoc["dataset"].toObject();
-    const auto imagesize0 = dataset["imagesize"].toObject()["0"].toArray();
+    info.experimentname = jdoc["project"]["name"].toString();
+    const auto dataset = jdoc["dataset"];
+    const auto imagesize0 = dataset["imagesize"]["0"];
     info.boundary = {
-        imagesize0.at(0).toInt(1000),
-        imagesize0.at(1).toInt(1000),
-        imagesize0.at(2).toInt(1000),
+        imagesize0[0].toInt(1000),
+        imagesize0[1].toInt(1000),
+        imagesize0[2].toInt(1000),
     };
-    for (auto scaleRef : dataset["voxelres"].toObject()) {
+    for (auto scaleRef : dataset["voxelres"].toArray()) {
         const auto scale = scaleRef.toArray();
-        info.scales.emplace_back(scale.at(0).toDouble(1), scale.at(1).toDouble(1), scale.at(2).toDouble(1));
+        info.scales.emplace_back(scale[0].toDouble(1), scale[1].toDouble(1), scale[2].toDouble(1));
     }
     info.scale = !info.scales.empty() ? info.scales.front() : decltype(info.scale){1, 1, 1};
-    const auto mags = dataset["resolutions"].toArray();
+    const auto mags = dataset["resolutions"];
 
-    info.lowestAvailableMag = std::pow(2, mags.at(0).toInt(1));
+    info.lowestAvailableMag = std::pow(2, mags[0].toInt(1));
     info.magnification = info.lowestAvailableMag;
-    info.highestAvailableMag = std::pow(2, mags.at(mags.size()-1).toInt(1));
+    info.highestAvailableMag = std::pow(2, mags[mags.toArray().size()-1].toInt(1));
     info.type = CubeType::RAW_JPG;
 
     return {info};
@@ -221,30 +221,30 @@ Dataset::list_t Dataset::parseWebKnossosJson(const QUrl & infoUrl, const QString
 
     const auto jmap = QJsonDocument::fromJson(json_raw.toUtf8()).object();
 
-    info.url = jmap["dataStore"].toObject()["url"].toString() + "/data/datasets/" + jmap["name"].toString();
+    info.url = jmap["dataStore"]["url"].toString() + "/data/datasets/" + jmap["name"].toString();
     info.experimentname = jmap["name"].toString();
 
     decltype(Dataset::datasets) layers;
     for (const auto & layer : static_cast<const QJsonArray>(jmap["dataSource"]["dataLayers"].toArray())) {
-        const auto layerString = layer.toObject()["name"].toString();
-        const auto category = layer.toObject()["category"].toString();
+        const auto layerString = layer["name"].toString();
+        const auto category = layer["category"].toString();
         const auto download = Network::singleton().refresh(QString("https://demo.webknossos.org/dataToken/generate?dataSetName=%1&dataLayerName=%2").arg(infoUrl.path().split("/").back()).arg(layerString));
         if (download.first) {
-            info.token = QJsonDocument::fromJson(download.second.toUtf8()).object()["token"].toString();
+            info.token = QJsonDocument::fromJson(download.second.toUtf8())["token"].toString();
         }
         if (category == "color") {
             info.type = CubeType::RAW_UNCOMPRESSED;
         } else {// "segmentation"
             info.type = CubeType::SEGMENTATION_UNCOMPRESSED_16;
         }
-        const auto boundary_json = layer.toObject()["boundingBox"].toObject();
+        const auto boundary_json = layer["boundingBox"];
         info.boundary = {
             boundary_json["width"].toInt(),
             boundary_json["height"].toInt(),
             boundary_json["depth"].toInt(),
         };
 
-        const auto scale_json = jmap["dataSource"].toObject()["scale"].toArray();
+        const auto scale_json = jmap["dataSource"]["scale"];
         info.scale = {
             static_cast<float>(scale_json[0].toDouble()),
             static_cast<float>(scale_json[1].toDouble()),
