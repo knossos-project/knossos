@@ -225,7 +225,7 @@ Dataset::list_t Dataset::parseWebKnossosJson(const QUrl & infoUrl, const QString
     info.experimentname = jmap["name"].toString();
 
     decltype(Dataset::datasets) layers;
-    for (auto && layer : jmap["dataSource"].toObject()["dataLayers"].toArray()) {
+    for (const auto & layer : static_cast<const QJsonArray>(jmap["dataSource"]["dataLayers"].toArray())) {
         const auto layerString = layer.toObject()["name"].toString();
         const auto category = layer.toObject()["category"].toString();
         const auto download = Network::singleton().refresh(QString("https://demo.webknossos.org/dataToken/generate?dataSetName=%1&dataLayerName=%2").arg(infoUrl.path().split("/").back()).arg(layerString));
@@ -251,22 +251,17 @@ Dataset::list_t Dataset::parseWebKnossosJson(const QUrl & infoUrl, const QString
             static_cast<float>(scale_json[2].toDouble()),
         };
 
-        QMap<int, floatCoordinate> magmap;
-        for (const auto & mag : layer.toObject()["resolutions"].toArray()) {
-            const auto scale = mag.toObject()["sclae"].toArray();
-            magmap[mag.toObject()["resolution"].toInt()] = {
-                static_cast<float>(scale[0].toDouble()),
-                static_cast<float>(scale[1].toDouble()),
-                static_cast<float>(scale[2].toDouble())
-            };
-        }
-        for (auto scale : magmap) {
-            info.scales.emplace_back(info.scale.componentMul(scale));
+        for (const auto & mag : static_cast<const QJsonArray>(layer["resolutions"].toArray())) {
+            info.scales.emplace_back(info.scale.componentMul({
+                static_cast<float>(mag[0].toDouble()),
+                static_cast<float>(mag[1].toDouble()),
+                static_cast<float>(mag[2].toDouble())
+            }));
         }
 
-        info.lowestAvailableMag = magmap.firstKey();
+        info.lowestAvailableMag = 1;
         info.magnification = info.lowestAvailableMag;
-        info.highestAvailableMag = magmap.lastKey();
+        info.highestAvailableMag = std::pow(2, info.scales.size() - 1);
 
         layers.push_back(info);
         layers.back().url.setPath(info.url.path() + "/layers/" + layerString + "/data");
