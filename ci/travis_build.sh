@@ -1,5 +1,7 @@
 #!/bin/sh
 
+pacman -Syu --noconfirm
+
 # run cmake and ninja
 cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DDEPLOY=TRUE -DCMAKE_PREFIX_PATH="/root/PythonQt-install/lib/cmake/" ../knossos
 ninja -j3
