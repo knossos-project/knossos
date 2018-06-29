@@ -23,4 +23,4 @@ rm -v libgnutls.so.30 libpython2.7.so.1.0 libsystemd.so.0 libpng16.so.16 libgcry
 cd ..
 
 rm -fv *.AppImage
-../deploy-tools/appimagetool . --verbose --no-appstream
+env ARCH=x86_64 ../deploy-tools/appimagetool . --verbose --no-appstream
