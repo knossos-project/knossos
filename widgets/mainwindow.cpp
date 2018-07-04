@@ -869,10 +869,11 @@ bool MainWindow::newAnnotationSlot() {
   *
   */
 void MainWindow::openSlot() {
+    const auto choices = tr("KNOSSOS annotation file(s) "
 #ifdef Q_OS_MAC
-    QString choices = "KNOSSOS annotation file(s) (*.zip *.nml)";
+                            "(*.zip *.nml)");
 #else
-    QString choices = "KNOSSOS annotation file(s) (*.k.zip *.nml)";
+                            "(*.k.zip *.nml)");
 #endif
     const QStringList fileNames = state->viewer->suspend([this, &choices]{
         return QFileDialog::getOpenFileNames(this, "Open annotation file(s)", openFileDirectory, choices);
@@ -896,11 +897,11 @@ void MainWindow::saveAsSlot() {
     const auto & suggestedFile = saveFileDirectory.isEmpty() ? annotationFileDefaultPath() : saveFileDirectory + '/' + annotationFileDefaultName();
 
     QString fileName = state->viewer->suspend([this, suggestedFile]{
+        return QFileDialog::getSaveFileName(this, "Save the KNOSSSOS annotation file", suggestedFile
 #ifdef Q_OS_MAC
-        return QFileDialog::getSaveFileName(this, "Save the KNOSSSOS Annotation file", suggestedFile);
-#else
-        return QFileDialog::getSaveFileName(this, "Save the KNOSSSOS annotation file", suggestedFile, "KNOSSOS annotation file (*.k.zip)");
+                                            , "KNOSSOS annotation file (*.k.zip)"
 #endif
+                                            );
     });
 
     if (!fileName.isEmpty()) {
