@@ -965,6 +965,14 @@ void Viewer::applyTextureFilterSetting(const QOpenGLTexture::Filter texFiltering
     window->forEachOrthoVPDo([texFiltering](ViewportOrtho & orthoVP) {
         orthoVP.setTextureFilter(texFiltering);
     });
+    for(auto& setting : viewerState.layerRenderSettings) {
+        if(texFiltering == QOpenGLTexture::Filter::Nearest) {
+            setting.linearFiltering = false;
+        } else {
+            setting.linearFiltering = true;
+        }
+    }
+    emit layerSettingsChanged();
 }
 
 void Viewer::updateCurrentPosition() {
