@@ -182,7 +182,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
             info.api = tokenList.at(1) == "knossos" ? API::Heidelbrain : tokenList.at(1) == "1" ? API::OpenConnectome : API::PyKnossos;
         } else if (token == "_BaseExt") {
             info.fileextension = tokenList.at(1);
-            info.type = typeMap.left.find(info.fileextension)->second;
+            info.type = typeMap.left.at(info.fileextension);
         } else if (token == "_DataScale") {
             for (int i = 3; i < tokenList.size() - tokenList.back().isEmpty(); i += 3) {
                 info.scales.emplace_back(tokenList.at(i-2).toFloat(), tokenList.at(i-1).toFloat(), tokenList.at(i).toFloat());
@@ -379,7 +379,7 @@ QUrl Dataset::knossosCubeUrl(const Coordinate coord) const {
             .arg(cubeCoord.x, 4, 10, QChar('0'))
             .arg(cubeCoord.y, 4, 10, QChar('0'))
             .arg(cubeCoord.z, 4, 10, QChar('0'))
-            .arg(typeMap.right.find(type)->second);
+            .arg(typeMap.right.at(type));
     auto base = url;
     base.setPath(url.path() + pos + filename);
     return base;
