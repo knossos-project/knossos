@@ -59,6 +59,8 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     minAreaHeadLayout.addWidget(&topLeftButton);
     addSpins(sizeAreaHeadLayout, sizeLabel, sizeSpins, sizeLock, sizeAreaSpinsLayout);
     addSpins(maxAreaHeadLayout, maxLabel, maxSpins, maxLock, maxAreaSpinsLayout);
+    bottomRightButton.setToolTip(tr("Sets movement area maximum to the visible bottom right corner of the xy viewport."));
+    maxAreaHeadLayout.addWidget(&bottomRightButton);
 
     QObject::connect(&lockGroup, static_cast<void(QButtonGroup::*)(QAbstractButton*, bool)>(&QButtonGroup::buttonToggled), [this](auto * button, bool checked){
         auto & spins = button == &minLock ? minSpins : button == &maxLock ? maxSpins : sizeSpins;
@@ -126,6 +128,11 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&topLeftButton, &QPushButton::clicked, [this](){
         const auto min = getCoordinateFromOrthogonalClick({}, *state->mainWindow->viewportXY);
         const auto max = maxLock.isChecked() ? maxSpins.get() - 1 : min + sizeSpins.get();
+        Session::singleton().updateMovementArea(min, max);
+    });
+    QObject::connect(&bottomRightButton, &QPushButton::clicked, [this](){
+        const auto max = getCoordinateFromOrthogonalClick(QPointF(state->mainWindow->viewportXY->width() - 1, state->mainWindow->viewportXY->height() - 1), *state->mainWindow->viewportXY);
+        const auto min = minLock.isChecked() ? minSpins.get() - 1 : max - sizeSpins.get();
         Session::singleton().updateMovementArea(min, max);
     });
     QObject::connect(&minSpins, &CoordinateSpins::coordinatesChanged, this, &NavigationTab::updateMovementArea);

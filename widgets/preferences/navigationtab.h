@@ -65,6 +65,7 @@ class NavigationTab : public QWidget {
     QPushButton topLeftButton{tr("top left")};
     QLabel sizeLabel{tr("Size")};
     QLabel maxLabel{tr("Max")};
+    QPushButton bottomRightButton{tr("bottom right")};
     CoordinateSpins minSpins, sizeSpins, maxSpins;
     QButtonGroup lockGroup;
     QPushButton minLock{tr("lock")}, sizeLock{tr("lock")}, maxLock{tr("lock")};
