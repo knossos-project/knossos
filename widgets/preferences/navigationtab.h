@@ -56,13 +56,15 @@ class NavigationTab : public QWidget {
     QVBoxLayout movementAreaLayout;
     QHBoxLayout minAreaHeadLayout;
     QHBoxLayout minAreaSpinsLayout;
+    QHBoxLayout sizeAreaHeadLayout;
+    QHBoxLayout sizeAreaSpinsLayout;
     QHBoxLayout maxAreaHeadLayout;
     QHBoxLayout maxAreaSpinsLayout;
     QHBoxLayout movementAreaBottomLayout;
     QLabel minLabel{tr("Min")};
+    QLabel sizeLabel{tr("Size")};
     QLabel maxLabel{tr("Max")};
-    QLabel sizeLabel{tr("size:")};
-    CoordinateSpins minSpins, maxSpins;
+    CoordinateSpins minSpins, sizeSpins, maxSpins;
     QLabel outVisibilityLabel{tr("Visibility of outside area")};
     QHBoxLayout outVisibilityAdjustLayout;
     QSlider outVisibilitySlider;

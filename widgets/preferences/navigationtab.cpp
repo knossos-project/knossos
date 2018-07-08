@@ -38,26 +38,23 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     sizeLabel.setTextInteractionFlags(Qt::TextSelectableByKeyboard | Qt::TextSelectableByMouse);
     outVisibilitySlider.setOrientation(Qt::Horizontal);
 
-    minAreaHeadLayout.setAlignment(Qt::AlignLeft);
-    minAreaHeadLayout.addWidget(&minLabel);
-    minAreaHeadLayout.addWidget(&minSpins.copyButton);
-    minAreaHeadLayout.addWidget(&minSpins.pasteButton);
-    movementAreaLayout.addLayout(&minAreaHeadLayout);
-    minAreaSpinsLayout.addWidget(&minSpins.xSpin);
-    minAreaSpinsLayout.addWidget(&minSpins.ySpin);
-    minAreaSpinsLayout.addWidget(&minSpins.zSpin);
-    movementAreaLayout.addLayout(&minAreaSpinsLayout);
-    maxAreaHeadLayout.setAlignment(Qt::AlignLeft);
-    maxAreaHeadLayout.addWidget(&maxLabel);
-    maxAreaHeadLayout.addWidget(&maxSpins.copyButton);
-    maxAreaHeadLayout.addWidget(&maxSpins.pasteButton);
-    movementAreaLayout.addLayout(&maxAreaHeadLayout);
-    maxAreaSpinsLayout.addWidget(&maxSpins.xSpin);
-    maxAreaSpinsLayout.addWidget(&maxSpins.ySpin);
-    maxAreaSpinsLayout.addWidget(&maxSpins.zSpin);
-    movementAreaLayout.addLayout(&maxAreaSpinsLayout);
+    auto addSpins = [this](auto & headLayout, auto & label, auto & spins, auto & spinsLayout){
+        headLayout.setAlignment(Qt::AlignLeft);
+        headLayout.addWidget(&label);
+        headLayout.addWidget(&spins.copyButton);
+        headLayout.addWidget(&spins.pasteButton);
+        movementAreaLayout.addLayout(&headLayout);
+        spinsLayout.addWidget(&spins.xSpin);
+        spinsLayout.addWidget(&spins.ySpin);
+        spinsLayout.addWidget(&spins.zSpin);
+        movementAreaLayout.addLayout(&spinsLayout);
+    };
+
+    addSpins(minAreaHeadLayout, minLabel, minSpins, minAreaSpinsLayout);
+    addSpins(sizeAreaHeadLayout, sizeLabel, sizeSpins, sizeAreaSpinsLayout);
+    addSpins(maxAreaHeadLayout, maxLabel, maxSpins, maxAreaSpinsLayout);
+
     movementAreaBottomLayout.addWidget(&resetMovementAreaButton);
-    movementAreaBottomLayout.addWidget(&sizeLabel, Qt::AlignRight);
     movementAreaLayout.addLayout(&movementAreaBottomLayout);
     separator.setFrameShape(QFrame::HLine);
     separator.setFrameShadow(QFrame::Sunken);
@@ -113,6 +110,9 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     mainLayout.addWidget(&advancedGroup);
     setLayout(&mainLayout);
     QObject::connect(&minSpins, &CoordinateSpins::coordinatesChanged, this, &NavigationTab::updateMovementArea);
+    QObject::connect(&sizeSpins, &CoordinateSpins::coordinatesChanged, [this](){
+        Session::singleton().updateMovementArea(minSpins.get() - 1, minSpins.get() - 1 + sizeSpins.get());
+    });
     QObject::connect(&maxSpins, &CoordinateSpins::coordinatesChanged, this, &NavigationTab::updateMovementArea);
 
     QObject::connect(&resetMovementAreaButton, &QPushButton::clicked, []() {
@@ -123,7 +123,7 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
         minSpins.set(session.movementAreaMin + 1);
         maxSpins.set(session.movementAreaMax + 1);
         const auto size = session.movementAreaMax - session.movementAreaMin;
-        sizeLabel.setText(tr("Size: %1, %2, %3").arg(size.x).arg(size.y).arg(size.z));
+        sizeSpins.set(size);
     });
 
     QObject::connect(&outVisibilitySlider, &QSlider::valueChanged, [this](const int value) {
