@@ -62,6 +62,7 @@ class NavigationTab : public QWidget {
     QHBoxLayout maxAreaSpinsLayout;
     QHBoxLayout movementAreaBottomLayout;
     QLabel minLabel{tr("Min")};
+    QPushButton topLeftButton{tr("top left")};
     QLabel sizeLabel{tr("Size")};
     QLabel maxLabel{tr("Max")};
     CoordinateSpins minSpins, sizeSpins, maxSpins;

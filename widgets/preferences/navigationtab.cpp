@@ -51,6 +51,8 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     };
 
     addSpins(minAreaHeadLayout, minLabel, minSpins, minAreaSpinsLayout);
+    topLeftButton.setToolTip(tr("Sets movement area minimum to the visible top left corner of the xy viewport."));
+    minAreaHeadLayout.addWidget(&topLeftButton);
     addSpins(sizeAreaHeadLayout, sizeLabel, sizeSpins, sizeAreaSpinsLayout);
     addSpins(maxAreaHeadLayout, maxLabel, maxSpins, maxAreaSpinsLayout);
 
@@ -109,6 +111,10 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     mainLayout.addLayout(&upperLayout);
     mainLayout.addWidget(&advancedGroup);
     setLayout(&mainLayout);
+
+    QObject::connect(&topLeftButton, &QPushButton::clicked, [this](){
+        Session::singleton().updateMovementArea(getCoordinateFromOrthogonalClick({}, *state->mainWindow->viewportXY), Session::singleton().movementAreaMax);
+    });
     QObject::connect(&minSpins, &CoordinateSpins::coordinatesChanged, this, &NavigationTab::updateMovementArea);
     QObject::connect(&sizeSpins, &CoordinateSpins::coordinatesChanged, [this](){
         Session::singleton().updateMovementArea(minSpins.get() - 1, minSpins.get() - 1 + sizeSpins.get());
