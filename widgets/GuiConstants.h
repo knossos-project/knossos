@@ -136,6 +136,7 @@ const QString VP_I_VISIBLE = "vp%1_visible";
 const QString VP_ORDER = "vp_order";
 
 // Navigation Widget
+const QString LOCKED_BUTTON = "locked_button";
 const QString JUMP_FRAMES = "jump_frames";
 const QString MOVEMENT_SPEED = "movement_speed";
 const QString NUMBER_OF_STEPS = "number_of_steps";

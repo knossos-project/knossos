@@ -38,11 +38,15 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     sizeLabel.setTextInteractionFlags(Qt::TextSelectableByKeyboard | Qt::TextSelectableByMouse);
     outVisibilitySlider.setOrientation(Qt::Horizontal);
 
-    auto addSpins = [this](auto & headLayout, auto & label, auto & spins, auto & spinsLayout){
+    auto addSpins = [this](auto & headLayout, auto & label, auto & spins, auto & lockButton, auto & spinsLayout){
+        lockButton.setCheckable(true);
+        lockGroup.addButton(&lockButton);
+
         headLayout.setAlignment(Qt::AlignLeft);
         headLayout.addWidget(&label);
         headLayout.addWidget(&spins.copyButton);
         headLayout.addWidget(&spins.pasteButton);
+        headLayout.addWidget(&lockButton);
         movementAreaLayout.addLayout(&headLayout);
         spinsLayout.addWidget(&spins.xSpin);
         spinsLayout.addWidget(&spins.ySpin);
@@ -50,11 +54,18 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
         movementAreaLayout.addLayout(&spinsLayout);
     };
 
-    addSpins(minAreaHeadLayout, minLabel, minSpins, minAreaSpinsLayout);
+    addSpins(minAreaHeadLayout, minLabel, minSpins, minLock, minAreaSpinsLayout);
     topLeftButton.setToolTip(tr("Sets movement area minimum to the visible top left corner of the xy viewport."));
     minAreaHeadLayout.addWidget(&topLeftButton);
-    addSpins(sizeAreaHeadLayout, sizeLabel, sizeSpins, sizeAreaSpinsLayout);
-    addSpins(maxAreaHeadLayout, maxLabel, maxSpins, maxAreaSpinsLayout);
+    addSpins(sizeAreaHeadLayout, sizeLabel, sizeSpins, sizeLock, sizeAreaSpinsLayout);
+    addSpins(maxAreaHeadLayout, maxLabel, maxSpins, maxLock, maxAreaSpinsLayout);
+
+    QObject::connect(&lockGroup, static_cast<void(QButtonGroup::*)(QAbstractButton*, bool)>(&QButtonGroup::buttonToggled), [this](auto * button, bool checked){
+        auto & spins = button == &minLock ? minSpins : button == &maxLock ? maxSpins : sizeSpins;
+        spins.xSpin.setEnabled(!checked);
+        spins.ySpin.setEnabled(!checked);
+        spins.zSpin.setEnabled(!checked);
+    });
 
     movementAreaBottomLayout.addWidget(&resetMovementAreaButton);
     movementAreaLayout.addLayout(&movementAreaBottomLayout);
@@ -113,12 +124,12 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     setLayout(&mainLayout);
 
     QObject::connect(&topLeftButton, &QPushButton::clicked, [this](){
-        Session::singleton().updateMovementArea(getCoordinateFromOrthogonalClick({}, *state->mainWindow->viewportXY), Session::singleton().movementAreaMax);
+        const auto min = getCoordinateFromOrthogonalClick({}, *state->mainWindow->viewportXY);
+        const auto max = maxLock.isChecked() ? maxSpins.get() - 1 : min + sizeSpins.get();
+        Session::singleton().updateMovementArea(min, max);
     });
     QObject::connect(&minSpins, &CoordinateSpins::coordinatesChanged, this, &NavigationTab::updateMovementArea);
-    QObject::connect(&sizeSpins, &CoordinateSpins::coordinatesChanged, [this](){
-        Session::singleton().updateMovementArea(minSpins.get() - 1, minSpins.get() - 1 + sizeSpins.get());
-    });
+    QObject::connect(&sizeSpins, &CoordinateSpins::coordinatesChanged, this, &NavigationTab::updateMovementArea);
     QObject::connect(&maxSpins, &CoordinateSpins::coordinatesChanged, this, &NavigationTab::updateMovementArea);
 
     QObject::connect(&resetMovementAreaButton, &QPushButton::clicked, []() {
@@ -156,12 +167,15 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
 }
 
 void NavigationTab::updateMovementArea() {
-    Session::singleton().updateMovementArea(minSpins.get() - 1, maxSpins.get() - 1);
+    const auto min = minLock.isChecked() ? minSpins.get() - 1 : maxSpins.get() - 1 - sizeSpins.get();
+    const auto max = maxLock.isChecked() ? maxSpins.get() - 1 : min + sizeSpins.get();
+    Session::singleton().updateMovementArea(min, max);
 }
 
 void NavigationTab::loadSettings(const QSettings & settings) {
     Session::singleton().resetMovementArea();
 
+    lockGroup.button(settings.value(LOCKED_BUTTON, -3).toInt())->setChecked(true);// size locked by default
     const auto visibility = settings.value(OUTSIDE_AREA_VISIBILITY, 80).toInt();
     outVisibilitySlider.setValue(visibility);
     outVisibilitySlider.valueChanged(visibility);
@@ -175,6 +189,7 @@ void NavigationTab::loadSettings(const QSettings & settings) {
 }
 
 void NavigationTab::saveSettings(QSettings & settings) {
+    settings.setValue(LOCKED_BUTTON, lockGroup.checkedId());
     settings.setValue(OUTSIDE_AREA_VISIBILITY, outVisibilitySlider.value());
     settings.setValue(MOVEMENT_SPEED, movementSpeedSpinBox.value());
     settings.setValue(JUMP_FRAMES, jumpFramesSpinBox.value());
