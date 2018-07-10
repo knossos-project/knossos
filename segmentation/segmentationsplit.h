@@ -72,7 +72,7 @@ public:
         return mode;
     }
     void setRadius(const int newRadius) {
-        radius = newRadius;
+        radius = std::max(newRadius, 1);
         emit radiusChanged(radius);
     }
     int getRadius() const {

@@ -468,10 +468,8 @@ void ViewportBase::handleWheelEvent(const QWheelEvent *event) {
         Skeletonizer::singleton().setRadius(*state->skeletonState->activeNode, radius);
     } else if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush) && event->modifiers() == Qt::SHIFT) {
         auto curRadius = seg.brush.getRadius();
-        seg.brush.setRadius(std::max(curRadius + (int)((event->delta() / 120) *
-                                                  // brush radius delta factor (float), as a function of current radius
-                                                  std::pow(curRadius + 1, 0.5)
-                                                  ), 1));
+        // brush radius delta factor (float), as a function of current radius
+        seg.brush.setRadius(curRadius + (event->delta() / 120) * std::pow(curRadius + 1, 0.5));
     }
 }
 
