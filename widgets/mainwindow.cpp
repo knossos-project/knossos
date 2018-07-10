@@ -899,7 +899,7 @@ void MainWindow::saveAsSlot() {
 
     QString fileName = state->viewer->suspend([this, suggestedFile]{
         return QFileDialog::getSaveFileName(this, "Save the KNOSSSOS annotation file", suggestedFile
-#ifdef Q_OS_MAC
+#ifndef Q_OS_MAC
                                             , "KNOSSOS annotation file (*.k.zip)"
 #endif
                                             );
