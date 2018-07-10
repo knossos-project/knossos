@@ -124,6 +124,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         };
 
         widgetContainer.annotationWidget.segmentationTab.updateBrushEditRange(1, *(std::max_element(mp.begin(), mp.end())));
+        Segmentation::singleton().brush.setRadius(Dataset::current().scale.x * 10);
     });
     QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::updateDatasetCompression,  this, &MainWindow::updateCompressionRatioDisplay);
     QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::snapshotVpSizeRequest, [this](SnapshotOptions & o) { viewport(o.vp)->takeSnapshotVpSize(o); });
