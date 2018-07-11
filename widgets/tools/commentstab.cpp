@@ -36,8 +36,8 @@
 
 void CommentsModel::fill() {
     beginResetModel();
-    for (int i = 1; i < 10; ++i) {
-        CommentSetting::comments.emplace_back(QString("%1").arg(i%10));
+    for (int i = 0; i < 9; ++i) {
+        CommentSetting::comments.emplace_back(tr("Ctrl + %1").arg(i + 1));
     }
     endResetModel();
 }
@@ -109,7 +109,7 @@ void CommentsTab::itemDoubleClicked(const QModelIndex &index) {
     auto & comment = CommentSetting::comments[index.row()];
     if (index.column() == 2) {
         const auto color = state->viewer->suspend([this, &comment]{
-            return QColorDialog::getColor(comment.color, this, "Select comment color", QColorDialog::ShowAlphaChannel);
+            return QColorDialog::getColor(comment.color, this, tr("Select comment color"), QColorDialog::ShowAlphaChannel);
         });
         if (color.isValid() == QColorDialog::Accepted) {
             comment.color = color;
@@ -153,10 +153,10 @@ CommentsTab::~CommentsTab() {}
 void CommentsTab::loadSettings() {
     QSettings settings;
     settings.beginGroup(COMMENTS_TAB);
-    for(int i = 0; i < 10; ++i) {
-        CommentSetting::comments[i].text = settings.value(QString("comment%1").arg(i+1)).toString();
-        CommentSetting::comments[i].color = settings.value(QString("color%1").arg(i+1), QColor(255, 255, 0, 255)).value<QColor>();
-        CommentSetting::comments[i].nodeRadius = settings.value(QString("radius%1").arg(i+1), 1.5).toFloat();
+    for (int i = 0; i < 9; ++i) {
+        CommentSetting::comments[i].text = settings.value(tr("comment%1").arg(i + 1)).toString();
+        CommentSetting::comments[i].color = settings.value(tr("color%1").arg(i + 1), QColor(255, 255, 0, 255)).value<QColor>();
+        CommentSetting::comments[i].nodeRadius = settings.value(tr("radius%1").arg(i + 1), 1.5).toFloat();
         state->viewer->mainWindow.updateCommentShortcut(i, CommentSetting::comments[i].text);
     }
     useCommentColorCheckbox.setChecked(settings.value(CUSTOM_COMMENT_NODECOLOR, true).toBool());
@@ -169,10 +169,10 @@ void CommentsTab::loadSettings() {
 void CommentsTab::saveSettings() {
     QSettings settings;
     settings.beginGroup(COMMENTS_TAB);
-    for(int i = 0; i < 10; ++i) {
-        settings.setValue(QString("comment%1").arg(i+1), CommentSetting::comments[i].text);
-        settings.setValue(QString("color%1").arg(i+1), CommentSetting::comments[i].color);
-        settings.setValue(QString("radius%1").arg(i+1), CommentSetting::comments[i].nodeRadius);
+    for(int i = 0; i < 9; ++i) {
+        settings.setValue(tr("comment%1").arg(i + 1), CommentSetting::comments[i].text);
+        settings.setValue(tr("color%1").arg(i + 1), CommentSetting::comments[i].color);
+        settings.setValue(tr("radius%1").arg(i + 1), CommentSetting::comments[i].nodeRadius);
     }
 
     settings.setValue(CUSTOM_COMMENT_NODECOLOR, useCommentColorCheckbox.isChecked());
