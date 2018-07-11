@@ -131,6 +131,8 @@ CommentsTab::CommentsTab(QWidget *parent) : QWidget(parent) {
 
     commentsTable.setModel(&commentModel);
     commentsTable.setAllColumnsShowFocus(true);
+    commentsTable.setUniformRowHeights(true);//perf hint from doc
+    commentsTable.setRootIsDecorated(false);
     commentsTable.header()->setStretchLastSection(false);
     commentsTable.header()->setSectionResizeMode(1, QHeaderView::Stretch);
     commentsTable.setSelectionMode(QAbstractItemView::ExtendedSelection);
