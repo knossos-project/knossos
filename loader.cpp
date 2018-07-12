@@ -563,8 +563,6 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 return;
             }
         }
-        QUrl dcUrl = dataset.apiSwitch(globalCoord);
-
         state->protectCube2Pointer.lock();
         const bool cubeNotAlreadyLoaded = cubeHash.count(globalCoord.cube(dataset.cubeEdgeLength, dataset.magnification)) == 0;
         state->protectCube2Pointer.unlock();
@@ -587,6 +585,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 return;
             }
 
+            QUrl dcUrl = dataset.apiSwitch(globalCoord);
             //transform googles oauth2 token from query item to request header
             QUrlQuery originalQuery(dcUrl);
             auto reducedQuery = originalQuery;
