@@ -147,11 +147,9 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
         const std::size_t cubeEdgeLen = Dataset::current().cubeEdgeLength;
         const std::size_t size = std::pow(cubeEdgeLen, 3);
 
-        std::array<std::vector<std::uint64_t>, 27> extractedCubes;// local lookup
-        auto extractedCubeForCoord = [&cubes, &pair, &extractedCubes, size](const auto & coord) -> decltype(extractedCubes)::value_type & {
-            const auto ref = pair.first - CoordOfCube{1, 1, 1};
-            const auto diff = coord - ref;
-            auto & cube = extractedCubes[diff.x * 4 + diff.y * 2 + diff.z];
+        std::unordered_map<CoordOfCube, std::vector<std::uint64_t>> extractedCubes;// local lookup
+        auto extractedCubeForCoord = [&cubes, &extractedCubes, size](const auto & coord) -> auto & {
+            auto & cube = extractedCubes[coord];
             if (cube.empty()) {
                 cube.resize(size);
                 auto findIt = cubes.find(coord);
@@ -176,8 +174,8 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
 
         marchingCubes(obj2points, obj2faces, obj2idCounter, extractedCubeForCoord(pair.first), soid2oid, origin, dims, spacing, extent);
         for (std::size_t i = 0; i < 6; ++i) {
-            const std::array<double, 3> dims{{i < 2 ? 2.0 : cubeEdgeLen + 2, i % 4 < 2 ? cubeEdgeLen + 2 : 2.0, i < 4 ? cubeEdgeLen + 2: 2.0}};
-            const floatCoordinate unscaledOrigin(pair.first.cube2Global(cubeEdgeLen, 1) + floatCoordinate(i == 0 ? -1 : i == 1 ? 128 : -1, i == 2 ? -1 : i == 3 ? 128 : -1, i == 4 ? -1 : i == 5 ? 128 : -1));
+            const std::array<double, 3> dims{{i < 2 ? 2.0 : cubeEdgeLen + 2, i % 4 < 2 ? cubeEdgeLen + 2 : 2.0, i < 4 ? cubeEdgeLen + 2 : 2.0}};
+            const floatCoordinate unscaledOrigin(pair.first.cube2Global(cubeEdgeLen, 1) + floatCoordinate(i == 1 ? 127 : -1, i == 3 ? 127 : -1, i == 5 ? 127 : -1));
             const std::array<double, 6> extent{{0, dims[0], 0, dims[1], 0, dims[2]}};
 
             std::vector<std::uint64_t> data(2 * std::pow(cubeEdgeLen + 2, 2));
