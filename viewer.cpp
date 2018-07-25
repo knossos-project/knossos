@@ -519,7 +519,6 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
         return;
     }
 
-    std::vector<std::uint8_t> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
     // We iterate over the texture with x and y being in a temporary coordinate
     // system local to this texture.
     if (!vp.resliceNecessary[layerId]) {
@@ -527,6 +526,7 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
     }
     vp.resliceNecessary[layerId] = false;
     const CoordOfCube upperLeftDc = Coordinate(vp.texture.leftUpperPxInAbsPx).cube(cubeEdgeLen, Dataset::datasets[layerId].magnification);
+    std::vector<std::uint8_t> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
     QFutureSynchronizer<void> sync;
     for(int x_dc = 0; x_dc < state->M; x_dc++) {
         for(int y_dc = 0; y_dc < state->M; y_dc++) {
