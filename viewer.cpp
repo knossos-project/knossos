@@ -263,11 +263,12 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
        areaMinCoord.y > cubePosInAbsPx.y || areaMaxCoord.y < cubePosInAbsPx.y + cubeEdgeLen * Dataset::current().magnification ||
        areaMinCoord.z > cubePosInAbsPx.z || areaMaxCoord.z < cubePosInAbsPx.z + cubeEdgeLen * Dataset::current().magnification;
 
+    // we traverse ZY column first because of better locailty of reference
     const std::size_t voxelIncrement = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen : 1;
     const std::size_t sliceIncrement = vp.viewportType == VIEWPORT_XY ? cubeEdgeLen : state->cubeSliceArea;
-    const std::size_t sliceSubLineIncrement = vp.viewportType == VIEWPORT_ZY ? 0 : sliceIncrement - cubeEdgeLen;
-    const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen * 4 : 4;// RGBA per pixel
-    const std::size_t texRevertToFirstLine = vp.viewportType == VIEWPORT_ZY ? (state->cubeSliceArea - 1) * 4 : 0;
+    const std::size_t lineIncrement = vp.viewportType == VIEWPORT_ZY ? 0 : sliceIncrement - cubeEdgeLen;
+    const std::size_t texNext = vp.viewportType == VIEWPORT_ZY ? state->viewerState->texEdgeLength * 4 : 4;// RGBA per pixel
+    const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? 4 - 4 * cubeEdgeLen * state->viewerState->texEdgeLength : (state->viewerState->texEdgeLength - cubeEdgeLen) * 4;
 
     int offsetX = 0, offsetY = 0;
     const int coordsPerLine = cubeEdgeLen * Dataset::current().magnification;
@@ -306,12 +307,12 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
             slice[3] = 255;
 
             datacube += voxelIncrement;
-            slice += texNextLine;
+            slice += texNext;
             offsetX = (offsetX + Dataset::current().magnification) % coordsPerLine;
             offsetY += (offsetX == 0)? Dataset::current().magnification : 0; // at end of line increment to next line
         }
-        datacube += sliceSubLineIncrement;
-        slice -= texRevertToFirstLine;
+        datacube += lineIncrement;
+        slice += texNextLine;
     }
 }
 
@@ -394,11 +395,12 @@ void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx,
        areaMinCoord.y > cubePosInAbsPx.y || areaMaxCoord.y < cubePosInAbsPx.y + cubeEdgeLen * Dataset::current().magnification ||
        areaMinCoord.z > cubePosInAbsPx.z || areaMaxCoord.z < cubePosInAbsPx.z + cubeEdgeLen * Dataset::current().magnification;
 
+    // we traverse ZY column first because of better locailty of reference
     const std::size_t voxelIncrement = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen : 1;
     const std::size_t sliceIncrement = vp.viewportType == VIEWPORT_XY ? cubeEdgeLen : state->cubeSliceArea;
-    const std::size_t sliceSubLineIncrement = vp.viewportType == VIEWPORT_ZY ? 0 : sliceIncrement - cubeEdgeLen;
-    const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen * 4 : 4;// RGBA per pixel
-    const std::size_t textRevertToFirstLine = vp.viewportType == VIEWPORT_ZY ? (state->cubeSliceArea - 1) * 4 : 0;
+    const std::size_t lineIncrement = vp.viewportType == VIEWPORT_ZY ? 0 : sliceIncrement - cubeEdgeLen;
+    const std::size_t texNext = vp.viewportType == VIEWPORT_ZY ? state->viewerState->texEdgeLength * 4 : 4;// RGBA per pixel
+    const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? 4 - 4 * cubeEdgeLen * state->viewerState->texEdgeLength : (state->viewerState->texEdgeLength - cubeEdgeLen) * 4;
 
     auto & seg = Segmentation::singleton();
     //cache
@@ -480,23 +482,13 @@ void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx,
             }
             ++counter;
             datacube += voxelIncrement;
-            slice += texNextLine;
+            slice += texNext;
             offsetX = (offsetX + Dataset::current().magnification) % coordsPerLine;
             offsetY += (offsetX == 0)? Dataset::current().magnification : 0; // at end of line increment to next line
         }
-        datacube += sliceSubLineIncrement;
-        slice -= textRevertToFirstLine;
+        datacube += lineIncrement;
+        slice += texNextLine;
     }
-}
-
-static int texIndex(uint x, uint y, uint colorMultiplicationFactor, viewportTexture *texture) {
-    uint index = 0;
-
-    index = x * state->cubeSliceArea + y
-            * (texture->size * Dataset::current().cubeEdgeLength)
-            * colorMultiplicationFactor;
-
-    return index;
 }
 
 void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
@@ -569,30 +561,24 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
                                          currentDc.z * Dataset::datasets[layerId].magnification * cubeEdgeLen};
             // This is used to index into the texture. overlayData[index] is the first
             // byte of the datacube slice at position (x_dc, y_dc) in the texture.
-            const int index = texIndex(x_dc, y_dc, 4, &(vp.texture));
-
+            const int index = 4 * (y_dc * state->viewerState->texEdgeLength * cubeEdgeLen + x_dc * cubeEdgeLen);
             if (cube != nullptr) {
                 if (Dataset::datasets[layerId].isOverlay()) {
                     ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp);
                 } else {
-                    dcSliceExtract(reinterpret_cast<std::uint8_t *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp, state->viewerState->datasetAdjustmentOn);
+                    dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp, state->viewerState->datasetAdjustmentOn);
                 }
             } else {
-                std::fill(std::begin(texData), std::end(texData), 0);
+                for (int y = y_px; y < y_px + cubeEdgeLen; ++y) {
+                    const auto start = std::next(std::begin(texData), 4 * (y * viewerState.texEdgeLength + x_px));
+                    std::fill(start, std::next(start, 4 * cubeEdgeLen), 0);
+                }
             }
-            vp.texture.texHandle[layerId].bind();
-            glTexSubImage2D(GL_TEXTURE_2D,
-                            0,
-                            x_px,
-                            y_px,
-                            cubeEdgeLen,
-                            cubeEdgeLen,
-                            GL_RGBA,
-                            GL_UNSIGNED_BYTE,
-                            texData.data() + index);
-            vp.texture.texHandle[layerId].release();
         }
     }
+    vp.texture.texHandle[layerId].bind();
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, state->viewerState->texEdgeLength, state->viewerState->texEdgeLength, GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
+    vp.texture.texHandle[layerId].release();
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
