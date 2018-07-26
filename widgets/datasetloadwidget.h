@@ -50,7 +50,7 @@ public:
     }
     void setCubeEdge(const int newCubeEdge) {
         cubeEdge = newCubeEdge;
-        setRange(cubeEdge * 2, cubeEdge * 14);
+        setRange(cubeEdge * 2, cubeEdge * 1024);
         setSingleStep(cubeEdge * 2);
         auto val = QString::number(value());
         fixup(val);
