@@ -35,6 +35,8 @@
 #include <QApplication>
 #include <QDebug>
 #include <QDesktopWidget>
+#include <QFutureSynchronizer>
+#include <QtConcurrentRun>
 #include <QVector3D>
 
 #include <boost/container/static_vector.hpp>
@@ -402,7 +404,7 @@ void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx,
     const std::size_t texNext = vp.viewportType == VIEWPORT_ZY ? state->viewerState->texEdgeLength * 4 : 4;// RGBA per pixel
     const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? 4 - 4 * cubeEdgeLen * state->viewerState->texEdgeLength : (state->viewerState->texEdgeLength - cubeEdgeLen) * 4;
 
-    auto & seg = Segmentation::singleton();
+    const auto & seg = Segmentation::singleton();
     //cache
     uint64_t subobjectIdCache = Segmentation::singleton().getBackgroundId();
     bool selectedCache = seg.isSubObjectIdSelected(subobjectIdCache);
@@ -525,6 +527,7 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
     }
     vp.resliceNecessary[layerId] = false;
     const CoordOfCube upperLeftDc = Coordinate(vp.texture.leftUpperPxInAbsPx).cube(cubeEdgeLen, Dataset::datasets[layerId].magnification);
+    QFutureSynchronizer<void> sync;
     for(int x_dc = 0; x_dc < state->M; x_dc++) {
         for(int y_dc = 0; y_dc < state->M; y_dc++) {
             const int x_px = x_dc * cubeEdgeLen;
@@ -562,20 +565,23 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
             // This is used to index into the texture. overlayData[index] is the first
             // byte of the datacube slice at position (x_dc, y_dc) in the texture.
             const int index = 4 * (y_dc * state->viewerState->texEdgeLength * cubeEdgeLen + x_dc * cubeEdgeLen);
-            if (cube != nullptr) {
-                if (Dataset::datasets[layerId].isOverlay()) {
-                    ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp);
+            sync.addFuture(QtConcurrent::run([=, &texData, &vp](){
+                if (cube != nullptr) {
+                    if (Dataset::datasets[layerId].isOverlay()) {
+                        ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp);
+                    } else {
+                        dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp, state->viewerState->datasetAdjustmentOn);
+                    }
                 } else {
-                    dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp, state->viewerState->datasetAdjustmentOn);
+                    for (int y = y_px; y < y_px + cubeEdgeLen; ++y) {
+                        const auto start = std::next(std::begin(texData), 4 * (y * viewerState.texEdgeLength + x_px));
+                        std::fill(start, std::next(start, 4 * cubeEdgeLen), 0);
+                    }
                 }
-            } else {
-                for (int y = y_px; y < y_px + cubeEdgeLen; ++y) {
-                    const auto start = std::next(std::begin(texData), 4 * (y * viewerState.texEdgeLength + x_px));
-                    std::fill(start, std::next(start, 4 * cubeEdgeLen), 0);
-                }
-            }
+            }));
         }
     }
+    sync.waitForFinished();
     vp.texture.texHandle[layerId].bind();
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, state->viewerState->texEdgeLength, state->viewerState->texEdgeLength, GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
     vp.texture.texHandle[layerId].release();
