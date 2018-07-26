@@ -526,7 +526,8 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
     }
     vp.resliceNecessary[layerId] = false;
     const CoordOfCube upperLeftDc = Coordinate(vp.texture.leftUpperPxInAbsPx).cube(cubeEdgeLen, Dataset::datasets[layerId].magnification);
-    std::vector<std::uint8_t> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
+    static std::vector<std::uint8_t> texData;// reallocation for every run would be a waste
+    texData.resize(4 * std::pow(state->viewerState->texEdgeLength, 2));
     QFutureSynchronizer<void> sync;
     for(int x_dc = 0; x_dc < state->M; x_dc++) {
         for(int y_dc = 0; y_dc < state->M; y_dc++) {
@@ -565,7 +566,7 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
             // This is used to index into the texture. overlayData[index] is the first
             // byte of the datacube slice at position (x_dc, y_dc) in the texture.
             const int index = 4 * (y_dc * state->viewerState->texEdgeLength * cubeEdgeLen + x_dc * cubeEdgeLen);
-            sync.addFuture(QtConcurrent::run([=, &texData, &vp](){
+            sync.addFuture(QtConcurrent::run([=, &vp](){
                 if (cube != nullptr) {
                     if (Dataset::datasets[layerId].isOverlay()) {
                         ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp);
