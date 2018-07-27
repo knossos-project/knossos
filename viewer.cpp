@@ -323,7 +323,7 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxI
     const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
     if((currentPxInDc.x < 0) || (currentPxInDc.y < 0) || (currentPxInDc.z < 0) ||
        (currentPxInDc.x >= cubeEdgeLen) || (currentPxInDc.y >= cubeEdgeLen) || (currentPxInDc.z >= cubeEdgeLen)) {
-        const int sliceIndex = 3 * ( s + *t  *  cubeEdgeLen * state->M);
+        const int sliceIndex = 3 * ( s + *t * std::ceil(usedSizeInCubePixels));
         slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = 0;
         slice[sliceIndex + 3] = 255;
         (*t)++;
@@ -341,7 +341,7 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxI
           && (0 <= currentPxInDc.y && currentPxInDc.y < cubeEdgeLen)
           && (0 <= currentPxInDc.z && currentPxInDc.z < cubeEdgeLen)) {
 
-        const int sliceIndex = 4 * ( s + *t  *  cubeEdgeLen * state->M);
+        const int sliceIndex = 4 * ( s + *t * std::ceil(usedSizeInCubePixels));
         const int dcIndex = currentPxInDc.x + currentPxInDc.y * cubeEdgeLen + currentPxInDc.z * state->cubeSliceArea;
         if(datacube == nullptr) {
             slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = 0;
@@ -719,7 +719,8 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
     rowPx_float = vp.texture.leftUpperPxInAbsPx / Dataset::current().magnification;
     currentPx_float = rowPx_float;
 
-    std::vector<std::uint8_t> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));// RGBA
+    static std::vector<std::uint8_t> texData;// reallocation for every run would be a waste
+    texData.resize(4 * std::pow(std::ceil(vp.texture.usedSizeInCubePixels), 2), 0);
 
     int s = 0, t = 0, t_old = 0;
     while(s < vp.texture.usedSizeInCubePixels) {
@@ -753,16 +754,7 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
     }
 
     vp.texture.texHandle[layerId].bind();
-    glTexSubImage2D(GL_TEXTURE_2D,
-                    0,
-                    0,
-                    0,
-                    state->M*Dataset::current().cubeEdgeLength,
-                    state->M*Dataset::current().cubeEdgeLength,
-                    GL_RGBA,
-                    GL_UNSIGNED_BYTE,
-                texData.data());
-
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, std::ceil(vp.texture.usedSizeInCubePixels), std::ceil(vp.texture.usedSizeInCubePixels), GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
     vp.texture.texHandle[layerId].release();
     glBindTexture(GL_TEXTURE_2D, 0);
 }

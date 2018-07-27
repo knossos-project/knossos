@@ -63,7 +63,8 @@ void ViewportArb::updateOverlayTexture() {
     const int width = (state->M - 1) * Dataset::current().cubeEdgeLength / std::sqrt(2);
     const int height = width;
     const auto begin = leftUpperPxInAbsPx_float;
-    std::vector<char> texData(4 * std::pow(state->viewerState->texEdgeLength, 2));
+    static std::vector<std::uint8_t> texData;// reallocation for every run would be a waste
+    texData.resize(4 * width * height, 0);
     boost::multi_array_ref<uint8_t, 3> viewportView(reinterpret_cast<uint8_t *>(texData.data()), boost::extents[width][height][4]);
     // cache
     auto subobjectIdCache = Segmentation::singleton().getBackgroundId();
@@ -85,8 +86,6 @@ void ViewportArb::updateOverlayTexture() {
         }
     }
     texture.texHandle[Segmentation::singleton().layerId].bind();
-    QOpenGLPixelTransferOptions options;
-    options.setRowLength(width);
-    texture.texHandle[Segmentation::singleton().layerId].setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, texData.data(), &options);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
     texture.texHandle[Segmentation::singleton().layerId].release();
 }
