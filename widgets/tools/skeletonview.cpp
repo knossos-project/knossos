@@ -64,7 +64,7 @@ QVariant AbstractSkeletonModel<ConcreteModel>::headerData(int section, Qt::Orien
 }
 template<typename ConcreteModel>
 Qt::ItemFlags AbstractSkeletonModel<ConcreteModel>::flags(const QModelIndex &index) const {
-    return QAbstractItemModel::flags(index) | Qt::ItemNeverHasChildren | static_cast<ConcreteModel const * const>(this)->flagModifier[index.column()];
+    return QAbstractItemModel::flags(index) | Qt::ItemNeverHasChildren | (index.isValid() ? static_cast<ConcreteModel const * const>(this)->flagModifier[index.column()] : Qt::ItemFlags{});
 }
 template<typename ConcreteModel>
 int AbstractSkeletonModel<ConcreteModel>::rowCount(const QModelIndex &) const {
