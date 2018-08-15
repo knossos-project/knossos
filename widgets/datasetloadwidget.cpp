@@ -256,7 +256,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         if (!silent) {
             QMessageBox warning{QApplication::activeWindow()};
             warning.setIcon(QMessageBox::Warning);
-            warning.setText(tr("Unable to load Daataset."));
+            warning.setText(tr("Unable to load Dataset."));
             warning.setInformativeText(tr("Failed to read config file from %1").arg(path.toString()));
             warning.exec();
             open();
