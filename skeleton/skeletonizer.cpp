@@ -374,7 +374,8 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     bool matlabCoordinates{skeletonState.loadMatlabCoordinates};
     QString experimentName, taskCategory, taskName;
     std::uint64_t activeNodeID = 0;
-    auto loadedPosition = boost::make_optional(false, Coordinate{});// make_optional gets around GCCs false positive maybe-uninitialized
+    auto nmlScale = Dataset::current().scale;
+    auto loadedPosition = boost::make_optional(false, floatCoordinate{});// make_optional gets around GCCs false positive maybe-uninitialized
     std::vector<std::uint64_t> branchVector;
     std::vector<std::pair<std::uint64_t, QString>> commentsVector;
     std::vector<std::pair<std::uint64_t, std::uint64_t>> edgeVector;
@@ -382,7 +383,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     std::unordered_map<decltype(nodeListElement::nodeID), std::reference_wrapper<nodeListElement>> nodeMap;
     std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> treeMap;
 
-    const QSet<QString> knownElements({"scale", "offset", "skeletonDisplayMode"});
+    const QSet<QString> knownElements({"offset", "skeletonDisplayMode"});
     QSet<QString> skippedElements;
 
     QElapsedTimer bench;
@@ -452,7 +453,8 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                 } else if(xml.name() == "segmentation") {
                     Segmentation::singleton().setBackgroundId(attributes.value("backgroundId").toULongLong());
                 } else if(xml.name() == "editPosition") {
-                    loadedPosition = Coordinate{attributes.value("x").toInt(), attributes.value("y").toInt(), attributes.value("z").toInt()};
+                    loadedPosition = floatCoordinate(attributes.value("x").toDouble(), attributes.value("y").toDouble(), attributes.value("z").toDouble());
+                    loadedPosition = (nmlScale / Dataset::current().scale).componentMul(loadedPosition.get()) - matlabCoordinates;
                 } else if(xml.name() == "skeletonVPState") {
                     if (!merge) {
                           // non-working code for skelvp rotation and translation restoration
@@ -501,6 +503,9 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                             Session::singleton().setAnnotationTime(annotationTime - idleTime);
                         }
                     }
+                } else if(xml.name() == "scale") {
+                    const auto & attributes = xml.attributes();
+                    nmlScale = floatCoordinate(attributes.value("x").toDouble(), attributes.value("y").toDouble(), attributes.value("z").toDouble());
                 } else if(xml.name() == "task") {
                     for (auto && attribute : attributes) {
                         auto key = attribute.name();
@@ -575,7 +580,11 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                 const auto & name = attribute.name();
                 const auto & value = attribute.value();
                 if (name == "id") {
-                    treeID = value.toULongLong();
+                    bool ok;
+                    treeID = value.toULongLong(&ok);
+                    if (!ok) {
+                        treeID = value.toDouble();
+                    }
                 } else if (name == "visible") {
                     render = value.toInt();
                 } else if (name == "color.r") {
@@ -623,11 +632,11 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                                 } else if (name == "radius") {
                                     radius = {value.toFloat()};
                                 } else if (name == "x") {
-                                    currentCoordinate.x = {value.toInt() - matlabCoordinates};
+                                    currentCoordinate.x = nmlScale.x / Dataset::current().scale.x * value.toDouble() - matlabCoordinates;
                                 } else if (name == "y") {
-                                    currentCoordinate.y = {value.toInt() - matlabCoordinates};
+                                    currentCoordinate.y = nmlScale.y / Dataset::current().scale.y * value.toDouble() - matlabCoordinates;
                                 } else if (name == "z") {
-                                    currentCoordinate.z = {value.toInt() - matlabCoordinates};
+                                    currentCoordinate.z = nmlScale.z / Dataset::current().scale.z * value.toDouble() - matlabCoordinates;
                                 } else if (name == "inVp") {
                                     inVP = static_cast<ViewportType>(value.toInt());
                                 } else if (name == "inMag") {
@@ -737,7 +746,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     if (!merge) {
         setActiveNode(Skeletonizer::singleton().findNodeByNodeID(activeNodeID));
         if (loadedPosition) {
-            state->viewer->setPosition(loadedPosition.get() - matlabCoordinates);
+            state->viewer->setPosition(loadedPosition.get());
         }
     }
     if (skeletonState.activeNode == nullptr && !skeletonState.trees.empty() && !skeletonState.trees.front().nodes.empty()) {
