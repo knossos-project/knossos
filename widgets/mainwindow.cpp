@@ -613,11 +613,11 @@ void MainWindow::createMenus() {
     newObjectAction = &addApplicationShortcut(actionMenu, QIcon(), tr("New segmentation object"), this, []() {
         Segmentation::singleton().createAndSelectObject(state->viewerState->currentPosition);
     }, Qt::Key_C);
-    auto setOverlayOpacity = [](int value) {
+    auto changeOverlayOpacity = [](int value) {
         Segmentation::singleton().alpha = static_cast<uint8_t>(std::max(0, std::min(255, static_cast<int>(Segmentation::singleton().alpha) + value)));
     };
-    increaseOpacityAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Increase Overlay Opacity"), this, [&]() { setOverlayOpacity(10); emit overlayOpacityChanged(); }, Qt::Key_Plus);
-    decreaseOpacityAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Decrease Overlay Opacity"), this, [&]() { setOverlayOpacity(-10); emit overlayOpacityChanged(); }, Qt::Key_Minus);
+    increaseOpacityAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Increase Overlay Opacity"), this, [&]() { changeOverlayOpacity(10); emit overlayOpacityChanged(); }, Qt::Key_Plus);
+    decreaseOpacityAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Decrease Overlay Opacity"), this, [&]() { changeOverlayOpacity(-10); emit overlayOpacityChanged(); }, Qt::Key_Minus);
     enlargeBrushAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Increase Brush Size (Shift + Scroll)"), &Segmentation::singleton(),
                                                  []() { Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() + 1); }, Qt::SHIFT + Qt::Key_Plus);
     shrinkBrushAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Decrease Brush Size (Shift + Scroll)"), &Segmentation::singleton(),
