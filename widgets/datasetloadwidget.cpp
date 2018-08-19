@@ -136,6 +136,9 @@ void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row)
     QObject::connect(removeDatasetButton, &QPushButton::clicked, [this, rowFromCell, removeDatasetButton](){
         const int row = rowFromCell(2, removeDatasetButton);
         tableWidget.removeRow(row);
+        if (row == tableWidget.rowCount() - 1) {
+            tableWidget.selectRow(row - 1);// select last item
+        }
     });
 
     QTableWidgetItem *datasetPathItem = new QTableWidgetItem(dataset);
