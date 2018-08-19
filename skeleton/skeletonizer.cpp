@@ -235,7 +235,7 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml) const {
         xml.writeStartElement("time");
         const auto time = Session::singleton().getAnnotationTime();
         xml.writeAttribute("ms", QString::number(time));
-        const auto timeData = QByteArray::fromRawData(reinterpret_cast<const char * const>(&time), sizeof(time));
+        const auto timeData = QByteArray::fromRawData(reinterpret_cast<const char *>(&time), sizeof(time));
         const QString timeChecksum = QCryptographicHash::hash(timeData, QCryptographicHash::Sha256).toHex().constData();
         xml.writeAttribute("checksum", timeChecksum);
         xml.writeEndElement();
