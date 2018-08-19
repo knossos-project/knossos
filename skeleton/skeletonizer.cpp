@@ -195,6 +195,10 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml) const {
     xml.writeAttribute("version", state->skeletonState->skeletonCreatedInVersion);
     xml.writeEndElement();
 
+    xml.writeStartElement("node_position_numbering");
+    xml.writeAttribute("index_origin", QString::number(skeletonState.saveMatlabCoordinates));
+    xml.writeEndElement();
+
     xml.writeStartElement("guiMode");
     xml.writeAttribute("mode", (Session::singleton().guiMode == GUIMode::ProofReading) ? "proof reading" : "none");
     xml.writeEndElement();
@@ -399,6 +403,8 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                     state->skeletonState->skeletonCreatedInVersion = attributes.value("version").toString();
                 } else if(xml.name() == "lastsavedin") {
                     state->skeletonState->skeletonLastSavedInVersion = attributes.value("version").toString();
+                } else if (xml.name() == "node_position_numbering") {
+                    matlabCoordinates = attributes.value("index_origin").toInt();
                 } else if (xml.name() == "guiMode") {
                     if (attributes.value("mode").toString() == "proof reading") {
                         Session::singleton().guiMode = GUIMode::ProofReading;
