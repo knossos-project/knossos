@@ -124,9 +124,7 @@ void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row)
             return QFileDialog::getOpenFileUrl(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf").toString();
         });
         if (!selectedFile.isEmpty()) {
-            QTableWidgetItem * const datasetPathItem = new QTableWidgetItem(selectedFile);
-            const int row = rowFromCell(1, addDatasetButton);
-            tableWidget.setItem(row, 0, datasetPathItem);
+            tableWidget.item(rowFromCell(1, addDatasetButton), 0)->setText(selectedFile);
         }
     });
 
@@ -141,8 +139,7 @@ void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row)
         }
     });
 
-    QTableWidgetItem *datasetPathItem = new QTableWidgetItem(dataset);
-    tableWidget.setItem(row, 0, datasetPathItem);
+    tableWidget.setItem(row, 0, new QTableWidgetItem(dataset));
     tableWidget.setCellWidget(row, 1, addDatasetButton);
     tableWidget.setCellWidget(row, 2, removeDatasetButton);
 }
@@ -153,6 +150,7 @@ void DatasetLoadWidget::datasetCellChanged(int row, int col) {
         const auto dataset = tableWidget.item(row, 0)->text();
         tableWidget.item(row, 0)->setText("");//clear edit row
         insertDatasetRow(dataset, tableWidget.rowCount() - 1);//insert before edit row
+        processButton.setFocus();// move focus away from the … button – needed to select a different row
         tableWidget.selectRow(row);//select new item
     }
     updateDatasetInfo();
