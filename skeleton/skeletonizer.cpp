@@ -252,9 +252,9 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml) const {
     xml.writeEndElement();
 
     xml.writeStartElement("editPosition");
-    xml.writeAttribute("x", QString::number(state->viewerState->currentPosition.x + 1));
-    xml.writeAttribute("y", QString::number(state->viewerState->currentPosition.y + 1));
-    xml.writeAttribute("z", QString::number(state->viewerState->currentPosition.z + 1));
+    xml.writeAttribute("x", QString::number(state->viewerState->currentPosition.x + skeletonState.saveMatlabCoordinates));
+    xml.writeAttribute("y", QString::number(state->viewerState->currentPosition.y + skeletonState.saveMatlabCoordinates));
+    xml.writeAttribute("z", QString::number(state->viewerState->currentPosition.z + skeletonState.saveMatlabCoordinates));
     xml.writeEndElement();
 
     xml.writeStartElement("skeletonVPState");
@@ -299,9 +299,9 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml) const {
             xml.writeStartElement("node");
             xml.writeAttribute("id", QString::number(node.nodeID));
             xml.writeAttribute("radius", QString::number(node.radius));
-            xml.writeAttribute("x", QString::number(node.position.x + 1));
-            xml.writeAttribute("y", QString::number(node.position.y + 1));
-            xml.writeAttribute("z", QString::number(node.position.z + 1));
+            xml.writeAttribute("x", QString::number(node.position.x + skeletonState.saveMatlabCoordinates));
+            xml.writeAttribute("y", QString::number(node.position.y + skeletonState.saveMatlabCoordinates));
+            xml.writeAttribute("z", QString::number(node.position.z + skeletonState.saveMatlabCoordinates));
             xml.writeAttribute("inVp", QString::number(node.createdInVp));
             xml.writeAttribute("inMag", QString::number(node.createdInMag));
             xml.writeAttribute("time", QString::number(node.timestamp));
@@ -367,6 +367,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
 
     Session::singleton().guiMode = GUIMode::None;
 
+    bool matlabCoordinates{skeletonState.loadMatlabCoordinates};
     QString experimentName, taskCategory, taskName;
     std::uint64_t activeNodeID = 0;
     auto loadedPosition = boost::make_optional(false, Coordinate{});// make_optional gets around GCCs false positive maybe-uninitialized
@@ -616,11 +617,11 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                                 } else if (name == "radius") {
                                     radius = {value.toFloat()};
                                 } else if (name == "x") {
-                                    currentCoordinate.x = {value.toInt() - 1};
+                                    currentCoordinate.x = {value.toInt() - matlabCoordinates};
                                 } else if (name == "y") {
-                                    currentCoordinate.y = {value.toInt() - 1};
+                                    currentCoordinate.y = {value.toInt() - matlabCoordinates};
                                 } else if (name == "z") {
-                                    currentCoordinate.z = {value.toInt() - 1};
+                                    currentCoordinate.z = {value.toInt() - matlabCoordinates};
                                 } else if (name == "inVp") {
                                     inVP = static_cast<ViewportType>(value.toInt());
                                 } else if (name == "inMag") {
@@ -730,7 +731,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     if (!merge) {
         setActiveNode(Skeletonizer::singleton().findNodeByNodeID(activeNodeID));
         if (loadedPosition) {
-            state->viewer->setPosition(loadedPosition.get() - 1);
+            state->viewer->setPosition(loadedPosition.get() - matlabCoordinates);
         }
     }
     if (skeletonState.activeNode == nullptr && !skeletonState.trees.empty() && !skeletonState.trees.front().nodes.empty()) {

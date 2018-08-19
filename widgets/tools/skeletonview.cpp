@@ -138,9 +138,9 @@ QVariant NodeModel::data(const QModelIndex &index, int role) const {
     if (role == Qt::DisplayRole || role == Qt::EditRole || role == Qt::UserRole) {
         switch (index.column()) {
         case 0: return static_cast<quint64>(node.nodeID);
-        case 1: return node.position.x + 1;
-        case 2: return node.position.y + 1;
-        case 3: return node.position.z + 1;
+        case 1: return node.position.x + state->skeletonState->displayMatlabCoordinates;
+        case 2: return node.position.y + state->skeletonState->displayMatlabCoordinates;
+        case 3: return node.position.z + state->skeletonState->displayMatlabCoordinates;
         case 4: return node.radius;
         case 5: return node.getComment();
         case 6:
@@ -165,13 +165,13 @@ bool NodeModel::setData(const QModelIndex & index, const QVariant & value, int r
     auto & node = cache[index.row()].get();
 
     if (index.column() == 1) {
-        const Coordinate position{value.toInt() - 1, node.position.y, node.position.z};
+        const Coordinate position{value.toInt() - state->skeletonState->displayMatlabCoordinates, node.position.y, node.position.z};
         Skeletonizer::singleton().setPosition(node, position);
     } else if (index.column() == 2) {
-        const Coordinate position{node.position.x, value.toInt() - 1, node.position.z};
+        const Coordinate position{node.position.x, value.toInt() - state->skeletonState->displayMatlabCoordinates, node.position.z};
         Skeletonizer::singleton().setPosition(node, position);
     } else if (index.column() == 3) {
-        const Coordinate position{node.position.x, node.position.y, value.toInt() - 1};
+        const Coordinate position{node.position.x, node.position.y, value.toInt() - state->skeletonState->displayMatlabCoordinates};
         Skeletonizer::singleton().setPosition(node, position);
     } else if (index.column() == 4) {
         const float radius{value.toFloat()};

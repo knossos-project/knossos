@@ -23,6 +23,7 @@
 #include "navigationtab.h"
 
 #include "session.h"
+#include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
 #include "viewer.h"
 #include "widgets/GuiConstants.h"
@@ -127,12 +128,12 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
 
     QObject::connect(&topLeftButton, &QPushButton::clicked, [this](){
         const auto min = getCoordinateFromOrthogonalClick({}, *state->mainWindow->viewportXY);
-        const auto max = maxLock.isChecked() ? maxSpins.get() - 1 : min + sizeSpins.get();
+        const auto max = maxLock.isChecked() ? maxSpins.get() - state->skeletonState->displayMatlabCoordinates : min + sizeSpins.get();
         Session::singleton().updateMovementArea(min, max);
     });
     QObject::connect(&bottomRightButton, &QPushButton::clicked, [this](){
         const auto max = getCoordinateFromOrthogonalClick(QPointF(state->mainWindow->viewportXY->width() - 1, state->mainWindow->viewportXY->height() - 1), *state->mainWindow->viewportXY);
-        const auto min = minLock.isChecked() ? minSpins.get() - 1 : max - sizeSpins.get();
+        const auto min = minLock.isChecked() ? minSpins.get() - state->skeletonState->displayMatlabCoordinates : max - sizeSpins.get();
         Session::singleton().updateMovementArea(min, max);
     });
     QObject::connect(&minSpins, &CoordinateSpins::coordinatesChanged, this, &NavigationTab::updateMovementArea);
@@ -144,8 +145,8 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     });
     QObject::connect(&Session::singleton(), &Session::movementAreaChanged, [this]() {
         auto & session = Session::singleton();
-        minSpins.set(session.movementAreaMin + 1);
-        maxSpins.set(session.movementAreaMax + 1);
+        minSpins.set(session.movementAreaMin + state->skeletonState->displayMatlabCoordinates);
+        maxSpins.set(session.movementAreaMax + state->skeletonState->displayMatlabCoordinates);
         const auto size = session.movementAreaMax - session.movementAreaMin;
         sizeSpins.set(size);
     });

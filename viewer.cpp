@@ -1021,7 +1021,8 @@ void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, 
         viewerState.currentPosition = newPos;
         recalcTextureOffsets();
     } else {
-        qDebug() << tr("Position (%1, %2, %3) out of bounds").arg(newPos.x + 1).arg(newPos.y + 1).arg(newPos.z + 1);
+        const auto inc{state->skeletonState->displayMatlabCoordinates};
+        qDebug() << tr("Position (%1, %2, %3) out of bounds").arg(newPos.x + inc).arg(newPos.y + inc).arg(newPos.z + inc);
     }
 
     const auto newPosition_dc = viewerState.currentPosition.cube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);

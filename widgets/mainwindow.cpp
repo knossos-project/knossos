@@ -238,7 +238,8 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
 
 void MainWindow::updateCursorLabel(const Coordinate & position, const ViewportType vpType) {
     cursorPositionLabel.setHidden(vpType == VIEWPORT_SKELETON || vpType == VIEWPORT_UNDEFINED);
-    cursorPositionLabel.setText(QString("%1, %2, %3").arg(position.x + 1).arg(position.y + 1).arg(position.z + 1));
+    const auto inc{state->skeletonState->displayMatlabCoordinates};
+    cursorPositionLabel.setText(QString("%1, %2, %3").arg(position.x + inc).arg(position.y + inc).arg(position.z + inc));
 }
 
 void MainWindow::resetTextureProperties() {
@@ -1166,7 +1167,7 @@ void MainWindow::defaultPreferencesSlot() {
 /* toolbar slots */
 
 void MainWindow::coordinateEditingFinished() {
-    floatCoordinate inputCoord{currentPosSpins.get() - 1.f};
+    floatCoordinate inputCoord{currentPosSpins.get() - 1.0f * state->skeletonState->displayMatlabCoordinates};
     state->viewer->userMove(inputCoord - state->viewerState->currentPosition, USERMOVE_NEUTRAL);
 }
 
@@ -1280,7 +1281,8 @@ void MainWindow::clearSettings() {
 }
 
 void MainWindow::updateCoordinateBar(int x, int y, int z) {
-    currentPosSpins.set({x + 1, y + 1, z + 1});
+    const auto inc{state->skeletonState->displayMatlabCoordinates};
+    currentPosSpins.set({x + inc, y + inc, z + inc});
 }
 
 void MainWindow::resizeEvent(QResizeEvent *) {

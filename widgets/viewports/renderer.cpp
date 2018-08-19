@@ -1654,9 +1654,9 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
                 renderAxis(floatCoordinate(0, scaledBoundary.y, 0), QString("y: %1 µm").arg(Dataset::current().boundary.y * Dataset::current().scale.y * 0.001));
                 renderAxis(floatCoordinate(0, 0, scaledBoundary.z), QString("z: %1 µm").arg(Dataset::current().boundary.z * Dataset::current().scale.z * 0.001));
             } else {
-                renderAxis(floatCoordinate(scaledBoundary.x, 0, 0), QString("x: %1 px").arg(Dataset::current().boundary.x + 1));
-                renderAxis(floatCoordinate(0, scaledBoundary.y, 0), QString("y: %1 px").arg(Dataset::current().boundary.y + 1));
-                renderAxis(floatCoordinate(0, 0, scaledBoundary.z), QString("z: %1 px").arg(Dataset::current().boundary.z + 1));
+                renderAxis(floatCoordinate(scaledBoundary.x, 0, 0), QString("x: %1 px").arg(Dataset::current().boundary.x + state->skeletonState->displayMatlabCoordinates));
+                renderAxis(floatCoordinate(0, scaledBoundary.y, 0), QString("y: %1 px").arg(Dataset::current().boundary.y + state->skeletonState->displayMatlabCoordinates));
+                renderAxis(floatCoordinate(0, 0, scaledBoundary.z), QString("z: %1 px").arg(Dataset::current().boundary.z + state->skeletonState->displayMatlabCoordinates));
             }
         }
     }

@@ -177,6 +177,10 @@ struct SkeletonState {
 
     QString skeletonCreatedInVersion;
     QString skeletonLastSavedInVersion;
+
+    bool displayMatlabCoordinates{true};
+    bool loadMatlabCoordinates{true};
+    bool saveMatlabCoordinates{true};
 };
 
 class Skeletonizer : public QObject {
