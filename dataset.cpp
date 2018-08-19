@@ -274,6 +274,7 @@ Dataset::list_t Dataset::parseWebKnossosJson(const QUrl & infoUrl, const QString
 Dataset::list_t Dataset::fromLegacyConf(const QUrl & configUrl, QString config) {
     Dataset info;
     info.api = API::Heidelbrain;
+    bool hasPNG{false};
 
     QTextStream stream(&config);
     QString line;
@@ -325,6 +326,8 @@ Dataset::list_t Dataset::fromLegacyConf(const QUrl & configUrl, QString config) 
                       : compressionRatio == 1000 ? Dataset::CubeType::RAW_JPG
                       : compressionRatio == 6 ? Dataset::CubeType::RAW_JP2_6
                       : Dataset::CubeType::RAW_J2K;
+        } else if (token == "png") {
+            hasPNG = true;
         } else {
             qDebug() << "Skipping unknown parameter" << token;
         }
@@ -346,7 +349,7 @@ Dataset::list_t Dataset::fromLegacyConf(const QUrl & configUrl, QString config) 
 
     if (info.type != Dataset::CubeType::RAW_UNCOMPRESSED) {
         auto info2 = info;
-        info2.type = Dataset::CubeType::RAW_UNCOMPRESSED;
+        info2.type = hasPNG ? Dataset::CubeType::RAW_PNG : Dataset::CubeType::RAW_UNCOMPRESSED;
         info2.allocationEnabled = info2.loadingEnabled = false;
         return {info, info2, info.createCorrespondingOverlayLayer()};
     } else {
