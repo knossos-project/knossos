@@ -1121,7 +1121,9 @@ void Viewer::reslice_notify_all(const std::size_t layerId, const Coordinate coor
 }
 
 void Viewer::segmentation_changed() {
-    reslice_notify(Segmentation::singleton().layerId);
+    if (Segmentation::singleton().enabled) {
+        reslice_notify(Segmentation::singleton().layerId);
+    }
 }
 
 void Viewer::recalcTextureOffsets() {
