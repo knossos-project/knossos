@@ -157,17 +157,16 @@ void DatasetLoadWidget::datasetCellChanged(int row, int col) {
 
 void DatasetLoadWidget::updateDatasetInfo() {
     bool bad = tableWidget.selectedItems().empty();
-    QString dataset;
+    QUrl dataset;
     bad = bad || (dataset = tableWidget.selectedItems().front()->text()).isEmpty();
     decltype(Network::singleton().refresh(std::declval<QUrl>())) download;
-    const QUrl url{dataset + (!QUrl{dataset}.isLocalFile() && !Dataset::isWebKnossos(dataset) ? "/" : "")};// add slash to avoid redirects
-    bad = bad || !(download = Network::singleton().refresh(url)).first;
+    bad = bad || !(download = Network::singleton().refresh(dataset)).first;
     if (bad) {
         infoLabel.setText("");
         return;
     }
 
-    const auto datasetinfo = Dataset::parse(url, download.second).front();
+    const auto datasetinfo = Dataset::parse(dataset, download.second).front();
 
     //make sure supercubeedge is small again
     auto supercubeedge = (fovSpin.value() + cubeEdgeSpin.value()) / datasetinfo.cubeEdgeLength;
@@ -200,7 +199,7 @@ void DatasetLoadWidget::updateDatasetInfo() {
     }
     cubeEdgeSpin.setParent(nullptr);
     cubeEdgeLabel.setParent(nullptr);
-    if (!(Dataset::isHeidelbrain(url) || Dataset::isPyKnossos(url))) {
+    if (!(Dataset::isHeidelbrain(dataset) || Dataset::isPyKnossos(dataset))) {
         datasetSettingsLayout.insertRow(0, &cubeEdgeSpin, &cubeEdgeLabel);
     }
 }
@@ -250,7 +249,6 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     } else if (path.isEmpty()) {//if empty reload previous
         path = datasetUrl;
     }
-    path.setPath(path.path() + (!path.isLocalFile() && !path.toString().endsWith("/") && !Dataset::isWebKnossos(path) ? "/" : ""));// add slash to avoid redirects
     const auto download = Network::singleton().refresh(path);
     if (!download.first) {
         if (!silent) {
