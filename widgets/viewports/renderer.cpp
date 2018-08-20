@@ -761,13 +761,13 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
         auto ordered_i = state->viewerState->layerOrder[i];
         if (!Dataset::datasets[ordered_i].isOverlay()) {
-            auto& layerSettings = state->viewerState->layerRenderSettings[ordered_i];
-            firstVisibleRawDataset = ordered_i;
+            auto & layerSettings = state->viewerState->layerRenderSettings[ordered_i];
             if (layerSettings.visible) {
+                firstVisibleRawDataset = ordered_i;
                 glColor4f(1, 1, 1, layerSettings.opacity);
                 slice(texture, firstVisibleRawDataset);
+                break;
             }
-            break;
         }
     }
 
