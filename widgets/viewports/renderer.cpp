@@ -790,12 +790,10 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     if (!options.nodePicking) {
         for (std::size_t i = 0; i < texture.texHandle.size(); ++i) {
             auto ordered_i = state->viewerState->layerOrder[i];
-            auto& layerSettings = state->viewerState->layerRenderSettings[ordered_i];
+            auto & layerSettings = state->viewerState->layerRenderSettings[ordered_i];
             if (layerSettings.visible) {
                 if (options.drawOverlay || !Dataset::datasets[ordered_i].isOverlay()) {
-                    if (Dataset::datasets[ordered_i].isOverlay()) {
-                        glColor4f(1, 1, 1, layerSettings.opacity);
-                    }
+                    glColor4f(1, 1, 1, layerSettings.opacity);
                     if (ordered_i == firstVisibleRawDataset) {
                         glColor4f(1, 1, 1, 0.6 * layerSettings.opacity);// second raw slice is semi transparent, with one direction of the skeleton showing through and the other above rendered above
                     }
