@@ -296,11 +296,13 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
 }
 
 void LayerDialogWidget::updateLayerProperties() {
-    std::size_t ordered_index = itemModel.ordered_i(treeView.selectionModel()->currentIndex().row());
-    auto& data = Dataset::datasets[ordered_index];
-    auto& layerSettings = state->viewerState->layerRenderSettings[ordered_index];
-    opacitySlider.setValue(static_cast<int>(layerSettings.opacity * opacitySlider.maximum()));
-    rangeDeltaSlider.setValue(static_cast<int>(layerSettings.rangeDelta * rangeDeltaSlider.maximum()));
-    biasSlider.setValue(static_cast<int>(layerSettings.bias * biasSlider.maximum()));
-    linearFilteringCheckBox.setChecked(layerSettings.linearFiltering);
+    const auto & currentIndex = treeView.selectionModel()->currentIndex();
+    if (currentIndex.isValid()) {
+        const auto ordered_index = itemModel.ordered_i(currentIndex.row());
+        auto & layerSettings = state->viewerState->layerRenderSettings[ordered_index];
+        opacitySlider.setValue(static_cast<int>(layerSettings.opacity * opacitySlider.maximum()));
+        rangeDeltaSlider.setValue(static_cast<int>(layerSettings.rangeDelta * rangeDeltaSlider.maximum()));
+        biasSlider.setValue(static_cast<int>(layerSettings.bias * biasSlider.maximum()));
+        linearFilteringCheckBox.setChecked(layerSettings.linearFiltering);
+    }
 }
