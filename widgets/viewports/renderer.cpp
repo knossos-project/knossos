@@ -760,7 +760,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     std::size_t firstVisibleRawDataset = 0;
     for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
         auto ordered_i = state->viewerState->layerOrder[i];
-        if (!Dataset::datasets[ordered_i].isOverlay()) {
+        if (options.drawOverlay || !Dataset::datasets[ordered_i].isOverlay()) {
             auto & layerSettings = state->viewerState->layerRenderSettings[ordered_i];
             if (layerSettings.visible) {
                 firstVisibleRawDataset = ordered_i;
