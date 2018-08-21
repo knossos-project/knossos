@@ -70,6 +70,9 @@ public:
     QToolButton addLayerButton;
     QToolButton removeLayerButton;
 
+    void loadSettings();
+    void saveSettings();
+
 private:
     void updateLayerProperties();
 };

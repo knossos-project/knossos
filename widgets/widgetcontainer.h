@@ -40,10 +40,9 @@
 
 struct WidgetContainer {
     WidgetContainer(QWidget * parent)
-        : aboutDialog(parent), annotationWidget(parent), datasetLoadWidget(parent)
+        : aboutDialog(parent), annotationWidget(parent), datasetLoadWidget(parent), layerDialogWidget(parent)
         , preferencesWidget(parent), pythonInterpreterWidget(parent), pythonPropertyWidget(parent)
         , snapshotWidget(parent), taskManagementWidget(parent), zoomWidget(parent, &datasetLoadWidget)
-        , layerDialogWidget(parent)
     {
         QObject::connect(&datasetLoadWidget, &DatasetLoadWidget::datasetSwitchZoomDefaults, &zoomWidget, &ZoomWidget::zoomDefaultsClicked);
         QObject::connect(&preferencesWidget.viewportTab.addArbVPCheckBox, &QCheckBox::toggled, &snapshotWidget.vpArbRadio, &QRadioButton::setVisible);
@@ -52,36 +51,36 @@ struct WidgetContainer {
     AboutDialog aboutDialog;
     AnnotationWidget annotationWidget;
     DatasetLoadWidget datasetLoadWidget;
+    LayerDialogWidget layerDialogWidget;
     PreferencesWidget preferencesWidget;
     PythonInterpreterWidget pythonInterpreterWidget;
     PythonPropertyWidget pythonPropertyWidget;
     SnapshotWidget snapshotWidget;
     TaskManagementWidget taskManagementWidget;
     ZoomWidget zoomWidget;
-    LayerDialogWidget layerDialogWidget;
 
     void applyVisibility() {
         QSettings settings;
         annotationWidget.setVisible(settings.value(ANNOTATION_WIDGET + '/' + VISIBLE, false).toBool());
+        layerDialogWidget.setVisible(settings.value(LAYER_DIALOG_WIDGET + '/' + VISIBLE, false).toBool());
         preferencesWidget.setVisible(settings.value(PREFERENCES_WIDGET + '/' + VISIBLE, false).toBool());
         pythonInterpreterWidget.setVisible(settings.value(PYTHON_TERMINAL_WIDGET + '/' + VISIBLE, false).toBool());
         pythonPropertyWidget.setVisible(settings.value(PYTHON_PROPERTY_WIDGET + '/' + VISIBLE, false).toBool());
         snapshotWidget.setVisible(settings.value(SNAPSHOT_WIDGET + '/' + VISIBLE, false).toBool());
         zoomWidget.setVisible(settings.value(ZOOM_WIDGET + '/' + VISIBLE, false).toBool());
-        layerDialogWidget.setVisible(settings.value(LAYER_DIALOG_WIDGET + '/' + VISIBLE, false).toBool());
     }
 
     void hideAll() {
         aboutDialog.hide();
         annotationWidget.hide();
         datasetLoadWidget.hide();
+        layerDialogWidget.hide();
         preferencesWidget.hide();
         pythonPropertyWidget.hide();
         pythonInterpreterWidget.hide();
         snapshotWidget.hide();
         taskManagementWidget.hide();
         zoomWidget.hide();
-        layerDialogWidget.hide();
     }
 };
 

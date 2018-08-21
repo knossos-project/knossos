@@ -280,6 +280,21 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
+void LayerDialogWidget::loadSettings() {
+    QSettings settings;
+    settings.beginGroup(LAYER_DIALOG_WIDGET);
+    restoreGeometry(settings.value(GEOMETRY).toByteArray());
+    settings.endGroup();
+}
+
+void LayerDialogWidget::saveSettings() {
+    QSettings settings;
+    settings.beginGroup(LAYER_DIALOG_WIDGET);
+    settings.setValue(GEOMETRY, saveGeometry());
+    settings.setValue(VISIBLE, isVisible());
+    settings.endGroup();
+}
+
 void LayerDialogWidget::updateLayerProperties() {
     const auto & currentIndex = treeView.selectionModel()->currentIndex();
     if (currentIndex.isValid()) {

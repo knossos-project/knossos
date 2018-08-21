@@ -1196,14 +1196,15 @@ void MainWindow::saveSettings() {
 
     settings.endGroup();
 
-    widgetContainer.datasetLoadWidget.saveSettings();
-    widgetContainer.zoomWidget.saveSettings();
-    widgetContainer.preferencesWidget.saveSettings();
     widgetContainer.annotationWidget.saveSettings();
-    widgetContainer.pythonPropertyWidget.saveSettings();
+    widgetContainer.datasetLoadWidget.saveSettings();
+    widgetContainer.layerDialogWidget.saveSettings();
+    widgetContainer.preferencesWidget.saveSettings();
     widgetContainer.pythonInterpreterWidget.saveSettings();
+    widgetContainer.pythonPropertyWidget.saveSettings();
     widgetContainer.snapshotWidget.saveSettings();
     widgetContainer.taskManagementWidget.taskLoginWidget.saveSettings();
+    widgetContainer.zoomWidget.saveSettings();
 }
 
 void MainWindow::loadSettings() {
@@ -1235,6 +1236,7 @@ void MainWindow::loadSettings() {
     settings.endGroup();
 
     widgetContainer.annotationWidget.loadSettings();
+    widgetContainer.layerDialogWidget.loadSettings();
     widgetContainer.preferencesWidget.loadSettings();
     widgetContainer.datasetLoadWidget.loadSettings();
     widgetContainer.zoomWidget.loadSettings();

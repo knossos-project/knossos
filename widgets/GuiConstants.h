@@ -31,13 +31,13 @@ const QString ANNOTATION_WIDGET = "tools_widget";
 const QString COMMENTS_TAB = "comments_tab";
 const QString DATASET_WIDGET = "dataset_widget";
 const QString HEIDELBRAIN_INTEGRATION = "heidelbrain_integration";
+const QString LAYER_DIALOG_WIDGET = "layer_dialog_widget";
 const QString MAIN_WINDOW = "main_window";
 const QString PREFERENCES_WIDGET = "preferences_widget";
 const QString PYTHON_PROPERTY_WIDGET = "pythonpropertywidget";
 const QString SNAPSHOT_WIDGET = "snapshot_widget";
 const QString VIEWER = "viewer";
 const QString ZOOM_WIDGET = "zoom_and_multires_widget";
-const QString LAYER_DIALOG_WIDGET = "layer_dialog_widget";
 
 // General attributes appropriate for most widgets
 const QString GEOMETRY = "geometry";
