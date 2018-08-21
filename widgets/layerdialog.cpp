@@ -79,6 +79,12 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 }
 
+void reloadLayers() {
+    Loader::Controller::singleton().restart(Dataset::datasets);
+    state->viewer->updateDatasetMag();// clear vps and notify loader
+    emit state->mainWindow->widgetContainer.datasetLoadWidget.datasetChanged();// HACK
+}
+
 bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, int role) {
     if(index.isValid()) {
         auto& layerSettings = state->viewerState->layerRenderSettings[ordered_i(index.row())];
@@ -93,7 +99,12 @@ bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, in
             }
         } else if(role == Qt::CheckStateRole) {
             if(index.column() == 0) {
-                layerSettings.visible = value.toBool();
+                auto & layer = Dataset::datasets[ordered_i(index.row())];
+                layer.allocationEnabled = layer.loadingEnabled = layerSettings.visible = value.toBool();
+                Segmentation::singleton().enabled = std::count_if(std::begin(Dataset::datasets), std::end(Dataset::datasets), [](const auto & dataset){
+                    return dataset.loadingEnabled && dataset.isOverlay();
+                });
+                reloadLayers();
             }
         }
     }
@@ -149,7 +160,6 @@ Qt::ItemFlags LayerItemModel::flags(const QModelIndex &index) const {
     return nullptr;
 }
 
-
 LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(PREFERENCES_WIDGET, parent) {
     setWindowTitle("Layers");
 
@@ -202,9 +212,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     QObject::connect(&removeLayerButton, &QToolButton::clicked, [this](){
         for (const auto & mindex : treeView.selectionModel()->selectedRows()) {
             Dataset::datasets.erase(std::next(std::begin(Dataset::datasets), itemModel.ordered_i(mindex.row())));
-            Loader::Controller::singleton().restart(Dataset::datasets);
-            state->viewer->updateDatasetMag();// clear vps and notify loader
-            emit state->mainWindow->widgetContainer.datasetLoadWidget.datasetChanged();// HACK
+            reloadLayers();
         }
     });
 
