@@ -257,14 +257,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         }
     });
 
-    QObject::connect(state->viewer, &Viewer::layerSettingsChanged, [this]() {
-        const auto& currentIndex = treeView.selectionModel()->currentIndex();
-        if(currentIndex.isValid()) {
-            std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
-            auto& layerSettings = state->viewerState->layerRenderSettings[ordered_index];
-            linearFilteringCheckBox.setCheckState((layerSettings.textureFilter == QOpenGLTexture::Linear) ? Qt::Checked : Qt::Unchecked);
-        }
-    });
+    QObject::connect(state->viewer, &Viewer::layerSettingsChanged, this, &LayerDialogWidget::updateLayerProperties);
 
     QObject::connect(treeView.selectionModel(), &QItemSelectionModel::selectionChanged, this, &LayerDialogWidget::updateLayerProperties);
     QObject::connect(&itemModel, &QAbstractItemModel::dataChanged, this, &LayerDialogWidget::updateLayerProperties);
