@@ -51,26 +51,7 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
             case 1: return QString::number(layerSettings.opacity * 100.0f) + (role == Qt::EditRole ? "" : "%");
             case 2: return layerSettings.layerName;
             case 3:
-                switch(data.type) {
-                case Dataset::CubeType::RAW_UNCOMPRESSED:
-                    return "RAW_UNCOMPRESSED";
-                case Dataset::CubeType::RAW_JPG:
-                    return "RAW_JPG";
-                case Dataset::CubeType::RAW_J2K:
-                    return "RAW_J2K";
-                case Dataset::CubeType::RAW_JP2_6:
-                    return "RAW_JP2_6";
-                case Dataset::CubeType::RAW_PNG:
-                    return "RAW_PNG";
-                case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_16:
-                    return "SEGMENTATION_UNCOMPRESSED_16";
-                case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64:
-                    return "SEGMENTATION_UNCOMPRESSED_64";
-                case Dataset::CubeType::SEGMENTATION_SZ_ZIP:
-                    return "SEGMENTATION_SZ_ZIP";
-                case Dataset::CubeType::SNAPPY:
-                    return "SNAPPY";
-                }
+                return data.compressionString();
             case 4:
                 switch(data.api) {
                 case Dataset::API::Heidelbrain:
