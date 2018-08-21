@@ -250,7 +250,10 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         if(currentIndex.isValid()) {
             std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
             auto& layerSettings = state->viewerState->layerRenderSettings[ordered_index];
-            layerSettings.linearFiltering = (checkstate == Qt::Checked) ? true : false;
+            layerSettings.textureFilter = (checkstate == Qt::Checked) ? QOpenGLTexture::Linear : QOpenGLTexture::Nearest;
+            state->mainWindow->forEachOrthoVPDo([&](ViewportOrtho & orthoVP){
+                orthoVP.applyTextureFilter();
+            });
         }
     });
 
@@ -259,7 +262,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         if(currentIndex.isValid()) {
             std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
             auto& layerSettings = state->viewerState->layerRenderSettings[ordered_index];
-            linearFilteringCheckBox.setCheckState((layerSettings.linearFiltering) ? Qt::Checked : Qt::Unchecked);
+            linearFilteringCheckBox.setCheckState((layerSettings.textureFilter == QOpenGLTexture::Linear) ? Qt::Checked : Qt::Unchecked);
         }
     });
 
@@ -282,6 +285,6 @@ void LayerDialogWidget::updateLayerProperties() {
         opacitySlider.setValue(static_cast<int>(layerSettings.opacity * opacitySlider.maximum()));
         rangeDeltaSlider.setValue(static_cast<int>(layerSettings.rangeDelta * rangeDeltaSlider.maximum()));
         biasSlider.setValue(static_cast<int>(layerSettings.bias * biasSlider.maximum()));
-        linearFilteringCheckBox.setChecked(layerSettings.linearFiltering);
+        linearFilteringCheckBox.setChecked(layerSettings.textureFilter == QOpenGLTexture::Linear);
     }
 }

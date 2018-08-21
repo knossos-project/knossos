@@ -962,16 +962,16 @@ void Viewer::run() {
 
 void Viewer::applyTextureFilterSetting(const QOpenGLTexture::Filter texFiltering) {
     viewerState.textureFilter = texFiltering;
-    window->forEachOrthoVPDo([texFiltering](ViewportOrtho & orthoVP) {
-        orthoVP.setTextureFilter(texFiltering);
-    });
-    for(auto& setting : viewerState.layerRenderSettings) {
-        if(texFiltering == QOpenGLTexture::Filter::Nearest) {
-            setting.linearFiltering = false;
-        } else {
-            setting.linearFiltering = true;
+    for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
+        if (!Dataset::datasets[layerId].isOverlay()) {
+            viewerState.layerRenderSettings[layerId].textureFilter = texFiltering;
+        } else {// overlay should have sharp edges by default
+            viewerState.layerRenderSettings[layerId].textureFilter = QOpenGLTexture::Nearest;
         }
     }
+    window->forEachOrthoVPDo([](ViewportOrtho & orthoVP) {
+        orthoVP.applyTextureFilter();
+    });
     emit layerSettingsChanged();
 }
 

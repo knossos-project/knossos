@@ -76,7 +76,7 @@ public:
     explicit ViewportOrtho(QWidget *parent, ViewportType viewportType);
     virtual ~ViewportOrtho() override;
     void resetTexture(const std::size_t layerCount);
-    void setTextureFilter(const QOpenGLTexture::Filter textureFilter);
+    void applyTextureFilter();
     void setTextureFilter(std::size_t layerId, const QOpenGLTexture::Filter textureFilter);
     static bool showNodeComments;
 

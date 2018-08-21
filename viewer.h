@@ -92,9 +92,9 @@ struct LayerRenderSettings {
     QString layerName{"unnamed"};
     bool visible{true};
     float opacity{1.0f};
-    float rangeDelta;
-    float bias;
-    bool linearFiltering;
+    float rangeDelta{1.f};
+    float bias{0.f};
+    QOpenGLTexture::Filter textureFilter;
 };
 
 struct ViewerState {

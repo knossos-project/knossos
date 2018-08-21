@@ -34,6 +34,8 @@
 #include <QMessageBox>
 
 DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(parent) {
+    datasetLinearFilteringCheckBox.setToolTip("Sets linear filtering for all non overlay layers \nand resets to nearest filtering for all overlay layers.");
+
     biasSpinBox.setRange(0, 255);
     biasSlider.setRange(0, 255);
 
@@ -79,11 +81,7 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     setLayout(&mainLayout);
 
     QObject::connect(&datasetLinearFilteringCheckBox, &QCheckBox::clicked, [](const bool checked) {
-        if (checked) {
-            state->viewer->applyTextureFilterSetting(QOpenGLTexture::Linear);
-        } else {
-            state->viewer->applyTextureFilterSetting(QOpenGLTexture::Nearest);
-        }
+        state->viewer->applyTextureFilterSetting(checked ? QOpenGLTexture::Linear : QOpenGLTexture::Nearest);
     });
     QObject::connect(&useOwnDatasetColorsCheckBox, &QCheckBox::clicked, [this](const bool checked) {
         if (checked) {//load file if none is cached
