@@ -98,7 +98,6 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
 
 bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, int role) {
     if(index.isValid()) {
-        auto& data = Dataset::datasets[ordered_i(index.row())];
         auto& layerSettings = state->viewerState->layerRenderSettings[ordered_i(index.row())];
         if (role == Qt::EditRole) {
             switch(index.column()) {
@@ -192,20 +191,14 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     treeView.setModel(&itemModel);
     treeView.resizeColumnToContents(0);
     treeView.resizeColumnToContents(1);
-//    treeView.header()->setSectionResizeMode(QHeaderView::Fixed); // can cause some unwanted column sizes that are unresizable
-//    treeView.header()->setSectionsClickable(false);
-//    treeView.header()->setSectionsMovable(false);
     treeView.setRootIsDecorated(false);
     treeView.setUniformRowHeights(true); // for optimization
     treeView.setDragDropMode(QAbstractItemView::InternalMove);
 
-//    addLayerButton.setIcon(QIcon(":/resources/icons/dialog-ok.png"));
-//    removeLayerButton.setIcon(QIcon(":/resources/icons/application-exit.png"));
-
-    addLayerButton.setText("➕");
-    removeLayerButton.setText("➖");
-    moveUpButton.setText("🡅");
-    moveDownButton.setText("🡇");
+    addLayerButton.setText("add");
+    removeLayerButton.setText("remove");
+    moveUpButton.setText("up");
+    moveDownButton.setText("down");
 
     controlButtonLayout.addWidget(&infoTextLabel);
     controlButtonLayout.addWidget(&moveUpButton);
@@ -238,7 +231,6 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if(currentIndex.isValid()) {
             std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
-            auto& selectedData = Dataset::datasets[ordered_index];
             auto& layerSettings = state->viewerState->layerRenderSettings[ordered_index];
             layerSettings.opacity = static_cast<float>(value) / opacitySlider.maximum();
             const auto& changeIndex = currentIndex.sibling(currentIndex.row(), 1); // todo: enum the 1
@@ -250,7 +242,6 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if(currentIndex.isValid()) {;
             std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
-            auto& data = Dataset::datasets[ordered_index];
             auto& layerSettings = state->viewerState->layerRenderSettings[ordered_index];
             layerSettings.rangeDelta = static_cast<float>(value) / rangeDeltaSlider.maximum();
         }
@@ -260,7 +251,6 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if(currentIndex.isValid()) {
             std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
-            auto& data = Dataset::datasets[ordered_index];
             auto& layerSettings = state->viewerState->layerRenderSettings[ordered_index];
             layerSettings.bias = static_cast<float>(value) / biasSlider.maximum();
         }
