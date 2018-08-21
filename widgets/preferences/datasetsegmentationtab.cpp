@@ -92,22 +92,22 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     });
     QObject::connect(&useOwnDatasetColorsButton, &QPushButton::clicked, [this](){ useOwnDatasetColorsButtonClicked(); });
     QObject::connect(&biasSlider, &QSlider::valueChanged, [this](const int value) {
-        state->viewerState->luminanceBias = value;
+        state->viewerState->luminanceBias = static_cast<double>(value) / biasSpinBox.maximum();
         biasSpinBox.setValue(value);
         state->viewer->datasetColorAdjustmentsChanged();
     });
     QObject::connect(&biasSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](const int value) {
-        state->viewerState->luminanceBias = value;
+        state->viewerState->luminanceBias = static_cast<double>(value) / biasSlider.maximum();
         biasSlider.setValue(value);
         state->viewer->datasetColorAdjustmentsChanged();
     });
     QObject::connect(&rangeDeltaSlider, &QSlider::valueChanged, [this](const int value) {
-        state->viewerState->luminanceRangeDelta = value;
+        state->viewerState->luminanceRangeDelta = static_cast<double>(value) / rangeDeltaSpinBox.maximum();
         rangeDeltaSpinBox.setValue(value);
         state->viewer->datasetColorAdjustmentsChanged();
     });
     QObject::connect(&rangeDeltaSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](const int value) {
-        state->viewerState->luminanceRangeDelta = value;
+        state->viewerState->luminanceRangeDelta = static_cast<double>(value) / rangeDeltaSlider.maximum();
         rangeDeltaSlider.setValue(value);
         state->viewer->datasetColorAdjustmentsChanged();
     });

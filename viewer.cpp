@@ -251,7 +251,18 @@ void Viewer::setMagnificationLock(const bool locked) {
     emit magnificationLockChanged(locked);
 }
 
-void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, bool useCustomLUT) {
+const auto datasetAdjustment = [](auto layerId, auto index){
+    if (state->viewerState->datasetColortableOn) {
+        return state->viewerState->datasetColortable[index];
+    } else {
+        const auto MAX_COLORVAL{std::numeric_limits<uint8_t>::max()};
+        int dynIndex = ((index - state->viewerState->layerRenderSettings[layerId].bias * 255) / (state->viewerState->layerRenderSettings[layerId].rangeDelta));
+        std::uint8_t val = std::min(static_cast<int>(MAX_COLORVAL), std::max(0, dynIndex));
+        return std::tuple(val, val, val);
+    }
+};
+
+void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, std::size_t layerId) {
     const auto & session = Session::singleton();
     const Coordinate areaMinCoord = {session.movementAreaMin.x,
                                      session.movementAreaMin.y,
@@ -274,15 +285,12 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
 
     int offsetX = 0, offsetY = 0;
     const int coordsPerLine = cubeEdgeLen * Dataset::current().magnification;
+    const auto useCustomLUT = state->viewerState->layerRenderSettings[layerId].bias > 0 || state->viewerState->layerRenderSettings[layerId].rangeDelta < std::numeric_limits<uint8_t>::max();
     for (auto y = cubeEdgeLen; y != 0; --y) {
         for (auto x = cubeEdgeLen; x != 0; --x) {// x and y’s values are not used
             uint8_t r, g, b;
-            if(useCustomLUT) {
-                //extract data as unsigned number from the datacube
-                const uint8_t adjustIndex = datacube[0];
-                r = std::get<0>(state->viewerState->datasetAdjustmentTable[adjustIndex]);
-                g = std::get<1>(state->viewerState->datasetAdjustmentTable[adjustIndex]);
-                b = std::get<2>(state->viewerState->datasetAdjustmentTable[adjustIndex]);
+            if (useCustomLUT) {
+                std::tie(r, g, b) = datasetAdjustment(layerId, datacube[0]);
             } else {
                 r = g = b = datacube[0];
             }
@@ -318,7 +326,7 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
     }
 }
 
-void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxInDc_float, std::uint8_t * slice, int s, int *t, const floatCoordinate & v2, bool useCustomLUT, float usedSizeInCubePixels) {
+void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxInDc_float, std::uint8_t * slice, int s, int *t, const floatCoordinate & v2, std::size_t layerId, float usedSizeInCubePixels) {
     Coordinate currentPxInDc = {roundFloat(currentPxInDc_float->x), roundFloat(currentPxInDc_float->y), roundFloat(currentPxInDc_float->z)};
     const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
     if((currentPxInDc.x < 0) || (currentPxInDc.y < 0) || (currentPxInDc.z < 0) ||
@@ -346,12 +354,8 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxI
         if(datacube == nullptr) {
             slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = 0;
         } else {
-            if(useCustomLUT) {
-                //extract data as unsigned number from the datacube
-                const unsigned char adjustIndex = datacube[dcIndex];
-                slice[sliceIndex + 0] = std::get<0>(state->viewerState->datasetAdjustmentTable[adjustIndex]);
-                slice[sliceIndex + 1] = std::get<1>(state->viewerState->datasetAdjustmentTable[adjustIndex]);
-                slice[sliceIndex + 2] = std::get<2>(state->viewerState->datasetAdjustmentTable[adjustIndex]);
+            if (layerId) {
+                std::tie(slice[sliceIndex + 0], slice[sliceIndex + 1], slice[sliceIndex + 2]) = datasetAdjustment(layerId, datacube[dcIndex]);
             }
             else {
                 slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = datacube[dcIndex];
@@ -571,7 +575,7 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
                     if (Dataset::datasets[layerId].isOverlay()) {
                         ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp);
                     } else {
-                        dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp, state->viewerState->datasetAdjustmentOn);
+                        dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp, layerId);
                     }
                 } else {
                     for (int y = y_px; y < y_px + cubeEdgeLen; ++y) {
@@ -740,12 +744,7 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
             currentPxInDc_float = currentPx_float - currentDc * Dataset::current().cubeEdgeLength;
             t_old = t;
 
-            dcSliceExtract(reinterpret_cast<std::uint8_t *>(datacube),
-                           &currentPxInDc_float,
-                           texData.data(),
-                           s, &t,
-                           vp.v2,
-                           state->viewerState->datasetAdjustmentOn, vp.texture.usedSizeInCubePixels);
+            dcSliceExtract(reinterpret_cast<std::uint8_t *>(datacube), &currentPxInDc_float, texData.data(), s, &t, vp.v2, layerId, vp.texture.usedSizeInCubePixels);
             currentPx_float = currentPx_float - vp.v2 * (t - t_old);
         }
         s++;
@@ -1200,27 +1199,12 @@ void Viewer::loadDatasetLUT(const QString & path) {
 }
 
 void Viewer::datasetColorAdjustmentsChanged() {
-    if (state->viewerState->datasetColortableOn) {
-        state->viewerState->datasetAdjustmentTable = state->viewerState->datasetColortable;
-    } else {
-        state->viewerState->datasetAdjustmentTable.resize(256);
-        for (std::size_t i = 0; i < state->viewerState->datasetAdjustmentTable.size(); ++i) {//identity adjustment
-            state->viewerState->datasetAdjustmentTable[i] = std::make_tuple(i, i, i);
-        }
+    for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
+        viewerState.layerRenderSettings[layerId].rangeDelta = state->viewerState->luminanceRangeDelta;
+        viewerState.layerRenderSettings[layerId].bias = state->viewerState->luminanceBias;
     }
-    //Apply the dynamic range settings to the adjustment table
-    const uint MAX_COLORVAL{255};
-    if (state->viewerState->luminanceBias > 0 || state->viewerState->luminanceRangeDelta < MAX_COLORVAL) {
-        const auto originalAdjustment = state->viewerState->datasetAdjustmentTable;
-        for (std::size_t i = 0; i < 256; ++i) {
-            int dynIndex = ((i - state->viewerState->luminanceBias) / (state->viewerState->luminanceRangeDelta / static_cast<double>(MAX_COLORVAL)));
-            dynIndex = std::min(static_cast<int>(MAX_COLORVAL), std::max(0, dynIndex));
-            state->viewerState->datasetAdjustmentTable[i] = originalAdjustment[dynIndex];
-        }
-    }
-    state->viewerState->datasetAdjustmentOn = state->viewerState->datasetColortableOn || state->viewerState->luminanceBias > 0 || state->viewerState->luminanceRangeDelta < MAX_COLORVAL;
-
-    reslice_notify(0);// FIXME
+    reslice_notify();
+    emit layerSettingsChanged();
 }
 
 /** Global interfaces  */

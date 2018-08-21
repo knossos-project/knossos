@@ -91,9 +91,9 @@ struct GLBuffers {
 struct LayerRenderSettings {
     QString layerName{"unnamed"};
     bool visible{true};
-    float opacity{1.0f};
-    float rangeDelta{1.f};
-    float bias{0.f};
+    double opacity{1.0};
+    double rangeDelta{1.};
+    double bias{0.};
     QOpenGLTexture::Filter textureFilter;
 };
 
@@ -143,13 +143,11 @@ struct ViewerState {
     float outsideMovementAreaFactor{80.f};
 
     // dataset & segmentation rendering options
-    uint luminanceRangeDelta{255};
-    int luminanceBias{0};
+    double luminanceRangeDelta{1.};
+    double luminanceBias{0.};
     bool showOnlyRawData{false};
     std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> datasetColortable;//user LUT
-    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> datasetAdjustmentTable;//final LUT used during slicing
     bool datasetColortableOn{false};
-    bool datasetAdjustmentOn{false};
     // skeleton rendering options
     float depthCutOff{5.f};
     QFlags<TreeDisplay> skeletonDisplayVP3D{TreeDisplay::ShowIn3DVP};
@@ -214,8 +212,8 @@ private:
 
     void vpGenerateTexture(ViewportArb & vp, const std::size_t layerId);
 
-    void dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, bool useCustomLUT);
-    void dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxInDc_float, std::uint8_t * slice, int s, int *t, const floatCoordinate & v2, bool useCustomLUT, float usedSizeInCubePixels);
+    void dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, std::size_t layerId);
+    void dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxInDc_float, std::uint8_t * slice, int s, int *t, const floatCoordinate & v2, std::size_t layerId, float usedSizeInCubePixels);
 
     void ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp);
 

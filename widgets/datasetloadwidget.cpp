@@ -355,6 +355,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         state->viewer->setPosition({Dataset::current().boundary / 2});
     }
     state->viewer->applyTextureFilterSetting(state->viewerState->textureFilter);// set filter for all layers
+    state->viewer->datasetColorAdjustmentsChanged();// set range delta and bias for all layers
     state->viewer->updateDatasetMag();// clear vps and notify loader
 
     emit datasetChanged();

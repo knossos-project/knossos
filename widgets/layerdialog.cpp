@@ -233,6 +233,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
             std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
             auto& layerSettings = state->viewerState->layerRenderSettings[ordered_index];
             layerSettings.rangeDelta = static_cast<float>(value) / rangeDeltaSlider.maximum();
+            state->viewer->reslice_notify(ordered_index);
         }
     });
 
@@ -242,6 +243,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
             std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
             auto& layerSettings = state->viewerState->layerRenderSettings[ordered_index];
             layerSettings.bias = static_cast<float>(value) / biasSlider.maximum();
+            state->viewer->reslice_notify(ordered_index);
         }
     });
 
