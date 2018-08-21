@@ -65,7 +65,6 @@ public:
     QTreeView treeView;
 
     QHBoxLayout controlButtonLayout;
-    QLabel infoTextLabel{"Hint: use layers to have layers."};
     QToolButton moveUpButton;
     QToolButton moveDownButton;
     QToolButton addLayerButton;

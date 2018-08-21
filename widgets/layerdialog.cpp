@@ -1,11 +1,13 @@
 #include "layerdialog.h"
 
-#include <QHeaderView>
 #include "dataset.h"
+#include "loader.h"
 #include "mainwindow.h"
-#include "stateInfo.h"
 #include "network.h"
+#include "stateInfo.h"
 #include "viewer.h"
+
+#include <QHeaderView>
 
 std::size_t LayerItemModel::ordered_i(std::size_t index) const {
     return state->viewerState->layerOrder[index];
@@ -196,11 +198,12 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     treeView.setDragDropMode(QAbstractItemView::InternalMove);
 
     addLayerButton.setText("add");
+    addLayerButton.setEnabled(false);
     removeLayerButton.setText("remove");
     moveUpButton.setText("up");
     moveDownButton.setText("down");
 
-    controlButtonLayout.addWidget(&infoTextLabel);
+    controlButtonLayout.addStretch();
     controlButtonLayout.addWidget(&moveUpButton);
     controlButtonLayout.addWidget(&moveDownButton);
     controlButtonLayout.addWidget(&addLayerButton);
@@ -216,7 +219,12 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     });
 
     QObject::connect(&removeLayerButton, &QToolButton::clicked, [this](){
-        itemModel.removeItem(treeView.selectionModel()->currentIndex());
+        for (const auto & mindex : treeView.selectionModel()->selectedRows()) {
+            Dataset::datasets.erase(std::next(std::begin(Dataset::datasets), itemModel.ordered_i(mindex.row())));
+            Loader::Controller::singleton().restart(Dataset::datasets);
+            state->viewer->updateDatasetMag();// clear vps and notify loader
+            emit state->mainWindow->widgetContainer.datasetLoadWidget.datasetChanged();// HACK
+        }
     });
 
     QObject::connect(&moveUpButton, &QToolButton::clicked, [this](){
