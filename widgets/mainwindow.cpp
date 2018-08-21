@@ -354,10 +354,11 @@ void MainWindow::createToolbars() {
     };
     createToolToggleButton(widgetContainer.preferencesWidget, ":/resources/icons/preferences.png", "Preferences");
     defaultToolbar.addSeparator();
-    createToolToggleButton(widgetContainer.taskManagementWidget, ":/resources/icons/tasks-management.png", "Task Management");
+    createToolToggleButton(widgetContainer.layerDialogWidget, ":/resources/icons/layers.png", "Layers");
     createToolToggleButton(widgetContainer.annotationWidget, ":/resources/icons/annotation.png", "Annotation");
     createToolToggleButton(widgetContainer.zoomWidget, ":/resources/icons/zoom.png", "Zoom");
     createToolToggleButton(widgetContainer.snapshotWidget, ":/resources/icons/snapshot.png", "Snapshot");
+    createToolToggleButton(widgetContainer.taskManagementWidget, ":/resources/icons/tasks-management.png", "Task Management");
     defaultToolbar.addSeparator();
     createToolToggleButton(widgetContainer.pythonInterpreterWidget, ":/resources/icons/python.png", "Python Interpreter");
 
@@ -375,8 +376,6 @@ void MainWindow::createToolbars() {
     loaderProgress->setFixedWidth(25);
     loaderProgress->setAlignment(Qt::AlignCenter);
     QObject::connect(&Loader::Controller::singleton(), &Loader::Controller::progress, this, &MainWindow::updateLoaderProgress);
-
-    createToolToggleButton(widgetContainer.layerDialogWidget, ":/resources/icons/preferences.png", "Layers");
 
     // segmentation task mode toolbar
     auto prevBtn = new QPushButton("< Last");
