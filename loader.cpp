@@ -574,7 +574,11 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 request.setPriority(QNetworkRequest::HighPriority);
             }
             auto * reply = [&]{
-                if (api == Dataset::API::WebKnossos) {
+                if (api == Dataset::API::GoogleBrainmaps) {
+                    const QString json(R"json({"geometry":{"corner":"%1,%2,%3", "size":"%4,%4,%4", "scale":%5}, "subvolume_format":"SINGLE_IMAGE", "image_format_options":{"image_format":"JPEG", "jpeg_quality":70}})json");
+                    data = json.arg(globalCoord.x).arg(globalCoord.y).arg(globalCoord.z).arg(state->cubeEdgeLength).arg(loaderMagnification).toUtf8();
+                }
+                if (api == Dataset::API::WebKnossos || api == Dataset::API::GoogleBrainmaps) {
                     request.setRawHeader("Content-Type", "application/octet-stream");
                     return qnam.post(request, data);
                 } else {

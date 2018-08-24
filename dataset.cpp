@@ -342,7 +342,7 @@ QUrl webKnossosCubeUrl(QUrl base, const int cubeEdgeLength, const Dataset::CubeT
 QNetworkRequest Dataset::apiSwitch(const API api, const QUrl & baseUrl, const Coordinate globalCoord, const int scale, const int cubeedgelength, const CubeType type) {
     switch (api) {
     case API::GoogleBrainmaps: {
-        QNetworkRequest request{googleCubeUrl(baseUrl, globalCoord, scale, cubeedgelength, type)};
+        QNetworkRequest request{baseUrl.toString() + "/subvolume:binary"};
         request.setRawHeader("Authorization", (QString("Bearer ") + Dataset::token).toUtf8());
         return request;
     }

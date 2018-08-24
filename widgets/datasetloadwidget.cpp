@@ -293,7 +293,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         };
 
         const auto datasets = blockDownloadExtractData(*Network::singleton().manager.get(googleRequest(
-                    QUrl("https://brainmaps.googleapis.com/v1beta2/volumes"))));
+                    QUrl("https://brainmaps.googleapis.com/v1/volumes"))));
         qDebug() << datasets.second;
 
         auto & reply = *Network::singleton().manager.get(googleRequest(path));
