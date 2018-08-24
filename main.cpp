@@ -103,12 +103,6 @@ Q_DECLARE_METATYPE(std::string)
 #include "skeleton/NeuroLucida.h"
 
 int main(int argc, char *argv[]) {
-//    parseNeuroLucida(QFile{"C:/k_mesh_test/12042017 Slice 5 thinned.ASC"});
-//    parseNeuroLucida(QFile{"C:/k_mesh_test/12042017 Slice 5.ASC"});
-//    parseNeuroLucida(QFile{"C:/k_mesh_test/01232018 slice 6 thinned.ASC"});
-    parseNeuroLucida(QFile{"C:/k_mesh_test/01232018 slice 6.ASC"});
-    exit(0);
-
     QtConcurrent::run([](){ QSslSocket::supportsSsl(); });// workaround until https://bugreports.qt.io/browse/QTBUG-59750
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);// explicitly enable sharing for undocked viewports
 #ifdef Q_OS_OSX
@@ -164,5 +158,11 @@ int main(int argc, char *argv[]) {
     // ensure killed QNAM’s before QNetwork deinitializes
     std::unique_ptr<Loader::Controller> loader_deleter{&Loader::Controller::singleton()};
     std::unique_ptr<Network> network_deleter{&Network::singleton()};
+
+//    parseNeuroLucida(QFile{"C:/k_mesh_test/12042017 Slice 5 thinned.ASC"});
+    parseNeuroLucida(QFile{"C:/k_mesh_test/12042017 Slice 5.ASC"});
+//    parseNeuroLucida(QFile{"C:/k_mesh_test/01232018 slice 6 thinned.ASC"});
+//    parseNeuroLucida(QFile{"C:/k_mesh_test/01232018 slice 6.ASC"});
+
     return app.exec();
 }
