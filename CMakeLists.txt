@@ -85,6 +85,8 @@ endif()
 
 set(pythonqt Qt5Python27 CACHE STRING "PythonQt flavour to search for")
 find_package(Boost 1.50 REQUIRED) # 1.50 added hash_value of std::tuple for Coordinate hash specialization
+find_package(gflags COMPONENTS static) # because gflags config is shit for transitive deps
+find_package(glog REQUIRED)
 find_package(OpenGL REQUIRED COMPONENTS OpenGL) # GLU
 find_package(${pythonqt} REQUIRED)
 find_package(Snappy REQUIRED)
@@ -176,7 +178,10 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     message(STATUS "using gold linker")
     set(LINUXLINKER -fuse-ld=gold)
 endif()
-
+target_compile_definitions(${PROJECT_NAME} PRIVATE "-D_WIN32_WINNT=0x0600") # gapi MsvcCondVar InitializeConditionVariable
+set(GAPI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/google-api-cpp-client/build-${CMAKE_BUILD_TYPE}")
+set(GAPI_LIB_DIR "${GAPI_DIR}/lib")
+target_include_directories(${PROJECT_NAME} PRIVATE "${GAPI_DIR}/include")
 target_link_libraries(${PROJECT_NAME}
     Boost::boost
     OpenGL::GLU
@@ -189,8 +194,18 @@ target_link_libraries(${PROJECT_NAME}
     ${pythonqt}
     QuaZip::QuaZip
     Snappy::Snappy
+    ${GAPI_LIB_DIR}/libgoogleapis_oauth2.a
+    crypto
+    ${GAPI_LIB_DIR}/libgoogleapis_http.a
+    ${GAPI_LIB_DIR}/libgoogleapis_utils.a
+    ${GAPI_LIB_DIR}/libgoogleapis_internal.a
+    $<$<OR:$<AND:$<PLATFORM_ID:Windows>,$<CONFIG:Debug>>,$<PLATFORM_ID:Linux>>:jsoncpp>
+    $<$<AND:$<PLATFORM_ID:Windows>,$<CONFIG:Release>>:jsoncpp_static>
+    glog::glog
+    $<$<PLATFORM_ID:Windows>:gflags_static>
     ${LINUXLINKER}
     $<$<PLATFORM_ID:Windows>:-Wl,--dynamicbase># use ASLR, required by the »Windows security features test« for »Windows Desktop App Certification«
+    -Wl,--allow-multiple-definition
 )
 
 find_program(LSBRELEASE lsb_release)
