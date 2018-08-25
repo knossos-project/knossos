@@ -52,19 +52,7 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
             case 2: return layerSettings.layerName;
             case 3:
                 return data.compressionString();
-            case 4:
-                switch(data.api) {
-                case Dataset::API::Heidelbrain:
-                    return "Heidelbrain";
-                case Dataset::API::WebKnossos:
-                    return "WebKnossos";
-                case Dataset::API::GoogleBrainmaps:
-                    return "GoogleBrainmaps";
-                case Dataset::API::PyKnossos:
-                    return "PyKnossos";
-                case Dataset::API::OpenConnectome:
-                    return "OpenConnectome";
-                }
+            case 4: return data.apiString();
             case 5: return data.magnification;
             case 6: return data.cubeEdgeLength;
             case 7: return data.experimentname;

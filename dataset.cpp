@@ -66,6 +66,22 @@ QString Dataset::compressionString() const {
     throw std::runtime_error(QObject::tr("no compressions string for %1").arg(static_cast<int>(type)).toUtf8()); ;
 }
 
+QString Dataset::apiString() const {
+    switch(api) {
+    case Dataset::API::GoogleBrainmaps:
+        return "GoogleBrainmaps";
+    case Dataset::API::Heidelbrain:
+        return "Heidelbrain";
+    case Dataset::API::OpenConnectome:
+        return "OpenConnectome";
+    case Dataset::API::PyKnossos:
+        return "PyKnossos";
+    case Dataset::API::WebKnossos:
+        return "WebKnossos";
+    }
+    throw std::runtime_error(QObject::tr("no api string for %1").arg(static_cast<int>(type)).toUtf8()); ;
+}
+
 bool Dataset::isHeidelbrain(const QUrl & url) {
     return !isNeuroDataStore(url) && !isPyKnossos(url) && !isWebKnossos(url);
 }
