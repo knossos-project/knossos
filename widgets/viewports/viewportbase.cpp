@@ -265,19 +265,21 @@ void ViewportBase::initializeGL() {
     if (oglDebug && oglLogger.initialize()) {
         oglLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
     }
-
-    meshShader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/mesh/meshshader.vert");
-    meshShader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/mesh/meshshader.frag");
-    meshShader.link();
-
-    meshTreeColorShader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/mesh/meshtreecolorshader.vert");
-    meshTreeColorShader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/mesh/meshtreecolorshader.frag");
-    meshTreeColorShader.link();
-
-    auto enabled = meshIdShader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/mesh/meshidshader.vert");
-    enabled = enabled && meshIdShader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/mesh/meshidshader.frag");
-    state->viewerState->MeshPickingEnabled = enabled && meshIdShader.link();
-
+    if (!meshShader.isLinked()) { // only setup shaders once, not on every vp dock/undock
+        meshShader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/mesh/meshshader.vert");
+        meshShader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/mesh/meshshader.frag");
+        meshShader.link();
+    }
+    if (!meshTreeColorShader.isLinked()) {
+        meshTreeColorShader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/mesh/meshtreecolorshader.vert");
+        meshTreeColorShader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/mesh/meshtreecolorshader.frag");
+        meshTreeColorShader.link();
+    }
+    if (!meshIdShader.isLinked()) {
+        auto enabled = meshIdShader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/mesh/meshidshader.vert");
+        enabled = enabled && meshIdShader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/mesh/meshidshader.frag");
+        state->viewerState->MeshPickingEnabled = enabled && meshIdShader.link();
+    }
     for (auto * shader : {&meshShader, &meshTreeColorShader, &meshIdShader}) {
         if (!shader->log().isEmpty()) {
             qDebug() << shader->log();
