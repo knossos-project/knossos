@@ -82,8 +82,12 @@ QString Dataset::apiString() const {
     throw std::runtime_error(QObject::tr("no api string for %1").arg(static_cast<int>(type)).toUtf8()); ;
 }
 
+bool Dataset::isGoogleBrainmaps(const QUrl & url) {
+    return url.toString().contains("google");
+}
+
 bool Dataset::isHeidelbrain(const QUrl & url) {
-    return !isNeuroDataStore(url) && !isPyKnossos(url) && !isWebKnossos(url);
+    return !isGoogleBrainmaps(url) && !isNeuroDataStore(url) && !isPyKnossos(url) && !isWebKnossos(url);
 }
 
 bool Dataset::isNeuroDataStore(const QUrl & url) {
@@ -101,6 +105,8 @@ bool Dataset::isWebKnossos(const QUrl & url) {
 Dataset::list_t Dataset::parse(const QUrl & url, const QString & data) {
     if (Dataset::isWebKnossos(url)) {
         return Dataset::parseWebKnossosJson(url, data);
+    } else if (Dataset::isGoogleBrainmaps(url)) {
+        return Dataset::parseGoogleJson(url, data);
     } else if (Dataset::isNeuroDataStore(url)) {
         return Dataset::parseNeuroDataStoreJson(url, data);
     } else if (Dataset::isPyKnossos(url)) {
@@ -110,7 +116,7 @@ Dataset::list_t Dataset::parse(const QUrl & url, const QString & data) {
     }
 }
 
-Dataset::list_t Dataset::parseGoogleJson(const QString & json_raw) {
+Dataset::list_t Dataset::parseGoogleJson(const QUrl & infoUrl, const QString & json_raw) {
     Dataset info;
     info.api = API::GoogleBrainmaps;
     const auto jmap = QJsonDocument::fromJson(json_raw.toUtf8()).object();
@@ -133,6 +139,8 @@ Dataset::list_t Dataset::parseGoogleJson(const QString & json_raw) {
     info.magnification = info.lowestAvailableMag;
     info.highestAvailableMag = std::pow(2,(jmap["geometry"].toArray().size()-1)); //highest google mag
     info.type = CubeType::RAW_JPG;
+
+    info.url = infoUrl;
 
     return {info};
 }
@@ -404,28 +412,6 @@ QUrl Dataset::knossosCubeUrl(const Coordinate coord) const {
     return base;
 }
 
-QUrl Dataset::googleCubeUrl(const Coordinate coord) const {
-    auto path = url.path() + "/binary/subvolume";
-
-    if (type == Dataset::CubeType::RAW_UNCOMPRESSED) {
-        path += "/format=raw";
-    } else if (type == Dataset::CubeType::RAW_JPG) {
-        path += "/format=singleimage";
-    }
-    path += "/scale=" + QString::number(static_cast<std::size_t>(std::log2(magnification)));// >= 0
-    path += "/size=" + QString("%1,%1,%1").arg(cubeEdgeLength);// <= 128³
-    path += "/corner=" + QString("%1,%2,%3").arg(coord.x).arg(coord.y).arg(coord.z);
-
-    auto query = QUrlQuery(url);
-    query.addQueryItem("alt", "media");
-
-    auto base = url;
-    base.setPath(path);
-    base.setQuery(query);
-    //<volume_id>/binary/subvolume/corner=5376,5504,2944/size=64,64,64/scale=0/format=singleimage?access_token=<oauth2_token>
-    return base;
-}
-
 QUrl Dataset::openConnectomeCubeUrl(Coordinate coord) const {
     auto path = url.path();
 
@@ -444,12 +430,15 @@ QUrl Dataset::openConnectomeCubeUrl(Coordinate coord) const {
     return base;
 }
 
-QUrl Dataset::apiSwitch(const Coordinate globalCoord) const {
+QNetworkRequest Dataset::apiSwitch(const Coordinate globalCoord) const {
     switch (api) {
-    case API::GoogleBrainmaps:
-        return googleCubeUrl(globalCoord);
+    case API::GoogleBrainmaps: {
+        QNetworkRequest request{url.toString() + "/subvolume:binary"};
+        request.setRawHeader("Authorization", (QString("Bearer ") + token).toUtf8());
+        return request;
+    }
     case API::Heidelbrain:
-        return knossosCubeUrl(globalCoord);
+        return QNetworkRequest{knossosCubeUrl(globalCoord)};
     case API::PyKnossos: {
         auto url = knossosCubeUrl(globalCoord);
         auto path = url.path();
@@ -458,12 +447,12 @@ QUrl Dataset::apiSwitch(const Coordinate globalCoord) const {
             path.replace(QRegularExpression("\\.[^.]*$"), fileextension);
         }
         url.setPath(path);
-        return url;
+        return QNetworkRequest{url};
     }
     case API::OpenConnectome:
-        return openConnectomeCubeUrl(globalCoord);
+        return QNetworkRequest{openConnectomeCubeUrl(globalCoord)};
     case API::WebKnossos:
-        return url;
+        return QNetworkRequest{url};
     }
     throw std::runtime_error("unknown value for Dataset::API");
 }

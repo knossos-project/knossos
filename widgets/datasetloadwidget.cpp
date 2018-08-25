@@ -22,6 +22,7 @@
 
 #include "datasetloadwidget.h"
 
+#include "brainmaps.h"
 #include "dataset.h"
 #include "GuiConstants.h"
 #include "loader.h"
@@ -251,7 +252,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         path = datasetUrl;
     }
     const auto download = Network::singleton().refresh(path);
-    if (!download.first) {
+    if (!Dataset::isGoogleBrainmaps(path) && !download.first) {
         if (!silent) {
             QMessageBox warning{QApplication::activeWindow()};
             warning.setIcon(QMessageBox::Warning);
@@ -279,8 +280,39 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         }
         keepAnnotation = question.clickedButton() == keepButton;
     }
+    auto data = download.second;
 
-    auto layers = Dataset::parse(path, download.second);
+    QString token;
+    if (Dataset::isGoogleBrainmaps(path)) {
+        const auto pair = getBrainmapsToken();
+        if (!pair.first) {
+            qDebug() << "getBrainmapsToken failed";
+            return false;
+        }
+        token = pair.second;
+
+        auto googleRequest = [&token](auto path){
+            QNetworkRequest request(path);
+            request.setRawHeader("Authorization", (QString("Bearer ") + token).toUtf8());
+            return request;
+        };
+
+        auto * reply = Network::singleton().manager.get(googleRequest(QUrl("https://brainmaps.googleapis.com/v1/volumes")));
+        const auto datasets = blockDownloadExtractData(*reply);
+        qDebug() << datasets.second;
+
+        reply = Network::singleton().manager.get(googleRequest(path));
+        const auto config = blockDownloadExtractData(*reply);
+
+        if (config.first) {
+            data = config.second;
+        } else {
+            qDebug() << "download failed";
+            return false;
+        }
+    }
+
+    auto layers = Dataset::parse(path, data);
     if (Dataset::isHeidelbrain(path)) {
         try {
             layers.front().checkMagnifications();
@@ -299,6 +331,10 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
             }
             qDebug() << "no mags";
             return false;
+        }
+    } else if (Dataset::isGoogleBrainmaps(path)) {
+        for (auto & layer : layers) {
+            layer.token = token;
         }
     }
 

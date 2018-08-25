@@ -25,6 +25,7 @@
 
 #include "coordinate.h"
 
+#include <QNetworkRequest>
 #include <QString>
 #include <QUrl>
 
@@ -41,13 +42,14 @@ struct Dataset {
     QString compressionString() const;
     QString apiString() const;
 
+    static bool isGoogleBrainmaps(const QUrl & url);
     static bool isHeidelbrain(const QUrl & url);
     static bool isNeuroDataStore(const QUrl & url);
     static bool isPyKnossos(const QUrl & url);
     static bool isWebKnossos(const QUrl & url);
 
     static list_t parse(const QUrl & url, const QString &data);
-    static list_t parseGoogleJson(const QString & json_raw);
+    static list_t parseGoogleJson(const QUrl & infoUrl, const QString & json_raw);
     static list_t parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw);
     static list_t parsePyKnossosConf(const QUrl & configUrl, QString config);
     static list_t parseWebKnossosJson(const QUrl &infoUrl, const QString & json_raw);
@@ -55,9 +57,8 @@ struct Dataset {
     void checkMagnifications();
     Dataset createCorrespondingOverlayLayer();
 
-    QUrl apiSwitch(const Coordinate globalCoord) const;
+    QNetworkRequest apiSwitch(const Coordinate globalCoord) const;
     QUrl knossosCubeUrl(const Coordinate coord) const;
-    QUrl googleCubeUrl(const Coordinate coord) const;
     QUrl openConnectomeCubeUrl(const Coordinate coord) const;
 
     bool isOverlay() const;

@@ -22,6 +22,7 @@
 
 #include "loader.h"
 
+#include "brainmaps.h"
 #include "network.h"
 #include "segmentation/segmentation.h"
 #include "session.h"
@@ -585,32 +586,30 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 return;
             }
 
-            QUrl dcUrl = dataset.apiSwitch(globalCoord);
-            //transform googles oauth2 token from query item to request header
-            QUrlQuery originalQuery(dcUrl);
-            auto reducedQuery = originalQuery;
-            reducedQuery.removeQueryItem("access_token");
-            dcUrl.setQuery(reducedQuery);
+            auto request = dataset.apiSwitch(globalCoord);
+//            request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
+//            request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
 
-            auto request = QNetworkRequest(dcUrl);
-
-            if (originalQuery.hasQueryItem("access_token")) {
-                const auto authorization =  QString("Bearer ") + originalQuery.queryItemValue("access_token");
-                request.setRawHeader("Authorization", authorization.toUtf8());
-            }
             QByteArray payload;
-            if (dataset.api == Dataset::API::WebKnossos) {
-                request.setRawHeader("Content-Type", "application/json");
-                payload = QString{R"json([{"position":[%1,%2,%3],"zoomStep":%4,"cubeSize":%5,"fourBit":false}])json"}.arg(globalCoord.x).arg(globalCoord.y).arg(globalCoord.z).arg(static_cast<std::size_t>(std::log2(dataset.magnification))).arg(dataset.cubeEdgeLength).toUtf8();
-            }
-            //request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
-            //request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
             if (globalCoord == center.cube(dataset.cubeEdgeLength, dataset.magnification).cube2Global(dataset.cubeEdgeLength, dataset.magnification)) {
                 //the first download usually finishes last (which is a bug) so we put it alone in the high priority bucket
                 request.setPriority(QNetworkRequest::HighPriority);
             }
-
-            auto * reply = dataset.api == Dataset::API::WebKnossos ? qnam.post(request, payload) : qnam.get(request);
+            auto * reply = [&]{
+                if (dataset.api == Dataset::API::GoogleBrainmaps) {
+                    request.setRawHeader("Content-Type", "application/octet-stream");
+                    const QString json(R"json({"geometry":{"corner":"%1,%2,%3", "size":"%4,%4,%4", "scale":%5}, "subvolume_format":"SINGLE_IMAGE", "image_format_options":{"image_format":"JPEG", "jpeg_quality":70}})json");
+                    payload = json.arg(globalCoord.x).arg(globalCoord.y).arg(globalCoord.z).arg(dataset.cubeEdgeLength).arg(loaderMagnification).toUtf8();
+                } else if (dataset.api == Dataset::API::WebKnossos) {
+                    request.setRawHeader("Content-Type", "application/json");
+                    payload = QString{R"json([{"position":[%1,%2,%3],"zoomStep":%4,"cubeSize":%5,"fourBit":false}])json"}.arg(globalCoord.x).arg(globalCoord.y).arg(globalCoord.z).arg(static_cast<std::size_t>(std::log2(dataset.magnification))).arg(dataset.cubeEdgeLength).toUtf8();
+                }
+                if (dataset.api == Dataset::API::WebKnossos || dataset.api == Dataset::API::GoogleBrainmaps) {
+                    return qnam.post(request, payload);
+                } else {
+                    return qnam.get(request);
+                }
+            }();
 
             reply->setParent(nullptr);//reparent, so it don’t gets destroyed with qnam
             downloads[globalCoord] = reply;
@@ -658,6 +657,15 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     } else {
                         if (reply->error() != QNetworkReply::OperationCanceledError) {
                             qCritical() << layerId << globalCoord << static_cast<int>(dataset.type) << reply->request().url() << reply->errorString() << reply->readAll();
+                            if (dataset.api == Dataset::API::GoogleBrainmaps) {
+                                qDebug() << "GoogleBrainmaps error" << reply->error();
+                                if (reply->error() == QNetworkReply::ContentAccessDenied || reply->error() == QNetworkReply::AuthenticationRequiredError) {
+                                    auto pair = getBrainmapsToken();
+                                    if (pair.first) {
+                                        Dataset::datasets[layerId].token = datasets[layerId].token = pair.second;
+                                    }
+                                }
+                            }
                         }
                     }
                     reply->deleteLater();
