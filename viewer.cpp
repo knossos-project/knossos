@@ -23,6 +23,7 @@
 #include "viewer.h"
 
 #include "file_io.h"
+#include "functions.h"
 #include "loader.h"
 #include "segmentation/segmentation.h"
 #include "session.h"

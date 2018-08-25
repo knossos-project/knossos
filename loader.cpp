@@ -23,6 +23,7 @@
 #include "loader.h"
 
 #include "brainmaps.h"
+#include "functions.h"
 #include "network.h"
 #include "segmentation/segmentation.h"
 #include "session.h"

@@ -21,6 +21,7 @@
  */
 
 #include "dataset.h"
+#include "functions.h"
 #include "widgets/viewports/viewportarb.h"
 #include "widgets/viewports/viewportbase.h"
 #include "widgets/viewports/viewportortho.h"

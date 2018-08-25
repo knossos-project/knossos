@@ -23,7 +23,6 @@
 #ifndef VIEWER_H
 #define VIEWER_H
 
-#include "functions.h"
 #include "remote.h"
 #include "slicer/gpucuber.h"
 #include "usermove.h"
