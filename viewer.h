@@ -88,7 +88,6 @@ struct GLBuffers {
 };
 
 struct LayerRenderSettings {
-    QString layerName{"unnamed"};
     bool visible{true};
     double opacity{1.0};
     double rangeDelta{1.};

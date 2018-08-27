@@ -1,4 +1,4 @@
-/*
+﻿/*
  *  This file is a part of KNOSSOS.
  *
  *  (C) Copyright 2007-2018
@@ -184,7 +184,7 @@ void DatasetLoadWidget::updateDatasetInfo() {
     } else {
         infotext = infotext.arg("Local").arg("");
     }
-    infotext += QString("Name: %1<br />Boundary (x y z): %2 %3 %4<br />Compression: %5<br />cubeEdgeLength: %6<br />Magnification: %7<br />Scale (x y z): %8 %9 %10")
+    infotext += QString("Name: %1<br/>Boundary (x y z): %2 %3 %4<br />Compression: %5<br/>cubeEdgeLength: %6<br/>Magnification: %7<br/>Scale (x y z): %8 %9 %10<br/>Description: %11")
         .arg(datasetinfo.experimentname)
         .arg(datasetinfo.boundary.x).arg(datasetinfo.boundary.y).arg(datasetinfo.boundary.z)
         .arg(datasetinfo.compressionString())
@@ -192,7 +192,8 @@ void DatasetLoadWidget::updateDatasetInfo() {
         .arg(datasetinfo.magnification)
         .arg(datasetinfo.scale.x)
         .arg(datasetinfo.scale.y)
-        .arg(datasetinfo.scale.z);
+        .arg(datasetinfo.scale.z)
+        .arg(datasetinfo.description);
 
     infoLabel.setText(infotext);
 

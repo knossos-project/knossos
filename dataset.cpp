@@ -222,7 +222,9 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
             info.type = type == 3 ? CubeType::RAW_JPG : type == 0 ? CubeType::RAW_UNCOMPRESSED : CubeType::RAW_PNG;
         } else if (token == "_Extent") {
             info.boundary = Coordinate(tokenList.at(1).toFloat(), tokenList.at(2).toFloat(), tokenList.at(3).toFloat());
-        } else if (!token.isEmpty() && token != "_Description" && token != "_NumberofCubes" && token != "_Origin") {
+        } else if (token == "_Description") {
+            info.description = tokenList.at(1).split('"', QString::SkipEmptyParts)[0];
+        } else if (!token.isEmpty() && token != "_NumberofCubes" && token != "_Origin") {
             qDebug() << "Skipping unknown parameter" << token;
         }
     }

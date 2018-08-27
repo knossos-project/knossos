@@ -49,13 +49,12 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
         if (role == Qt::DisplayRole || role == Qt::EditRole) {
             switch(index.column()) {
             case 1: return QString::number(layerSettings.opacity * 100.0f) + (role == Qt::EditRole ? "" : "%");
-            case 2: return layerSettings.layerName;
-            case 3:
-                return data.compressionString();
-            case 4: return data.apiString();
-            case 5: return data.magnification;
-            case 6: return data.cubeEdgeLength;
-            case 7: return data.experimentname;
+            case 2: return data.compressionString();
+            case 3: return data.apiString();
+            case 4: return data.magnification;
+            case 5: return data.cubeEdgeLength;
+            case 6: return data.experimentname;
+            case 7: return data.description;
             }
         } else if(role == Qt::CheckStateRole) {
             if(index.column() == 0) {
@@ -80,9 +79,6 @@ bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, in
             switch(index.column()) {
             case 1:
                 layerSettings.opacity = std::min(value.toFloat() / 100.0f, 1.0f);
-                break;
-            case 2:
-                layerSettings.layerName = value.toString();
                 break;
             }
         } else if(role == Qt::CheckStateRole) {
