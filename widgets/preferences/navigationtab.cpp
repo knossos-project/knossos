@@ -39,15 +39,16 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     sizeLabel.setTextInteractionFlags(Qt::TextSelectableByKeyboard | Qt::TextSelectableByMouse);
     outVisibilitySlider.setOrientation(Qt::Horizontal);
 
-    auto addSpins = [this](auto & headLayout, auto & label, auto & spins, auto & lockButton, auto & spinsLayout){
-        lockButton.setCheckable(true);
-        lockGroup.addButton(&lockButton);
+    auto addSpins = [this](auto & headLayout, auto & label, auto & spins, auto & autoButton, auto & spinsLayout){
+        autoButton.setCheckable(true);
+        autoButton.setToolTip("Change this value accordingly, upon change of one of the others.");
+        autoGroup.addButton(&autoButton);
 
         headLayout.setAlignment(Qt::AlignLeft);
         headLayout.addWidget(&label);
         headLayout.addWidget(&spins.copyButton);
         headLayout.addWidget(&spins.pasteButton);
-        headLayout.addWidget(&lockButton);
+        headLayout.addWidget(&autoButton);
         movementAreaLayout.addLayout(&headLayout);
         spinsLayout.addWidget(&spins.xSpin);
         spinsLayout.addWidget(&spins.ySpin);
@@ -55,16 +56,20 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
         movementAreaLayout.addLayout(&spinsLayout);
     };
 
-    addSpins(minAreaHeadLayout, minLabel, minSpins, minLock, minAreaSpinsLayout);
+    addSpins(minAreaHeadLayout, minLabel, minSpins, minAuto, minAreaSpinsLayout);
     topLeftButton.setToolTip(tr("Sets movement area minimum to the visible top left corner of the xy viewport."));
     minAreaHeadLayout.addWidget(&topLeftButton);
-    addSpins(sizeAreaHeadLayout, sizeLabel, sizeSpins, sizeLock, sizeAreaSpinsLayout);
-    addSpins(maxAreaHeadLayout, maxLabel, maxSpins, maxLock, maxAreaSpinsLayout);
+    addSpins(sizeAreaHeadLayout, sizeLabel, sizeSpins, sizeAuto, sizeAreaSpinsLayout);
+    addSpins(maxAreaHeadLayout, maxLabel, maxSpins, maxAuto, maxAreaSpinsLayout);
     bottomRightButton.setToolTip(tr("Sets movement area maximum to the visible bottom right corner of the xy viewport."));
     maxAreaHeadLayout.addWidget(&bottomRightButton);
 
-    QObject::connect(&lockGroup, static_cast<void(QButtonGroup::*)(QAbstractButton*, bool)>(&QButtonGroup::buttonToggled), [this](auto * button, bool checked){
-        auto & spins = button == &minLock ? minSpins : button == &maxLock ? maxSpins : sizeSpins;
+    QObject::connect(&autoGroup, static_cast<void(QButtonGroup::*)(QAbstractButton*, bool)>(&QButtonGroup::buttonToggled), [this](auto * button, bool checked){
+        auto & spins = button == &minAuto ? minSpins : button == &maxAuto ? maxSpins : sizeSpins;
+        topLeftButton.setEnabled(button != &minAuto);
+        bottomRightButton.setEnabled(button != &maxAuto);
+        spins.copyButton.setEnabled(!checked);
+        spins.pasteButton.setEnabled(!checked);
         spins.xSpin.setEnabled(!checked);
         spins.ySpin.setEnabled(!checked);
         spins.zSpin.setEnabled(!checked);
@@ -128,12 +133,12 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
 
     QObject::connect(&topLeftButton, &QPushButton::clicked, [this](){
         const auto min = getCoordinateFromOrthogonalClick({}, *state->mainWindow->viewportXY);
-        const auto max = maxLock.isChecked() ? maxSpins.get() - state->skeletonState->displayMatlabCoordinates : min + sizeSpins.get();
+        const auto max = maxAuto.isChecked() ? min + sizeSpins.get() : maxSpins.get() - state->skeletonState->displayMatlabCoordinates;
         Session::singleton().updateMovementArea(min, max);
     });
     QObject::connect(&bottomRightButton, &QPushButton::clicked, [this](){
         const auto max = getCoordinateFromOrthogonalClick(QPointF(state->mainWindow->viewportXY->width() - 1, state->mainWindow->viewportXY->height() - 1), *state->mainWindow->viewportXY);
-        const auto min = minLock.isChecked() ? minSpins.get() - state->skeletonState->displayMatlabCoordinates : max - sizeSpins.get();
+        const auto min = minAuto.isChecked() ? max - sizeSpins.get() : minSpins.get() - state->skeletonState->displayMatlabCoordinates;
         Session::singleton().updateMovementArea(min, max);
     });
     QObject::connect(&minSpins, &CoordinateSpins::coordinatesChanged, this, &NavigationTab::updateMovementArea);
@@ -175,15 +180,15 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
 }
 
 void NavigationTab::updateMovementArea() {
-    const auto min = minLock.isChecked() ? minSpins.get() - 1 : maxSpins.get() - 1 - sizeSpins.get();
-    const auto max = maxLock.isChecked() ? maxSpins.get() - 1 : min + sizeSpins.get();
+    const auto min = minAuto.isChecked() ? maxSpins.get() - state->skeletonState->displayMatlabCoordinates - sizeSpins.get() : minSpins.get() - state->skeletonState->displayMatlabCoordinates;
+    const auto max = maxAuto.isChecked() ? minSpins.get() - state->skeletonState->displayMatlabCoordinates + sizeSpins.get() : maxSpins.get() - state->skeletonState->displayMatlabCoordinates;
     Session::singleton().updateMovementArea(min, max);
 }
 
 void NavigationTab::loadSettings(const QSettings & settings) {
     Session::singleton().resetMovementArea();
 
-    lockGroup.button(settings.value(LOCKED_BUTTON, -3).toInt())->setChecked(true);// size locked by default
+    autoGroup.button(settings.value(LOCKED_BUTTON, -3).toInt())->setChecked(true);// size locked by default
     const auto visibility = settings.value(OUTSIDE_AREA_VISIBILITY, 80).toInt();
     outVisibilitySlider.setValue(visibility);
     outVisibilitySlider.valueChanged(visibility);
@@ -197,7 +202,7 @@ void NavigationTab::loadSettings(const QSettings & settings) {
 }
 
 void NavigationTab::saveSettings(QSettings & settings) {
-    settings.setValue(LOCKED_BUTTON, lockGroup.checkedId());
+    settings.setValue(LOCKED_BUTTON, autoGroup.checkedId());
     settings.setValue(OUTSIDE_AREA_VISIBILITY, outVisibilitySlider.value());
     settings.setValue(MOVEMENT_SPEED, movementSpeedSpinBox.value());
     settings.setValue(JUMP_FRAMES, jumpFramesSpinBox.value());

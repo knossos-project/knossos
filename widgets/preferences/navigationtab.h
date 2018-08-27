@@ -67,8 +67,8 @@ class NavigationTab : public QWidget {
     QLabel maxLabel{tr("Max")};
     QPushButton bottomRightButton{tr("bottom right")};
     CoordinateSpins minSpins, sizeSpins, maxSpins;
-    QButtonGroup lockGroup;
-    QPushButton minLock{tr("lock")}, sizeLock{tr("lock")}, maxLock{tr("lock")};
+    QButtonGroup autoGroup;
+    QPushButton minAuto{tr("auto-adjust")}, sizeAuto{tr("auto-adjust")}, maxAuto{tr("auto-adjust")};
     QLabel outVisibilityLabel{tr("Visibility of outside area")};
     QHBoxLayout outVisibilityAdjustLayout;
     QSlider outVisibilitySlider;
