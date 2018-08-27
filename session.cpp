@@ -79,6 +79,11 @@ bool Session::outsideMovementArea(const Coordinate & pos) {
 void Session::updateMovementArea(const Coordinate & min, const Coordinate & max) {
     movementAreaMin = min.capped({0, 0, 0}, Dataset::current().boundary);
     movementAreaMax = max.capped({0, 0, 0}, Dataset::current().boundary);
+    // fixup empty movement area, ignore edge case at boundary
+    const auto size = movementAreaMax - movementAreaMin;
+    movementAreaMax.x = size.x < 1 ? movementAreaMin.x + 1 : movementAreaMax.x;
+    movementAreaMax.y = size.y < 1 ? movementAreaMin.y + 1 : movementAreaMax.y;
+    movementAreaMax.z = size.z < 1 ? movementAreaMin.z + 1 : movementAreaMax.z;
     emit movementAreaChanged();
 }
 
