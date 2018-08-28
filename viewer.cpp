@@ -273,9 +273,9 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
                                      session.movementAreaMax.z};
     const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
     const auto partlyInMovementArea =
-       areaMinCoord.x > cubePosInAbsPx.x || areaMaxCoord.x < cubePosInAbsPx.x + cubeEdgeLen * Dataset::current().magnification ||
-       areaMinCoord.y > cubePosInAbsPx.y || areaMaxCoord.y < cubePosInAbsPx.y + cubeEdgeLen * Dataset::current().magnification ||
-       areaMinCoord.z > cubePosInAbsPx.z || areaMaxCoord.z < cubePosInAbsPx.z + cubeEdgeLen * Dataset::current().magnification;
+       areaMinCoord.x > cubePosInAbsPx.x || areaMaxCoord.x <= cubePosInAbsPx.x + cubeEdgeLen * Dataset::current().magnification ||
+       areaMinCoord.y > cubePosInAbsPx.y || areaMaxCoord.y <= cubePosInAbsPx.y + cubeEdgeLen * Dataset::current().magnification ||
+       areaMinCoord.z > cubePosInAbsPx.z || areaMaxCoord.z <= cubePosInAbsPx.z + cubeEdgeLen * Dataset::current().magnification;
 
     // we traverse ZY column first because of better locailty of reference
     const std::size_t voxelIncrement = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen : 1;
@@ -297,13 +297,13 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
             }
             if(partlyInMovementArea) {
                 bool factor = false;
-                if((vp.viewportType == VIEWPORT_XY && (cubePosInAbsPx.y + offsetY < areaMinCoord.y || cubePosInAbsPx.y + offsetY > areaMaxCoord.y)) ||
-                    ((vp.viewportType == VIEWPORT_XZ || vp.viewportType == VIEWPORT_ZY) && (cubePosInAbsPx.z + offsetY < areaMinCoord.z || cubePosInAbsPx.z + offsetY > areaMaxCoord.z))) {
+                if((vp.viewportType == VIEWPORT_XY && (cubePosInAbsPx.y + offsetY < areaMinCoord.y || cubePosInAbsPx.y + offsetY >= areaMaxCoord.y)) ||
+                    ((vp.viewportType == VIEWPORT_XZ || vp.viewportType == VIEWPORT_ZY) && (cubePosInAbsPx.z + offsetY < areaMinCoord.z || cubePosInAbsPx.z + offsetY >= areaMaxCoord.z))) {
                     // vertically out of movement area
                     factor = true;
                 }
-                else if(((vp.viewportType == VIEWPORT_XY || vp.viewportType == VIEWPORT_XZ) && (cubePosInAbsPx.x + offsetX < areaMinCoord.x || cubePosInAbsPx.x + offsetX > areaMaxCoord.x)) ||
-                        (vp.viewportType == VIEWPORT_ZY && (cubePosInAbsPx.y + offsetX < areaMinCoord.y || cubePosInAbsPx.y + offsetX > areaMaxCoord.y))) {
+                else if(((vp.viewportType == VIEWPORT_XY || vp.viewportType == VIEWPORT_XZ) && (cubePosInAbsPx.x + offsetX < areaMinCoord.x || cubePosInAbsPx.x + offsetX >= areaMaxCoord.x)) ||
+                        (vp.viewportType == VIEWPORT_ZY && (cubePosInAbsPx.y + offsetX < areaMinCoord.y || cubePosInAbsPx.y + offsetX >= areaMaxCoord.y))) {
                     // horizontally out of movement area
                     factor = true;
                 }

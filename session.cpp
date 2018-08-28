@@ -71,9 +71,9 @@ void Session::clearAnnotation() {
 }
 
 bool Session::outsideMovementArea(const Coordinate & pos) {
-    return pos.x < movementAreaMin.x || pos.x > movementAreaMax.x ||
-           pos.y < movementAreaMin.y || pos.y > movementAreaMax.y ||
-           pos.z < movementAreaMin.z || pos.z > movementAreaMax.z;
+    return pos.x < movementAreaMin.x || pos.x >= movementAreaMax.x ||
+           pos.y < movementAreaMin.y || pos.y >= movementAreaMax.y ||
+           pos.z < movementAreaMin.z || pos.z >= movementAreaMax.z;
 }
 
 void Session::updateMovementArea(const Coordinate & min, const Coordinate & max) {

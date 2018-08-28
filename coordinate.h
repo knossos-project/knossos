@@ -145,9 +145,9 @@ public:
 
     constexpr CoordinateDerived capped(const CoordinateDerived & min, const CoordinateDerived & max) const {
         return CoordinateDerived{
-            std::max(min.x, std::min(x, max.x))
-            , std::max(min.y, std::min(y, max.y))
-            , std::max(min.z, std::min(z, max.z))
+            std::max(min.x, std::min(x, max.x - 1))
+            , std::max(min.y, std::min(y, max.y - 1))
+            , std::max(min.z, std::min(z, max.z - 1))
         };
     }
 
