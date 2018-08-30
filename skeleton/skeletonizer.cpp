@@ -630,7 +630,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                                 if (name == "id") {
                                     nodeID = value.toULongLong();
                                 } else if (name == "radius") {
-                                    radius = {value.toFloat()};
+                                    radius = nmlScale.x / Dataset::current().scale.x * value.toDouble();
                                 } else if (name == "x") {
                                     currentCoordinate.x = nmlScale.x / Dataset::current().scale.x * value.toDouble() - matlabCoordinates;
                                 } else if (name == "y") {
