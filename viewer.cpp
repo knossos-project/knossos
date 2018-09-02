@@ -1212,7 +1212,7 @@ void Viewer::datasetColorAdjustmentsChanged() {
 void Viewer::rewire() {
     // viewer signals
     QObject::connect(this, &Viewer::zoomChanged, &window->widgetContainer.zoomWidget, &ZoomWidget::update);
-    QObject::connect(this, &Viewer::coordinateChangedSignal, [this](const Coordinate & pos) { window->updateCoordinateBar(pos.x, pos.y, pos.z); });
+    QObject::connect(this, &Viewer::coordinateChangedSignal, window, &MainWindow::updateCoordinateBar);
     QObject::connect(this, &Viewer::coordinateChangedSignal, [this](const Coordinate &) {
         if (window->viewport3D->hasCursor) {
             window->updateCursorLabel(Coordinate(), VIEWPORT_SKELETON);

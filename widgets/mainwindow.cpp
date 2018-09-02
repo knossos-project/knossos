@@ -1170,6 +1170,7 @@ void MainWindow::defaultPreferencesSlot() {
 
 void MainWindow::coordinateEditingFinished() {
     floatCoordinate inputCoord{currentPosSpins.get() - 1.0f * state->skeletonState->displayMatlabCoordinates};
+    inputCoord = Dataset::current().scales[0].componentMul(inputCoord) / Dataset::current().scale;
     state->viewer->userMove(inputCoord - state->viewerState->currentPosition, USERMOVE_NEUTRAL);
 }
 
@@ -1284,9 +1285,10 @@ void MainWindow::clearSettings() {
     }
 }
 
-void MainWindow::updateCoordinateBar(int x, int y, int z) {
+void MainWindow::updateCoordinateBar(Coordinate pos) {
     const auto inc{state->skeletonState->displayMatlabCoordinates};
-    currentPosSpins.set({x + inc, y + inc, z + inc});
+    pos = Dataset::current().scale.componentMul(pos) / Dataset::current().scales[0];
+    currentPosSpins.set({pos.x + inc, pos.y + inc, pos.z + inc});
 }
 
 void MainWindow::resizeEvent(QResizeEvent *) {

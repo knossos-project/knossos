@@ -247,7 +247,7 @@ public slots:
     void setProofReadingUI(const bool on);
     void setJobModeUI(bool enabled);
     void updateLoaderProgress(int refCount);
-    void updateCursorLabel(const Coordinate & position, const ViewportType vpType);
+    void updateCursorLabel(const Coordinate &position, const ViewportType vpType);
     // for the recent file menu
     bool openFileDispatch(QStringList fileNames, const bool mergeAll = false, const bool silent = false);
     void updateRecentFile(const QString &fileName);
@@ -272,7 +272,7 @@ public slots:
 
     /* toolbar slots */
     void coordinateEditingFinished();
-    void updateCoordinateBar(int x, int y, int z);
+    void updateCoordinateBar(Coordinate pos);
     // viewports
     void resetViewports();
 

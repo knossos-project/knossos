@@ -99,10 +99,10 @@ QColor getPickingColor(const nodeListElement & node, const RenderOptions::Select
 }
 
 void ViewportBase::renderCylinder(const Coordinate & base, float baseRadius, const Coordinate & top, float topRadius, const QColor & color, const RenderOptions & options) {
-    const auto isoBase = Dataset::current().scale.componentMul(base);
-    const auto isoTop = Dataset::current().scale.componentMul(top);
-    baseRadius *= Dataset::current().scale.x;
-    topRadius *= Dataset::current().scale.x;
+    const auto isoBase = Dataset::current().scales[0].componentMul(base);
+    const auto isoTop = Dataset::current().scales[0].componentMul(top);
+    baseRadius *= Dataset::current().scales[0].x;
+    topRadius *= Dataset::current().scales[0].x;
 
     if (!options.useLinesAndPoints(std::max(baseRadius, topRadius) * screenPxXPerDataPx, smallestVisibleNodeSize())) {
         glColor4d(color.redF(), color.greenF(), color.blueF(), color.alphaF());
@@ -139,8 +139,8 @@ void ViewportBase::renderCylinder(const Coordinate & base, float baseRadius, con
 }
 
 void ViewportBase::renderSphere(const Coordinate & pos, float radius, const QColor & color, const RenderOptions & options) {
-    const auto isoPos = Dataset::current().scale.componentMul(pos);
-    radius *= Dataset::current().scale.x;
+    const auto isoPos = Dataset::current().scales[0].componentMul(pos);
+    radius *= Dataset::current().scales[0].x;
 
     if (!options.useLinesAndPoints(radius * screenPxXPerDataPx, smallestVisibleNodeSize())) {
         glColor4d(color.redF(), color.greenF(), color.blueF(), color.alphaF());
@@ -1455,7 +1455,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     if (options.drawViewportPlanes) { // Draw the slice planes for orientation inside the data stack
         glPushMatrix();
 
-        const auto isoCurPos = Dataset::current().scale.componentMul(state->viewerState->currentPosition);
+        const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
         glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
         // raw slice image
         glEnable(GL_TEXTURE_2D);
@@ -1959,8 +1959,8 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
     };
 
     auto addSegment = [arrayFromQColor, &glBuffers](const segmentListElement & segment, const QColor & color) {
-        const auto isoBase = Dataset::current().scale.componentMul(segment.source.position);
-        const auto isoTop = Dataset::current().scale.componentMul(segment.target.position);
+        const auto isoBase = Dataset::current().scales[0].componentMul(segment.source.position);
+        const auto isoTop = Dataset::current().scales[0].componentMul(segment.target.position);
 
         glBuffers.lineVertBuffer.emplace_back(isoBase, arrayFromQColor(color));
         glBuffers.lineVertBuffer.emplace_back(isoTop, arrayFromQColor(color));
@@ -1976,7 +1976,7 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
             glBuffers.pointVertBuffer.lastSelectedNode = node.nodeID;
         }
 
-        const auto isoPos = Dataset::current().scale.componentMul(node.position);
+        const auto isoPos = Dataset::current().scales[0].componentMul(node.position);
 
         glBuffers.colorPickingBuffer24.emplace_back(arrayFromQColor(getPickingColor(node, RenderOptions::SelectionPass::NodeID0_24Bits)));
         glBuffers.colorPickingBuffer48.emplace_back(arrayFromQColor(getPickingColor(node, RenderOptions::SelectionPass::NodeID24_48Bits)));

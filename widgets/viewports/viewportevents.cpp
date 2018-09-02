@@ -108,7 +108,6 @@ void segmentation_brush_work(const QMouseEvent *event, ViewportOrtho & vp) {
     }
 }
 
-
 void ViewportOrtho::handleMouseHover(const QMouseEvent *event) {
     auto coord = getCoordinateFromOrthogonalClick(event->pos(), *this);
     emit cursorPositionChanged(coord, viewportType);
@@ -254,6 +253,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
         if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
             Skeletonizer::singleton().setSubobjectSelectAndMergeWithPrevious(newNode.get(), subobjectId, oldNode);
         }
+        clickedCoordinate = Dataset::current().scales[0].componentMul(clickedCoordinate) / Dataset::current().scale;
         // Move to the new node position
         if (state->viewerState->autoTracingMode != Recentering::Off) {
             if (viewportType == VIEWPORT_ARBITRARY) {
@@ -675,7 +675,8 @@ void Viewport3D::focusOutEvent(QFocusEvent * event) {
 
 Coordinate getCoordinateFromOrthogonalClick(const QPointF pos, ViewportOrtho & vp) {
     const auto leftUpper = floatCoordinate{state->viewerState->currentPosition} - (vp.v1 * vp.edgeLength / vp.screenPxXPerDataPx - vp.v2 * vp.edgeLength / vp.screenPxYPerDataPx) * 0.5;
-    return leftUpper + vp.v1 * (pos.x() / vp.screenPxXPerDataPx - 0.5) - vp.v2 * (pos.y() / vp.screenPxYPerDataPx - 0.5);
+    auto position = leftUpper + vp.v1 * (pos.x() / vp.screenPxXPerDataPx - 0.5) - vp.v2 * (pos.y() / vp.screenPxYPerDataPx - 0.5);
+    return Dataset::current().scale.componentMul(position) / Dataset::current().scales[0];
 }
 
 QSet<nodeListElement*> ViewportBase::nodeSelection(int x, int y) {
