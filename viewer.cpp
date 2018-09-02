@@ -217,6 +217,12 @@ float Viewer::highestScreenPxXPerDataPx(const bool ofCurrentMag) {
     auto * vp = viewportXY;
     float FOVinDCs = static_cast<float>(state->M) - 1.f;
     float displayedEdgeLen = (FOVinDCs * VPZOOMMAX * Dataset::current().cubeEdgeLength) / vp->texture.size;
+
+    if (ofCurrentMag) {
+        displayedEdgeLen *= std::min(Dataset::current().scale.x / Dataset::current().scale.z, 1.f);
+    } else {
+        displayedEdgeLen *= std::min(Dataset::current().scales[std::log2(highestMag())].x / Dataset::current().scales[std::log2(highestMag())].z, 1.f);
+    }
     displayedEdgeLen = (std::ceil(displayedEdgeLen / 2. / texUnitsPerDataPx) * texUnitsPerDataPx) * 2.;
     return vp->edgeLength / (displayedEdgeLen / texUnitsPerDataPx);
 }
@@ -226,6 +232,11 @@ float Viewer::lowestScreenPxXPerDataPx(const bool ofCurrentMag) {
     auto * vp = viewportXY;
     float FOVinDCs = static_cast<float>(state->M) - 1.f;
     float displayedEdgeLen = (FOVinDCs * Dataset::current().cubeEdgeLength) / vp->texture.size;
+    if (ofCurrentMag) {
+        displayedEdgeLen *= std::min(Dataset::current().scale.x / Dataset::current().scale.z, 1.f);
+    } else {
+        displayedEdgeLen *= std::min(Dataset::current().scales[std::log2(highestMag())].x / Dataset::current().scales[std::log2(highestMag())].z, 1.f);
+    }
     displayedEdgeLen = (std::ceil(displayedEdgeLen / 2. / texUnitsPerDataPx) * texUnitsPerDataPx) * 2.;
     return vp->edgeLength / (displayedEdgeLen / texUnitsPerDataPx);
 }
@@ -795,14 +806,15 @@ void Viewer::calcDisplayedEdgeLength() {
     });
 }
 
-void Viewer::zoom(const float factor) {
+void Viewer::zoom(const double factor) {
     const auto & texture = viewportXY->texture;
     const bool reachedHighestMag = Dataset::current().magnification == Dataset::current().highestAvailableMag;
     const bool reachedLowestMag = Dataset::current().magnification == Dataset::current().lowestAvailableMag;
-    const bool reachedMinZoom = texture.FOV * factor > VPZOOMMIN && reachedHighestMag;
-    const bool reachedMaxZoom = texture.FOV * factor < VPZOOMMAX && reachedLowestMag;
-    const bool magUp = texture.FOV == VPZOOMMIN && factor > 1 && !reachedHighestMag;
-    const bool magDown = texture.FOV == 0.5 && factor < 1 && !reachedLowestMag;
+    const auto zscale = std::min(Dataset::current().scale.z / Dataset::current().scale.x, 1.f);
+    const bool magUp = texture.FOV == zscale * VPZOOMMIN && factor > 1 && !reachedHighestMag;
+    const bool magDown = texture.FOV <= zscale * 0.5 && factor < 1 && !reachedLowestMag;
+
+    qDebug() << texture.FOV << zscale << factor;
 
     const auto updateFOV = [this](const float newFOV) {
         window->forEachOrthoVPDo([&newFOV](ViewportOrtho & orthoVP) {
@@ -810,23 +822,19 @@ void Viewer::zoom(const float factor) {
         });
     };
     auto newMag = Dataset::current().magnification;
-    if (reachedMinZoom) {
-        updateFOV(VPZOOMMIN);
-    } else if (reachedMaxZoom) {
-        updateFOV(VPZOOMMAX);
-    } else if (state->viewerState->datasetMagLock) {
-        updateFOV(texture.FOV * factor > VPZOOMMIN ? VPZOOMMIN :
-                  texture.FOV * factor < VPZOOMMAX ? VPZOOMMAX :
+    if (state->viewerState->datasetMagLock) {
+        updateFOV(texture.FOV * factor > zscale * VPZOOMMIN ? zscale * VPZOOMMIN :
+                  texture.FOV * factor < zscale * VPZOOMMAX ? zscale * VPZOOMMAX :
                   texture.FOV * factor);
     } else if (magUp) {
         newMag *= 2;
-        updateFOV(0.5);
+        updateFOV(0.5 * zscale);
     } else if (magDown) {
         newMag /= 2;
-        updateFOV(VPZOOMMIN);
+        updateFOV(VPZOOMMIN * zscale);
     } else {
-        const float zoomMax = Dataset::current().magnification == Dataset::current().lowestAvailableMag ? VPZOOMMAX : 0.5;
-        updateFOV(std::max(std::min(texture.FOV * factor, static_cast<float>(VPZOOMMIN)), zoomMax));
+        const auto zoomMax = (Dataset::current().magnification == Dataset::current().lowestAvailableMag ? VPZOOMMAX : 0.5);
+        updateFOV(std::max(std::min(texture.FOV * factor, zscale * VPZOOMMIN), zscale * zoomMax));
     }
 
     if (newMag != Dataset::current().magnification) {
@@ -838,7 +846,7 @@ void Viewer::zoom(const float factor) {
 
 void Viewer::zoomReset() {
     state->viewer->window->forEachOrthoVPDo([](ViewportOrtho & orthoVP){
-        orthoVP.texture.FOV = 1;
+        orthoVP.texture.FOV = std::min(Dataset::current().scale.z / Dataset::current().scale.x, 1.f);
     });
     recalcTextureOffsets();
     emit zoomChanged();

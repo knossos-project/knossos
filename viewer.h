@@ -242,7 +242,7 @@ public:
 
     ViewportOrtho *viewportXY, *viewportXZ, *viewportZY;
     ViewportArb *viewportArb;
-    void zoom(const float factor);
+    void zoom(const double factor);
     void zoomReset();
     QTimer timer;
 

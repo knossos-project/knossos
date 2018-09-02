@@ -68,7 +68,6 @@ class ZoomWidget : public DialogVisibilityNotify {
     QLabel currentActiveMagDatasetLabel;
     QLabel highestActiveMagDatasetLabel;
     QLabel lowestActiveMagDatasetLabel;
-    void applyZoom(const float newScreenPxXPerDataPx);
     void reinitializeOrthoZoomWidgets();
     float zoomStep{1};
     void updateOrthogonalZoomSpinBox();
