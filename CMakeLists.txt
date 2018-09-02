@@ -85,7 +85,7 @@ endif()
 
 set(pythonqt Qt5Python27 CACHE STRING "PythonQt flavour to search for")
 find_package(Boost 1.50 REQUIRED) # 1.50 added hash_value of std::tuple for Coordinate hash specialization
-find_package(OpenGL REQUIRED) # GLU
+find_package(OpenGL REQUIRED COMPONENTS OpenGL) # GLU
 find_package(${pythonqt} REQUIRED)
 find_package(Snappy REQUIRED)
 find_package(QuaZip 0.6.2 REQUIRED)
@@ -117,6 +117,7 @@ add_custom_command(
         -D GIT=${CMAKE_CURRENT_SOURCE_DIR}
         -P ${CMAKE_CURRENT_SOURCE_DIR}/buildinfo.cmake
 )
+set_property(SOURCE buildinfo.h PROPERTY SKIP_AUTOGEN ON)
 
 # rcc --project adds all content of a directory to a new .qrc, so create folder for cheatsheet pages.
 add_custom_command(OUTPUT ${cheatsheet_dir}
