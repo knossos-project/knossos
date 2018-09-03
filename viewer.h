@@ -70,7 +70,7 @@ struct GLBuffers {
         QOpenGLBuffer vertex_buffer{QOpenGLBuffer::VertexBuffer};
         QOpenGLBuffer color_buffer{QOpenGLBuffer::VertexBuffer};
 
-        size_t lastSelectedNode{0};
+        size_t lastSelectedNode{1};
 
         void clear() {
             vertices.clear();

@@ -57,7 +57,11 @@ const auto tree = [](auto & ctx){
 const auto node = [](auto & ctx){
     using namespace boost::fusion;
     const auto & attr = _attr(ctx);
-    const auto pos = floatCoordinate(0, Dataset::current().boundary.y * 0.5, Dataset::current().boundary.z) + floatCoordinate(-at_c<1>(attr), at_c<0>(attr), at_c<2>(attr)) * 1000.0 / Dataset::current().scale;
+    //3169, 2905, 135
+    //3380, 3178, 117
+    //583 -2613 -306
+    const auto pos = floatCoordinate(-2613, -583, -306) + floatCoordinate(3380, 3178, 117) + floatCoordinate(-at_c<1>(attr), at_c<0>(attr), -at_c<2>(attr)) * 1000.0 / Dataset::current().scale;
+//    const auto pos = floatCoordinate(at_c<0>(attr), at_c<1>(attr), at_c<2>(attr)) * 1000.0 / Dataset::current().scale;
     auto node = Skeletonizer::singleton().addNode(boost::none, 0.5 * at_c<3>(attr), currentTreeId, pos, VIEWPORT_UNDEFINED, 1, boost::none, false);
     if (node) {
         if (lastNode) {
