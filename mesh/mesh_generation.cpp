@@ -218,46 +218,62 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
     pause.exec();
 
     progress.setLabelText(progress.labelText() + QObject::tr("\nFinalizing …"));
-    progress.setRange(0, objects.size());
-    int value{0};
+    progress.setRange(0, 1000);
+    double value{0};
 
+    std::unordered_map<std::uint64_t, QVector<float>> obj2verts;
+    std::unordered_map<std::uint64_t, std::vector<std::size_t>> obj2offsets;
+    std::unordered_map<std::uint64_t, std::size_t> obj2offseti;
+    std::unordered_map<std::uint64_t, QVector<unsigned int>> obj2faces;
+
+    value = 0;
+    for (const auto & elempoints : obj2totalpoints) {
+        if (progress.wasCanceled()) {
+            break;
+        }
+        for (const auto & pair : elempoints) {
+            const auto oid = pair.first;
+            auto & verts = obj2verts[oid];
+            const auto offset = verts.size();
+            obj2offsets[oid].emplace_back(offset / 3);
+            verts.resize(offset + 3 * pair.second.size());
+            for (const auto & pair : pair.second) {
+                verts[offset + 3 * pair.second    ] = pair.first.x;
+                verts[offset + 3 * pair.second + 1] = pair.first.y;
+                verts[offset + 3 * pair.second + 2] = pair.first.z;
+            }
+        }
+        progress.setValue(++value / obj2totalpoints.size() * 333);
+    }
+    value = 0;
+    for (const auto & elemfaces : obj2totalfaces) {
+        if (progress.wasCanceled()) {
+            break;
+        }
+        for (const auto & pair : elemfaces) {
+            const auto oid = pair.first;
+            auto & faces = obj2faces[oid];
+            auto & offseti = obj2offseti[oid];
+            auto & offsets = obj2offsets[oid];
+            for (const auto & elem : pair.second) {
+                faces.push_back(offsets[offseti] + elem);
+            }
+            ++offseti;
+        }
+        progress.setValue(++value / obj2totalfaces.size() * 333);
+    }
+    value = 0;
     for (const auto oid : objects) {
         if (progress.wasCanceled()) {
             break;
         }
-
-        QVector<float> verts;
-        std::vector<std::size_t> offsets;
-        for (const auto & elempoints : obj2totalpoints) {
-            if (auto pit = elempoints.find(oid); pit != std::end(elempoints)) {
-                const auto offset = verts.size();
-                offsets.emplace_back(offset / 3);
-                verts.resize(offset + 3 * pit->second.size());
-                for (const auto & pair : pit->second) {
-                    verts[offset + 3 * pair.second    ] = pair.first.x;
-                    verts[offset + 3 * pair.second + 1] = pair.first.y;
-                    verts[offset + 3 * pair.second + 2] = pair.first.z;
-                }
-            }
+        if (auto it = obj2verts.find(oid); it != std::end(obj2verts)) {// creating empty ogl meshes isn’t trivial
+            QVector<float> normals;
+            QVector<std::uint8_t> colors;
+            QSignalBlocker blocker(Skeletonizer::singleton());
+            Skeletonizer::singleton().addMeshToTree(oid, it->second, normals, obj2faces[oid], colors, GL_TRIANGLES);
         }
-        QVector<unsigned int> faces;
-        std::size_t offseti{0};
-        for (const auto & elemfaces : obj2totalfaces) {
-            if (auto pit = elemfaces.find(oid); pit != std::end(elemfaces)) {
-                for (const auto & elem : pit->second) {
-                    faces.push_back(offsets[offseti] + elem);
-                }
-                ++offseti;
-            }
-        }
-
-        qDebug() << oid << ':' << (verts.size() / 3) << "→" << faces.size() / 3;
-
-        QVector<float> normals;
-        QVector<std::uint8_t> colors;
-        QSignalBlocker blocker(Skeletonizer::singleton());
-        Skeletonizer::singleton().addMeshToTree(oid, verts, normals, faces, colors, GL_TRIANGLES);
-        progress.setValue(++value);
+        progress.setValue(++value / objects.size() * 334);
     }
     Skeletonizer::singleton().resetData();
 }
