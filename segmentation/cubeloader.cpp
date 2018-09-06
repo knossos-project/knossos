@@ -151,7 +151,7 @@ CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  g
         auto rawcube = getRawCube(globalCubeBegin);
         if (rawcube.first) {
             auto cubeRef = getCubeRef(rawcube.second);
-            const auto globalCubeEnd = globalCubeBegin + cubeEdgeLen * Dataset::current().magnification - 1;
+            const auto globalCubeEnd = globalCubeBegin + cubeEdgeLen * Dataset::current().magnification;
             const auto localStart = globalFirst.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeEdgeLen, Dataset::current().magnification);
             const auto localEnd = globalLast.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeEdgeLen, Dataset::current().magnification);
 
