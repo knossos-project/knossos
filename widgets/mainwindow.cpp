@@ -443,6 +443,7 @@ void MainWindow::setJobModeUI(bool enabled) {
         forEachVPDo([] (ViewportBase & vp) { vp.hide(); });
         viewportXY.get()->resize(centralWidget()->height() - DEFAULT_VP_MARGIN, centralWidget()->height() - DEFAULT_VP_MARGIN);
         QObject::connect(&Segmentation::singleton(), &Segmentation::todosLeftChanged, this, &MainWindow::updateTodosLeft);
+        QObject::connect(&Segmentation::singleton(), &Segmentation::resetData, this, &MainWindow::updateTodosLeft);
     } else {
         menuBar()->show();
         removeToolBar(&segJobModeToolbar);
@@ -450,6 +451,7 @@ void MainWindow::setJobModeUI(bool enabled) {
         defaultToolbar.show();
         resetViewports();
         QObject::disconnect(&Segmentation::singleton(), &Segmentation::todosLeftChanged, this, &MainWindow::updateTodosLeft);
+        QObject::disconnect(&Segmentation::singleton(), &Segmentation::resetData, this, &MainWindow::updateTodosLeft);
     }
 }
 
