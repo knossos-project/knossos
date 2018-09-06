@@ -545,9 +545,9 @@ void SegmentationView::touchedObjSelectionChanged(const QItemSelection & selecte
 
 void SegmentationView::selectionChanged(const QItemSelection & selected, const QItemSelection & deselected) {
     if (scope s{objectSelectionProtection}) {
-        const auto & proxySelected = objectProxyModelCategory.mapSelectionToSource(objectProxyModelComment.mapSelectionToSource(selected));
-        const auto & proxyDeselected = objectProxyModelCategory.mapSelectionToSource(objectProxyModelComment.mapSelectionToSource(deselected));
-        commitSelection(proxySelected, proxyDeselected);
+        commitSelection(selected, deselected, [this](const int & i){
+            return objectProxyModelCategory.mapToSource(objectProxyModelComment.mapToSource(objectProxyModelComment.index(i, 1))).row();
+        });
         updateTouchedObjSelection();
     }
 }
