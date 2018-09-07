@@ -358,7 +358,8 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         if (layers[i].isOverlay()) {
             overlayPresent = true;
             layers[i].allocationEnabled = layers[i].loadingEnabled = Segmentation::singleton().enabled;
-            Segmentation::singleton().layerId = i;// last layer gets snappy layer
+            Segmentation::singleton().layerId = i;
+            break;// only enable the first overlay layer by default
         }
     }
     if (!overlayPresent) {// add empty overlay channel
