@@ -60,7 +60,7 @@ QString Dataset::compressionString() const {
     case Dataset::CubeType::RAW_PNG: return "png";
     case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_16: return "16 bit id";
     case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64: return "64 bit id";
-    case Dataset::CubeType::SEGMENTATION_SZ_ZIP: return "sz.zip";
+    case Dataset::CubeType::SEGMENTATION_SZ_ZIP: return "seg.sz.zip";
     case Dataset::CubeType::SNAPPY: return "snappy";
     }
     throw std::runtime_error(QObject::tr("no compressions string for %1").arg(static_cast<int>(type)).toUtf8()); ;
