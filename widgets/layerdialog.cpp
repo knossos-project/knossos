@@ -60,6 +60,8 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
             if(index.column() == 0) {
                 auto visible = state->viewerState->layerRenderSettings[ordered_i(index.row())].visible;
                 return visible ? Qt::Checked : Qt::Unchecked;
+            } else if(index.column() == 2) {
+                return ordered_i(index.row()) == Segmentation::singleton().layerId ? Qt::PartiallyChecked : data.isOverlay() ? Qt::Unchecked : QVariant{};
             }
         }
     }
@@ -88,6 +90,13 @@ bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, in
                 Segmentation::singleton().enabled = std::count_if(std::begin(Dataset::datasets), std::end(Dataset::datasets), [](const auto & dataset){
                     return dataset.loadingEnabled && dataset.isOverlay();
                 });
+                reloadLayers();
+            } else if (index.column() == 2 && value.toBool()) {
+                const auto beginIt = std::cbegin(state->viewerState->layerOrder);
+                const auto segi = std::distance(beginIt, std::find(beginIt, std::cend(state->viewerState->layerOrder), Segmentation::singleton().layerId));
+                const auto prevSegLayerIndex = this->index(segi);
+                Segmentation::singleton().layerId = ordered_i(index.row());
+                emit dataChanged(prevSegLayerIndex, prevSegLayerIndex, QVector<int>(role));
                 reloadLayers();
             }
         }
@@ -133,6 +142,7 @@ Qt::ItemFlags LayerItemModel::flags(const QModelIndex &index) const {
         switch(index.column()) {
         case 0: flags |= Qt::ItemIsUserCheckable | Qt::ItemIsEditable; break;
         case 1: flags |= Qt::ItemIsEditable; break;
+        case 2: flags |= Qt::ItemIsUserCheckable; break;
         case 7: flags |= Qt::ItemIsEditable; break;
         }
         return flags;
@@ -197,11 +207,19 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     });
 
     QObject::connect(&moveUpButton, &QToolButton::clicked, [this](){
+        const auto isMoveSeg = itemModel.ordered_i(treeView.selectionModel()->currentIndex().row()) == Segmentation::singleton().layerId;
         itemModel.moveItem(treeView.selectionModel()->currentIndex(), -1);
+        if (isMoveSeg) {
+            Segmentation::singleton().layerId = itemModel.ordered_i(treeView.selectionModel()->currentIndex().row());
+        }
     });
 
     QObject::connect(&moveDownButton, &QToolButton::clicked, [this](){
+        const auto isMoveSeg = itemModel.ordered_i(treeView.selectionModel()->currentIndex().row()) == Segmentation::singleton().layerId;
         itemModel.moveItem(treeView.selectionModel()->currentIndex(), 1);
+        if (isMoveSeg) {
+            Segmentation::singleton().layerId = itemModel.ordered_i(treeView.selectionModel()->currentIndex().row());
+        }
     });
 
     QObject::connect(&opacitySlider, &QAbstractSlider::valueChanged, [this](int value){
