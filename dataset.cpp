@@ -179,17 +179,18 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
     QTextStream stream(&config);
     QString line;
     while (!(line = stream.readLine()).isNull()) {
-        const QStringList tokenList = line.split(QRegularExpression("( = |,)"));
-        const QString & token = tokenList.front();
+        const auto & tokenList = line.split(QRegularExpression(" = "));
+        const auto & token = tokenList.front();
         if (token.startsWith("[Dataset")) {
             infos.emplace_back();
             infos.back().api = API::PyKnossos;
             infos.back().cubeEdgeLength = 128;
             continue;
         }
+        const auto & value = tokenList.back();
         auto & info = infos.back();
         if (token == "_BaseName") {
-            info.experimentname = tokenList.at(1);
+            info.experimentname = value;
         } else if (token == "_BaseURL") {
             QUrl url{line.section(" = ", 1)};// tokelist may split URL in half
             if (!info.url.isEmpty()) {// user info was provided beforehand
@@ -199,31 +200,33 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
                 info.url = url;
             }
         } else if (token == "_UserName") {
-            info.url.setUserName(tokenList.at(1));
+            info.url.setUserName(value);
         } else if (token == "_Password") {
-            info.url.setPassword(tokenList.at(1));
+            info.url.setPassword(value);
         } else if (token == "_ServerFormat") {
-            info.api = tokenList.at(1) == "knossos" ? API::Heidelbrain : tokenList.at(1) == "1" ? API::OpenConnectome : API::PyKnossos;
+            info.api = value == "knossos" ? API::Heidelbrain : value == "1" ? API::OpenConnectome : API::PyKnossos;
         } else if (token == "_BaseExt") {
-            info.fileextension = tokenList.at(1);
+            info.fileextension = value;
             info.type = typeMap.left.at(info.fileextension);
         } else if (token == "_DataScale") {
-            for (int i = 3; i < tokenList.size() - tokenList.back().isEmpty(); i += 3) {
+            const auto tokenList = value.split(",");
+            for (int i = 2; i < tokenList.size() - tokenList.back().isEmpty(); i += 3) {
                 info.scales.emplace_back(tokenList.at(i-2).toFloat(), tokenList.at(i-1).toFloat(), tokenList.at(i).toFloat());
             }
             info.scale = info.scales.front();
             info.magnification = info.lowestAvailableMag = 1;
-            info.highestAvailableMag = std::pow(2, (tokenList.size() - 1) / 3 - 1);
+            info.highestAvailableMag = std::pow(2, tokenList.size() / 3 - 1);
         } else if (token == "_FileType") {
-            const auto type = tokenList.at(1).toInt();
+            const auto type = value.toInt();
             if (type == 1) {
                 qWarning() << "_FileType = 1 (PNG, rotated) not supported, loading as 2 (PNG)";
             }
             info.type = type == 3 ? CubeType::RAW_JPG : type == 0 ? CubeType::RAW_UNCOMPRESSED : CubeType::RAW_PNG;
         } else if (token == "_Extent") {
-            info.boundary = Coordinate(tokenList.at(1).toFloat(), tokenList.at(2).toFloat(), tokenList.at(3).toFloat());
+            const auto tokenList = value.split(",");
+            info.boundary = Coordinate(tokenList.at(0).toFloat(), tokenList.at(1).toFloat(), tokenList.at(2).toFloat());
         } else if (token == "_Description") {
-            info.description = tokenList.at(1).split('"', QString::SkipEmptyParts)[0];
+            info.description = value.split('"', QString::SkipEmptyParts)[0];
         } else if (!token.isEmpty() && token != "_NumberofCubes" && token != "_Origin") {
             qDebug() << "Skipping unknown parameter" << token;
         }
