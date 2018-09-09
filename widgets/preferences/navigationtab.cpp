@@ -68,7 +68,7 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
         auto & spins = button == &minAuto ? minSpins : button == &maxAuto ? maxSpins : sizeSpins;
         topLeftButton.setEnabled(button != &minAuto);
         bottomRightButton.setEnabled(button != &maxAuto);
-        spins.copyButton.setEnabled(!checked);
+        // copy may be available at any time
         spins.pasteButton.setEnabled(!checked);
         spins.xSpin.setEnabled(!checked);
         spins.ySpin.setEnabled(!checked);
