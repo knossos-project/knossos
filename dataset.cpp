@@ -382,6 +382,7 @@ Dataset::list_t Dataset::fromLegacyConf(const QUrl & configUrl, QString config) 
         info2.allocationEnabled = info2.loadingEnabled = false;
         return {info, info2, info.createCorrespondingOverlayLayer()};
     } else {
+        info.type = hasPNG ? Dataset::CubeType::RAW_PNG : Dataset::CubeType::RAW_UNCOMPRESSED;
         return {info, info.createCorrespondingOverlayLayer()};
     }
 }
