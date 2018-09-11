@@ -1,6 +1,6 @@
 env:
   global:
-  - TRAVIS_TAG=nightly
+  - TRAVIS_TAG=nightly-dev
 
 language: cpp
 
@@ -20,14 +20,14 @@ script:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cp artifact/* .; fi
 
 deploy:
-  provider: releases
-  api_key:
-    secure: WH5I/c6N4Ekb+dIWDxOEcwA6o1xNGkmI5nvDavO6PavvSzCydBTPQ5xXm7s1KD6M1+8MbF30REfO4mnRyjuzYbV7ap9Vm9S7YXOzXuHw19uxpGmnJyvcJnSJlPf7uNghGuoyBzZGS5SOoH/k6w6TGOitnE2PfI3pWQGbV8YTsyQ=
-  file_glob: true
-  file: "*.AppImage"
-  skip_cleanup: true
-  overwrite: true
-  on:
-    repo: knossos-project/knossos
-    all_branches: true
-    condition: $TRAVIS_OS_NAME = linux
+  - provider: releases
+    api_key:
+      secure: WH5I/c6N4Ekb+dIWDxOEcwA6o1xNGkmI5nvDavO6PavvSzCydBTPQ5xXm7s1KD6M1+8MbF30REfO4mnRyjuzYbV7ap9Vm9S7YXOzXuHw19uxpGmnJyvcJnSJlPf7uNghGuoyBzZGS5SOoH/k6w6TGOitnE2PfI3pWQGbV8YTsyQ=
+    file_glob: true
+    file: "*.AppImage"
+    skip_cleanup: true
+    overwrite: true
+    on:
+      repo: knossos-project/knossos
+      all_branches: true
+      condition: $TRAVIS_OS_NAME = linux

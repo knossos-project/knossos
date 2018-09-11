@@ -14,11 +14,21 @@ build_script:
   - C:\msys64\usr\bin\bash -lc "$(cygpath ${APPVEYOR_BUILD_FOLDER})/ci/appveyor_build.sh"
 
 deploy:
-  tag: nightly
-  description: 'Nightly build from the latest successful commit'
-  provider: GitHub
-  auth_token:
-    secure: 9tKkhsqR9qSoKt3390923aZ0EauffZQQ/6Ho0HdYlTEudtFJ1eTnw6B3TGclgqA0 # your encrypted token from GitHub
-    artifact: /.*\nightly.exe/ # artifact to release
-  prerelease: true
-  force_update: true
+  - provider: GitHub
+    tag: nightly
+    description: 'Nightly build from the latest successful commit'
+    auth_token:
+      secure: 9tKkhsqR9qSoKt3390923aZ0EauffZQQ/6Ho0HdYlTEudtFJ1eTnw6B3TGclgqA0 # your encrypted token from GitHub
+      artifact: /.*\nightly.exe/ # artifact to release
+    prerelease: true
+    force_update: true
+    on:
+      branch: master
+  - provider: GitHub
+    tag: nightly-dev
+    description: 'Nightly build from the latest successful commit'
+    auth_token:
+      secure: 9tKkhsqR9qSoKt3390923aZ0EauffZQQ/6Ho0HdYlTEudtFJ1eTnw6B3TGclgqA0 # your encrypted token from GitHub
+      artifact: /.*\nightly.exe/ # artifact to release
+    prerelease: true
+    force_update: true
