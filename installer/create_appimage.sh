@@ -16,11 +16,25 @@ mkdir -p deploy
 cp -v knossos ../knossos/installer/knossos.desktop ../knossos/resources/icons/knossos.png deploy
 
 cd deploy
+
 ../deploy-tools/linuxdeployqt knossos -bundle-non-qt-libs
 
-cd lib
-rm -v libgnutls.so.30 libpython2.7.so.1.0 libsystemd.so.0 libpng16.so.16 libgcrypt.so.20 # will error if one of the files isn’t present
-cd ..
+mkdir -p glibc
+tar -xf $(find /var/cache/pacman/pkg -iname $(expac "%n-%v-x86_64.pkg.tar.xz" glibc)) -C glibc
+
+pacman -S patchelf --noconfirm
+patchelf --set-rpath "\$ORIGIN/lib:\$ORIGIN/glibc/usr/lib" knossos
+patchelf --set-interpreter glibc/usr/lib/ld-2.28.so knossos
+patchelf --add-needed libpthread.so.0 knossos
+patchelf --add-needed libQt5XcbQpa.so.5 knossos
+patchelf --add-needed libdl.so.2 knossos
+
+rm -v AppRun
+cp -v ../../knossos/installer/AppRun .
+
+#cd lib
+#rm -v libgnutls.so.30 libpython2.7.so.1.0 libsystemd.so.0 libpng16.so.16 libgcrypt.so.20 # will error if one of the files isn’t present
+#cd ..
 
 rm -fv *.AppImage
 env ARCH=x86_64 ../deploy-tools/appimagetool . --verbose --no-appstream
