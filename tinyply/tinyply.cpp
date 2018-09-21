@@ -280,10 +280,6 @@ void PlyFile::read_internal(T & is) {
                             std::size_t listSize = 0;
                             std::size_t dummyCount = 0;
                             read_property(property.listType, &listSize, dummyCount, is);
-                            if (cursor->realloc == false) {
-                                cursor->realloc = true;
-                                resize_vector(property.propertyType, cursor->vector, listSize * element.size, cursor->data);
-                            }
                             for (std::size_t i = 0; i < listSize; ++i) {
                                 read_property(property.propertyType, (cursor->data + cursor->offset), cursor->offset, is);
                             }
