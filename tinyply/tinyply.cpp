@@ -273,26 +273,34 @@ template<typename T>
 void PlyFile::read_internal(T & is) {
     for (auto & element : get_elements()) {
         if (std::find(requestedElements.begin(), requestedElements.end(), element.name) != requestedElements.end()) {
+            std::vector<bool> valid;
+            std::vector<DataCursor*> cursors;
+            for (auto & property : element.properties) {
+                auto maybeCursor = userDataTable[make_key(element.name, property.name)];
+                valid.emplace_back(maybeCursor);
+                cursors.emplace_back(maybeCursor.get());
+            }
             for (std::size_t count = 0; count < element.size; ++count) {
-                for (auto & property : element.properties) {
-                    if (auto & cursor = userDataTable[make_key(element.name, property.name)]) {
-                        if (property.isList) {
+                for (std::size_t pi = 0; pi < element.properties.size(); ++pi) {
+                    if (valid[pi]) {
+                        auto & cursor = *cursors[pi];
+                        if (element.properties[pi].isList) {
                             std::size_t listSize = 0;
                             std::size_t dummyCount = 0;
-                            read_property(property.listType, &listSize, dummyCount, is);
+                            read_property(element.properties[pi].listType, &listSize, dummyCount, is);
                             for (std::size_t i = 0; i < listSize; ++i) {
-                                read_property(property.propertyType, (cursor->data + cursor->offset), cursor->offset, is);
+                                read_property(element.properties[pi].propertyType, (cursor.data + cursor.offset), cursor.offset, is);
                             }
                         } else {
-                            read_property(property.propertyType, (cursor->data + cursor->offset), cursor->offset, is);
+                            read_property(element.properties[pi].propertyType, (cursor.data + cursor.offset), cursor.offset, is);
                         }
                     } else {
-                        skip_property(property, is);
+                        skip_property(element.properties[pi], is);
                     }
                 }
             }
         }
-    };
+    }
 }
 template void PlyFile::read_internal(QDataStream & is);
 template void PlyFile::read_internal(QTextStream & is);
