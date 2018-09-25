@@ -20,11 +20,13 @@
 #include <QListWidget>
 #include <QFormLayout>
 #include <QSpinBox>
+#include <QColorDialog>
+#include <QStyledItemDelegate>
 
 class LayerItemModel : public QAbstractListModel {
 Q_OBJECT
 protected:
-    const std::vector<QString> header{"visible", "opacity", "cubetype", "api", "mag", "edgelength", "experiment", "description"};
+    const std::vector<QString> header{"visible", "opacity", "cubetype", "api", "mag", "edgelength", "experiment", "description", "color"};
 
 public:
     LayerItemModel();
@@ -41,6 +43,16 @@ public:
     void reset();
 
     std::size_t ordered_i(std::size_t index) const;
+};
+
+class LayerColorPickerDialog : public QStyledItemDelegate {
+Q_OBJECT
+public:
+    explicit LayerColorPickerDialog(QWidget * parent = nullptr)
+     : QStyledItemDelegate(parent) {}
+    virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+    virtual void setEditorData(QWidget *editor, const QModelIndex &index) const override;
+    virtual void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
 };
 
 class LayerDialogWidget : public DialogVisibilityNotify {

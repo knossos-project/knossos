@@ -55,6 +55,7 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
             case 5: return data.cubeEdgeLength;
             case 6: return data.experimentname;
             case 7: return data.description;
+            case 8: return layerSettings.color;
             }
         } else if(role == Qt::CheckStateRole) {
             if(index.column() == 0) {
@@ -81,6 +82,9 @@ bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, in
             switch(index.column()) {
             case 1:
                 layerSettings.opacity = std::min(value.toFloat() / 100.0f, 1.0f);
+                break;
+            case 8:
+                layerSettings.color = value.value<QColor>();
                 break;
             }
         } else if(role == Qt::CheckStateRole) {
@@ -144,6 +148,7 @@ Qt::ItemFlags LayerItemModel::flags(const QModelIndex &index) const {
         case 1: flags |= Qt::ItemIsEditable; break;
         case 2: flags |= Qt::ItemIsUserCheckable; break;
         case 7: flags |= Qt::ItemIsEditable; break;
+        case 8: flags |= Qt::ItemIsEditable; break;
         }
         return flags;
     }
@@ -175,6 +180,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     treeView.resizeColumnToContents(0);
     treeView.resizeColumnToContents(1);
     treeView.setRootIsDecorated(false);
+    treeView.setItemDelegateForColumn(8, new LayerColorPickerDialog(this));
     treeView.setUniformRowHeights(true); // for optimization
     treeView.setDragDropMode(QAbstractItemView::InternalMove);
 
@@ -303,4 +309,20 @@ void LayerDialogWidget::updateLayerProperties() {
         biasSlider.setValue(static_cast<int>(layerSettings.bias * biasSlider.maximum()));
         linearFilteringCheckBox.setChecked(layerSettings.textureFilter == QOpenGLTexture::Linear);
     }
+}
+
+QWidget *LayerColorPickerDialog::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const {
+    return new QColorDialog(parent);
+}
+
+void LayerColorPickerDialog::setEditorData(QWidget *editor, const QModelIndex &index) const {
+    auto* colorEditor = qobject_cast<QColorDialog*>(editor);
+    auto color = index.data().value<QColor>();
+    colorEditor->setCurrentColor(color);
+}
+
+void LayerColorPickerDialog::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const {
+    auto* colorEditor = qobject_cast<QColorDialog*>(editor);
+    auto color = colorEditor->currentColor();
+    model->setData(index, color);
 }
