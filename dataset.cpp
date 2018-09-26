@@ -119,6 +119,7 @@ Dataset::list_t Dataset::parse(const QUrl & url, const QString & data) {
 Dataset::list_t Dataset::parseGoogleJson(const QUrl & infoUrl, const QString & json_raw) {
     Dataset info;
     info.api = API::GoogleBrainmaps;
+    info.experimentname = QFileInfo{infoUrl.path()}.fileName().section(':', 2);
     const auto jmap = QJsonDocument::fromJson(json_raw.toUtf8()).object();
 
     const auto boundary_json = jmap["geometry"][0]["volumeSize"];
