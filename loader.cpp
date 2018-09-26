@@ -600,7 +600,8 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 if (dataset.api == Dataset::API::GoogleBrainmaps) {
                     request.setRawHeader("Content-Type", "application/octet-stream");
                     const QString json(R"json({"geometry":{"corner":"%1,%2,%3", "size":"%4,%4,%4", "scale":%5}, "subvolume_format":"SINGLE_IMAGE", "image_format_options":{"image_format":"JPEG", "jpeg_quality":70}})json");
-                    payload = json.arg(globalCoord.x).arg(globalCoord.y).arg(globalCoord.z).arg(dataset.cubeEdgeLength).arg(loaderMagnification).toUtf8();
+                    const auto magCoord = globalCoord / dataset.magnification;
+                    payload = json.arg(magCoord.x).arg(magCoord.y).arg(magCoord.z).arg(dataset.cubeEdgeLength).arg(loaderMagnification).toUtf8();
                 } else if (dataset.api == Dataset::API::WebKnossos) {
                     request.setRawHeader("Content-Type", "application/json");
                     payload = QString{R"json([{"position":[%1,%2,%3],"zoomStep":%4,"cubeSize":%5,"fourBit":false}])json"}.arg(globalCoord.x).arg(globalCoord.y).arg(globalCoord.z).arg(static_cast<std::size_t>(std::log2(dataset.magnification))).arg(dataset.cubeEdgeLength).toUtf8();

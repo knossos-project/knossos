@@ -128,12 +128,11 @@ Dataset::list_t Dataset::parseGoogleJson(const QUrl & infoUrl, const QString & j
         boundary_json["z"].toString().toInt(),
     };
 
-    const auto scale_json = jmap["geometry"][0]["pixelSize"];
-    info.scale = {
-        static_cast<float>(scale_json["x"].toDouble()),
-        static_cast<float>(scale_json["y"].toDouble()),
-        static_cast<float>(scale_json["z"].toDouble()),
-    };
+    for (auto scaleRef : jmap["geometry"].toArray()) {
+        const auto & scale_json = scaleRef.toObject()["pixelSize"].toObject();
+        info.scales.emplace_back(scale_json["x"].toDouble(1), scale_json["y"].toDouble(1), scale_json["z"].toDouble(1));
+    }
+    info.scale = info.scales.front();
 
     info.lowestAvailableMag = 1;
     info.magnification = info.lowestAvailableMag;
