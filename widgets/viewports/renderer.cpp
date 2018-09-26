@@ -799,7 +799,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
                         glColor4f(1, 1, 1, 0.6 * layerSettings.opacity);// second raw slice is semi transparent, with one direction of the skeleton showing through and the other above rendered above
                     }
                     if (i < 3 && Dataset::datasets.size() >= 3 && !Dataset::datasets[2].isOverlay()) {// FIXME: rgb dataset
-                        glColor4f(ordered_i == 0, ordered_i == 1, ordered_i == 2, layerSettings.opacity);
+                        glColor4f(layerSettings.color.redF(), layerSettings.color.greenF(), layerSettings.color.blueF(), layerSettings.opacity);
                     } else {
                         glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
                     }
