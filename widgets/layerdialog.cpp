@@ -144,7 +144,7 @@ Qt::ItemFlags LayerItemModel::flags(const QModelIndex &index) const {
     if(index.isValid()) {
         Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled;
         switch(index.column()) {
-        case 0: flags |= Qt::ItemIsUserCheckable | Qt::ItemIsEditable; break;
+        case 0: flags |= Qt::ItemIsUserCheckable; break;
         case 1: flags |= Qt::ItemIsEditable; break;
         case 2: flags |= Qt::ItemIsUserCheckable; break;
         case 7: flags |= Qt::ItemIsEditable; break;
