@@ -8,6 +8,7 @@
 #include "viewer.h"
 
 #include <QHeaderView>
+#include <QPainter>
 
 std::size_t LayerItemModel::ordered_i(std::size_t index) const {
     return state->viewerState->layerOrder[index];
@@ -43,7 +44,7 @@ QVariant LayerItemModel::headerData(int section, Qt::Orientation orientation, in
 }
 
 QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
-    if(index.isValid()) {
+    if (index.isValid()) {
         const auto& data = Dataset::datasets[ordered_i(index.row())];
         auto& layerSettings = state->viewerState->layerRenderSettings[ordered_i(index.row())];
         if (role == Qt::DisplayRole || role == Qt::EditRole) {
@@ -57,12 +58,22 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
             case 7: return data.description;
             case 8: return layerSettings.color;
             }
-        } else if(role == Qt::CheckStateRole) {
-            if(index.column() == 0) {
+        } else if (role == Qt::CheckStateRole) {
+            if (index.column() == 0) {
                 auto visible = state->viewerState->layerRenderSettings[ordered_i(index.row())].visible;
                 return visible ? Qt::Checked : Qt::Unchecked;
-            } else if(index.column() == 2) {
+            } else if (index.column() == 2) {
                 return ordered_i(index.row()) == Segmentation::singleton().layerId ? Qt::PartiallyChecked : data.isOverlay() ? Qt::Unchecked : QVariant{};
+            }
+        } else if (role == Qt::ForegroundRole) {
+            if (index.column() == 8) {
+                auto color = index.data().value<QColor>();
+                qDebug() << (qGray(color.rgb()) > 186);
+                return QColor((qGray(color.rgb()) > 186) ? Qt::black : Qt::white);
+            }
+        } else if (role == Qt::BackgroundRole) {
+            if (index.column() == 8) {
+                return index.data().value<QColor>();
             }
         }
     }
