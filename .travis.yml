@@ -1,23 +1,16 @@
 env:
   global:
-  - TRAVIS_TAG=nightly-dev
+    - TRAVIS_TAG=nightly-dev
 
-language: cpp
+language: minimal
 
 matrix:
   include:
     - os: linux
-      dist: trusty
-      sudo: required
-      compiler: gcc
       services: docker
 
-git:
-  submodules: false
-
 script:
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then docker run -it --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${PWD}/artifact:/root/artifact -v ${PWD}:/root/knossos -e TRAVIS_BRANCH -e TRAVIS_COMMIT knossosal3xst/knossos-project-arch /bin/bash -c 'cd /root/knossos-release/; ../knossos/ci/travis_build.sh'; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cp artifact/* .; fi
+  - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then docker run -it --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${PWD}:/root/knossos -e TRAVIS_BRANCH knossostool/knossos bash -c '/root/knossos/ci/travis_build.sh'; fi
 
 deploy:
   - provider: releases

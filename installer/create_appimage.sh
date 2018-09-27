@@ -1,8 +1,5 @@
 #!/bin/bash
-
-# error on any failed command
-set -e 
-set -o pipefail
+set -euxo pipefail
 
 mkdir -p deploy-tools
 cd deploy-tools
@@ -14,7 +11,6 @@ cd ..
 
 mkdir -p deploy
 cp -v knossos ../knossos/installer/knossos.desktop ../knossos/resources/icons/knossos.png deploy
-
 cd deploy
 
 ../deploy-tools/linuxdeployqt knossos -bundle-non-qt-libs
@@ -22,7 +18,6 @@ cd deploy
 mkdir -p glibc
 tar -xf $(find /var/cache/pacman/pkg -iname $(expac "%n-%v-x86_64.pkg.tar.xz" glibc)) -C glibc
 
-pacman -S patchelf --noconfirm
 patchelf --set-rpath "\$ORIGIN/lib:\$ORIGIN/glibc/usr/lib" knossos
 patchelf --set-interpreter glibc/usr/lib/ld-2.28.so knossos
 patchelf --add-needed libpthread.so.0 knossos
