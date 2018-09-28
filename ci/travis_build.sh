@@ -8,7 +8,7 @@ cd ~
 # run cmake and ninja
 mkdir knossos-build
 cd knossos-build
-cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DDEPLOY=TRUE -DCMAKE_PREFIX_PATH="/root/PythonQt-install/lib/cmake/" ../knossos
+cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH="/root/PythonQt-install/lib/cmake/" ../knossos
 ninja
 
 # create AppImage

@@ -165,7 +165,7 @@ if(PythonQt_QtAll)
     target_link_libraries(${PROJECT_NAME} ${pythonqt}_QtAll)
 endif()
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT DEPLOY)
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     message(STATUS "using gold linker")
     set(LINUXLINKER -fuse-ld=gold)
 endif()

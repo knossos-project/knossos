@@ -18,7 +18,6 @@ cd deploy
 mkdir -p glibc
 tar -xf $(find /var/cache/pacman/pkg -iname $(expac "%n-%v-x86_64.pkg.tar.xz" glibc)) -C glibc
 
-patchelf --set-rpath "\$ORIGIN/lib:\$ORIGIN/glibc/usr/lib" knossos
 patchelf --set-interpreter glibc/usr/lib/ld-2.28.so knossos
 patchelf --add-needed libpthread.so.0 knossos
 patchelf --add-needed libQt5XcbQpa.so.5 knossos
