@@ -588,8 +588,9 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             }
 
             auto request = dataset.apiSwitch(globalCoord);
-//            request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
-//            request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
+            request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
+            request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
+            request.setAttribute(QNetworkRequest::HTTP2AllowedAttribute, true);
 
             QByteArray payload;
             if (globalCoord == center.cube(dataset.cubeEdgeLength, dataset.magnification).cube2Global(dataset.cubeEdgeLength, dataset.magnification)) {
@@ -617,6 +618,9 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             downloads[globalCoord] = reply;
             broadcastProgress(true);
             QObject::connect(reply, &QNetworkReply::finished, [this, layerId, dataset, reply, globalCoord, &downloads, &decompressions, &freeSlots, &cubeHash](){
+//                qDebug() << reply->attribute(QNetworkRequest::HttpPipeliningWasUsedAttribute)
+//                         << reply->attribute(QNetworkRequest::SpdyWasUsedAttribute)
+//                         << reply->attribute(QNetworkRequest::HTTP2WasUsedAttribute);
                 if (freeSlots.empty()) {
                     qCritical() << layerId << globalCoord << static_cast<int>(dataset.type) << "no slots for decompression" << cubeHash.size() << freeSlots.size();
                     reply->deleteLater();
