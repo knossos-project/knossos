@@ -10,6 +10,7 @@ matrix:
       services: docker
 
 script:
+  - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then docker pull knossostool/knossos; fi
   - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then docker run -it --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${PWD}:/root/knossos -e TRAVIS_BRANCH knossostool/knossos bash -c '/root/knossos/ci/travis_build.sh'; fi
 
 deploy:
