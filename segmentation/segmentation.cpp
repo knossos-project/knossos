@@ -621,7 +621,7 @@ void Segmentation::mergelistLoad(QTextStream & stream) {
                 }
                 obj.comment = comment;
             } else {
-                Segmentation::clear();
+                clear();
                 throw std::runtime_error("mergelistLoad parsing failed");
             }
         }
