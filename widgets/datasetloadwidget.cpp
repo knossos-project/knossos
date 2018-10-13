@@ -443,7 +443,7 @@ void DatasetLoadWidget::loadSettings() {
 
     restoreGeometry(settings.value(DATASET_GEOMETRY, "").toByteArray());
     datasetUrl = transitionedDataset(settings.value(DATASET_LAST_USED, "").toString());
-
+    tableWidget.setRowCount(0); // prevent dataset duplication on loading custom settings
     auto appendRowSelectIfLU = [this](const QString & dataset){
         insertDatasetRow(dataset, tableWidget.rowCount());
         if (dataset == datasetUrl.toString()) {
