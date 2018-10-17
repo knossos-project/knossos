@@ -45,16 +45,6 @@ public:
     std::size_t ordered_i(std::size_t index) const;
 };
 
-class LayerColorPickerDialog : public QStyledItemDelegate {
-Q_OBJECT
-public:
-    explicit LayerColorPickerDialog(QWidget * parent = nullptr)
-     : QStyledItemDelegate(parent) {}
-    virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
-    virtual void setEditorData(QWidget *editor, const QModelIndex &index) const override;
-    virtual void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
-};
-
 class LayerDialogWidget : public DialogVisibilityNotify {
 Q_OBJECT
 public:
@@ -75,6 +65,7 @@ public:
     QVBoxLayout layerLayout;
     LayerItemModel itemModel;
     QTreeView treeView;
+    QColorDialog colorDialog;
 
     QHBoxLayout controlButtonLayout;
     QToolButton moveUpButton;

@@ -8,7 +8,6 @@
 #include "viewer.h"
 
 #include <QHeaderView>
-#include <QPainter>
 
 std::size_t LayerItemModel::ordered_i(std::size_t index) const {
     return state->viewerState->layerOrder[index];
@@ -165,7 +164,7 @@ Qt::ItemFlags LayerItemModel::flags(const QModelIndex &index) const {
     return nullptr;
 }
 
-LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(PREFERENCES_WIDGET, parent) {
+LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(PREFERENCES_WIDGET, parent), colorDialog(this) {
     setWindowTitle("Layers");
 
     int row = 0;
@@ -190,7 +189,6 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     treeView.resizeColumnToContents(0);
     treeView.resizeColumnToContents(1);
     treeView.setRootIsDecorated(false);
-    treeView.setItemDelegateForColumn(8, new LayerColorPickerDialog(this));
     treeView.setUniformRowHeights(true); // for optimization
     treeView.setDragDropMode(QAbstractItemView::InternalMove);
 
@@ -281,6 +279,15 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         }
     });
 
+    QObject::connect(&treeView, &QTreeView::doubleClicked, [this](const QModelIndex & index) {
+        if (index.column() == 8) {
+            colorDialog.setCurrentColor(treeView.model()->data(index, Qt::BackgroundRole).value<QColor>());
+            if (state->viewer->suspend([this]{ return colorDialog.exec(); }) == QColorDialog::Accepted) {
+                treeView.model()->setData(index, colorDialog.currentColor());
+            }
+        }
+    });
+
     QObject::connect(state->viewer, &Viewer::layerSettingsChanged, this, &LayerDialogWidget::updateLayerProperties);
 
     QObject::connect(treeView.selectionModel(), &QItemSelectionModel::selectionChanged, this, &LayerDialogWidget::updateLayerProperties);
@@ -319,20 +326,4 @@ void LayerDialogWidget::updateLayerProperties() {
         biasSlider.setValue(static_cast<int>(layerSettings.bias * biasSlider.maximum()));
         linearFilteringCheckBox.setChecked(layerSettings.textureFilter == QOpenGLTexture::Linear);
     }
-}
-
-QWidget *LayerColorPickerDialog::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const {
-    return new QColorDialog(parent);
-}
-
-void LayerColorPickerDialog::setEditorData(QWidget *editor, const QModelIndex &index) const {
-    auto* colorEditor = qobject_cast<QColorDialog*>(editor);
-    auto color = index.data().value<QColor>();
-    colorEditor->setCurrentColor(color);
-}
-
-void LayerColorPickerDialog::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const {
-    auto* colorEditor = qobject_cast<QColorDialog*>(editor);
-    auto color = colorEditor->currentColor();
-    model->setData(index, color);
 }
