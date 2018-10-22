@@ -1701,9 +1701,13 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
         const auto xsize = bradius / Dataset::current().scale.x;
         const auto ysize = bradius / Dataset::current().scale.y;
         const auto zsize = bradius / Dataset::current().scale.z;
+        const auto bcoord = Dataset::current().scale.componentMul(Coordinate(coord.x, coord.y, coord.z));
+//        const auto bcoord = Dataset::current().scale.componentMul(Coordinate(coord.x + coord.x % Dataset::current().magnification
+//                                                                             , coord.y + coord.y % Dataset::current().magnification
+//                                                                             , coord.z + coord.z % Dataset::current().magnification));
 
         //move from center to cursor
-        glTranslatef(Dataset::current().scale.x * coord.x, Dataset::current().scale.y * coord.y, Dataset::current().scale.z * coord.z);
+        glTranslatef(bcoord.x, bcoord.y, bcoord.z);
         if (viewportType == VIEWPORT_XZ && bview == brush_t::view_t::xz) {
             glTranslatef(0, 0, Dataset::current().scale.z);//move origin to other corner of voxel, idrk why that’s necessary
             glRotatef(-90, 1, 0, 0);
@@ -1716,31 +1720,53 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
 
         const bool xy = viewportType == VIEWPORT_XY;
         const bool xz = viewportType == VIEWPORT_XZ;
+        const bool zy = viewportType == VIEWPORT_ZY;
         const int z = 0;
         std::vector<floatCoordinate> vertices;
         if(seg.brush.getShape() == brush_t::shape_t::angular) {
-            const auto x = xy || xz ? xsize : zsize;
-            const auto y = xz ? zsize : ysize;
+            auto region = getRegion(coord, seg.brush.value());
+            auto first = region.first - coord;
+            auto second = region.second - coord + 1;
+            // size
+            if (coord.x % Dataset::current().magnification != 0) {
+                first.x -= Dataset::current().magnification - coord.x % Dataset::current().magnification;
+            }
+            if (coord.y % Dataset::current().magnification != 0) {
+                first.y -= Dataset::current().magnification - coord.y % Dataset::current().magnification;
+            }
+            if (coord.z % Dataset::current().magnification != 0) {
+                first.z -= Dataset::current().magnification - coord.z % Dataset::current().magnification;
+            }
+            if ((coord.x + 1) % Dataset::current().magnification != 0) {
+                second.x += Dataset::current().magnification - (coord.x + 1) % Dataset::current().magnification;
+            }
+            if ((coord.y + 1) % Dataset::current().magnification != 0) {
+                second.y += Dataset::current().magnification - (coord.y + 1) % Dataset::current().magnification;
+            }
+            if ((coord.z + 1) % Dataset::current().magnification != 0) {
+                second.z += Dataset::current().magnification - (coord.z + 1) % Dataset::current().magnification;
+            }
+            qDebug() << first << second;
             //integer coordinates to round to voxel boundaries
-            vertices.emplace_back(-x    , -y    , z);
-            vertices.emplace_back( x + 1, -y    , z);
-            vertices.emplace_back( x + 1,  y + 1, z);
-            vertices.emplace_back(-x    ,  y + 1, z);
+            vertices.emplace_back(first.x , first.y , second.z);
+            vertices.emplace_back(second.x, first.y , second.z);
+            vertices.emplace_back(second.x, second.y, second.z);
+            vertices.emplace_back(first.x , second.y, second.z);
         } else if(seg.brush.getShape() == brush_t::shape_t::round) {
-            const int xmax = xy ? xsize : xz ? xsize : zsize;
-            const int ymax = xy ? ysize : xz ? zsize : ysize;
+            const int xmax = zy ? zsize : xsize;
+            const int ymax = xz ? zsize : ysize;
             int y = 0;
             int x = xmax;
-            auto addVerticalPixelBorder = [&vertices](float x, float y, float z) {
+            const auto addVerticalPixelBorder = [&vertices](float x, float y, float z) {
                 vertices.emplace_back(x, y    , z);
                 vertices.emplace_back(x, y + 1, z);
             };
-            auto addHorizontalPixelBorder = [&vertices](float x, float y, float z) {
+            const auto addHorizontalPixelBorder = [&vertices](float x, float y, float z) {
                 vertices.emplace_back(x    , y, z);
                 vertices.emplace_back(x + 1, y, z);
             };
             while (x >= y) { //first part of the ellipse (circle with anisotropic pixels), y dominant movement
-                auto val = isInsideSphere(xy ? x : xz ? x : z, xy ? y : xz ? z : y, xy ? z : xz ? y : x, bradius);
+                const auto val = isInsideSphere((zy ? z : x) * Dataset::current().magnification, (xz ? z : y) * Dataset::current().magnification, (xy ? z : xz ? y : x) * Dataset::current().magnification, bradius);
                 if (val) {
                     addVerticalPixelBorder( x + 1,  y, z);
                     addVerticalPixelBorder(-x    ,  y, z);
@@ -1753,16 +1779,16 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
                     addHorizontalPixelBorder( x, -y + 1, z);
                 }
                 if (val) {
-                    ++y;
+                    y += 1;
                 } else {
-                    --x;
+                    x -= 1;
                 }
             }
 
             x = 0;
             y = ymax;
             while (y >= x) { //second part of the ellipse, x dominant movement
-                auto val = isInsideSphere(xy ? x : xz ? x : z, xy ? y : xz ? z : y, xy ? z : xz ? y : x, bradius);
+                const auto val = isInsideSphere(zy ? z : x, xz ? z : y, xy ? z : xz ? y : x, bradius);
                 if (val) {
                     addHorizontalPixelBorder( x,  y + 1, z);
                     addHorizontalPixelBorder(-x,  y + 1, z);
@@ -1775,9 +1801,9 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
                     addVerticalPixelBorder( x    , -y, z);
                 }
                 if (val) {
-                    ++x;
+                    x += 1;
                 } else {
-                    --y;
+                    y -= 1;
                 }
             }
         }
@@ -1785,6 +1811,9 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
         for (auto && point : vertices) {
             point.x *= Dataset::current().scale.componentMul(v1).length();
             point.y *= Dataset::current().scale.componentMul(v2).length();
+        }
+        if (vertices.empty()) {
+            return;
         }
         // sort by angle
         const auto center = std::accumulate(std::begin(vertices), std::end(vertices), floatCoordinate(0, 0, 0)) / vertices.size();

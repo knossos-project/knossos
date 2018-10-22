@@ -34,6 +34,7 @@ using CubeCoordSet = std::unordered_set<CoordOfCube>;
 using subobjectRetrievalMap = std::unordered_map<uint64_t, Coordinate>;
 
 bool isInsideSphere(const double xi, const double yi, const double zi, const double radius);
+std::pair<Coordinate, Coordinate> getRegion(const floatCoordinate & centerPos, const brush_t & brush);
 
 void coordCubesMarkChanged(const CubeCoordSet & cubeChangeSet);
 uint64_t readVoxel(const Coordinate & pos);

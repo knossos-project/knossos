@@ -45,7 +45,7 @@ public:
     bool inverse = false;
     mode_t mode = mode_t::two_dim;
     view_t view = view_t::xy;
-    shape_t shape = shape_t::round;
+    shape_t shape = shape_t::angular;
     floatCoordinate v1{1, 0, 0};
     floatCoordinate v2{0, 1, 0};
     floatCoordinate n{0, 0, 1};
