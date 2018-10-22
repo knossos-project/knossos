@@ -93,7 +93,7 @@ struct LayerRenderSettings {
     double rangeDelta{1.};
     double bias{0.};
     QOpenGLTexture::Filter textureFilter;
-    QColor color;
+    QColor color{Qt::white};
 };
 
 struct ViewerState {

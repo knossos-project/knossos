@@ -754,27 +754,23 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     view();
     updateFrustumClippingPlanes();
 
-    glColor4f(1, 1, 1, 1);// 100% alpha for first slice
-    glDisable(GL_DEPTH_TEST);// render first raw slice below everything
     glPolygonMode(GL_FRONT, GL_FILL);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+    glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-    std::size_t firstVisibleRawDataset = 0;
-    for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
-        auto ordered_i = state->viewerState->layerOrder[i];
-        if (options.drawOverlay || !Dataset::datasets[ordered_i].isOverlay()) {
-            auto & layerSettings = state->viewerState->layerRenderSettings[ordered_i];
-            if (layerSettings.visible) {
-                firstVisibleRawDataset = ordered_i;
-                glColor4f(1, 1, 1, layerSettings.opacity);
-                slice(texture, firstVisibleRawDataset);
-                break;
-            }
+    // data that’s visible through the skeleton (e.g. halo)
+    for (std::size_t i = 0; i < texture.texHandle.size(); ++i) {
+        const auto ordered_i = state->viewerState->layerOrder[i];
+        const auto & layerSettings = state->viewerState->layerRenderSettings[ordered_i];
+        if (!options.nodePicking && layerSettings.visible && !Dataset::datasets[ordered_i].isOverlay()) {
+            glColor4f(layerSettings.color.redF(), layerSettings.color.greenF(), layerSettings.color.blueF(), layerSettings.opacity);
+            slice(texture, ordered_i, n * fars);// offset to the far clipping plane to avoid clipping the skeleton
+            break;
         }
     }
 
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
-
+    glColor4f(1, 1, 1, 1);
     if (options.drawSkeleton && state->viewerState->skeletonDisplayVPOrtho.testFlag(TreeDisplay::ShowInOrthoVPs)) {
         glPushMatrix();
         if (viewportType != VIEWPORT_ARBITRARY) {// arb already is at the pixel center
@@ -785,33 +781,36 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glPopMatrix();
     }
 
-    if (Dataset::datasets.size() >= 3 && !Dataset::datasets[2].isOverlay()) {// FIXME: rgb dataset
-        glBlendFunc(GL_ONE, GL_ONE);
-    }
-    if (!options.nodePicking) {
-        for (std::size_t i = 0; i < texture.texHandle.size(); ++i) {
-            auto ordered_i = state->viewerState->layerOrder[i];
-            auto & layerSettings = state->viewerState->layerRenderSettings[ordered_i];
-            if (layerSettings.visible) {
-                if (options.drawOverlay || !Dataset::datasets[ordered_i].isOverlay()) {
-                    glColor4f(1, 1, 1, layerSettings.opacity);
-                    if (ordered_i == firstVisibleRawDataset) {
-                        glColor4f(1, 1, 1, 0.6 * layerSettings.opacity);// second raw slice is semi transparent, with one direction of the skeleton showing through and the other above rendered above
-                    }
-                    if (i < 3 && Dataset::datasets.size() >= 3 && !Dataset::datasets[2].isOverlay()) {// FIXME: rgb dataset
-                        glColor4f(layerSettings.color.redF(), layerSettings.color.greenF(), layerSettings.color.blueF(), layerSettings.opacity);
-                    } else {
-                        glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-                    }
-                    slice(texture, ordered_i, n);
+    glDepthMask(GL_FALSE);// overlay shouldn’t prevent opaque layer rendering below the skeleton
+    bool notFirst{false};
+    for (std::size_t i = 0; i < texture.texHandle.size(); ++i) {
+        const auto ordered_i = state->viewerState->layerOrder[i];
+        const auto & layerSettings = state->viewerState->layerRenderSettings[ordered_i];
+        if (!options.nodePicking && layerSettings.visible) {
+            if (!Dataset::datasets[ordered_i].isOverlay()) {
+                const auto alpha = (notFirst ? 1 : 0.6) * layerSettings.opacity;
+                glColor4f(layerSettings.color.redF() * layerSettings.opacity, layerSettings.color.greenF() * layerSettings.opacity, layerSettings.color.blueF() * layerSettings.opacity, alpha);
+                if (notFirst) {
+                    glBlendFunc(GL_ONE, GL_ONE);// mix all non overlay channels
+                    slice(texture, ordered_i, n * fars);// accumulate all opaque layers below the skeleton to not overdraw it
+                } else {// second raw slice is semi transparent, with one direction of the skeleton showing through and the other rendered above
+                    glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                    slice(texture, ordered_i);
                 }
+                notFirst = true;
+            } else if (options.drawOverlay) {
+                glColor4f(layerSettings.color.redF(), layerSettings.color.greenF(), layerSettings.color.blueF(), layerSettings.opacity);
+                glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                slice(texture, ordered_i);// overlay can be rendered inside the skeleton
             }
         }
     }
-    glColor4f(1, 1, 1, 1);
-    glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);// FIXME: rgb dataset
+    glDepthMask(GL_TRUE);
 
-    glDisable(GL_DEPTH_TEST);
+    glColor4f(1, 1, 1, 1);
+    glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+    glDisable(GL_DEPTH_TEST);// don’t render skeleton above crosshairs
     if (options.drawCrosshairs) {
         glPushMatrix();
         glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
