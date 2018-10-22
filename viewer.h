@@ -229,7 +229,7 @@ public:
         timer.stop();
         auto && res = func(args...);
         timer.start();
-        return res;
+        return std::move(res);
     }
     void saveSettings();
     void loadSettings();
