@@ -318,6 +318,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         try {
             layers.front().checkMagnifications();
             for (auto & layer : layers) {// apply discovered mags to all layers
+                layer.magnification = layers.front().magnification;
                 layer.lowestAvailableMag = layers.front().lowestAvailableMag;
                 layer.highestAvailableMag = layers.front().highestAvailableMag;
             }

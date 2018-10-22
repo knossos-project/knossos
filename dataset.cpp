@@ -390,6 +390,7 @@ Dataset::list_t Dataset::fromLegacyConf(const QUrl & configUrl, QString config) 
 void Dataset::checkMagnifications() {
     //iterate over all possible mags and test their availability
     std::tie(lowestAvailableMag, highestAvailableMag) = Network::singleton().checkOnlineMags(url);
+    magnification = std::min(std::max(magnification, lowestAvailableMag), highestAvailableMag);
     qDebug() << QObject::tr("Lowest Mag: %1, Highest Mag: %2").arg(lowestAvailableMag).arg(highestAvailableMag).toUtf8().constData();
 }
 
