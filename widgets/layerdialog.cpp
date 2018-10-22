@@ -125,15 +125,6 @@ void LayerItemModel::addItem() {
     endInsertRows();
 }
 
-void LayerItemModel::removeItem(const QModelIndex &index) {
-    if(index.isValid()) {
-        auto row = index.row();
-        beginRemoveRows(QModelIndex(), row, row);
-        // TODO: remove layer
-        endRemoveRows();
-    }
-}
-
 void LayerItemModel::moveItem(const QModelIndex &index, int offset) {
     if(index.isValid()) {
         auto row = index.row();
@@ -216,7 +207,11 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
 
     QObject::connect(&removeLayerButton, &QToolButton::clicked, [this](){
         for (const auto & mindex : treeView.selectionModel()->selectedRows()) {
-            Dataset::datasets.erase(std::next(std::begin(Dataset::datasets), itemModel.ordered_i(mindex.row())));
+            const auto layeri = itemModel.ordered_i(mindex.row());
+            Dataset::datasets.erase(std::next(std::begin(Dataset::datasets), layeri));
+            if (Segmentation::singleton().layerId >= layeri) {
+                --Segmentation::singleton().layerId;
+            }
             reloadLayers();
         }
     });

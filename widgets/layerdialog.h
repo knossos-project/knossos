@@ -38,7 +38,6 @@ public:
     virtual Qt::ItemFlags flags(const QModelIndex &index) const override;
 
     void addItem();
-    void removeItem(const QModelIndex &index);
     void moveItem(const QModelIndex &indices, int offset);
     void reset();
 
