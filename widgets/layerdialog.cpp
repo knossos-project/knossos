@@ -66,13 +66,13 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
             }
         } else if (role == Qt::ForegroundRole) {
             if (index.column() == 8) {
-                auto color = index.data().value<QColor>();
-                float luminance = 0.299 * color.redF() + 0.587 * color.greenF() + 0.114 * color.blueF();
+                const auto color = layerSettings.color;
+                const auto luminance = 0.299 * color.redF() + 0.587 * color.greenF() + 0.114 * color.blueF();
                 return QColor((luminance > 0.5) ? Qt::black : Qt::white);
             }
         } else if (role == Qt::BackgroundRole) {
             if (index.column() == 8) {
-                return index.data().value<QColor>();
+                return layerSettings.color;
             }
         }
     }
