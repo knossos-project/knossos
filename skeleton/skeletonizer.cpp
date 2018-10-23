@@ -390,9 +390,8 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     bench.start();
     {
     QSignalBlocker blocker{this};
-    if (!xml.readNextStartElement() || xml.name() != "things") {
-        throw std::runtime_error(tr("loadXmlSkeleton invalid xml token: %1").arg(xml.name().toString()).toStdString());
-    }
+    xml.readNextStartElement();// <things>
+    const auto rootTag = xml.name();
     while(xml.readNextStartElement()) {
         if(xml.name() == "parameters") {
             while(xml.readNextStartElement()) {
@@ -683,8 +682,11 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
         }
     }
     xml.readNext();//</things>
-    if(xml.hasError()) {
-        throw std::runtime_error(tr("loadXmlSkeleton xml error: %1 at %2").arg(xml.errorString()).arg(xml.lineNumber()).toStdString());
+    if (xml.hasError()) {
+        throw std::runtime_error(tr("loadXmlSkeleton xml error in line %2: »%1«").arg(xml.errorString()).arg(xml.lineNumber()).toStdString());
+    }
+    if (rootTag != "things") {
+        throw std::runtime_error{tr("loadXmlSkeleton: expected root tag <things>, got »%1«").arg(xml.name()).toStdString()};
     }
 
 
