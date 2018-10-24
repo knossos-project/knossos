@@ -56,7 +56,7 @@ QString annotationFileDefaultPath() {
     return QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/annotationFiles/" + annotationFileDefaultName();
 }
 
-void annotationFileLoad(const QString & filename, const bool mergeSkeleton, const QString & treeCmtOnMultiLoad) {
+void annotationFileLoad(const QString & filename, bool mergeSkeleton, const QString & treeCmtOnMultiLoad) {
     QElapsedTimer time;
     time.start();
     QSet<QString> nonExtraFiles;
@@ -115,11 +115,11 @@ void annotationFileLoad(const QString & filename, const bool mergeSkeleton, cons
             treeMap = Skeletonizer::singleton().loadXmlSkeleton(file, mergeSkeleton, treeCmtOnMultiLoad);
         });
         for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) { // after annotation.xml, because loading .xml clears skeleton
-            const QRegularExpression meshRegEx(R"regex([0-9]*.ply)regex");
+            const QRegularExpression meshRegEx(R"regex([0-9]*\.ply)regex");
+            const QRegularExpression nmlRegEx(R"regex(.*\.nml)regex");
             auto fileName = archive.getCurrentFileName();
-            const auto matchMesh = meshRegEx.match(fileName);
-            if (matchMesh .hasMatch()) {
-                nonExtraFiles.insert(archive.getCurrentFileName());
+            if (meshRegEx.match(fileName).hasMatch()) {
+                nonExtraFiles.insert(fileName);
                 QuaZipFile file(&archive);
                 auto nameWithoutExtension = fileName;
                 nameWithoutExtension.chop(4);
@@ -140,6 +140,12 @@ void annotationFileLoad(const QString & filename, const bool mergeSkeleton, cons
                     }
                 }
                 Skeletonizer::singleton().loadMesh(file, treeId, fileName);
+            }
+            if (nmlRegEx.match(fileName).hasMatch()) {// PyK *.nml inside an *.nmx
+                nonExtraFiles.insert(fileName);
+                QuaZipFile file(&archive);
+                Skeletonizer::singleton().loadXmlSkeleton(file, mergeSkeleton, fileName);
+                mergeSkeleton = true;// support loading multiple files
             }
         }
         state->viewer->loader_notify();
