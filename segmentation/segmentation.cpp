@@ -549,7 +549,10 @@ void Segmentation::mergelistClear() {
     Object::highestIndex = -1;
     SubObject::highestId = 0;
     subobjects.clear();
+    backgroundId = 0;
+    hovered_subobject_id = 0;
     touched_subobject_id = 0;
+    lastTodoObject_id = 0;
     categories = prefixed_categories;
     emit resetData();
     emit resetSelection();
