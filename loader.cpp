@@ -491,7 +491,7 @@ void Loader::Worker::cleanup(const Coordinate center) {
 void Loader::Controller::startLoading(const Coordinate & center, const UserMoveType userMoveType, const floatCoordinate & direction) {
     if (worker != nullptr) {
         worker->isFinished = false;
-        emit loadSignal(++loadingNr, center, userMoveType, direction, Dataset::datasets);
+        emit loadSignal(++loadingNr, center, userMoveType, direction, Dataset::datasets, Segmentation::singleton().layerId);
     }
 }
 
@@ -504,9 +504,11 @@ void Loader::Worker::broadcastProgress(bool startup) {
     emit progress(startup, count);
 }
 
-void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset::list_t & changedDatasets) {
-    datasets = changedDatasets;
+void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset::list_t & changedDatasets, const size_t segmentationLayer) {
     cleanup(center);
+    datasets = changedDatasets;
+    snappyLayerId = segmentationLayer;
+
     const auto magnification = datasets.front().magnification;
     loaderMagnification = datasets.front().magIndex;
     const auto cubeEdgeLen = datasets.front().cubeEdgeLength;

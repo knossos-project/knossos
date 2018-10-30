@@ -109,9 +109,9 @@ bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, in
                 const auto beginIt = std::cbegin(state->viewerState->layerOrder);
                 const auto segi = std::distance(beginIt, std::find(beginIt, std::cend(state->viewerState->layerOrder), Segmentation::singleton().layerId));
                 const auto prevSegLayerIndex = this->index(segi);
+                Segmentation::singleton().clear();// clear selection and snappy cache
                 Segmentation::singleton().layerId = ordered_i(index.row());
                 emit dataChanged(prevSegLayerIndex, prevSegLayerIndex, QVector<int>(role));
-                reloadLayers();
             }
         }
     }
