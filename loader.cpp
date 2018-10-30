@@ -331,7 +331,7 @@ void Loader::Worker::snappyCacheClear() {
         return;
     }
     //unload all modified cubes
-    for (std::size_t mag = 0; mag < OcModifiedCacheQueue.size(); ++mag) {
+    for (std::size_t mag = 0; mag < state->cube2Pointer[snappyLayerId].size(); ++mag) {
         unloadCubes(state->cube2Pointer[snappyLayerId][mag], freeSlots[snappyLayerId], [this, mag](const CoordOfCube & cubeCoord){
             const bool unflushed = OcModifiedCacheQueue[mag].find(cubeCoord) != std::end(OcModifiedCacheQueue[mag]);
             const bool flushed = snappyCache[mag].find(cubeCoord) != std::end(snappyCache[mag]);
