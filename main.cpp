@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  *
- *  For further information, visit https://knossostool.org
+ *  For further information, visit https://knossos.app
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
 #ifdef NDEBUG
     Splash splash(dynamic_cast<QGuiApplication&>(*QApplication::instance()).primaryScreen()->devicePixelRatio() == 1.0 ? ":/resources/splash.png" : ":/resources/splash@2x.png");
 #endif
-    QCoreApplication::setOrganizationDomain("knossostool.org");
+    QCoreApplication::setOrganizationDomain("knossos.app");
     QCoreApplication::setOrganizationName("MPIN");
     QCoreApplication::setApplicationName("KNOSSOS");
     QSettings::setDefaultFormat(QSettings::IniFormat);

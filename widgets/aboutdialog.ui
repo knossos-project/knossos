@@ -280,7 +280,7 @@ margin-top: 8px;
          <item>
           <widget class="QLabel" name="webLabel">
            <property name="text">
-            <string>&lt;a href=&quot;https://knossostool.org&quot;&gt;https://knossostool.org&lt;/a&gt;</string>
+            <string>&lt;a href=&quot;https://knossos.app&quot;&gt;https://knossos.app&lt;/a&gt;</string>
            </property>
            <property name="openExternalLinks">
             <bool>true</bool>

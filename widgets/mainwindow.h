@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  *
- *  For further information, visit https://knossostool.org
+ *  For further information, visit https://knossos.app
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
@@ -194,7 +194,7 @@ class MainWindow : public QMainWindow {
 
     Cheatsheet cheatsheet;
 public:
-    static constexpr auto docUrl = "https://knossostool.org/documentation/KNOSSOS_full_doc.html";
+    static constexpr auto docUrl = "https://knossos.app/documentation/KNOSSOS_full_doc.html";
 
     std::unique_ptr<ViewportOrtho> viewportXY;
     std::unique_ptr<ViewportOrtho> viewportXZ;

@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-    For further information, visit https://knossostool.org
+    For further information, visit https://knossos.app
     or contact knossos-team@mpimf-heidelberg.mpg.de
 ]]
 

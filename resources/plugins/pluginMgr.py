@@ -9,7 +9,7 @@ class main_class(QtGui.QWidget):
     LOCAL_REPO = "<LOCAL>"
     PLUGIN_COLUMN_NAMES = ["Name","Repo","Local","Remote","Description","URL"]
     PLUGIN_NAME_COLUMN_INDEX = PLUGIN_COLUMN_NAMES.index("Name")
-    DEFAULT_REPO_LIST_URL = "https://knossostool.org/knossos-plugins/repo_list.txt"
+    DEFAULT_REPO_LIST_URL = "https://knossos.app/knossos-plugins/repo_list.txt"
     PLUGIN_MGR_NAME = __name__
     SETTING_GROUP_NAME = "Plugin_" + PLUGIN_MGR_NAME
     SETTING_NAMES = {"SETTING_OVERWRITE_SAME_NAME":"OverwriteSame",
