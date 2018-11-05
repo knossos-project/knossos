@@ -36,6 +36,7 @@ using subobjectRetrievalMap = std::unordered_map<uint64_t, Coordinate>;
 bool isInsideSphere(const double xi, const double yi, const double zi, const double radius);
 
 void coordCubesMarkChanged(const CubeCoordSet & cubeChangeSet);
+uint64_t readVoxel(const Coordinate & pos, const std::size_t layerId);
 uint64_t readVoxel(const Coordinate & pos);
 subobjectRetrievalMap readVoxels(const Coordinate & centerPos, const brush_t &);
 bool writeVoxel(const Coordinate & pos, const uint64_t value, bool isMarkChanged = true);

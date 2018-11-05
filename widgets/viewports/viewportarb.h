@@ -28,7 +28,6 @@
 class ViewportArb : public ViewportOrtho {
     Q_OBJECT
     QAction resetAction{"Reset rotation", &menuButton};
-    void updateOverlayTexture();
 
 protected:
     virtual void paintGL() override;
@@ -38,6 +37,7 @@ public:
     ViewportArb(QWidget *parent, ViewportType viewportType);
 
     virtual float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const override;
+    void updateOverlayTexture(const std::size_t layerId);
 };
 
 #endif // VIEWPORTARB_H

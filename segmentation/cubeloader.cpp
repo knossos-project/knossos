@@ -30,7 +30,7 @@
 
 #include <boost/multi_array.hpp>
 
-std::pair<bool, void *> getRawCube(const Coordinate & pos) {
+std::pair<bool, void *> getRawCube(const Coordinate & pos, const std::size_t layerId = Segmentation::singleton().layerId) {
     if (!Segmentation::singleton().enabled) {
         return {false, nullptr};
     }
@@ -49,13 +49,17 @@ boost::multi_array_ref<uint64_t, 3> getCubeRef(void * const rawcube) {
     return boost::multi_array_ref<uint64_t, 3>(reinterpret_cast<uint64_t *>(rawcube), dims);
 }
 
-uint64_t readVoxel(const Coordinate & pos) {
-    auto cubeIt = getRawCube(pos);
+uint64_t readVoxel(const Coordinate & pos, const std::size_t layerId) {
+    auto cubeIt = getRawCube(pos, layerId);
     if (Session::singleton().outsideMovementArea(pos) || !cubeIt.first) {
         return Segmentation::singleton().getBackgroundId();
     }
     const auto inCube = pos.insideCube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
     return getCubeRef(cubeIt.second)[inCube.z][inCube.y][inCube.x];
+}
+
+uint64_t readVoxel(const Coordinate & pos) {
+    return readVoxel(pos, Segmentation::singleton().layerId);
 }
 
 bool writeVoxel(const Coordinate & pos, const uint64_t value, bool isMarkChanged) {

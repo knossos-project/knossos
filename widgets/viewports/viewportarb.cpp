@@ -49,17 +49,15 @@ void ViewportArb::hideVP() {
 void ViewportArb::paintGL() {
     if (state->gpuSlicer && state->viewer->gpuRendering) {
         state->viewer->arbCubes(*this);
-    } else if (Segmentation::singleton().enabled && state->viewerState->showOnlyRawData == false) {
-        updateOverlayTexture();
     }
     ViewportOrtho::paintGL();
 }
 
-void ViewportArb::updateOverlayTexture() {
-    if (!Segmentation::singleton().enabled || !resliceNecessary[Segmentation::singleton().layerId]) {
+void ViewportArb::updateOverlayTexture(const std::size_t layerId) {
+    if (!Dataset::datasets[layerId].isOverlay() || !resliceNecessary[layerId]) {
         return;
     }
-    resliceNecessary[Segmentation::singleton().layerId] = false;
+    resliceNecessary[layerId] = false;
     const int width = (state->M - 1) * Dataset::current().cubeEdgeLength / std::sqrt(2);
     const int height = width;
     const auto begin = leftUpperPxInAbsPx_float;
@@ -75,7 +73,7 @@ void ViewportArb::updateOverlayTexture() {
         if (dataPos.x < 0 || dataPos.y < 0 || dataPos.z < 0) {
             viewportView[y][x][0] = viewportView[y][x][1] = viewportView[y][x][2] = viewportView[y][x][3] = 0;
         } else {
-            const auto soid = readVoxel(dataPos);
+            const auto soid = readVoxel(dataPos, layerId);
             const auto color = (subobjectIdCache == soid) ? colorCache : Segmentation::singleton().colorObjectFromSubobjectId(soid);
             subobjectIdCache = soid;
             colorCache = color;
@@ -85,7 +83,7 @@ void ViewportArb::updateOverlayTexture() {
             viewportView[y][x][3] = std::get<3>(color);
         }
     }
-    texture.texHandle[Segmentation::singleton().layerId].bind();
+    texture.texHandle[layerId].bind();
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
-    texture.texHandle[Segmentation::singleton().layerId].release();
+    texture.texHandle[layerId].release();
 }

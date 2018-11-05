@@ -712,6 +712,7 @@ void Viewer::setDefaultVPSizeAndPos(const bool on) {
 }
 
 void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
+    vp.updateOverlayTexture(layerId);
     if (Dataset::datasets[layerId].isOverlay() || !vp.resliceNecessary[layerId]) {
         return;
     }
