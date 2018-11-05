@@ -281,6 +281,7 @@ void Loader::Worker::unloadCurrentMagnification() {
                 }
             }
             freeSlots[layerId].emplace_back(remSlotPtr);
+            state->viewer->reslice_notify_all(layerId, cubeCoord.cube2Global(datasets[layerId].cubeEdgeLength, std::pow(2, loaderMagnification)));
         }
         state->cube2Pointer[layerId][loaderMagnification].clear();
     }
