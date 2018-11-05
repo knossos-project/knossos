@@ -495,6 +495,23 @@ void Loader::Worker::broadcastProgress(bool startup) {
 
 void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset::list_t & changedDatasets, const size_t segmentationLayer) {
     cleanup(center);
+    if (datasets.size() != changedDatasets.size()) {
+        const std::size_t layerCount{changedDatasets.size()};
+        slotDownload.resize(layerCount);
+        slotDecompression.resize(layerCount);
+        slotChunk.resize(layerCount);
+        freeSlots.resize(layerCount);
+        state->cube2Pointer.resize(layerCount);
+
+        for (std::size_t layerId{0}; layerId < changedDatasets.size(); ++layerId) {
+            state->cube2Pointer.emplace_back(std::log2(changedDatasets[layerId].highestAvailableMag)+1);
+        }
+
+        snappyLayerId = Segmentation::singleton().layerId;
+        const auto snappyLayerMagCount{static_cast<std::size_t>(std::log2(changedDatasets[snappyLayerId].highestAvailableMag) + 1)};
+        OcModifiedCacheQueue.resize(snappyLayerMagCount);
+        snappyCache.resize(snappyLayerMagCount);
+    }
     // freeSlots[] are lists of pointers to locations that
     // can hold data or overlay cubes. Whenever we want to load a new
     // datacube, we load it into a location from this list. Whenever a
