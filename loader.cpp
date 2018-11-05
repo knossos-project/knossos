@@ -208,25 +208,9 @@ Loader::Worker::Worker(const decltype(datasets) & layers)
     , snappyCache(static_cast<std::size_t>(std::log2(layers.front().highestAvailableMag)+1))
 {
     qnam.setRedirectPolicy(QNetworkRequest::NoLessSafeRedirectPolicy);// default is manual redirect
-    state->cube2Pointer.clear();
-    state->cube2Pointer.shrink_to_fit();
-
-    // freeSlots[] are lists of pointers to locations that
-    // can hold data or overlay cubes. Whenever we want to load a new
-    // datacube, we load it into a location from this list. Whenever a
-    // datacube in memory becomes invalid, we add the pointer to its
-    // memory location back into this list.
-    for (std::size_t layerId{0}; layerId < layers.size(); ++layerId) {
-        state->cube2Pointer.emplace_back(std::log2(layers[layerId].highestAvailableMag)+1);
-        if (!datasets[layerId].allocationEnabled) {
-            continue;
-        }
-        const auto overlayFactor = layers[layerId].isOverlay() ? OBJID_BYTES : 1;
-        qDebug() << "Allocating" << state->cubeSetBytes * overlayFactor / 1024. / 1024. << "MiB for cubes.";
-        for (size_t i = 0; i < state->cubeSetBytes * overlayFactor; i += state->cubeBytes * overlayFactor) {
-            slotChunk[layerId].emplace_back(state->cubeBytes * overlayFactor, 0);// zero init chunk of chars
-            freeSlots[layerId].emplace_back(slotChunk[layerId].back().data());// append newest element
-        }
+    state->cube2Pointer.resize(datasets.size());
+    for (auto && layer : datasets) {
+        layer.allocationEnabled = false;// signify that nothing is allocated yet
     }
 }
 
@@ -263,27 +247,31 @@ void unloadCubes(CubeHash & loadedCubes, Slots & freeSlots, Keep keep, UnloadHoo
     }
 }
 
+void Loader::Worker::unloadCurrentMagnification(const std::size_t layerId) {
+    abortDownloadsFinishDecompression(layerId, [](const Coordinate &){return false;});
+    QMutexLocker locker(&state->protectCube2Pointer);
+    if (loaderMagnification >= state->cube2Pointer[layerId].size()) {
+        return;
+    }
+    for (auto & elem : state->cube2Pointer[layerId][loaderMagnification]) {
+        const auto cubeCoord = elem.first;
+        const auto remSlotPtr = elem.second;
+        if (layerId == snappyLayerId) {
+            if (OcModifiedCacheQueue[loaderMagnification].find(cubeCoord) != std::end(OcModifiedCacheQueue[loaderMagnification])) {
+                snappyCacheBackupRaw(cubeCoord, remSlotPtr);
+                //remove from work queue
+                OcModifiedCacheQueue[loaderMagnification].erase(cubeCoord);
+            }
+        }
+        freeSlots[layerId].emplace_back(remSlotPtr);
+        state->viewer->reslice_notify_all(layerId, cubeCoord.cube2Global(datasets[layerId].cubeEdgeLength, std::pow(2, loaderMagnification)));
+    }
+    state->cube2Pointer[layerId][loaderMagnification].clear();
+}
+
 void Loader::Worker::unloadCurrentMagnification() {
     for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
-        abortDownloadsFinishDecompression(layerId, [](const Coordinate &){return false;});
-        QMutexLocker locker(&state->protectCube2Pointer);
-        if (loaderMagnification >= state->cube2Pointer[layerId].size()) {
-            continue;
-        }
-        for (auto &elem : state->cube2Pointer[layerId][loaderMagnification]) {
-            const auto cubeCoord = elem.first;
-            const auto remSlotPtr = elem.second;
-            if (layerId == snappyLayerId) {
-                if (OcModifiedCacheQueue[loaderMagnification].find(cubeCoord) != std::end(OcModifiedCacheQueue[loaderMagnification])) {
-                    snappyCacheBackupRaw(cubeCoord, remSlotPtr);
-                    //remove from work queue
-                    OcModifiedCacheQueue[loaderMagnification].erase(cubeCoord);
-                }
-            }
-            freeSlots[layerId].emplace_back(remSlotPtr);
-            state->viewer->reslice_notify_all(layerId, cubeCoord.cube2Global(datasets[layerId].cubeEdgeLength, std::pow(2, loaderMagnification)));
-        }
-        state->cube2Pointer[layerId][loaderMagnification].clear();
+        unloadCurrentMagnification(layerId);
     }
 }
 
@@ -507,6 +495,28 @@ void Loader::Worker::broadcastProgress(bool startup) {
 
 void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset::list_t & changedDatasets, const size_t segmentationLayer) {
     cleanup(center);
+    // freeSlots[] are lists of pointers to locations that
+    // can hold data or overlay cubes. Whenever we want to load a new
+    // datacube, we load it into a location from this list. Whenever a
+    // datacube in memory becomes invalid, we add the pointer to its
+    // memory location back into this list.
+    for (std::size_t layerId{0}; layerId < changedDatasets.size(); ++layerId) {
+        state->cube2Pointer[layerId].resize(std::log2(changedDatasets[layerId].highestAvailableMag)+1);
+        if (datasets[layerId].allocationEnabled && !changedDatasets[layerId].allocationEnabled) {
+            unloadCurrentMagnification(layerId);
+            slotChunk[layerId].clear();
+            freeSlots[layerId].clear();
+        }
+        if (!changedDatasets[layerId].allocationEnabled || datasets[layerId].allocationEnabled) {
+            continue;
+        }
+        const auto overlayFactor = changedDatasets[layerId].isOverlay() ? OBJID_BYTES : 1;
+        qDebug() << "Allocating" << state->cubeSetBytes * overlayFactor / 1024. / 1024. << "MiB for cubes.";
+        for (std::size_t i = 0; i < state->cubeSetBytes * overlayFactor; i += state->cubeBytes * overlayFactor) {
+            slotChunk[layerId].emplace_back(state->cubeBytes * overlayFactor, 0);// zero init chunk of chars
+            freeSlots[layerId].emplace_back(slotChunk[layerId].back().data());// append newest element
+        }
+    }
     datasets = changedDatasets;
     snappyLayerId = segmentationLayer;
 

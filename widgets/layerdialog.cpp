@@ -80,8 +80,7 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
 }
 
 void reloadLayers() {
-    Loader::Controller::singleton().restart(Dataset::datasets);
-    state->viewer->updateDatasetMag();// clear vps and notify loader
+    state->viewer->loader_notify();
     emit state->mainWindow->widgetContainer.datasetLoadWidget.datasetChanged();// HACK
 }
 

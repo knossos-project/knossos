@@ -111,6 +111,7 @@ public://matsch
 
     void moveToThread(QThread * targetThread);//reimplement to move qnam
 
+    void unloadCurrentMagnification(const std::size_t);
     void unloadCurrentMagnification();
     void markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification);
     void snappyCacheSupplySnappy(const CoordOfCube, const int magnification, const std::string cube);
@@ -157,7 +158,7 @@ public:
         QObject::connect(worker.get(), &Loader::Worker::progress, this, [this](bool, int count){emit progress(count);});
         QObject::connect(worker.get(), &Loader::Worker::progress, this, &Loader::Controller::refCountChange);
         QObject::connect(this, &Loader::Controller::loadSignal, worker.get(), &Loader::Worker::downloadAndLoadCubes);
-        QObject::connect(this, &Loader::Controller::unloadCurrentMagnificationSignal, worker.get(), &Loader::Worker::unloadCurrentMagnification, Qt::BlockingQueuedConnection);
+        QObject::connect(this, &Loader::Controller::unloadCurrentMagnificationSignal, worker.get(), static_cast<void(Loader::Worker::*)()>(&Loader::Worker::unloadCurrentMagnification), Qt::BlockingQueuedConnection);
         QObject::connect(this, &Loader::Controller::markOcCubeAsModifiedSignal, worker.get(), &Loader::Worker::markOcCubeAsModified, Qt::BlockingQueuedConnection);
         QObject::connect(this, &Loader::Controller::snappyCacheSupplySnappySignal, worker.get(), &Loader::Worker::snappyCacheSupplySnappy, Qt::BlockingQueuedConnection);
         workerThread.start();
