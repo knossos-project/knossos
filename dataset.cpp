@@ -450,9 +450,6 @@ QNetworkRequest Dataset::apiSwitch(const Coordinate globalCoord) const {
         auto url = knossosCubeUrl(globalCoord);
         auto path = url.path();
         path.replace(QRegularExpression("mag\\d+"), QString{"mag%1"}.arg(std::log2(magnification)+1));
-        if (!fileextension.isEmpty()) {
-            path.replace(QRegularExpression("\\.[^.]*$"), fileextension);
-        }
         url.setPath(path);
         return QNetworkRequest{url};
     }
