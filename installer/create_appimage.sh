@@ -23,12 +23,18 @@ patchelf --add-needed libpthread.so.0 knossos
 patchelf --add-needed libQt5XcbQpa.so.5 knossos
 patchelf --add-needed libdl.so.2 knossos
 
+cp -Lv /usr/lib/libz.so.1 lib/
+cp -Lv /usr/lib/libgpg-error.so.0 lib/
+cp -Lv /usr/lib/libxcb.so.1 lib/
+cp -Lv /usr/lib/libharfbuzz.so.0 lib/
+cp -Lv /usr/lib/libfreetype.so.6 lib/
+
 rm -v AppRun
 cp -v ../../knossos/installer/AppRun .
 
-#cd lib
-#rm -v libgnutls.so.30 libpython2.7.so.1.0 libsystemd.so.0 libpng16.so.16 libgcrypt.so.20 # will error if one of the files isn’t present
-#cd ..
+cd lib
+rm -v libpython2.7.so.1.0
+cd ..
 
 rm -fv *.AppImage
 env ARCH=x86_64 ../deploy-tools/appimagetool . --verbose --no-appstream
