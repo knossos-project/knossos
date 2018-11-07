@@ -1958,8 +1958,8 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
     };
 
     auto addSegment = [arrayFromQColor, &glBuffers](const segmentListElement & segment, const QColor & color) {
-        const auto isoBase = Dataset::current().scale.componentMul(segment.source.position);
-        const auto isoTop = Dataset::current().scale.componentMul(segment.target.position);
+        const auto isoBase = Dataset::current().scales[0].componentMul(segment.source.position);
+        const auto isoTop = Dataset::current().scales[0].componentMul(segment.target.position);
 
         glBuffers.lineVertBuffer.emplace_back(isoBase, arrayFromQColor(color));
         glBuffers.lineVertBuffer.emplace_back(isoTop, arrayFromQColor(color));
@@ -1975,7 +1975,7 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
             glBuffers.pointVertBuffer.lastSelectedNode = node.nodeID;
         }
 
-        const auto isoPos = Dataset::current().scale.componentMul(node.position);
+        const auto isoPos = Dataset::current().scales[0].componentMul(node.position);
 
         glBuffers.colorPickingBuffer24.emplace_back(arrayFromQColor(getPickingColor(node, RenderOptions::SelectionPass::NodeID0_24Bits)));
         glBuffers.colorPickingBuffer48.emplace_back(arrayFromQColor(getPickingColor(node, RenderOptions::SelectionPass::NodeID24_48Bits)));
