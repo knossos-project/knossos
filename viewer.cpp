@@ -1025,13 +1025,12 @@ void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, 
 
     const Coordinate movement = step;
     auto newPos = viewerState.currentPosition + movement;
-    if (!Session::singleton().outsideMovementArea(newPos)) {
-        viewerState.currentPosition = newPos;
-        recalcTextureOffsets();
-    } else {
+    if (Session::singleton().outsideMovementArea(newPos)) {
         const auto inc{state->skeletonState->displayMatlabCoordinates};
         qDebug() << tr("Position (%1, %2, %3) out of bounds").arg(newPos.x + inc).arg(newPos.y + inc).arg(newPos.z + inc);
     }
+    viewerState.currentPosition = newPos.capped(Session::singleton().movementAreaMin, Session::singleton().movementAreaMax);
+    recalcTextureOffsets();
 
     const auto newPosition_dc = viewerState.currentPosition.cube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
     const auto newPosition_gpudc = viewerState.currentPosition.cube(gpucubeedge, Dataset::current().magnification);
