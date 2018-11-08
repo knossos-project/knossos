@@ -95,7 +95,8 @@ public:
         return static_cast<CoordinateDerived&>(*this = *this - rhs);
     }
 
-    constexpr CoordinateDerived componentMul(const CoordinateDerived & rhs) const {
+    template<typename T>
+    constexpr CoordinateDerived componentMul(const T & rhs) const {
         return CoordinateDerived(x * rhs.x, y * rhs.y, z * rhs.z);
     }
 

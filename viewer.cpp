@@ -263,13 +263,8 @@ const auto datasetAdjustment = [](auto layerId, auto index){
 };
 
 void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId, const boost::optional<decltype(LayerRenderSettings::combineSlicesType)> combineType) {
-    const auto & session = Annotation::singleton();
-    const Coordinate areaMinCoord = {session.movementAreaMin.x,
-                                     session.movementAreaMin.y,
-                                     session.movementAreaMin.z};
-    const Coordinate areaMaxCoord = {session.movementAreaMax.x,
-                                     session.movementAreaMax.y,
-                                     session.movementAreaMax.z};
+    const Coordinate areaMinCoord = Dataset::current().scaleFactor.componentMul(Annotation::singleton().movementAreaMin);
+    const Coordinate areaMaxCoord = Dataset::current().scaleFactor.componentMul(Annotation::singleton().movementAreaMax);
     const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
     const auto partlyInMovementArea =
        areaMinCoord.x > cubePosInAbsPx.x || areaMaxCoord.x < cubePosInAbsPx.x + cubeEdgeLen * Dataset::current().magnification ||
@@ -400,13 +395,8 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxI
  *
  */
 void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId) {
-    const auto & session = Annotation::singleton();
-    const Coordinate areaMinCoord = {session.movementAreaMin.x,
-                                     session.movementAreaMin.y,
-                                     session.movementAreaMin.z};
-    const Coordinate areaMaxCoord = {session.movementAreaMax.x,
-                                     session.movementAreaMax.y,
-                                     session.movementAreaMax.z};
+    const Coordinate areaMinCoord = Dataset::current().scaleFactor.componentMul(Annotation::singleton().movementAreaMin);
+    const Coordinate areaMaxCoord = Dataset::current().scaleFactor.componentMul(Annotation::singleton().movementAreaMax);
     const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
     const auto partlyInMovementArea =
        areaMinCoord.x > cubePosInAbsPx.x || areaMaxCoord.x < cubePosInAbsPx.x + cubeEdgeLen * Dataset::current().magnification ||
@@ -524,8 +514,9 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
     for (int multiSlicei{-multiSliceiMax}; multiSlicei <= multiSliceiMax; ++multiSlicei) {
         const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
         const auto offset = vp.n * multiSlicei * Dataset::current().magnification;
-        const auto offsetCube = (state->viewerState->currentPosition + offset).cube(cubeEdgeLen, Dataset::datasets[layerId].magnification) - state->viewerState->currentPosition.cube(cubeEdgeLen, Dataset::datasets[layerId].magnification);
-        const CoordInCube currentPosition_dc = (state->viewerState->currentPosition + offset).capped(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax).insideCube(cubeEdgeLen, Dataset::current().magnification);
+        const auto cpos = state->viewerState->currentPosition.componentMul(Dataset::datasets[layerId].scaleFactor);
+        const auto offsetCube = (cpos + offset).cube(cubeEdgeLen, Dataset::datasets[layerId].magnification) - state->viewerState->currentPosition.cube(cubeEdgeLen, Dataset::datasets[layerId].magnification);
+        const CoordInCube currentPosition_dc = (cpos + offset).capped(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax).insideCube(cubeEdgeLen, Dataset::current().magnification);
         if (Annotation::singleton().outsideMovementArea(state->viewerState->currentPosition + offset)) {
             continue;
         }
@@ -788,11 +779,12 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
 void Viewer::calcLeftUpperTexAbsPx() {
     window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
         const auto fov = orthoVP.texture.usedSizeInCubePixels;
-        const CoordOfCube currentPosition_dc = viewerState.currentPosition.cube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
+        const CoordOfCube currentPosition_dc = viewerState.currentPosition.componentMul(Dataset::current().scaleFactor).cube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
         const auto xy = orthoVP.viewportType == VIEWPORT_XY;
         const auto xz = orthoVP.viewportType == VIEWPORT_XZ;
         const auto zy = orthoVP.viewportType == VIEWPORT_ZY;
-        orthoVP.texture.leftUpperPxInAbsPx = (currentPosition_dc - CoordOfCube{(xy || xz) * state->M / 2, (xy || zy) * state->M / 2, (xz || zy) * state->M / 2}).cube2Global(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
+        orthoVP.texture.leftUpperDc = (currentPosition_dc - CoordOfCube{(xy || xz) * state->M / 2, (xy || zy) * state->M / 2, (xz || zy) * state->M / 2});
+        orthoVP.texture.leftUpperPxInAbsPx = orthoVP.texture.leftUpperDc.cube2Global(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
         if (orthoVP.viewportType == VIEWPORT_ARBITRARY) {
             auto & arbVP = static_cast<ViewportArb&>(orthoVP);
             arbVP.leftUpperPxInAbsPx_float = floatCoordinate{viewerState.currentPosition} - (orthoVP.v1 - orthoVP.v2) * 0.5 * fov * Dataset::current().magnification;// broken arb slicing depends on this
@@ -811,13 +803,13 @@ void Viewer::calcDisplayedEdgeLength() {
         texture.texUsedX = texture.usedSizeInCubePixels / texture.size * texture.FOV / voxelV1X;
         texture.texUsedY = texture.usedSizeInCubePixels / texture.size * texture.FOV / voxelV2X;
 
-        vpOrtho.displayedIsoPx = layer.scale.x * 0.5 * texture.usedSizeInCubePixels * texture.FOV * layer.magnification;// FOV is within current mag
+        vpOrtho.displayedIsoPx = layer.scales[0].x * 0.5 * texture.usedSizeInCubePixels * texture.FOV * layer.magnification;// FOV is within current mag
         const auto dataPx = texture.usedSizeInCubePixels * texture.FOV * layer.magnification;
         vpOrtho.screenPxXPerDataPx = vpOrtho.edgeLength / dataPx * voxelV1X;
         vpOrtho.screenPxYPerDataPx = vpOrtho.edgeLength / dataPx * voxelV2X;
 
-        vpOrtho.displayedlengthInNmX = layer.scale.componentMul(vpOrtho.v1).length() * (texture.texUsedX / texture.texUnitsPerDataPx);
-        vpOrtho.displayedlengthInNmY = layer.scale.componentMul(vpOrtho.v2).length() * (texture.texUsedY / texture.texUnitsPerDataPx);
+        vpOrtho.displayedlengthInNmX = layer.scales[0].componentMul(vpOrtho.v1).length() * (texture.texUsedX / texture.texUnitsPerDataPx);
+        vpOrtho.displayedlengthInNmY = layer.scales[0].componentMul(vpOrtho.v2).length() * (texture.texUsedY / texture.texUnitsPerDataPx);
     });
 }
 
@@ -883,19 +875,20 @@ bool Viewer::updateDatasetMag(const int mag) {
             if (layer.scales.size() > std::log2(mag)) {
                 // convert sizes in dataset coordinates to physical coordinates and back with updated scale
                 // save intermediates in floatCoordinate as not to truncate them
-                const auto prevScale = layer.scale;
-                layer.scale = layer.scales[static_cast<std::size_t>(std::log2(mag))] / layer.magnification;
+//                const auto prevScale = layer.scale;
+                layer.scale = layer.scales[static_cast<std::size_t>(std::log2(mag))];
+                layer.scaleFactor = (layer.scales[0] * mag) / layer.scale;
 
-                const auto boundary = prevScale.componentMul(layer.boundary);
-                layer.boundary = boundary / layer.scale;
+//                const auto boundary = prevScale.componentMul(layer.boundary);
+//                layer.boundary = boundary / layer.scale;
 
-                if (&layer == &Dataset::datasets.front()) {// only update movement area and position once
-                    const auto movementAreaMin = prevScale.componentMul(Annotation::singleton().movementAreaMin);
-                    const auto movementAreaMax = prevScale.componentMul(Annotation::singleton().movementAreaMax);
-                    const auto cpos = prevScale.componentMul(state->viewerState->currentPosition);
-                    Annotation::singleton().updateMovementArea(movementAreaMin / layer.scale, movementAreaMax / layer.scale);
-                    setPosition(cpos / layer.scale);
-                }
+//                if (&layer == &Dataset::datasets.front()) {// only update movement area and position once
+//                    const auto movementAreaMin = prevScale.componentMul(Annotation::singleton().movementAreaMin);
+//                    const auto movementAreaMax = prevScale.componentMul(Annotation::singleton().movementAreaMax);
+//                    const auto cpos = prevScale.componentMul(state->viewerState->currentPosition);
+//                    Annotation::singleton().updateMovementArea(movementAreaMin / layer.scale, movementAreaMax / layer.scale);
+//                    setPosition(cpos / layer.scale);
+//                }
             }
 
             window->forEachOrthoVPDo([mag](ViewportOrtho & orthoVP) {
@@ -1170,15 +1163,16 @@ void Viewer::recalcTextureOffsets() {
         float midY = texture.texUnitsPerDataPx;
         float xFactor = 0.5 * texture.texUsedX;
         float yFactor = 0.5 * texture.texUsedY;
+        const auto cpos = state->viewerState->currentPosition.componentMul(Dataset::current().scaleFactor);
         if (orthoVP.viewportType == VIEWPORT_XY) {
-            midX *= state->viewerState->currentPosition.x - texture.leftUpperPxInAbsPx.x;
-            midY *= state->viewerState->currentPosition.y - texture.leftUpperPxInAbsPx.y;
+            midX *= cpos.x - texture.leftUpperPxInAbsPx.x;
+            midY *= cpos.y - texture.leftUpperPxInAbsPx.y;
         } else if (orthoVP.viewportType == VIEWPORT_XZ) {
-            midX *= state->viewerState->currentPosition.x - texture.leftUpperPxInAbsPx.x;
-            midY *= state->viewerState->currentPosition.z - texture.leftUpperPxInAbsPx.z;
+            midX *= cpos.x - texture.leftUpperPxInAbsPx.x;
+            midY *= cpos.z - texture.leftUpperPxInAbsPx.z;
         } else if (orthoVP.viewportType == VIEWPORT_ZY) {
-            midX *= state->viewerState->currentPosition.z - texture.leftUpperPxInAbsPx.z;
-            midY *= state->viewerState->currentPosition.y - texture.leftUpperPxInAbsPx.y;
+            midX *= cpos.z - texture.leftUpperPxInAbsPx.z;
+            midY *= cpos.y - texture.leftUpperPxInAbsPx.y;
         } else {
             const auto texUsed = texture.usedSizeInCubePixels / texture.size;
             midX = 0.5 * texUsed;

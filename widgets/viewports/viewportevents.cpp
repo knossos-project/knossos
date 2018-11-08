@@ -434,7 +434,7 @@ void ViewportOrtho::handleMouseReleaseMiddle(const QMouseEvent *event) {
             brush_copy.shape = brush_t::shape_t::angular;
             brush_copy.radius = displayedlengthInNmX / 2;//set brush to fill visible area
 
-            const floatCoordinate displayedDataPx{floatCoordinate{displayedlengthInNmX, displayedlengthInNmX, displayedlengthInNmX} / Dataset::current().scale};
+            const floatCoordinate displayedDataPx{floatCoordinate{displayedlengthInNmX, displayedlengthInNmX, displayedlengthInNmX} / Dataset::current().scale};// TODO
             auto areaMin = state->viewerState->currentPosition - displayedDataPx / 2;
             auto areaMax = state->viewerState->currentPosition + displayedDataPx / 2;
 

@@ -164,7 +164,7 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
             return cube;
         };
 
-        const auto scale = Dataset::current().scale * Dataset::current().magnification;
+        const auto scale = Dataset::current().scale;
         const auto cubeCoord = scale.componentMul(pair.first.cube2Global(cubeEdgeLen, 1));
 
         const std::array<double, 3> dims{{cubeEdgeLen * 1.0, cubeEdgeLen * 1.0, cubeEdgeLen * 1.0}};

@@ -116,17 +116,10 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
 
         widgetContainer.annotationWidget.setSegmentationVisibility(Segmentation::singleton().enabled);
 
-        const auto & dsb = Dataset::current().boundary;
-        const auto & dss = Dataset::current().scale;
-
-        std::vector<int> mp {
-            static_cast<int>(dsb.x * dss.x),
-            static_cast<int>(dsb.y * dss.y),
-            static_cast<int>(dsb.z * dss.z)
-        };
-
+        const Coordinate c = Dataset::current().boundary.componentMul(Dataset::current().scales[0]);
+        std::vector<int> mp {c.x, c.y, c.z};
         widgetContainer.annotationWidget.segmentationTab.updateBrushEditRange(1, *(std::max_element(mp.begin(), mp.end())));
-        Segmentation::singleton().brush.setRadius(Dataset::current().scale.x * 10);
+        Segmentation::singleton().brush.setRadius(Dataset::current().scales[0].x * 10);
     });
     QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::updateDatasetCompression,  this, &MainWindow::updateCompressionRatioDisplay);
     QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::snapshotVpSizeRequest, [this](SnapshotOptions & o) { viewport(o.vp)->takeSnapshotVpSize(o); });
@@ -253,7 +246,7 @@ void MainWindow::resetTextureProperties() {
     //reset viewerState texture properties
     forEachOrthoVPDo([](ViewportOrtho & orthoVP) {
         orthoVP.texture.size = state->viewerState->texEdgeLength;
-        orthoVP.texture.texUnitsPerDataPx = (1.0 / orthoVP.texture.size) / Dataset::current().magnification;
+        orthoVP.texture.texUnitsPerDataPx = (1.0 / orthoVP.texture.size) / Dataset::current().magnification;//TODO
         orthoVP.texture.FOV = 1;
         orthoVP.texture.usedSizeInCubePixels = (state->M - 1) * Dataset::current().cubeEdgeLength;
         if (orthoVP.viewportType == VIEWPORT_ARBITRARY) {

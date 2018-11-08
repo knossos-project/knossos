@@ -80,7 +80,7 @@ bool isInsideSphere(const double xi, const double yi, const double zi, const dou
 }
 
 std::pair<Coordinate, Coordinate> getRegion(const floatCoordinate & centerPos, const brush_t & brush) { // calcs global AABB of local coordinate system's region
-    const auto posArb = centerPos.toLocal(brush.v1, brush.v2, brush.n);
+    const auto posArb = Dataset::current().scaleFactor.componentMul(centerPos).toLocal(brush.v1, brush.v2, brush.n);
     const auto width = brush.radius / Dataset::current().scale.componentMul(brush.v1).length();
     const auto height = brush.radius / Dataset::current().scale.componentMul(brush.v2).length();
     const auto depth = (brush.mode == brush_t::mode_t::three_dim) ? brush.radius / Dataset::current().scale.componentMul(brush.n).length() : 0;
@@ -93,7 +93,7 @@ std::pair<Coordinate, Coordinate> getRegion(const floatCoordinate & centerPos, c
     auto min = floatCoordinate(1, 1, 1) * std::numeric_limits<int>::max();
     floatCoordinate max{0, 0, 0};
     for (const auto localCoord : localPoints) {
-        const auto worldCoord = localCoord.toWorldFrom(brush.v1, brush.v2, brush.n).capped(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax);
+        const auto worldCoord = localCoord.toWorldFrom(brush.v1, brush.v2, brush.n).capped(Dataset::current().scaleFactor.componentMul(Annotation::singleton().movementAreaMin), Dataset::current().scaleFactor.componentMul(Annotation::singleton().movementAreaMax));
         min = {std::min(worldCoord.x, min.x), std::min(worldCoord.y, min.y), std::min(worldCoord.z, min.z)};
         max = {std::max(worldCoord.x, max.x), std::max(worldCoord.y, max.y), std::max(worldCoord.z, max.z)};
     }
@@ -192,6 +192,7 @@ void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush
     CubeCoordSet cubeChangeSetWholeCube;
     if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint)) {
         const auto region = getRegion(centerPos, brush);
+        qDebug() << region.first << region.second;
         if (brush.shape == brush_t::shape_t::angular) {
             if (!brush.inverse || Segmentation::singleton().selectedObjectsCount() == 0) {
                 //for rectangular brushes no further range checks are needed
@@ -215,12 +216,14 @@ void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush
         } else if (!brush.inverse || Segmentation::singleton().selectedObjectsCount() == 0) {
             //voxel need to check if they are inside the circle
             cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate globalPos){
+                globalPos = globalPos / Dataset::datasets[Segmentation::singleton().layerId].scaleFactor;
                 if (isInsideSphere(globalPos.x - centerPos.x, globalPos.y - centerPos.y, globalPos.z - centerPos.z, brush.radius)) {
                     voxel = value;
                 }
             });
         } else {//circle, inverse and selected
             cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos](uint64_t & voxel, Coordinate globalPos){
+                globalPos = globalPos / Dataset::datasets[Segmentation::singleton().layerId].scaleFactor;
                 if (isInsideSphere(globalPos.x - centerPos.x, globalPos.y - centerPos.y, globalPos.z - centerPos.z, brush.radius)
                         && Segmentation::singleton().isSubObjectIdSelected(voxel)) {
                     voxel = 0;

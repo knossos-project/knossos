@@ -63,6 +63,7 @@ struct viewportTexture {
     //Handles for OpenGl
     std::vector<GLTexture2D> texHandle;
     //The absPx coordinate of the upper left corner of the texture actually stored in *texture
+    CoordOfCube leftUpperDc;
     floatCoordinate leftUpperPxInAbsPx;
     GLsizei size;
 

@@ -58,7 +58,7 @@
 SkeletonState::SkeletonState() : skeletonCreatedInVersion{KREVISION} {}
 
 double SkeletonState::volBoundary() const {
-    const auto & scale = Dataset::current().scale;
+    const auto & scale = Dataset::current().scales[0];
     const auto & boundary = Dataset::current().boundary;
     return 2 * std::max({scale.x * boundary.x, scale.y * boundary.y, scale.z * boundary.z});
 }
@@ -258,9 +258,9 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     xml.writeEndElement();
 
     xml.writeStartElement("scale");
-    xml.writeAttribute("x", QString::number(Dataset::current().scale.x));
-    xml.writeAttribute("y", QString::number(Dataset::current().scale.y));
-    xml.writeAttribute("z", QString::number(Dataset::current().scale.z));
+    xml.writeAttribute("x", QString::number(Dataset::current().scales[0].x));
+    xml.writeAttribute("y", QString::number(Dataset::current().scales[0].y));
+    xml.writeAttribute("z", QString::number(Dataset::current().scales[0].z));
     xml.writeEndElement();
 
     xml.writeStartElement("RadiusLocking");
@@ -416,7 +416,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     bool matlabCoordinates{skeletonState.loadMatlabCoordinates};
     QString experimentName, taskCategory, taskName;
     std::uint64_t activeNodeID = 0;
-    auto nmlScale = Dataset::current().scale;
+    auto nmlScale = Dataset::current().scales[0];
     auto loadedPosition = boost::make_optional(false, floatCoordinate{});// make_optional gets around GCCs false positive maybe-uninitialized
     std::vector<std::uint64_t> branchVector;
     std::vector<std::pair<std::uint64_t, QString>> commentsVector;
@@ -495,7 +495,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                     Segmentation::singleton().setBackgroundId(attributes.value("backgroundId").toULongLong());
                 } else if(xml.name() == "editPosition") {
                     loadedPosition = floatCoordinate(attributes.value("x").toDouble(), attributes.value("y").toDouble(), attributes.value("z").toDouble());
-                    loadedPosition = (nmlScale / Dataset::current().scale).componentMul(loadedPosition.get()) - matlabCoordinates;
+                    loadedPosition = (nmlScale / Dataset::current().scales[0]).componentMul(loadedPosition.get()) - matlabCoordinates;
                 } else if(xml.name() == "skeletonVPState") {
                     if (!merge) {
                           // non-working code for skelvp rotation and translation restoration
@@ -671,13 +671,13 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                                 if (name == "id") {
                                     nodeID = value.toULongLong();
                                 } else if (name == "radius") {
-                                    radius = nmlScale.x / Dataset::current().scale.x * value.toDouble();
+                                    radius = nmlScale.x / Dataset::current().scales[0].x * value.toDouble();
                                 } else if (name == "x") {
-                                    currentCoordinate.x = nmlScale.x / Dataset::current().scale.x * value.toDouble() - matlabCoordinates;
+                                    currentCoordinate.x = nmlScale.x / Dataset::current().scales[0].x * value.toDouble() - matlabCoordinates;
                                 } else if (name == "y") {
-                                    currentCoordinate.y = nmlScale.y / Dataset::current().scale.y * value.toDouble() - matlabCoordinates;
+                                    currentCoordinate.y = nmlScale.y / Dataset::current().scales[0].y * value.toDouble() - matlabCoordinates;
                                 } else if (name == "z") {
-                                    currentCoordinate.z = nmlScale.z / Dataset::current().scale.z * value.toDouble() - matlabCoordinates;
+                                    currentCoordinate.z = nmlScale.z / Dataset::current().scales[0].z * value.toDouble() - matlabCoordinates;
                                 } else if (name == "inVp") {
                                     inVP = static_cast<ViewportType>(value.toInt());
                                 } else if (name == "inMag") {
@@ -1168,7 +1168,7 @@ bool Skeletonizer::addSegment(nodeListElement & sourceNode, nodeListElement & ta
     sourceSegIt->sisterSegment->sisterSegment = sourceSegIt;
 
     /* Do we really skip this node? Test cum dist. to last rendered node! */
-    sourceSegIt->length = sourceSegIt->sisterSegment->length = Dataset::current().scale.componentMul(targetNode.position - sourceNode.position).length();
+    sourceSegIt->length = sourceSegIt->sisterSegment->length = Dataset::current().scales[0].componentMul(targetNode.position - sourceNode.position).length();
 
     updateCircRadius(&sourceNode);
     updateCircRadius(&targetNode);
