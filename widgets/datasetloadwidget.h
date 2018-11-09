@@ -92,6 +92,12 @@ class DatasetLoadWidget : public DialogVisibilityNotify {
     QHBoxLayout buttonHLayout;
     QPushButton processButton{"Load Dataset"};
     QPushButton cancelButton{"Close"};
+
+    void applyGeometrySettings();
+    void datasetCellChanged(int row, int col);
+    QStringList getRecentPathItems();
+    void insertDatasetRow(const QString & dataset, const int pos);
+    void updateDatasetInfo();
 public:
     QUrl datasetUrl;//meh
 
@@ -99,11 +105,6 @@ public:
     bool loadDataset(const boost::optional<bool> loadOverlay = boost::none, QUrl path = {}, const bool silent = false);
     void saveSettings();
     void loadSettings();
-    void applyGeometrySettings();
-    void updateDatasetInfo();
-    void insertDatasetRow(const QString & dataset, const int pos);
-    void datasetCellChanged(int row, int col);
-    QStringList getRecentPathItems();
 
 signals:
     void updateDatasetCompression();
