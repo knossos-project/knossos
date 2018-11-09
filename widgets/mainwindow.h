@@ -213,7 +213,7 @@ public:
     void loadSettings();
     void clearSettings();
 
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(QWidget *parent = nullptr);
     template<typename Function> void forEachVPDo(Function func) {
         for (auto * vp : { static_cast<ViewportBase *>(viewportXY.get()), static_cast<ViewportBase *>(viewportXZ.get()), static_cast<ViewportBase *>(viewportZY.get()), static_cast<ViewportBase *>(viewportArb.get()), static_cast<ViewportBase *>(viewport3D.get()) }) {
             func(*vp);
@@ -241,6 +241,7 @@ public:
 
 signals:
     void aboutToSave();
+    void datasetDropped(const QUrl &);
     void overlayOpacityChanged();
 public slots:
     void refreshPluginMenu();

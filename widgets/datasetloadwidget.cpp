@@ -102,6 +102,16 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     };
     QObject::connect(this, &DatasetLoadWidget::rejected, []() { resetSettings(); });
     QObject::connect(&cancelButton, &QPushButton::clicked, [this]() { resetSettings(); hide(); });
+
+    QObject::connect(&state->viewer->mainWindow, &MainWindow::datasetDropped, [this](const QUrl & url) {
+        const auto existingEntries = tableWidget.findItems(url.url(), Qt::MatchFlag::MatchExactly);
+        if (existingEntries.size() == 0) {
+            insertDatasetRow(url.url(), tableWidget.rowCount() - 1);
+        } else {
+            tableWidget.selectRow(existingEntries.front()->row());
+        }
+        loadDataset(boost::none, url);
+    });
     resize(600, 600);//random default size, will be overriden by settings if present
 }
 
@@ -143,6 +153,7 @@ void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row)
     tableWidget.setItem(row, 0, new QTableWidgetItem(dataset));
     tableWidget.setCellWidget(row, 1, addDatasetButton);
     tableWidget.setCellWidget(row, 2, removeDatasetButton);
+    tableWidget.selectRow(row);
 }
 
 void DatasetLoadWidget::datasetCellChanged(int row, int col) {

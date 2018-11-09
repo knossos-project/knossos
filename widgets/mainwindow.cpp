@@ -1308,7 +1308,7 @@ void MainWindow::dropEvent(QDropEvent *event) {
     for (auto && url : event->mimeData()->urls()) {
         const auto localPath = url.toLocalFile();
         if (localPath.endsWith(".conf")) {
-            widgetContainer.datasetLoadWidget.loadDataset(boost::none, url);
+            emit datasetDropped(url);
         } else {
             files.append(localPath);
         }
