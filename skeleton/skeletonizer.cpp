@@ -235,15 +235,13 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml) const {
     xml.writeAttribute("lockToNodesWithComment", QString(state->skeletonState->lockingComment));
     xml.writeEndElement();
 
-    if (!Session::singleton().annotationFilename.isEmpty()) {// don’t save time on inital save
-        xml.writeStartElement("time");
-        const auto time = Session::singleton().getAnnotationTime();
-        xml.writeAttribute("ms", QString::number(time));
-        const auto timeData = QByteArray::fromRawData(reinterpret_cast<const char *>(&time), sizeof(time));
-        const QString timeChecksum = QCryptographicHash::hash(timeData, QCryptographicHash::Sha256).toHex().constData();
-        xml.writeAttribute("checksum", timeChecksum);
-        xml.writeEndElement();
-    }
+    xml.writeStartElement("time");
+    const auto time = Session::singleton().saveAnnotationTime? Session::singleton().getAnnotationTime() : 0;
+    xml.writeAttribute("ms", QString::number(time));
+    const auto timeData = QByteArray::fromRawData(reinterpret_cast<const char *>(&time), sizeof(time));
+    const QString timeChecksum = QCryptographicHash::hash(timeData, QCryptographicHash::Sha256).toHex().constData();
+    xml.writeAttribute("checksum", timeChecksum);
+    xml.writeEndElement();
 
     if (state->skeletonState->activeNode != nullptr) {
         xml.writeStartElement("activeNode");

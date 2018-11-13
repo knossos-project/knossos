@@ -43,7 +43,7 @@ class SaveTab : public QWidget {
     QGroupBox generalGroup{"General"};
     QVBoxLayout generalLayout;
     QCheckBox autoincrementFileNameButton{"Auto increment filename on every save"};
-
+    QCheckBox saveTimeButton{"Save annotation time"};
     QFormLayout locationFormLayout;
     QLabel autosaveLocationLabel;
 

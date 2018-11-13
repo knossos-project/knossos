@@ -43,6 +43,8 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent) {
     autosaveLocationLabel.setWordWrap(true);
 
     generalLayout.addWidget(&autoincrementFileNameButton);
+    generalLayout.addWidget(&saveTimeButton);
+
     locationFormLayout.addRow("Default location: ", &autosaveLocationLabel);
     generalLayout.addLayout(&locationFormLayout);
     generalGroup.setLayout(&generalLayout);
@@ -68,6 +70,9 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent) {
     QObject::connect(&autoincrementFileNameButton, &QCheckBox::stateChanged, [](const bool on) {
         Session::singleton().autoFilenameIncrementBool = on;
     });
+    QObject::connect(&saveTimeButton, &QCheckBox::stateChanged, [](const bool on) {
+        Session::singleton().saveAnnotationTime = on;
+    });
     QObject::connect(&autosaveIntervalSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](const int value) {
         if (autosaveGroup.isChecked()) {
             Session::singleton().autoSaveTimer.start(value * 60 * 1000);
@@ -89,6 +94,8 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent) {
 void SaveTab::loadSettings(const QSettings & settings) {
     autoincrementFileNameButton.setChecked(settings.value(AUTOINC_FILENAME, true).toBool());
     autoincrementFileNameButton.stateChanged(autoincrementFileNameButton.checkState());
+    saveTimeButton.setChecked(settings.value(SAVE_ANNOTATION_TIME, true).toBool());
+    saveTimeButton.stateChanged(saveTimeButton.checkState());
 
     // autosaveGroup.toggled will handle the autosave timer and its time (therefore load the time first)
     autosaveIntervalSpinBox.setValue(settings.value(SAVING_INTERVAL, 5).toInt());
@@ -102,6 +109,7 @@ void SaveTab::loadSettings(const QSettings & settings) {
 void SaveTab::saveSettings(QSettings & settings) {
     settings.setValue(AUTOINC_FILENAME, autoincrementFileNameButton.isChecked());
     settings.setValue(AUTO_SAVING, autosaveGroup.isChecked());
+    settings.setValue(SAVE_ANNOTATION_TIME, saveTimeButton.isChecked());
     settings.setValue(SAVING_INTERVAL, autosaveIntervalSpinBox.value());
     settings.setValue(PLY_SAVE_AS_BIN, plySaveAsBinRadio.isChecked());
 }
