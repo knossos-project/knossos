@@ -520,11 +520,15 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
             * viewerState.layerRenderSettings[layerId].combineSlices
             * ((vp.viewportType == VIEWPORT_XY) || !viewerState.layerRenderSettings[layerId].combineSlicesXyOnly);
     static std::vector<std::uint8_t> texData;// reallocation for every run would be a waste
+    bool first{true};
     for (int multiSlicei{-multiSliceiMax}; multiSlicei <= multiSliceiMax; ++multiSlicei) {
         const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
         const auto offset = vp.n * multiSlicei * Dataset::current().magnification;
         const auto offsetCube = (state->viewerState->currentPosition + offset).cube(cubeEdgeLen, Dataset::datasets[layerId].magnification) - state->viewerState->currentPosition.cube(cubeEdgeLen, Dataset::datasets[layerId].magnification);
         const CoordInCube currentPosition_dc = (state->viewerState->currentPosition + offset).capped(Session::singleton().movementAreaMin, Session::singleton().movementAreaMax).insideCube(cubeEdgeLen, Dataset::current().magnification);
+        if (Session::singleton().outsideMovementArea(state->viewerState->currentPosition + offset)) {
+            continue;
+        }
 
         int slicePositionWithinCube;
         switch(vp.viewportType) {
@@ -595,7 +599,7 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
                         if (Dataset::datasets[layerId].isOverlay()) {
                             ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp, layerId);
                         } else {
-                            const auto combine = boost::make_optional(multiSlicei != -multiSliceiMax, viewerState.layerRenderSettings[layerId].combineSlicesType);
+                            const auto combine = boost::make_optional(!first, viewerState.layerRenderSettings[layerId].combineSlicesType);
                             dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp, layerId, combine);
                         }
                     } else {
@@ -608,6 +612,7 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
             }
         }
         sync.waitForFinished();
+        first = false;
     }
     vp.texture.texHandle[layerId].bind();
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, state->viewerState->texEdgeLength, state->viewerState->texEdgeLength, GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
