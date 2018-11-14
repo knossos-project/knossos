@@ -321,6 +321,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
 
     QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this]() {
         itemModel.reset();
+        updateLayerProperties();
     });
 
     resize(800, 600);
@@ -344,6 +345,7 @@ void LayerDialogWidget::saveSettings() {
 
 void LayerDialogWidget::updateLayerProperties() {
     const auto & currentIndex = treeView.selectionModel()->currentIndex();
+    optionsSpoiler.setEnabled(currentIndex.isValid());
     if (currentIndex.isValid()) {
         const auto ordered_index = itemModel.ordered_i(currentIndex.row());
         auto & layerSettings = state->viewerState->layerRenderSettings[ordered_index];
