@@ -972,7 +972,7 @@ void Viewer::applyTextureFilterSetting(const QOpenGLTexture::Filter texFiltering
     window->forEachOrthoVPDo([](ViewportOrtho & orthoVP) {
         orthoVP.applyTextureFilter();
     });
-    emit layerSettingsChanged();
+    emit layerRenderSettingsChanged();
 }
 
 void Viewer::updateCurrentPosition() {
@@ -1204,7 +1204,7 @@ void Viewer::datasetColorAdjustmentsChanged() {
         viewerState.layerRenderSettings[layerId].bias = state->viewerState->luminanceBias;
     }
     reslice_notify();
-    emit layerSettingsChanged();
+    emit layerRenderSettingsChanged();
 }
 
 /** Global interfaces  */

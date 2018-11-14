@@ -262,7 +262,7 @@ signals:
     void movementAreaFactorChangedSignal();
     void magnificationLockChanged(bool);
     void layerVisibilityChanged(const int);
-    void layerSettingsChanged();
+    void layerRenderSettingsChanged();
     void mesh3dAlphaFactorChanged(float);
     void meshSlicingAlphaFactorChanged(float);
 public slots:

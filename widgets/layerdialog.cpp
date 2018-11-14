@@ -314,7 +314,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         }
     });
 
-    QObject::connect(state->viewer, &Viewer::layerSettingsChanged, this, &LayerDialogWidget::updateLayerProperties);
+    QObject::connect(state->viewer, &Viewer::layerRenderSettingsChanged, this, &LayerDialogWidget::updateLayerProperties);
 
     QObject::connect(treeView.selectionModel(), &QItemSelectionModel::selectionChanged, this, &LayerDialogWidget::updateLayerProperties);
     QObject::connect(&itemModel, &QAbstractItemModel::dataChanged, this, &LayerDialogWidget::updateLayerProperties);

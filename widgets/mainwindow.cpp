@@ -580,8 +580,12 @@ void MainWindow::createMenus() {
     compressionToggleAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Toggle Dataset Compression: None"), this, [this]() {
         if (Dataset::datasets.size() > 1 && !Dataset::datasets[1].allocationEnabled && !Dataset::datasets[1].isOverlay()) {// TODO multi layer
             std::swap(Dataset::datasets[0], Dataset::datasets[1]);
+            std::swap(state->viewerState->layerRenderSettings[0], state->viewerState->layerRenderSettings[1]);
+            std::swap(state->viewerState->layerRenderSettings[0].visible, state->viewerState->layerRenderSettings[1].visible);
             std::swap(Dataset::datasets[0].allocationEnabled, Dataset::datasets[1].allocationEnabled);
             std::swap(Dataset::datasets[0].loadingEnabled, Dataset::datasets[1].loadingEnabled);
+            state->viewer->layerRenderSettingsChanged();
+            emit widgetContainer.datasetLoadWidget.datasetChanged();
             state->viewer->updateDatasetMag();
             updateCompressionRatioDisplay();
         }
