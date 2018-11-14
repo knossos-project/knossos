@@ -262,7 +262,7 @@ const auto datasetAdjustment = [](auto layerId, auto index){
     }
 };
 
-void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId) {
+void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId, const bool mip) {
     const auto & session = Session::singleton();
     const Coordinate areaMinCoord = {session.movementAreaMin.x,
                                      session.movementAreaMin.y,
@@ -311,10 +311,16 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
                     r *= d; g *= d; b *= d;
                 }
             }
-            slice[0] = r;
-            slice[1] = g;
-            slice[2] = b;
-            slice[3] = 255;
+            if (mip) {
+                slice[0] = std::min(slice[0], r);
+                slice[1] = std::min(slice[1], g);
+                slice[2] = std::min(slice[2], b);
+            } else {
+                slice[0] = r;
+                slice[1] = g;
+                slice[2] = b;
+                slice[3] = 255;
+            }
 
             datacube += voxelIncrement;
             slice += texNext;
@@ -504,89 +510,98 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
         vpGenerateTexture(static_cast<ViewportArb&>(vp), layerId);
         return;
     }
-    const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
-    const CoordInCube currentPosition_dc = state->viewerState->currentPosition.insideCube(cubeEdgeLen, Dataset::current().magnification);
-
-    int slicePositionWithinCube;
-    switch(vp.viewportType) {
-    case VIEWPORT_XY:
-        slicePositionWithinCube = state->cubeSliceArea * currentPosition_dc.z;
-        break;
-    case VIEWPORT_XZ:
-        slicePositionWithinCube = cubeEdgeLen * currentPosition_dc.y;
-        break;
-    case VIEWPORT_ZY:
-        slicePositionWithinCube = currentPosition_dc.x;
-        break;
-    default:
-        qDebug("No such slice view: %d.", vp.viewportType);
-        return;
-    }
-
-    // We iterate over the texture with x and y being in a temporary coordinate
-    // system local to this texture.
-    if (!vp.resliceNecessary[layerId]) {
-        return;
-    }
-    vp.resliceNecessary[layerId] = false;
-    const CoordOfCube upperLeftDc = Coordinate(vp.texture.leftUpperPxInAbsPx).cube(cubeEdgeLen, Dataset::datasets[layerId].magnification);
+    const int multiSliceiMax = viewerState.layerRenderSettings[layerId].combineSlicesEnabled
+            * viewerState.layerRenderSettings[layerId].combineSlices
+            * ((vp.viewportType == VIEWPORT_XY) || !viewerState.layerRenderSettings[layerId].combineSlicesXyOnly);
     static std::vector<std::uint8_t> texData;// reallocation for every run would be a waste
-    texData.resize(4 * std::pow(state->viewerState->texEdgeLength, 2));
-    QFutureSynchronizer<void> sync;
-    for(int x_dc = 0; x_dc < state->M; x_dc++) {
-        for(int y_dc = 0; y_dc < state->M; y_dc++) {
-            const int x_px = x_dc * cubeEdgeLen;
-            const int y_px = y_dc * cubeEdgeLen;
+    for (int multiSlicei{-multiSliceiMax}; multiSlicei <= multiSliceiMax; ++multiSlicei) {
+        const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
+        const auto offset = vp.n * multiSlicei * Dataset::current().magnification;
+        const auto offsetCube = (state->viewerState->currentPosition + offset).cube(cubeEdgeLen, Dataset::datasets[layerId].magnification) - state->viewerState->currentPosition.cube(cubeEdgeLen, Dataset::datasets[layerId].magnification);
+        const CoordInCube currentPosition_dc = (state->viewerState->currentPosition + offset).capped(Session::singleton().movementAreaMin, Session::singleton().movementAreaMax).insideCube(cubeEdgeLen, Dataset::current().magnification);
 
-            CoordOfCube currentDc;
-
-            switch(vp.viewportType) {
-            // With an x/y-coordinate system in a viewport, we get the following
-            // mapping from viewport (slice) coordinates to global (dc)
-            // coordinates:
-            // XY-slice: x local is x global, y local is y global
-            // XZ-slice: x local is x global, y local is z global
-            // ZY-slice: x local is z global, y local is y global.
-            case VIEWPORT_XY:
-                currentDc = {upperLeftDc.x + x_dc, upperLeftDc.y + y_dc, upperLeftDc.z};
-                break;
-            case VIEWPORT_XZ:
-                currentDc = {upperLeftDc.x + x_dc, upperLeftDc.y, upperLeftDc.z + y_dc};
-                break;
-            case VIEWPORT_ZY:
-                currentDc = {upperLeftDc.x, upperLeftDc.y + y_dc, upperLeftDc.z + x_dc};
-                break;
-            default:
-                qDebug("No such slice type (%d) in vpGenerateTexture.", vp.viewportType);
-            }
-            state->protectCube2Pointer.lock();
-            void * const cube = cubeQuery(state->cube2Pointer, layerId, Dataset::current().magIndex, currentDc);
-            state->protectCube2Pointer.unlock();
-
-            // Take care of the data textures.
-            Coordinate cubePosInAbsPx = {currentDc.x * Dataset::datasets[layerId].magnification * cubeEdgeLen,
-                                         currentDc.y * Dataset::datasets[layerId].magnification * cubeEdgeLen,
-                                         currentDc.z * Dataset::datasets[layerId].magnification * cubeEdgeLen};
-            // This is used to index into the texture. overlayData[index] is the first
-            // byte of the datacube slice at position (x_dc, y_dc) in the texture.
-            const int index = 4 * (y_dc * state->viewerState->texEdgeLength * cubeEdgeLen + x_dc * cubeEdgeLen);
-            sync.addFuture(QtConcurrent::run([=, &vp](){
-                if (cube != nullptr) {
-                    if (Dataset::datasets[layerId].isOverlay()) {
-                        ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp, layerId);
-                    } else {
-                        dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp, layerId);
-                    }
-                } else {
-                    for (int y = y_px; y < y_px + cubeEdgeLen; ++y) {
-                        const auto start = std::next(std::begin(texData), 4 * (y * viewerState.texEdgeLength + x_px));
-                        std::fill(start, std::next(start, 4 * cubeEdgeLen), 0);
-                    }
-                }
-            }));
+        int slicePositionWithinCube;
+        switch(vp.viewportType) {
+        case VIEWPORT_XY:
+            slicePositionWithinCube = state->cubeSliceArea * currentPosition_dc.z;
+            break;
+        case VIEWPORT_XZ:
+            slicePositionWithinCube = cubeEdgeLen * currentPosition_dc.y;
+            break;
+        case VIEWPORT_ZY:
+            slicePositionWithinCube = currentPosition_dc.x;
+            break;
+        default:
+            qDebug("No such slice view: %d.", vp.viewportType);
+            return;
         }
+
+        // We iterate over the texture with x and y being in a temporary coordinate
+        // system local to this texture.
+        if (!vp.resliceNecessary[layerId]) {
+            return;
+        }
+        if (multiSlicei == multiSliceiMax) {
+            vp.resliceNecessary[layerId] = false;
+        }
+        const CoordOfCube upperLeftDc = Coordinate(vp.texture.leftUpperPxInAbsPx).cube(cubeEdgeLen, Dataset::datasets[layerId].magnification) + offsetCube;
+        texData.resize(4 * std::pow(state->viewerState->texEdgeLength, 2));
+        QFutureSynchronizer<void> sync;
+        for(int x_dc = 0; x_dc < state->M; x_dc++) {
+            for(int y_dc = 0; y_dc < state->M; y_dc++) {
+                const int x_px = x_dc * cubeEdgeLen;
+                const int y_px = y_dc * cubeEdgeLen;
+
+                CoordOfCube currentDc;
+
+                switch(vp.viewportType) {
+                // With an x/y-coordinate system in a viewport, we get the following
+                // mapping from viewport (slice) coordinates to global (dc)
+                // coordinates:
+                // XY-slice: x local is x global, y local is y global
+                // XZ-slice: x local is x global, y local is z global
+                // ZY-slice: x local is z global, y local is y global.
+                case VIEWPORT_XY:
+                    currentDc = {upperLeftDc.x + x_dc, upperLeftDc.y + y_dc, upperLeftDc.z};
+                    break;
+                case VIEWPORT_XZ:
+                    currentDc = {upperLeftDc.x + x_dc, upperLeftDc.y, upperLeftDc.z + y_dc};
+                    break;
+                case VIEWPORT_ZY:
+                    currentDc = {upperLeftDc.x, upperLeftDc.y + y_dc, upperLeftDc.z + x_dc};
+                    break;
+                default:
+                    qDebug("No such slice type (%d) in vpGenerateTexture.", vp.viewportType);
+                }
+                state->protectCube2Pointer.lock();
+                void * const cube = cubeQuery(state->cube2Pointer, layerId, Dataset::current().magIndex, currentDc);
+                state->protectCube2Pointer.unlock();
+
+                // Take care of the data textures.
+                Coordinate cubePosInAbsPx = {currentDc.x * Dataset::datasets[layerId].magnification * cubeEdgeLen,
+                                             currentDc.y * Dataset::datasets[layerId].magnification * cubeEdgeLen,
+                                             currentDc.z * Dataset::datasets[layerId].magnification * cubeEdgeLen};
+                // This is used to index into the texture. overlayData[index] is the first
+                // byte of the datacube slice at position (x_dc, y_dc) in the texture.
+                const int index = 4 * (y_dc * state->viewerState->texEdgeLength * cubeEdgeLen + x_dc * cubeEdgeLen);
+                sync.addFuture(QtConcurrent::run([=, &vp](){
+                    if (cube != nullptr) {
+                        if (Dataset::datasets[layerId].isOverlay()) {
+                            ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp, layerId);
+                        } else {
+                            dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp, layerId, multiSlicei != -multiSliceiMax);
+                        }
+                    } else {
+                        for (int y = y_px; y < y_px + cubeEdgeLen; ++y) {
+                            const auto start = std::next(std::begin(texData), 4 * (y * viewerState.texEdgeLength + x_px));
+                            std::fill(start, std::next(start, 4 * cubeEdgeLen), 0);
+                        }
+                    }
+                }));
+            }
+        }
+        sync.waitForFinished();
     }
-    sync.waitForFinished();
     vp.texture.texHandle[layerId].bind();
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, state->viewerState->texEdgeLength, state->viewerState->texEdgeLength, GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
     vp.texture.texHandle[layerId].release();

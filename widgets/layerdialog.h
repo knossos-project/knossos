@@ -59,6 +59,9 @@ public:
     QSlider rangeDeltaSlider{Qt::Horizontal};
     QLabel biasSliderLabel{"bias"};
     QSlider biasSlider{Qt::Horizontal};
+    QCheckBox combineSlicesCheck{"combine consecutive slices"};
+    QSpinBox combineSlicesSpin;
+    QCheckBox combineSlicesXyOnlyCheck{"only in xy"};
     QCheckBox linearFilteringCheckBox{"linear filtering"};
 
     QVBoxLayout layerLayout;

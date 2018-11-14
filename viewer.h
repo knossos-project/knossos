@@ -92,6 +92,9 @@ struct LayerRenderSettings {
     double opacity{1.0};
     double rangeDelta{1.};
     double bias{0.};
+    bool combineSlicesEnabled{false};
+    bool combineSlicesXyOnly{true};
+    int combineSlices{4};
     QOpenGLTexture::Filter textureFilter;
     QColor color{Qt::white};
 };
@@ -201,7 +204,7 @@ private:
 
     void vpGenerateTexture(ViewportArb & vp, const std::size_t layerId);
 
-    void dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId);
+    void dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId, const bool mip);
     void dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxInDc_float, std::uint8_t * slice, int s, int *t, const floatCoordinate & v2, const std::size_t layerId, float usedSizeInCubePixels);
 
     void ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId);
