@@ -186,6 +186,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     treeView.setUniformRowHeights(true); // for optimization
     treeView.setDragDropMode(QAbstractItemView::InternalMove);
 
+    dupLayerButton.setText("duplicate");
     addLayerButton.setText("add");
     addLayerButton.setEnabled(false);
     removeLayerButton.setText("remove");
@@ -195,6 +196,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     controlButtonLayout.addStretch();
     controlButtonLayout.addWidget(&moveUpButton);
     controlButtonLayout.addWidget(&moveDownButton);
+    controlButtonLayout.addWidget(&dupLayerButton);
     controlButtonLayout.addWidget(&addLayerButton);
     controlButtonLayout.addWidget(&removeLayerButton);
 
@@ -203,6 +205,25 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     mainLayout.addLayout(&controlButtonLayout);
     setLayout(&mainLayout);
 
+
+    QObject::connect(&dupLayerButton, &QToolButton::clicked, [this](){
+        for (const auto & mindex : treeView.selectionModel()->selectedRows()) {
+            const auto layeri = itemModel.ordered_i(mindex.row());
+            const auto datasetIt = std::next(std::begin(Dataset::datasets), layeri);
+            Dataset::datasets.insert(datasetIt, Dataset{*datasetIt});
+            state->viewerState->layerOrder.emplace(std::next(std::begin(state->viewerState->layerOrder), mindex.row()), layeri);
+            for (std::size_t i = mindex.row() + 1; i < Dataset::datasets.size(); ++i) {
+                if (state->viewerState->layerOrder[i] >= layeri) {
+                    ++state->viewerState->layerOrder[i];
+                }
+            }
+            state->viewer->resizeTexEdgeLength(Dataset::current().cubeEdgeLength, state->M, Dataset::datasets.size());// update layerRenderSettings and textures
+            if (Segmentation::singleton().layerId >= layeri) {
+                ++Segmentation::singleton().layerId;
+            }
+            reloadLayers(true);
+        }
+    });
     QObject::connect(&addLayerButton, &QToolButton::clicked, [this](){
         itemModel.addItem();
     });

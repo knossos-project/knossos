@@ -69,6 +69,7 @@ public:
     QHBoxLayout controlButtonLayout;
     QToolButton moveUpButton;
     QToolButton moveDownButton;
+    QToolButton dupLayerButton;
     QToolButton addLayerButton;
     QToolButton removeLayerButton;
 
