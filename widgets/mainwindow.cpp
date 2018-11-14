@@ -701,6 +701,7 @@ void MainWindow::createMenus() {
 
     auto windowMenu = menuBar()->addMenu("&Windows");
     windowMenu->addAction(QIcon(":/resources/icons/menubar/tasks-management.png"), tr("Task Management"), &widgetContainer.taskManagementWidget, SLOT(updateAndRefreshWidget()));
+    windowMenu->addAction(QIcon(":/resources/icons/layers.png"), tr("Layers"), &widgetContainer.layerDialogWidget, SLOT(show()));
     windowMenu->addAction(QIcon(":/resources/icons/menubar/annotation.png"), tr("Annotation"), &widgetContainer.annotationWidget, SLOT(show()));
     windowMenu->addAction(QIcon(":/resources/icons/menubar/zoom.png"), tr("Zoom"), &widgetContainer.zoomWidget, SLOT(show()));
     windowMenu->addAction(QIcon(":/resources/icons/menubar/snapshot.png"), tr("Take a Snapshot"), &widgetContainer.snapshotWidget, SLOT(show()));
