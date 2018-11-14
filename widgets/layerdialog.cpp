@@ -211,6 +211,12 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         for (const auto & mindex : treeView.selectionModel()->selectedRows()) {
             const auto layeri = itemModel.ordered_i(mindex.row());
             Dataset::datasets.erase(std::next(std::begin(Dataset::datasets), layeri));
+            state->viewerState->layerOrder.erase(std::next(std::begin(state->viewerState->layerOrder), mindex.row()));
+            for (std::size_t i{layeri}; i < Dataset::datasets.size(); ++i) {
+                if (state->viewerState->layerOrder[i] > layeri) {
+                    --state->viewerState->layerOrder[i];
+                }
+            }
             state->viewer->resizeTexEdgeLength(Dataset::current().cubeEdgeLength, state->M, Dataset::datasets.size());// update layerRenderSettings and textures
             if (Segmentation::singleton().layerId >= layeri) {
                 --Segmentation::singleton().layerId;
