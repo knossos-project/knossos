@@ -1,27 +1,28 @@
 #ifndef LAYERDIALOG_H
 #define LAYERDIALOG_H
 
+#include "dataset.h"
+#include "widgets/datasetloadwidget.h"
 #include "widgets/DialogVisibilityNotify.h"
 #include "widgets/Spoiler.h"
-#include "widgets/datasetloadwidget.h"
-#include "dataset.h"
 
-#include <QGroupBox>
-#include <QToolButton>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QGridLayout>
-#include <QLabel>
-#include <QSlider>
-#include <QCheckBox>
-#include <QTreeView>
 #include <QAbstractItemModel>
-#include <QMessageBox>
-#include <QListWidget>
-#include <QFormLayout>
-#include <QSpinBox>
+#include <QCheckBox>
 #include <QColorDialog>
+#include <QComboBox>
+#include <QFormLayout>
+#include <QGridLayout>
+#include <QGroupBox>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QListWidget>
+#include <QMessageBox>
+#include <QSlider>
 #include <QStyledItemDelegate>
+#include <QToolButton>
+#include <QTreeView>
+#include <QVBoxLayout>
+#include <QSpinBox>
 
 class LayerItemModel : public QAbstractListModel {
 Q_OBJECT
@@ -60,6 +61,7 @@ public:
     QLabel biasSliderLabel{"bias"};
     QSlider biasSlider{Qt::Horizontal};
     QCheckBox combineSlicesCheck{"combine consecutive slices"};
+    QComboBox combineSlicesType;
     QSpinBox combineSlicesSpin;
     QCheckBox combineSlicesXyOnlyCheck{"only in xy"};
     QCheckBox linearFilteringCheckBox{"linear filtering"};

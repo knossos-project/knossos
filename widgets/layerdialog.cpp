@@ -175,9 +175,11 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
 
     biasSlider.setTracking(true);
     biasSlider.setMaximum(100);
+    combineSlicesType.addItems({"min", "max"});
     optionsLayout.addWidget(&biasSliderLabel, ++row, col=0);
     optionsLayout.addWidget(&biasSlider, row, ++col);
     optionsLayout.addWidget(&combineSlicesCheck, ++row, col=0);
+    optionsLayout.addWidget(&combineSlicesType, row, ++col);
     optionsLayout.addWidget(&combineSlicesSpin, row, ++col);
     optionsLayout.addWidget(&combineSlicesXyOnlyCheck, row, ++col);
     optionsSpoiler.setContentLayout(optionsLayout);
@@ -305,6 +307,15 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
             state->viewer->reslice_notify(ordered_index);
         }
     });
+    QObject::connect(&combineSlicesType, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](int index){
+        const auto& currentIndex = treeView.selectionModel()->currentIndex();
+        if (currentIndex.isValid()) {
+            std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
+            state->viewerState->layerRenderSettings[ordered_index].combineSlicesType = static_cast<decltype(LayerRenderSettings::combineSlicesType)>(index);
+            state->viewer->layerRenderSettingsChanged();
+            state->viewer->reslice_notify(ordered_index);
+        }
+    });
     QObject::connect(&combineSlicesSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](int value){
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if (currentIndex.isValid()) {
@@ -384,8 +395,10 @@ void LayerDialogWidget::updateLayerProperties() {
         rangeDeltaSlider.setValue(static_cast<int>(layerSettings.rangeDelta * rangeDeltaSlider.maximum()));
         biasSlider.setValue(static_cast<int>(layerSettings.bias * biasSlider.maximum()));
         combineSlicesCheck.setChecked(layerSettings.combineSlicesEnabled);
+        combineSlicesType.setEnabled(layerSettings.combineSlicesEnabled);
         combineSlicesSpin.setEnabled(layerSettings.combineSlicesEnabled);
         combineSlicesXyOnlyCheck.setEnabled(layerSettings.combineSlicesEnabled);
+        combineSlicesSpin.setRange(0, Dataset::datasets[ordered_index].cubeEdgeLength * 0.5 * (state->M - 1));
         combineSlicesSpin.setValue(layerSettings.combineSlices);
         combineSlicesXyOnlyCheck.setChecked(layerSettings.combineSlicesXyOnly);
         linearFilteringCheckBox.setChecked(layerSettings.textureFilter == QOpenGLTexture::Linear);

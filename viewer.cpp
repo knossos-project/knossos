@@ -262,7 +262,7 @@ const auto datasetAdjustment = [](auto layerId, auto index){
     }
 };
 
-void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId, const bool mip) {
+void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId, const boost::optional<decltype(LayerRenderSettings::combineSlicesType)> combineType) {
     const auto & session = Session::singleton();
     const Coordinate areaMinCoord = {session.movementAreaMin.x,
                                      session.movementAreaMin.y,
@@ -311,10 +311,16 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
                     r *= d; g *= d; b *= d;
                 }
             }
-            if (mip) {
-                slice[0] = std::min(slice[0], r);
-                slice[1] = std::min(slice[1], g);
-                slice[2] = std::min(slice[2], b);
+            if (combineType) {
+                if (combineType.get() == decltype(LayerRenderSettings::combineSlicesType)::min) {
+                    slice[0] = std::min(slice[0], r);
+                    slice[1] = std::min(slice[1], g);
+                    slice[2] = std::min(slice[2], b);
+                } else if (combineType.get() == decltype(LayerRenderSettings::combineSlicesType)::max) {
+                    slice[0] = std::max(slice[0], r);
+                    slice[1] = std::max(slice[1], g);
+                    slice[2] = std::max(slice[2], b);
+                }
             } else {
                 slice[0] = r;
                 slice[1] = g;
@@ -589,7 +595,8 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
                         if (Dataset::datasets[layerId].isOverlay()) {
                             ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp, layerId);
                         } else {
-                            dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp, layerId, multiSlicei != -multiSliceiMax);
+                            const auto combine = boost::make_optional(multiSlicei != -multiSliceiMax, viewerState.layerRenderSettings[layerId].combineSlicesType);
+                            dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, cubePosInAbsPx, texData.data() + index, vp, layerId, combine);
                         }
                     } else {
                         for (int y = y_px; y < y_px + cubeEdgeLen; ++y) {
