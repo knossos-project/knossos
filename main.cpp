@@ -77,7 +77,7 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext &
     case QtCriticalMsg: intro = QString("Critical: "); break;
     case QtFatalMsg:    intro = QString("Fatal: ");    break;
     }
-    QString txt = QString("%4%5").arg(intro).arg(msg);
+    auto txt = QString("%4%5").arg(intro).arg(msg);
 #ifdef QT_MESSAGELOGCONTEXT
     txt.prepend(QString("[%1:%2] \t").arg(QFileInfo(context.file).fileName()).arg(context.line));
 #endif
@@ -102,18 +102,18 @@ Q_DECLARE_METATYPE(std::string)
 
 int main(int argc, char *argv[]) {
     QtConcurrent::run([](){ QSslSocket::supportsSsl(); });// workaround until https://bugreports.qt.io/browse/QTBUG-59750
-    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);//explicitly enable sharing for undocked viewports
+    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);// explicitly enable sharing for undocked viewports
 #ifdef Q_OS_OSX
     const auto end = std::next(argv, argc);
     bool styleOverwrite = std::find_if(argv, end, [](const auto & argvv){
         return QString::fromUtf8(argvv).contains("-style");
     }) != end;
 #endif
-    QApplication a(argc, argv);
+    QApplication app(argc, argv);
 
     QFile file(":/resources/style.qss");
     file.open(QFile::ReadOnly);
-    a.setStyleSheet(file.readAll());
+    app.setStyleSheet(file.readAll());
     file.close();
 #ifdef Q_OS_OSX
     if (!styleOverwrite) {// default to Fusion style on OSX if nothing contrary was specified (because the default theme looks bad)
@@ -121,19 +121,15 @@ int main(int argc, char *argv[]) {
     }
 #endif
     qInstallMessageHandler(debugMessageHandler);
-    /* On OSX there is the problem that the splashscreen nevers returns and it prevents the start of the application.
-       I searched for the reason and found this here : https://bugreports.qt-project.org/browse/QTBUG-35169
-       As I found out randomly that effect does not occur if the splash is invoked directly after the QApplication(argc, argv)
-    */
 #ifdef NDEBUG
-    Splash splash(dynamic_cast<QGuiApplication&>(*QApplication::instance()).primaryScreen()->devicePixelRatio() == 1.0 ? ":/resources/splash.png" : ":/resources/splash@2x.png");
+    Splash splash(qApp->primaryScreen()->devicePixelRatio() == 1.0 ? ":/resources/splash.png" : ":/resources/splash@2x.png");
 #endif
     QCoreApplication::setOrganizationDomain("knossos.app");
     QCoreApplication::setOrganizationName("MPIN");
     QCoreApplication::setApplicationName("KNOSSOS");
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
-    QFile::copy(QSettings{}.fileName(), QSettings{QSettings::IniFormat, QSettings::UserScope, "MPIN", "KNOSSOS 5.0"}.fileName());
+    QFile::copy(QSettings{QSettings::IniFormat, QSettings::UserScope, "MPIN", "KNOSSOS 5.0"}.fileName(), QSettings{}.fileName());// doesn’t overwrite
 
     qRegisterMetaType<std::string>();
     qRegisterMetaType<Coordinate>();
@@ -160,5 +156,5 @@ int main(int argc, char *argv[]) {
     // ensure killed QNAM’s before QNetwork deinitializes
     std::unique_ptr<Loader::Controller> loader_deleter{&Loader::Controller::singleton()};
     std::unique_ptr<Network> network_deleter{&Network::singleton()};
-    return a.exec();
+    return app.exec();
 }
