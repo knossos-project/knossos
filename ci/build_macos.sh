@@ -39,6 +39,7 @@ make
 mv knossos.app KNOSSOS.app
 /usr/local/opt/qt/bin/macdeployqt KNOSSOS.app
 cp /usr/local/Cellar/quazip/${QUAZIP_VERSION}/lib/libquazip.1.0.0.dylib KNOSSOS.app/Contents/Frameworks/libquazip.1.dylib
+install_name_tool KNOSSOS.app/Contents/Frameworks/libquazip.1.dylib -change /usr/local/opt/qt/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore
 
 # Deployment
 BRANCH_PREFIX=""
