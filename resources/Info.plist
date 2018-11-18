@@ -16,6 +16,8 @@
 	<string>knossos.icns</string>
 	<key>CFBundleIdentifier</key>
 	<string>org.mpin.KNOSSOS</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>10.11.0</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -23,12 +25,12 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>5.0.1</string>
+	<string>5.1</string>
 	<key>CFBundleVersion</key>
-	<string>5.0.1</string>
+	<string>5.1</string>
 	<key>CSResourcesFileMapped</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
-	<string>© 2015, KNOSSOS</string>
+	<string>© 2018, KNOSSOS</string>
 </dict>
 </plist>
