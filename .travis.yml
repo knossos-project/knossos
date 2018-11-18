@@ -8,20 +8,31 @@ matrix:
   include:
     - os: linux
       services: docker
+    - os: osx
+      sudo: enabled
+      addons:
+        homebrew:
+          packages:
+            - boost
+            - qt
+            - quazip
+            - snappy
 
 script:
   - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then docker pull knossostool/knossos; fi
   - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then docker run -it --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${PWD}:/root/knossos -e TRAVIS_BRANCH knossostool/knossos bash -c '/root/knossos/ci/travis_build.sh'; fi
+  - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then sh $TRAVIS_BUILD_DIR/ci/build_macos.sh; fi
 
 deploy:
   - provider: releases
     api_key:
       secure: WH5I/c6N4Ekb+dIWDxOEcwA6o1xNGkmI5nvDavO6PavvSzCydBTPQ5xXm7s1KD6M1+8MbF30REfO4mnRyjuzYbV7ap9Vm9S7YXOzXuHw19uxpGmnJyvcJnSJlPf7uNghGuoyBzZGS5SOoH/k6w6TGOitnE2PfI3pWQGbV8YTsyQ=
     file_glob: true
-    file: "*.AppImage"
+    file:
+      - "*.AppImage"
+      - "macos.*.zip"
     skip_cleanup: true
     overwrite: true
     on:
       repo: knossos-project/knossos
       all_branches: true
-      condition: $TRAVIS_OS_NAME = linux
