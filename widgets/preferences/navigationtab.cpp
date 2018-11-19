@@ -25,7 +25,7 @@
 #include "annotation/annotation.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 #include "widgets/GuiConstants.h"
 
 #include <QApplication>

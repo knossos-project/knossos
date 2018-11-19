@@ -25,13 +25,13 @@
 #include "annotation/annotation.h"
 #include "buildinfo.h"
 #include "functions.h"
-#include "loader.h"
+#include "slicer/loader.h"
 #include "segmentation/cubeloader.h"
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
 #include "stateInfo.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 #include "widgets/mainwindow.h"
 
 #include <Python.h>

@@ -22,12 +22,12 @@
 
 #include "viewportbase.h"
 
-#include "dataset.h"
+#include "slicer/dataset.h"
 #include "scriptengine/scripting.h"
 #include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 
 #include <QApplication>
 #include <QHBoxLayout>

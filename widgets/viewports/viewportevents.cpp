@@ -21,7 +21,6 @@
  */
 
 #include "annotation/annotation.h"
-#include "dataset.h"
 #include "widgets/viewports/viewportarb.h"
 #include "widgets/viewports/viewportbase.h"
 #include "widgets/viewports/viewportortho.h"
@@ -35,8 +34,9 @@
 #include "segmentation/segmentationsplit.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
+#include "slicer/dataset.h"
+#include "slicer/viewer.h"
 #include "stateInfo.h"
-#include "viewer.h"
 #include "widgets/preferences/navigationtab.h"
 #include "widgets/mainwindow.h"
 

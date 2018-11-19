@@ -21,12 +21,12 @@
  */
 
 #include "coordinate.h"
-#include "dataset.h"
-#include "loader.h"
+#include "slicer/dataset.h"
+#include "slicer/loader.h"
 #include "network.h"
 #include "scriptengine/scripting.h"
 #include "stateInfo.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 #include "widgets/mainwindow.h"
 #include "widgets/viewports/viewportbase.h"
 

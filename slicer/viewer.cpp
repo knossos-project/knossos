@@ -20,12 +20,12 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
-#include "viewer.h"
+#include "slicer/viewer.h"
 
 #include "annotation/annotation.h"
 #include "annotation/file_io.h"
 #include "functions.h"
-#include "loader.h"
+#include "slicer/loader.h"
 #include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"

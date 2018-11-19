@@ -21,7 +21,6 @@
  */
 
 #include "annotation/annotation.h"
-#include "dataset.h"
 #include "functions.h"
 #include "widgets/viewports/viewportarb.h"
 #include "widgets/viewports/viewportbase.h"
@@ -34,8 +33,9 @@
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
+#include "slicer/dataset.h"
+#include "slicer/viewer.h"
 #include "stateInfo.h"
-#include "viewer.h"
 
 #include <QMatrix4x4>
 #include <QOpenGLFramebufferObject>

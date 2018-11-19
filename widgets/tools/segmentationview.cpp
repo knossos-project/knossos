@@ -23,11 +23,11 @@
 #include "segmentationview.h"
 
 #include "action_helper.h"
-#include "dataset.h"
+#include "slicer/dataset.h"
 #include "mesh/mesh_generation.h"
 #include "model_helper.h"
 #include "stateInfo.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 
 #include <QApplication>
 #include <QEvent>

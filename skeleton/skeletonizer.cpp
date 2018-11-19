@@ -24,7 +24,6 @@
 
 #include "annotation/file_io.h"
 #include "buildinfo.h"
-#include "dataset.h"
 #include "functions.h"
 #include "mesh/mesh.h"
 #include "segmentation/cubeloader.h"
@@ -34,7 +33,8 @@
 #include "skeleton/tree.h"
 #include "stateInfo.h"
 #include "tinyply/tinyply.h"
-#include "viewer.h"
+#include "slicer/dataset.h"
+#include "slicer/viewer.h"
 #include "widgets/viewports/viewportbase.h"
 #include "widgets/mainwindow.h"
 

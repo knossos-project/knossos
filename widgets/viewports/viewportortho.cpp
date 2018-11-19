@@ -22,9 +22,9 @@
 
 #include "viewportortho.h"
 
-#include "dataset.h"
+#include "slicer/dataset.h"
 #include "stateInfo.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 
 bool ViewportOrtho::showNodeComments = false;
 

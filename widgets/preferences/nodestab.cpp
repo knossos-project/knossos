@@ -25,7 +25,7 @@
 #include "gui_wrapper.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 #include "widgets/GuiConstants.h"
 #include "widgets/mainwindow.h"
 #include "widgets/viewports/viewportbase.h"

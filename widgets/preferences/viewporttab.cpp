@@ -22,7 +22,7 @@
 
 #include "stateInfo.h"
 #include "viewporttab.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 #include "widgets/GuiConstants.h"
 #include "widgets/viewports/viewportbase.h"
 

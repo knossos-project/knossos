@@ -22,7 +22,7 @@
 
 #include "annotation.h"
 
-#include "dataset.h"
+#include "slicer/dataset.h"
 #include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"

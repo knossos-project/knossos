@@ -27,7 +27,7 @@
 #include "gui_wrapper.h"
 #include "htmlmacros.h"
 #include "layerdialog.h"
-#include "loader.h"
+#include "slicer/loader.h"
 #include "mainwindow.h"
 #include "network.h"
 #include "scriptengine/scripting.h"
@@ -35,7 +35,7 @@
 #include "skeleton/skeleton_dfs.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 #include "viewports/viewportbase.h"
 #include "widgetcontainer.h"
 

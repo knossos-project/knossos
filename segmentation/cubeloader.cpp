@@ -26,6 +26,7 @@
 #include "loader.h"
 #include "segmentation.h"
 #include "segmentationsplit.h"
+#include "slicer/loader.h"
 #include "stateInfo.h"
 
 #include <boost/multi_array.hpp>

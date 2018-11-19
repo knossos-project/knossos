@@ -24,7 +24,7 @@
 
 #include "GuiConstants.h"
 #include "stateInfo.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 
 #include <Python.h>
 #include <PythonQt/PythonQt.h>

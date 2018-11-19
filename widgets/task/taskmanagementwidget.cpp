@@ -25,7 +25,7 @@
 #include "annotation/annotation.h"
 #include "network.h"
 #include "stateInfo.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 #include "widgets/mainwindow.h"
 
 #include <QByteArray>

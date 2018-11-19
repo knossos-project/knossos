@@ -24,7 +24,7 @@
 
 #include "coordinate.h"
 #include "cubeloader.h"
-#include "loader.h"
+#include "slicer/loader.h"
 #include "segmentation.h"
 
 #include <unordered_set>

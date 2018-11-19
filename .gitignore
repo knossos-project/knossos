@@ -1,16 +1,8 @@
-#generated documentation files
-resources/doc/collection.qhc
-resources/doc/doc.qch
-
-#OS X Finder
+# OS X Finder
 .DS_Store
 
-#qtcreator settings
+# qtcreator settings
 CMakeLists.txt.user
-knossos.pro.user
 
-#system depended settings
+# system dependent settings
 CustomLibraryLocations.cmake
-
-#aur ssh private key
-id_rsa

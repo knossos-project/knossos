@@ -1,10 +1,10 @@
 #ifndef LAYERDIALOG_H
 #define LAYERDIALOG_H
 
-#include "dataset.h"
 #include "widgets/datasetloadwidget.h"
 #include "widgets/DialogVisibilityNotify.h"
 #include "widgets/Spoiler.h"
+#include "slicer/dataset.h"
 
 #include <QAbstractItemModel>
 #include <QCheckBox>

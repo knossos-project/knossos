@@ -1,8 +1,8 @@
 #include "mesh_generation.h"
 
 #include "coordinate.h"
-#include "dataset.h"
-#include "loader.h"
+#include "slicer/dataset.h"
+#include "slicer/loader.h"
 #include "segmentation/cubeloader.h"
 #include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"

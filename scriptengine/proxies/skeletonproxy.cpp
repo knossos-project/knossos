@@ -27,7 +27,7 @@
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 #include "widgets/mainwindow.h"
 
 #include <QApplication>

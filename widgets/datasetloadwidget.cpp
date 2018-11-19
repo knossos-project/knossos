@@ -23,15 +23,15 @@
 #include "datasetloadwidget.h"
 
 #include "brainmaps.h"
-#include "dataset.h"
 #include "GuiConstants.h"
-#include "loader.h"
 #include "mainwindow.h"
 #include "network.h"
 #include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
+#include "slicer/dataset.h"
+#include "slicer/loader.h"
+#include "slicer/viewer.h"
 #include "stateInfo.h"
-#include "viewer.h"
 
 #include <QApplication>
 #include <QComboBox>

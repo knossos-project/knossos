@@ -22,10 +22,10 @@
 
 #include "viewportarb.h"
 
-#include "dataset.h"
+#include "slicer/dataset.h"
 #include "segmentation/cubeloader.h"
 #include "stateInfo.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 
 #include <QOpenGLPixelTransferOptions>
 

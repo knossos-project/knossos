@@ -24,7 +24,7 @@
 
 #include "GuiConstants.h"
 #include "skeleton/skeletonizer.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 
 #include <QLineEdit>
 #include <QCheckBox>

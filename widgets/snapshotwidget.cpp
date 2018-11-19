@@ -23,11 +23,11 @@
 #include "snapshotwidget.h"
 
 #include "annotation/annotation.h"
-#include "dataset.h"
 #include "GuiConstants.h"
 #include "segmentation/segmentation.h"
+#include "slicer/dataset.h"
+#include "slicer/viewer.h"
 #include "stateInfo.h"
-#include "viewer.h"
 
 #include <QApplication>
 #include <QClipboard>

@@ -24,7 +24,7 @@
 #define LOADER_H
 
 #include "coordinate.h"
-#include "dataset.h"
+#include "slicer/dataset.h"
 #include "segmentation/segmentation.h"
 #include "usermove.h"
 

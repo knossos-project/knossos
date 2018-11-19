@@ -22,11 +22,11 @@
 
 #include "viewport3d.h"
 
-#include "dataset.h"
+#include "slicer/dataset.h"
 #include "profiler.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 
 bool Viewport3D::showBoundariesInUm = false;
 

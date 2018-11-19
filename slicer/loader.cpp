@@ -28,7 +28,7 @@
 #include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 #include "widgets/mainwindow.h"
 
 #include <quazip5/quazip.h>

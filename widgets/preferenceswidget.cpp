@@ -23,7 +23,7 @@
 #include "preferenceswidget.h"
 
 #include "GuiConstants.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 
 #include <QSettings>
 #include <QCheckBox>

@@ -24,7 +24,7 @@
 #define PYTHONPROXY_H
 
 #include "skeleton/node.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 
 #include <QObject>
 #include <QList>

@@ -23,7 +23,7 @@
 #ifndef COMMENTSTAB_H
 #define COMMENTSTAB_H
 
-#include "commentsetting.h"
+#include "skeleton/commentsetting.h"
 
 #include <QAbstractListModel>
 #include <QCheckBox>
@@ -49,8 +49,7 @@ public:
 };
 
 
-class CommentsTab : public QWidget
-{
+class CommentsTab : public QWidget {
     Q_OBJECT
     QCheckBox useCommentColorCheckbox{"Use custom comment color"};
     QCheckBox useCommentRadiusCheckbox{"Use custom comment radius"};
@@ -64,10 +63,6 @@ public:
     void loadSettings();
     explicit CommentsTab(QWidget *parent = nullptr);
     virtual ~CommentsTab() override;
-
-signals:
-
-public slots:
 };
 
 #endif // COMMENTSTAB_H

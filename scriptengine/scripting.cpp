@@ -27,10 +27,10 @@
 #include "decorators/nodelistdecorator.h"
 #include "decorators/treelistdecorator.h"
 #include "decorators/segmentlistdecorator.h"
-#include "loader.h"
+#include "slicer/loader.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 #include "widgets/GuiConstants.h"
 #include "widgets/mainwindow.h"
 

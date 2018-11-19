@@ -20,7 +20,7 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
-#include "dataset.h"
+#include "slicer/dataset.h"
 #include "functions.h"
 
 #include <boost/math/constants/constants.hpp>

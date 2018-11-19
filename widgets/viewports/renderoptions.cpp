@@ -1,7 +1,7 @@
 #include "renderoptions.h"
-#include "dataset.h"
+#include "slicer/dataset.h"
 #include "stateInfo.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 
 RenderOptions::RenderOptions()
     : drawCrosshairs(state->viewerState->drawVPCrosshairs && state->viewerState->showOnlyRawData == false)

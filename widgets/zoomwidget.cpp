@@ -22,12 +22,12 @@
 
 #include "zoomwidget.h"
 
-#include "dataset.h"
+#include "slicer/dataset.h"
 #include "datasetloadwidget.h"
 #include "GuiConstants.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 #include "widgets/viewports/viewportbase.h"
 
 #include <QApplication>

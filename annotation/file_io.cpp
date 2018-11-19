@@ -23,13 +23,13 @@
 #include "file_io.h"
 
 #include "annotation/annotation.h"
-#include "loader.h"
 #include "widgets/mainwindow.h"
 #include "scriptengine/scripting.h"
 #include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
+#include "slicer/loader.h"
+#include "slicer/viewer.h"
 #include "stateInfo.h"
-#include "viewer.h"
 
 #include <quazip5/quazipfile.h>
 

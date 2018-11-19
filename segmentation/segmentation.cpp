@@ -24,10 +24,10 @@
 
 #include "annotation/annotation.h"
 #include "annotation/file_io.h"
-#include "loader.h"
 #include "skeleton/skeletonizer.h"
+#include "slicer/loader.h"
+#include "slicer/viewer.h"
 #include "stateInfo.h"
-#include "viewer.h"
 
 #include <QSignalBlocker>
 #include <QTextStream>

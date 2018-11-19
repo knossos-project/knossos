@@ -1,11 +1,11 @@
 #include "layerdialog.h"
 
-#include "dataset.h"
-#include "loader.h"
+#include "slicer/dataset.h"
+#include "slicer/loader.h"
 #include "mainwindow.h"
 #include "network.h"
 #include "stateInfo.h"
-#include "viewer.h"
+#include "slicer/viewer.h"
 
 #include <QHeaderView>
 
