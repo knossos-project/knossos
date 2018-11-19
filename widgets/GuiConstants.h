@@ -143,6 +143,7 @@ const QString JUMP_FRAMES = "jump_frames";
 const QString MOVEMENT_SPEED = "movement_speed";
 const QString NUMBER_OF_STEPS = "number_of_steps";
 const QString RECENTERING = "recentering";
+const QString SHOW_CUBE_COORDS = "show_cube_coordinates";
 const QString OUTSIDE_AREA_VISIBILITY = "outside_area_visibility";
 const QString WALK_FRAMES = "walk_frames";
 

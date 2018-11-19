@@ -240,7 +240,12 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
 void MainWindow::updateCursorLabel(const Coordinate & position, const ViewportType vpType) {
     cursorPositionLabel.setHidden(vpType == VIEWPORT_SKELETON || vpType == VIEWPORT_UNDEFINED);
     const auto inc{state->skeletonState->displayMatlabCoordinates};
-    cursorPositionLabel.setText(QString("%1, %2, %3").arg(position.x + inc).arg(position.y + inc).arg(position.z + inc));
+    QString cubePosText = "";
+    if (state->viewerState->showCubeCoordinates) {
+        const auto cubePosition = position / Dataset::current().cubeEdgeLength;
+        cubePosText = QString(" | %1, %2, %3").arg(cubePosition.x).arg(cubePosition.y).arg(cubePosition.z);
+    }
+    cursorPositionLabel.setText(QString("%1, %2, %3%4").arg(position.x + inc).arg(position.y + inc).arg(position.z + inc).arg(cubePosText));
 }
 
 void MainWindow::resetTextureProperties() {

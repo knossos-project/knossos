@@ -50,8 +50,12 @@ class NavigationTab : public QWidget {
     Q_OBJECT
     QVBoxLayout mainLayout;
     QHBoxLayout upperLayout;
-    QVBoxLayout rightupperLayout;
+    QVBoxLayout leftupperLayout;
 
+    QGroupBox generalGroup{"General"};
+    QFormLayout generalLayout;
+    QCheckBox penModeCheckBox{"Pen mode"};
+    QCheckBox cubeCoordinateBox{"Show Cube coordinates"};
     QGroupBox movementAreaGroup{"Movement area"};
     QVBoxLayout movementAreaLayout;
     QHBoxLayout minAreaHeadLayout;
@@ -76,9 +80,6 @@ class NavigationTab : public QWidget {
     QPushButton resetMovementAreaButton{"Reset to dataset boundaries"};
     QFrame separator;
     QGroupBox keyboardMovementGroup{"Keyboard movement"};
-    QGroupBox mouseBehaviourGroup{"Mouse behaviour"};
-    QFormLayout mouseBehaviourLayout;
-    QCheckBox penModeCheckBox;
     QFormLayout keyboardMovementLayout;
     QSpinBox movementSpeedSpinBox;
     QSpinBox jumpFramesSpinBox;
