@@ -765,7 +765,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         const auto & layerSettings = state->viewerState->layerRenderSettings[ordered_i];
         if (!options.nodePicking && layerSettings.visible && !Dataset::datasets[ordered_i].isOverlay()) {
             glColor4f(layerSettings.color.redF(), layerSettings.color.greenF(), layerSettings.color.blueF(), layerSettings.opacity);
-            slice(texture, ordered_i, n * fars);// offset to the far clipping plane to avoid clipping the skeleton
+            slice(texture, ordered_i, n * 0.5 * fars);// offset to the far clipping plane to avoid clipping the skeleton
             break;
         }
     }
@@ -773,10 +773,8 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glColor4f(1, 1, 1, 1);
     if (options.drawSkeleton && state->viewerState->skeletonDisplayVPOrtho.testFlag(TreeDisplay::ShowInOrthoVPs)) {
         glPushMatrix();
-        if (viewportType != VIEWPORT_ARBITRARY) {// arb already is at the pixel center
-            const auto halfPixelOffset = 0.5 * (v1 - v2) * Dataset::current().scale;
-            glTranslatef(halfPixelOffset.x(), halfPixelOffset.y(), halfPixelOffset.z());
-        }
+        const auto halfPixelOffset = 0.5 * (v1 - v2) * Dataset::current().scale;
+        glTranslatef(halfPixelOffset.x(), halfPixelOffset.y(), halfPixelOffset.z());
         renderSkeleton(options);
         glPopMatrix();
     }
@@ -815,8 +813,8 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glPushMatrix();
         glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
         glLineWidth(1);
-        const auto hOffset = viewportType == VIEWPORT_ARBITRARY ? QVector3D{} : 0.5 * v1 * Dataset::current().scale;
-        const auto vOffset = viewportType == VIEWPORT_ARBITRARY ? QVector3D{} : 0.5 * v2 * Dataset::current().scale;
+        const auto hOffset = 0.5 * v1 * Dataset::current().scale;
+        const auto vOffset = 0.5 * v2 * Dataset::current().scale;
         glBegin(GL_LINES);
             glColor4f(std::abs(v2.z), std::abs(v2.y), std::abs(v2.x), 0.3);
             const auto halfLength = dataPxX * v1;
@@ -852,6 +850,9 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glLoadIdentity();
         glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, -(0.5), -(-state->skeletonState->volBoundary()));
         glMatrixMode(GL_MODELVIEW);
+
+        const auto halfPixelOffset = 0.25 * (v1 - v2) * Dataset::current().scale;
+        glTranslatef(halfPixelOffset.x(), halfPixelOffset.y(), halfPixelOffset.z());
 
         glEnable(GL_DEPTH_TEST);
         glDisable(GL_BLEND);
@@ -1054,10 +1055,6 @@ void Viewport3D::renderViewport(const RenderOptions &options) {
 }
 
 void ViewportBase::renderMeshBuffer(Mesh & buf) {
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glTranslatef(0.5, 0.5, 0.5);
-
     // get modelview and projection matrices
     GLfloat modelview_mat[4][4];
     glGetFloatv(GL_MODELVIEW_MATRIX, &modelview_mat[0][0]);
@@ -1126,14 +1123,9 @@ void ViewportBase::renderMeshBuffer(Mesh & buf) {
     glDisableClientState(GL_VERTEX_ARRAY);
 
     meshShader.release();
-    glPopMatrix();
 }
 void Viewport3D::renderMeshBufferIds(Mesh &buf) {
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glTranslatef(0.5, 0.5, 0.5);
     ViewportBase::renderMeshBufferIds(buf);
-    glPopMatrix();
 }
 
 void ViewportOrtho::renderMeshBufferIds(Mesh &buf) {

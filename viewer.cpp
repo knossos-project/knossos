@@ -1160,26 +1160,14 @@ void Viewer::recalcTextureOffsets() {
         }
         // Calculate the vertices in texture coordinates
         // mid really means current pos inside the texture, in texture coordinates, relative to the texture origin 0., 0.
-//        if (orthoVP.viewportType != VIEWPORT_ARBITRARY) {
-            texture.texLUx = midX - xFactor;
-            texture.texLUy = midY + yFactor;
-            texture.texRUx = midX + xFactor;
-            texture.texRUy = texture.texLUy;
-            texture.texRLx = texture.texRUx;
-            texture.texRLy = midY - yFactor;
-            texture.texLLx = texture.texLUx;
-            texture.texLLy = texture.texRLy;
-//        } else {// arb should use the entirety of (a specific part) of the texture
-//            const auto texUsed = 1;texture.fovPixel / texture.size * texture.FOV;
-//            texture.texLUx = 0;
-//            texture.texLUy = texUsed;
-//            texture.texRUx = texUsed;
-//            texture.texRUy = texUsed;
-//            texture.texRLx = texUsed;
-//            texture.texRLy = 0;
-//            texture.texLLx = 0;
-//            texture.texLLy = 0;
-//        }
+        texture.texLUx = midX - xFactor;
+        texture.texLUy = midY + yFactor;
+        texture.texRUx = midX + xFactor;
+        texture.texRUy = texture.texLUy;
+        texture.texRLx = texture.texRUx;
+        texture.texRLy = midY - yFactor;
+        texture.texLLx = texture.texLUx;
+        texture.texLLy = texture.texRLy;
     });
 }
 
