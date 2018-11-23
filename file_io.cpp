@@ -118,8 +118,10 @@ void annotationFileLoad(const QString & filename, const bool mergeSkeleton, cons
                     if (iter != std::end(treeMap)) {
                         treeId = iter->second.get().treeID;
                     } else {
-                        qDebug() << "Tree not found for this mesh, loading as new tree:" << fileName;
-                        treeId = boost::none;
+                        if (!Skeletonizer::singleton().findTreeByTreeID(treeId.get())) {
+                            qDebug() << "Tree not found for this mesh, loading as new tree:" << fileName;
+                            treeId = boost::none;
+                        }
                     }
                 }
                 Skeletonizer::singleton().loadMesh(file, treeId, fileName);
