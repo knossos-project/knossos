@@ -2054,6 +2054,7 @@ void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeI
             QVector3D p1{verts[indices[i]*3]  , verts[indices[i]*3+1]  , verts[indices[i]*3+2]};
             QVector3D p2{verts[indices[i+1]*3], verts[indices[i+1]*3+1], verts[indices[i+1]*3+2]};
             QVector3D p3{verts[indices[i+2]*3], verts[indices[i+2]*3+1], verts[indices[i+2]*3+2]};
+            std::swap(p1, p3);
             QVector3D e1{p2 - p1};
             QVector3D e2{p3 - p1};
 
