@@ -19,20 +19,43 @@ void parseSWC(QIODevice && file) {
     auto first = std::cbegin(stream);
 
     auto treeID = Skeletonizer::singleton().addTree().treeID;
-    const auto node = [treeID](auto & ctx){
+    std::vector<std::pair<std::uint64_t, std::uint64_t>> edges;
+    const auto node = [treeID, &edges](auto & ctx){
         using namespace boost::fusion;
         const auto & attr = _attr(ctx);
         const auto pos = floatCoordinate(at_c<2>(attr), at_c<3>(attr), at_c<4>(attr)) * 1000.0 / Dataset::current().scale;
         const auto radius = at_c<5>(attr) * 1000.0 / Dataset::current().scale.x;
-        auto node = Skeletonizer::singleton().addNode(at_c<0>(attr), radius, treeID, pos, VIEWPORT_UNDEFINED, 1, boost::none, false);
-        if (const auto connectedNode = Skeletonizer::singleton().findNodeByNodeID(at_c<6>(attr))) {
-            Skeletonizer::singleton().addSegment(*connectedNode, node.get());
+        auto srcid = at_c<0>(attr);
+        auto trgid = at_c<6>(attr);
+        auto node = Skeletonizer::singleton().addNode(srcid, radius, treeID, pos, VIEWPORT_UNDEFINED, 1, boost::none, false);
+        if (!node) {
+            throw std::runtime_error("node " + std::to_string(srcid) + " couldn’t be added");
         }
+        Skeletonizer::singleton().setComment(node.get(), [](const auto & type_id)->QString{
+            switch (type_id) {
+            case 1: return "soma";
+            case 2: return "axon";
+            case 3: return "basal";
+            case 4: return "apical";
+            default: return "";
+            };
+        }(at_c<1>(attr)));
+        edges.emplace_back(trgid, srcid);
     };
     using namespace boost::spirit::x3;
     const auto comment_ = lexeme['#' >> *(char_ - eol) >> (eol|eoi)];
     const auto node_ = (int_ >> int_ >> double_ >> double_ >> double_ >> double_ >> int_)[node];
     const bool res = boost::spirit::x3::phrase_parse(first, std::end(stream), *(node_ | comment_), boost::spirit::x3::space);
+
+    for (const auto & edge : edges) {
+        const auto & srcNode = Skeletonizer::singleton().findNodeByNodeID(edge.first);
+        const auto & trgNode = Skeletonizer::singleton().findNodeByNodeID(edge.second);
+        if (srcNode && trgNode) {
+            Skeletonizer::singleton().addSegment(*srcNode, *trgNode);
+        } else {
+            qDebug() << "couldn’t find nodes for edge" << edge.first << edge.second;
+        }
+    }
 
     if (!res || first != std::end(stream)) {
         Skeletonizer::singleton().clearSkeleton();
