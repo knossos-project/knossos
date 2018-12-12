@@ -638,6 +638,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//show
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//hide
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//restore default color
+        treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() > 0);//save selected trees
         treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() > 0 && containsMesh);//remove mesh
         treeContextMenu.actions().at(deleteActionIndex = i++)->setEnabled(nodeEditing && selectedTrees.size() > 0);//delete
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
@@ -741,6 +742,9 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         Skeletonizer::singleton().bulkOperation(state->skeletonState->selectedTrees, [](auto & tree){
             Skeletonizer::singleton().restoreDefaultTreeColor(tree);
         });
+    });
+    QObject::connect(treeContextMenu.addAction("&Save trees"), &QAction::triggered, [](){
+        state->viewer->mainWindow.saveAsSlot(true);
     });
     QObject::connect(treeContextMenu.addAction("&Remove meshes from trees"), &QAction::triggered, [](){
         Skeletonizer::singleton().bulkOperation(state->skeletonState->selectedTrees, [](auto & tree){

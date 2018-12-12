@@ -576,7 +576,7 @@ void MainWindow::createMenus() {
         ++i;
     }
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/menubar/save-annotation.png"), tr("Save Annotation"), this, &MainWindow::saveSlot, QKeySequence::Save);
-    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/menubar/save-annotation-as.png"), tr("Save Annotation as …"), this, &MainWindow::saveAsSlot, QKeySequence::SaveAs);
+    addApplicationShortcut(fileMenu, QIcon(":/resources/icons/menubar/save-annotation-as.png"), tr("Save Annotation as …"), this, &MainWindow::saveAsSlotWrap, QKeySequence::SaveAs);
     fileMenu.addSeparator();
     fileMenu.addAction(tr("Export to nml..."), this, SLOT(exportToNml()));
     fileMenu.addSeparator();
@@ -909,7 +909,11 @@ void MainWindow::saveSlot() {
     }
 }
 
-void MainWindow::saveAsSlot() {
+void MainWindow::saveAsSlotWrap() {
+    saveAsSlot(false);
+}
+
+void MainWindow::saveAsSlot(const bool onlySelectedTrees) {
     const auto & suggestedFile = saveFileDirectory.isEmpty() ? annotationFileDefaultPath() : saveFileDirectory + '/' + annotationFileDefaultName();
 
     QString fileName = state->viewer->suspend([this, suggestedFile]{
@@ -936,11 +940,11 @@ void MainWindow::saveAsSlot() {
             }
         }
         saveFileDirectory = QFileInfo(fileName).absolutePath();
-        save(fileName + ".k.zip", false, false);
+        save(fileName + ".k.zip", false, false, onlySelectedTrees);
     }
 }
 
-void MainWindow::save(QString filename, const bool silent, const bool allocIncrement)
+void MainWindow::save(QString filename, const bool silent, const bool allocIncrement, const bool onlySelectedTrees)
 try {
     LoadingCursor loadingcursor;
     if (filename.isEmpty()) {
@@ -960,7 +964,7 @@ try {
         }
     }
     emit aboutToSave();
-    annotationFileSave(filename);
+    annotationFileSave(filename, onlySelectedTrees);
     Session::singleton().annotationFilename = filename;
     updateRecentFile(filename);
     updateTitlebar();

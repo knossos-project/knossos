@@ -143,7 +143,7 @@ void annotationFileLoad(const QString & filename, const bool mergeSkeleton, cons
     }
 }
 
-void annotationFileSave(const QString & filename) {
+void annotationFileSave(const QString & filename, const bool onlySelectedTrees) {
     QTime time;
     time.start();
     QuaZip archive_write(filename);
@@ -164,11 +164,11 @@ void annotationFileSave(const QString & filename) {
         }
         QuaZipFile file_write(&archive_write);
         if (zipCreateFile(file_write, "annotation.xml", 1)) {
-            state->viewer->skeletonizer->saveXmlSkeleton(file_write);
+            state->viewer->skeletonizer->saveXmlSkeleton(file_write, onlySelectedTrees);
         } else {
             throw std::runtime_error((filename + ": saving skeleton failed").toStdString());
         }
-        if (Segmentation::singleton().hasObjects()) {
+        if (Segmentation::singleton().hasObjects() && !onlySelectedTrees) {
             QuaZipFile file_write(&archive_write);
             if (zipCreateFile(file_write, "mergelist.txt", 1)) {
                 Segmentation::singleton().mergelistSave(file_write);
@@ -185,7 +185,7 @@ void annotationFileSave(const QString & filename) {
             }
         }
         for (const auto & tree : state->skeletonState->trees) {
-            if (tree.mesh != nullptr) {
+            if ((!onlySelectedTrees || tree.selected) && tree.mesh != nullptr) {
                 QuaZipFile file_write(&archive_write);
                 const auto filename = QString::number(tree.treeID) + ".ply";
                 if (zipCreateFile(file_write, filename, 1)) {
@@ -195,23 +195,25 @@ void annotationFileSave(const QString & filename) {
                 }
             }
         }
-        QTime cubeTime;
-        cubeTime.start();
-        const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
-        for (std::size_t i = 0; i < cubes.size(); ++i) {
-            const auto magName = QString("%1_mag%2x%3y%4z%5.seg.sz").arg(Dataset::current().experimentname).arg(QString::number(std::pow(2, i)));
-            for (const auto & pair : cubes[i]) {
-                QuaZipFile file_write(&archive_write);
-                const auto cubeCoord = pair.first;
-                const auto name = magName.arg(cubeCoord.x).arg(cubeCoord.y).arg(cubeCoord.z);
-                if (zipCreateFile(file_write, name, 1)) {
-                    file_write.write(pair.second.c_str(), pair.second.length());
-                } else {
-                    throw std::runtime_error((filename + ": saving snappy cube failed").toStdString());
+        if (!onlySelectedTrees) {
+            QTime cubeTime;
+            cubeTime.start();
+            const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
+            for (std::size_t i = 0; i < cubes.size(); ++i) {
+                const auto magName = QString("%1_mag%2x%3y%4z%5.seg.sz").arg(Dataset::current().experimentname).arg(QString::number(std::pow(2, i)));
+                for (const auto & pair : cubes[i]) {
+                    QuaZipFile file_write(&archive_write);
+                    const auto cubeCoord = pair.first;
+                    const auto name = magName.arg(cubeCoord.x).arg(cubeCoord.y).arg(cubeCoord.z);
+                    if (zipCreateFile(file_write, name, 1)) {
+                        file_write.write(pair.second.c_str(), pair.second.length());
+                    } else {
+                        throw std::runtime_error((filename + ": saving snappy cube failed").toStdString());
+                    }
                 }
             }
+            qDebug() << "save cubes" << cubeTime.restart();
         }
-        qDebug() << "save cubes" << cubeTime.restart();
     } else {
         throw std::runtime_error(QObject::tr("opening %1 for writing failed").arg(filename).toStdString());
     }

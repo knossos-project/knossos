@@ -171,12 +171,12 @@ boost::optional<nodeListElement &> Skeletonizer::addSkeletonNodeAndLinkWithActiv
     return targetNode.get();
 }
 
-void Skeletonizer::saveXmlSkeleton(QIODevice & file) const {
+void Skeletonizer::saveXmlSkeleton(QIODevice & file, const bool onlySelected) {
     QXmlStreamWriter xml(&file);
-    saveXmlSkeleton(xml);
+    saveXmlSkeleton(xml, onlySelected);
 }
 
-void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml) const {
+void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelected) {
     xml.setAutoFormatting(true);
     xml.writeStartDocument();
 
@@ -244,9 +244,12 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml) const {
     xml.writeEndElement();
 
     if (state->skeletonState->activeNode != nullptr) {
-        xml.writeStartElement("activeNode");
-        xml.writeAttribute("id", QString::number(state->skeletonState->activeNode->nodeID));
-        xml.writeEndElement();
+        auto * activeNode = state->skeletonState->activeNode;
+        if (!onlySelected || activeNode->correspondingTree->selected) {
+            xml.writeStartElement("activeNode");
+            xml.writeAttribute("id", QString::number(activeNode->nodeID));
+            xml.writeEndElement();
+        }
     }
 
     xml.writeStartElement("segmentation");
@@ -277,6 +280,9 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml) const {
     xml.writeEndElement(); // end parameters
 
     for (auto & currentTree : skeletonState.trees) {
+        if (onlySelected && !currentTree.selected) {
+            continue;
+        }
         //Every "thing" (tree) has associated nodes and edges.
         xml.writeStartElement("thing");
         xml.writeAttribute("id", QString::number(currentTree.treeID));
@@ -333,20 +339,24 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml) const {
     xml.writeStartElement("comments");
     TreeTraverser commentTraverser(state->skeletonState->trees);
     for (; !commentTraverser.reachedEnd; ++commentTraverser) {
-        if(!(*commentTraverser).getComment().isEmpty()) {
-            xml.writeStartElement("comment");
-            xml.writeAttribute("node", QString::number((*commentTraverser).nodeID));
-            xml.writeAttribute("content", (*commentTraverser).getComment());
-            xml.writeEndElement();
+        if (!onlySelected || skeletonState.nodesByNodeID[(*commentTraverser).nodeID]->correspondingTree->selected) {
+            if(!(*commentTraverser).getComment().isEmpty()) {
+                xml.writeStartElement("comment");
+                xml.writeAttribute("node", QString::number((*commentTraverser).nodeID));
+                xml.writeAttribute("content", (*commentTraverser).getComment());
+                xml.writeEndElement();
+            }
         }
     }
     xml.writeEndElement(); // end comments
 
     xml.writeStartElement("branchpoints");
     for (const auto branchNodeID : state->skeletonState->branchStack) {
-        xml.writeStartElement("branchpoint");
-        xml.writeAttribute("id", QString::number(branchNodeID));
-        xml.writeEndElement();
+        if (!onlySelected || skeletonState.nodesByNodeID[branchNodeID]->correspondingTree->selected) {
+            xml.writeStartElement("branchpoint");
+            xml.writeAttribute("id", QString::number(branchNodeID));
+            xml.writeEndElement();
+        }
     }
     xml.writeEndElement(); // end branchpoints
 
