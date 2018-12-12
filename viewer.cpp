@@ -51,7 +51,6 @@ ViewerState::ViewerState() {
 }
 
 Viewer::Viewer() : evilHack{[this](){ state->viewer = this; return true; }()} {
-    skeletonizer = &Skeletonizer::singleton();
     loadTreeLUT();
 
     recalcTextureOffsets();
@@ -1281,7 +1280,7 @@ void Viewer::loadNodeLUT(const QString & path) {
 
 void Viewer::loadTreeLUT(const QString & path) {
     state->viewerState->treeColors = loadLookupTable(path);
-    skeletonizer->updateTreeColors();
+    Skeletonizer::singleton().updateTreeColors();
 }
 
 QColor Viewer::getNodeColor(const nodeListElement & node) const {

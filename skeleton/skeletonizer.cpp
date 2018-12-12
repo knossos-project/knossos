@@ -879,7 +879,7 @@ bool Skeletonizer::delNode(std::uint64_t nodeID, nodeListElement *nodeToDel) {
         if (newActiveNode == nullptr) { // nodeToDel was not connected
             newActiveNode = findNearbyNode(tree, pos);
         }
-        state->viewer->skeletonizer->setActiveNode(newActiveNode);
+        setActiveNode(newActiveNode);
     }
 
     Session::singleton().unsavedChanges = true;

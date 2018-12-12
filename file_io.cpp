@@ -97,7 +97,7 @@ void annotationFileLoad(const QString & filename, const bool mergeSkeleton, cons
         //load skeleton after mergelist as it may depend on a loaded segmentation
         std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> treeMap;
         getSpecificFile("annotation.xml", [&treeMap, mergeSkeleton, treeCmtOnMultiLoad](auto & file){
-            treeMap = state->viewer->skeletonizer->loadXmlSkeleton(file, mergeSkeleton, treeCmtOnMultiLoad);
+            treeMap = Skeletonizer::singleton().loadXmlSkeleton(file, mergeSkeleton, treeCmtOnMultiLoad);
         });
         for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) { // after annotation.xml, because loading .xml clears skeleton
             const QRegularExpression meshRegEx(R"regex([0-9]*.ply)regex");
@@ -164,7 +164,7 @@ void annotationFileSave(const QString & filename, const bool onlySelectedTrees) 
         }
         QuaZipFile file_write(&archive_write);
         if (zipCreateFile(file_write, "annotation.xml", 1)) {
-            state->viewer->skeletonizer->saveXmlSkeleton(file_write, onlySelectedTrees);
+            Skeletonizer::singleton().saveXmlSkeleton(file_write, onlySelectedTrees);
         } else {
             throw std::runtime_error((filename + ": saving skeleton failed").toStdString());
         }
@@ -225,7 +225,7 @@ void annotationFileSave(const QString & filename, const bool onlySelectedTrees) 
 void nmlExport(const QString & filename) {
     QFile file(filename);
     file.open(QIODevice::WriteOnly);
-    state->viewer->skeletonizer->saveXmlSkeleton(file);
+    Skeletonizer::singleton().saveXmlSkeleton(file);
     file.close();
 }
 

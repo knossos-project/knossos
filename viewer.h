@@ -187,16 +187,6 @@ struct ViewerState {
     GLBuffers selectedTreesBuffers;
 };
 
-/**
- *
- *  This file contains functions that are called by the managing,
- *  all openGL rendering operations and
- *  all skeletonization operations commanded directly by the user over the GUI. The files gui.c, renderer.c and
- *  skeletonizer.c contain functions mainly used by the corresponding "subsystems". viewer.c contains the main
- *  event loop and routines that handle (extract slices, pack into openGL textures,...) the data coming
- *  from the loader thread.
- */
-class Skeletonizer;
 class ViewportBase;
 class Viewer : public QObject {
     const bool evilHack;
@@ -233,7 +223,6 @@ public:
     }
     void saveSettings();
     void loadSettings();
-    Skeletonizer *skeletonizer;
     MainWindow mainWindow;
     MainWindow *window = &mainWindow;
 

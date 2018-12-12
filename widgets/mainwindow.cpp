@@ -814,7 +814,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
         for (const auto & filename : nmls) {
             const QString treeCmtOnMultiLoad = multipleFiles ? QFileInfo(filename).fileName() : "";
             QFile file(filename);
-            state->viewer->skeletonizer->loadXmlSkeleton(file, mergeSkeleton, treeCmtOnMultiLoad);
+            Skeletonizer::singleton().loadXmlSkeleton(file, mergeSkeleton, treeCmtOnMultiLoad);
             updateRecentFile(filename);
             mergeSkeleton |= multipleFiles;// multiple files have to be merged
         }
