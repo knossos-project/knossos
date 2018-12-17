@@ -619,7 +619,13 @@ void MainWindow::createMenus() {
     swapSynapticNodes = &addApplicationShortcut(actionMenu, QIcon(), tr("Reverse Synapse Direction")
                                                 , &widgetContainer.annotationWidget.skeletonTab, &SkeletonView::reverseSynapseDirection
                                                 , Qt::ShiftModifier + Qt::ControlModifier + Qt::Key_C);
-
+    jumpToCycle = &addApplicationShortcut(actionMenu, QIcon(), tr("Jump to Cycle"), this, []() {
+        auto cycle = Skeletonizer::singleton().findCycle();
+        if (!cycle.isEmpty()) {
+            Skeletonizer::singleton().selectNodes(cycle);
+            Skeletonizer::singleton().jumpToNode(**(cycle.begin()));
+        }
+    }, Qt::Key_O);
     actionMenu.addSeparator();
     clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/menubar/trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlot()));
     actionMenu.addSeparator();

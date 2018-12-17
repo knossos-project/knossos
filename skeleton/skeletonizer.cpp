@@ -47,6 +47,8 @@
 #include <QXmlStreamAttributes>
 
 #include <cstring>
+#include <deque>
+#include <iterator>
 #include <queue>
 #include <type_traits>
 #include <unordered_set>
@@ -1851,6 +1853,40 @@ void Skeletonizer::deleteSelectedNodes() {
     if (skeletonState.activeNode != nullptr) {
         selectNodes({state->skeletonState->activeNode});
     }
+}
+
+QSet<nodeListElement *> Skeletonizer::findCycle() {
+    if (Skeletonizer::singleton().skeletonState.nodesByNodeID.empty()) {
+        return {};
+    }
+    auto * root = Skeletonizer::singleton().skeletonState.nodesByNodeID.begin()->second;
+    std::deque<nodeListElement *> spanningTree{root};
+    std::unordered_map<nodeListElement *, nodeListElement *> predecessors{{root, root}};
+    std::unordered_map<nodeListElement *, std::unordered_set<nodeListElement *>> usedNodes{{root, {}}};
+    while (!spanningTree.empty()) {
+        auto * node = spanningTree.back();
+        spanningTree.pop_back();
+        for (const auto & segment : *(node->getSegments())) {
+            auto * neighbor = (node == &segment->source) ? &segment->target : &segment->source;
+            if (usedNodes.find(neighbor) == std::end(usedNodes)) {
+                predecessors[neighbor] = node;
+                spanningTree.push_back(neighbor);
+                usedNodes[neighbor] = {node};
+            } else if (neighbor == node) {
+                return {node};
+            } else if (usedNodes[node].find(neighbor) == std::end(usedNodes[node])) {
+                QSet<nodeListElement *> cycle{neighbor, node};
+                auto * predecessor = predecessors[node];
+                while (usedNodes[neighbor].find(predecessor) == std::end(usedNodes[neighbor])) {
+                    cycle.insert(predecessor);
+                    predecessor = predecessors[predecessor];
+                }
+                cycle.insert(predecessor);
+                return cycle;
+            }
+        }
+    }
+    return {};
 }
 
 bool Skeletonizer::areConnected(const nodeListElement & lhs,const nodeListElement & rhs) const {

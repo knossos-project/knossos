@@ -307,7 +307,7 @@ public:
     boost::optional<nodeListElement &> addSkeletonNodeAndLinkWithActive(const Coordinate & clickedCoordinate, ViewportType VPtype, int makeNodeActive);
 
     static bool updateCircRadius(nodeListElement *node);
-
+    QSet<nodeListElement *> findCycle();
     bool areConnected(const nodeListElement & v,const nodeListElement & w) const; // true if a path between the two nodes can be found.
     float radius(const nodeListElement &node) const;
     const QSet<QString> getNumberProperties() const { return numberProperties; }

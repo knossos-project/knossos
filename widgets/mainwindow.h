@@ -126,6 +126,7 @@ class MainWindow : public QMainWindow {
     QAction *createSynapse;
     static constexpr int FILE_DIALOG_HISTORY_MAX_ENTRIES = 10;
     std::array<QAction*, FILE_DIALOG_HISTORY_MAX_ENTRIES> historyEntryActions;
+    QAction *jumpToCycle;
     QAction *newTreeAction;
     QAction *popBranchAction;
     QAction *pushBranchAction;
