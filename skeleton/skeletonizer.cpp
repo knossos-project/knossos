@@ -63,29 +63,26 @@ double SkeletonState::volBoundary() const {
     return 2 * std::max({scale.x * boundary.x, scale.y * boundary.y, scale.z * boundary.z});
 }
 
-template<typename T, typename Func>
-bool connectedComponent(T & node, Func func) {
-    std::queue<T*> queue;
-    std::unordered_set<const T*> visitedNodes;
+auto connectedComponent(nodeListElement & node) {
+    std::queue<const nodeListElement *> queue;
+    std::unordered_set<treeListElement *> visitedTrees;
+    std::unordered_set<nodeListElement *> visitedNodes;
     visitedNodes.emplace(&node);
     queue.push(&node);
     while (!queue.empty()) {
         auto * nextNode = queue.front();
         queue.pop();
 
-        if (func(*nextNode)) {
-            return true;
-        }
-
         for (auto & segment : nextNode->segments) {
             auto & neighbor = segment.forward ? segment.target : segment.source;
             if (visitedNodes.find(&neighbor) == visitedNodes.end()) {
                 visitedNodes.emplace(&neighbor);
+                visitedTrees.emplace(node.correspondingTree);
                 queue.push(&neighbor);
             }
         }
     }
-    return false;
+    return std::pair{visitedNodes, visitedTrees};
 }
 
 Skeletonizer::Skeletonizer() {
@@ -1436,14 +1433,7 @@ bool Skeletonizer::extractConnectedComponent(std::uint64_t nodeID) {
         return false;
     }
 
-    std::unordered_set<treeListElement*> treesSeen; // Connected component might consist of multiple trees.
-    std::unordered_set<nodeListElement*> visitedNodes;
-    visitedNodes.insert(firstNode);
-    connectedComponent(*firstNode, [&treesSeen, &visitedNodes](nodeListElement & node){
-        visitedNodes.emplace(&node);
-        treesSeen.emplace(node.correspondingTree);
-        return false;
-    });
+    auto [visitedNodes, visitedTrees] = connectedComponent(*firstNode);
 
     //  If the total number of nodes visited is smaller than the sum of the
     //  number of nodes in all trees we've seen, the connected component is a
@@ -1456,10 +1446,10 @@ bool Skeletonizer::extractConnectedComponent(std::uint64_t nodeID) {
     // feature when performing skeleton consolidation and allows one to merge
     // many trees at once.
     std::size_t nodeCountSeenTrees = 0;
-    for(auto * tree : treesSeen) {
+    for(auto * tree : visitedTrees) {
         nodeCountSeenTrees += tree->nodes.size();
     }
-    if (visitedNodes.size() == nodeCountSeenTrees && treesSeen.size() == 1) {
+    if (visitedNodes.size() == nodeCountSeenTrees && visitedTrees.size() == 1) {
         return false;
     }
 
@@ -1889,10 +1879,31 @@ QSet<nodeListElement *> Skeletonizer::findCycle() {
     return {};
 }
 
-bool Skeletonizer::areConnected(const nodeListElement & lhs,const nodeListElement & rhs) const {
-    return connectedComponent(lhs, [&rhs](const nodeListElement & node){
-        return node == rhs;
-    });
+bool Skeletonizer::areConnected(nodeListElement & lhs, const nodeListElement & rhs) const { // using uniform cost search
+    auto cmp = [](const auto & lhs, const auto & rhs) { return lhs.second > rhs.second; };
+    std::unordered_set<const nodeListElement *> explored;
+    std::priority_queue<std::pair<nodeListElement *, int>, std::vector<std::pair<nodeListElement *, int>>, decltype(cmp)> frontier(cmp);
+    frontier.emplace(&lhs, 0);
+    while (true) {
+        if (frontier.empty()) {
+            return false;
+        }
+        auto [node, cost] = frontier.top();
+        frontier.pop();
+        if (explored.find(node) != std::end(explored)) {
+            continue;
+        }
+        explored.insert(node);
+        if (node == &rhs) {
+            return true;
+        }
+        for (const auto & segment : *(node->getSegments())) {
+            auto * neighbor = (node == &segment->source) ? &segment->target : &segment->source;
+            if (explored.find(neighbor) == std::end(explored)) {
+                frontier.emplace(neighbor, cost + 1);
+            }
+        }
+    }
 }
 
 void Skeletonizer::loadMesh(QIODevice & file, const boost::optional<decltype(treeListElement::treeID)> treeID, const QString & filename) {
