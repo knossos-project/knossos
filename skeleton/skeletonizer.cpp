@@ -1930,8 +1930,16 @@ QSet<nodeListElement *> Skeletonizer::findCycle() {
     return {};
 }
 
-bool Skeletonizer::areConnected(nodeListElement & lhs, const nodeListElement & rhs) const {
-    return shortestPath(lhs, rhs).size() > 0;
+QSet<nodeListElement *> Skeletonizer::getPath(std::vector<nodeListElement *> & nodes) {
+    for (auto it1 = std::begin(nodes); it1 != std::end(nodes) - 1; it1++)  {
+        for (auto it2 = it1+1; it2 != std::end(nodes); it2++) {
+            auto path = shortestPath(**it1, **it2);
+            if (!path.isEmpty()) {
+                return path;
+            }
+        }
+    }
+    return {};
 }
 
 void Skeletonizer::loadMesh(QIODevice & file, const boost::optional<decltype(treeListElement::treeID)> treeID, const QString & filename) {

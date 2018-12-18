@@ -669,6 +669,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         ++i;// separator
         nodeContextMenu.actions().at(i++)->setEnabled(tracingAdvanced && selectedNodes.size() == 1);//split connected components
         nodeContextMenu.actions().at(i++)->setEnabled(nodeEditing && selectedNodes.size() > 0);//jump to unconnected component
+        nodeContextMenu.actions().at(i++)->setEnabled(nodeEditing && selectedNodes.size() > 1);//highlight path between nodes
         nodeContextMenu.actions().at(i++)->setEnabled(tracingAdvanced && selectedNodes.size() == 2);//link nodes needs two selected nodes
         nodeContextMenu.actions().at(i++)->setEnabled(nodeEditing && selectedNodes.size() > 0);//set comment
         nodeContextMenu.actions().at(i++)->setEnabled(nodeEditing && selectedNodes.size() > 0);//set radius
@@ -865,6 +866,18 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             QMessageBox box{this};
             box.setIcon(QMessageBox::Information);
             box.setText(tr("No unconnected components were found."));
+            box.exec();
+        }
+    });
+    QObject::connect(nodeContextMenu.addAction("Highlight path"), &QAction::triggered, [this]() {
+        auto path = Skeletonizer::singleton().getPath(Skeletonizer::singleton().skeletonState.selectedNodes);
+        if (!path.empty()) {
+            Skeletonizer::singleton().selectNodes(path);
+            Skeletonizer::singleton().jumpToNode(**path.begin());
+        } else {
+            QMessageBox box{this};
+            box.setIcon(QMessageBox::Information);
+            box.setText(tr("There are no paths between any pair of selected nodes."));
             box.exec();
         }
     });

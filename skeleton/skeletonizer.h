@@ -309,7 +309,7 @@ public:
 
     static bool updateCircRadius(nodeListElement *node);
     QSet<nodeListElement *> findCycle();
-    bool areConnected(nodeListElement & lhs, const nodeListElement & rhs) const; // true if a path between the two nodes can be found.
+    QSet<nodeListElement *> getPath(std::vector<nodeListElement *> & nodes);
     float radius(const nodeListElement &node) const;
     const QSet<QString> getNumberProperties() const { return numberProperties; }
     const QSet<QString> getTextProperties() const { return textProperties; }

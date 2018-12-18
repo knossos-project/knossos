@@ -55,7 +55,8 @@ nodeListElement * checkedPopBranchNode() {
 }
 
 void checkedToggleNodeLink(nodeListElement & lhs, nodeListElement & rhs) {
-    if (!Session::singleton().annotationMode.testFlag(AnnotationMode::SkeletonCycles) && Skeletonizer::singleton().areConnected(lhs, rhs)) {
+    std::vector<nodeListElement *> nodes{&lhs, &rhs};
+    if (!Session::singleton().annotationMode.testFlag(AnnotationMode::SkeletonCycles) && !Skeletonizer::singleton().getPath(nodes).isEmpty()) {
         QMessageBox prompt{QApplication::activeWindow()};
         prompt.setIcon(QMessageBox::Warning);
         prompt.setText(QObject::tr("Cycle detected!"));
