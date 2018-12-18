@@ -300,6 +300,7 @@ public:
     void restoreDefaultTreeColor(treeListElement & tree);
 
     bool extractConnectedComponent(std::uint64_t nodeID);
+    boost::optional<nodeListElement &> unconnectedNode(nodeListElement & node) const;
     bool mergeTrees(decltype(treeListElement::treeID) treeID1, decltype(treeListElement::treeID) treeID2);
     void mergeMeshes(Mesh & mesh1, Mesh & mesh2);
     void updateTreeColors();

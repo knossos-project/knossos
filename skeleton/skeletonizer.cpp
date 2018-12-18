@@ -63,6 +63,41 @@ double SkeletonState::volBoundary() const {
     return 2 * std::max({scale.x * boundary.x, scale.y * boundary.y, scale.z * boundary.z});
 }
 
+QSet<nodeListElement *> shortestPath(nodeListElement & lhs, const nodeListElement & rhs) { // using uniform cost search
+    auto cmp = [](const auto & lhs, const auto & rhs) { return lhs.second > rhs.second; };
+    std::unordered_set<const nodeListElement *> explored;
+    std::priority_queue<std::pair<nodeListElement *, int>, std::vector<std::pair<nodeListElement *, int>>, decltype(cmp)> frontier(cmp);
+    frontier.emplace(&lhs, 0);
+    std::unordered_map<nodeListElement *, nodeListElement *> parentMap{{&lhs, nullptr}};
+    while (true) {
+        if (frontier.empty()) {
+            return {};
+        }
+        auto [node, cost] = frontier.top();
+        frontier.pop();
+        if (explored.find(node) != std::end(explored)) {
+            continue;
+        }
+        explored.insert(node);
+        if (node == &rhs) {
+            QSet<nodeListElement *> path{node};
+            auto * parent = parentMap[node];
+            while (parent != nullptr) {
+                path.insert(parent);
+                parent = parentMap[parent];
+            }
+            return path;
+        }
+        for (const auto & segment : *(node->getSegments())) {
+            auto * neighbor = (node == &segment->source) ? &segment->target : &segment->source;
+            if (explored.find(neighbor) == std::end(explored)) {
+                frontier.emplace(neighbor, cost + 1);
+                parentMap[neighbor] = node;
+            }
+        }
+    }
+}
+
 auto connectedComponent(nodeListElement & node) {
     std::queue<const nodeListElement *> queue;
     std::unordered_set<treeListElement *> visitedTrees;
@@ -1470,6 +1505,22 @@ bool Skeletonizer::extractConnectedComponent(std::uint64_t nodeID) {
     return true;
 }
 
+boost::optional<nodeListElement &> Skeletonizer::unconnectedNode(nodeListElement & node) const {
+    for (auto [id, nextNode] : skeletonState.nodesByNodeID) {
+        auto * segments = nextNode->getSegments();
+        if (nextNode == &node || segments->size() > 1) {
+            continue; // enough to look at degree 1 nodes
+        } else if (segments->size() == 0) {
+            return *nextNode;
+        }
+        auto path = shortestPath(node, *nextNode);
+        if (path.size() == 0) {
+            return *nextNode;
+        }
+    }
+    return boost::none;
+}
+
 void Skeletonizer::notifyChanged(treeListElement & tree) {
     emit treeChangedSignal(tree);
 }
@@ -1879,31 +1930,8 @@ QSet<nodeListElement *> Skeletonizer::findCycle() {
     return {};
 }
 
-bool Skeletonizer::areConnected(nodeListElement & lhs, const nodeListElement & rhs) const { // using uniform cost search
-    auto cmp = [](const auto & lhs, const auto & rhs) { return lhs.second > rhs.second; };
-    std::unordered_set<const nodeListElement *> explored;
-    std::priority_queue<std::pair<nodeListElement *, int>, std::vector<std::pair<nodeListElement *, int>>, decltype(cmp)> frontier(cmp);
-    frontier.emplace(&lhs, 0);
-    while (true) {
-        if (frontier.empty()) {
-            return false;
-        }
-        auto [node, cost] = frontier.top();
-        frontier.pop();
-        if (explored.find(node) != std::end(explored)) {
-            continue;
-        }
-        explored.insert(node);
-        if (node == &rhs) {
-            return true;
-        }
-        for (const auto & segment : *(node->getSegments())) {
-            auto * neighbor = (node == &segment->source) ? &segment->target : &segment->source;
-            if (explored.find(neighbor) == std::end(explored)) {
-                frontier.emplace(neighbor, cost + 1);
-            }
-        }
-    }
+bool Skeletonizer::areConnected(nodeListElement & lhs, const nodeListElement & rhs) const {
+    return shortestPath(lhs, rhs).size() > 0;
 }
 
 void Skeletonizer::loadMesh(QIODevice & file, const boost::optional<decltype(treeListElement::treeID)> treeID, const QString & filename) {

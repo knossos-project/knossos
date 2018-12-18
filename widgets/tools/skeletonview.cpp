@@ -668,6 +668,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         nodeContextMenu.actions().at(copyActionIndex = i++)->setEnabled(selectedNodes.size() > 0);//copy selected contents
         ++i;// separator
         nodeContextMenu.actions().at(i++)->setEnabled(tracingAdvanced && selectedNodes.size() == 1);//split connected components
+        nodeContextMenu.actions().at(i++)->setEnabled(nodeEditing && selectedNodes.size() > 0);//jump to unconnected component
         nodeContextMenu.actions().at(i++)->setEnabled(tracingAdvanced && selectedNodes.size() == 2);//link nodes needs two selected nodes
         nodeContextMenu.actions().at(i++)->setEnabled(nodeEditing && selectedNodes.size() > 0);//set comment
         nodeContextMenu.actions().at(i++)->setEnabled(nodeEditing && selectedNodes.size() > 0);//set radius
@@ -844,6 +845,27 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
                 }
                 Skeletonizer::singleton().setComment(state->skeletonState->trees.back(), msg);
             }
+        }
+    });
+    QObject::connect(nodeContextMenu.addAction("Jump to &unconnected component"), &QAction::triggered, [this]() {
+        // finds component not connected to any selected node
+        boost::optional<nodeListElement &> foundNode;
+        for (auto * seedNode : Skeletonizer::singleton().skeletonState.selectedNodes) {
+            auto unconnectedNode = Skeletonizer::singleton().unconnectedNode(*seedNode);
+            if (unconnectedNode) {
+                foundNode = unconnectedNode.get();
+            } else {
+                return;
+            }
+        }
+        if (foundNode) {
+            Skeletonizer::singleton().selectNodes({&foundNode.get()});
+            Skeletonizer::singleton().jumpToNode(foundNode.get());
+        } else {
+            QMessageBox box{this};
+            box.setIcon(QMessageBox::Information);
+            box.setText(tr("No unconnected components were found."));
+            box.exec();
         }
     });
     linkAction = nodeContextMenu.addAction("&Link/Unlink nodes");
