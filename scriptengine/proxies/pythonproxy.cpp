@@ -53,10 +53,7 @@ void PythonProxy::annotation_add_file(const QString & name, const QByteArray & c
 }
 
 QByteArray PythonProxy::annotation_get_file(const QString & name) {
-    if (Session::singleton().extraFiles.find(name) == std::end(Session::singleton().extraFiles)) {
-        return QByteArray();
-    }
-    return Session::singleton().extraFiles[name];
+    return Session::singleton().extraFiles.value(name);
 }
 
 QString PythonProxy::annotation_filename() {
