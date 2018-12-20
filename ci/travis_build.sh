@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euxo pipefail
 
-pacman -Syu --noconfirm
+time pacman -Syu --noconfirm
 
 cd ~
 
@@ -9,10 +9,10 @@ cd ~
 mkdir knossos-build
 cd knossos-build
 cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH="/root/PythonQt-install/lib/cmake/" ../knossos
-ninja
+time ninja
 
 # create AppImage
-../knossos/installer/create_appimage.sh
+time ../knossos/installer/create_appimage.sh
 
 # Deploy
 BRANCH_PREFIX=""
