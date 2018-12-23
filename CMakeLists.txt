@@ -229,5 +229,5 @@ endif()
 include(cotire OPTIONAL)#https://github.com/sakra/cotire/releases/latest
 if(COMMAND cotire)
     set_target_properties(${PROJECT_NAME} PROPERTIES COTIRE_ADD_UNITY_BUILD FALSE)# recurring https://github.com/Alexpux/MINGW-packages/issues/923
-    cotire(${PROJECT_NAME})
+#    cotire(${PROJECT_NAME})
 endif()
