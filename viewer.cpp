@@ -22,11 +22,11 @@
 
 #include "viewer.h"
 
-#include "file_io.h"
+#include "annotation/annotation.h"
+#include "annotation/file_io.h"
 #include "functions.h"
 #include "loader.h"
 #include "segmentation/segmentation.h"
-#include "session.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
 #include "widgets/mainwindow.h"
@@ -119,7 +119,7 @@ Viewer::Viewer() : evilHack{[this](){ state->viewer = this; return true; }()} {
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeSelectionChangedSignal, regVBuff);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, regVBuff);
 
-    QObject::connect(&Session::singleton(), &Session::movementAreaChanged, this, [this](){
+    QObject::connect(&Annotation::singleton(), &Annotation::movementAreaChanged, this, [this](){
         updateCurrentPosition();
         reslice_notify();
     });
@@ -263,7 +263,7 @@ const auto datasetAdjustment = [](auto layerId, auto index){
 };
 
 void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId, const boost::optional<decltype(LayerRenderSettings::combineSlicesType)> combineType) {
-    const auto & session = Session::singleton();
+    const auto & session = Annotation::singleton();
     const Coordinate areaMinCoord = {session.movementAreaMin.x,
                                      session.movementAreaMin.y,
                                      session.movementAreaMin.z};
@@ -400,7 +400,7 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxI
  *
  */
 void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId) {
-    const auto & session = Session::singleton();
+    const auto & session = Annotation::singleton();
     const Coordinate areaMinCoord = {session.movementAreaMin.x,
                                      session.movementAreaMin.y,
                                      session.movementAreaMin.z};
@@ -525,8 +525,8 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
         const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
         const auto offset = vp.n * multiSlicei * Dataset::current().magnification;
         const auto offsetCube = (state->viewerState->currentPosition + offset).cube(cubeEdgeLen, Dataset::datasets[layerId].magnification) - state->viewerState->currentPosition.cube(cubeEdgeLen, Dataset::datasets[layerId].magnification);
-        const CoordInCube currentPosition_dc = (state->viewerState->currentPosition + offset).capped(Session::singleton().movementAreaMin, Session::singleton().movementAreaMax).insideCube(cubeEdgeLen, Dataset::current().magnification);
-        if (Session::singleton().outsideMovementArea(state->viewerState->currentPosition + offset)) {
+        const CoordInCube currentPosition_dc = (state->viewerState->currentPosition + offset).capped(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax).insideCube(cubeEdgeLen, Dataset::current().magnification);
+        if (Annotation::singleton().outsideMovementArea(state->viewerState->currentPosition + offset)) {
             continue;
         }
 
@@ -890,10 +890,10 @@ bool Viewer::updateDatasetMag(const int mag) {
                 layer.boundary = boundary / layer.scale;
 
                 if (&layer == &Dataset::datasets.front()) {// only update movement area and position once
-                    const auto movementAreaMin = prevScale.componentMul(Session::singleton().movementAreaMin);
-                    const auto movementAreaMax = prevScale.componentMul(Session::singleton().movementAreaMax);
+                    const auto movementAreaMin = prevScale.componentMul(Annotation::singleton().movementAreaMin);
+                    const auto movementAreaMax = prevScale.componentMul(Annotation::singleton().movementAreaMax);
                     const auto cpos = prevScale.componentMul(state->viewerState->currentPosition);
-                    Session::singleton().updateMovementArea(movementAreaMin / layer.scale, movementAreaMax / layer.scale);
+                    Annotation::singleton().updateMovementArea(movementAreaMin / layer.scale, movementAreaMax / layer.scale);
                     setPosition(cpos / layer.scale);
                 }
             }
@@ -1002,7 +1002,7 @@ void Viewer::applyTextureFilterSetting(const QOpenGLTexture::Filter texFiltering
 }
 
 void Viewer::updateCurrentPosition() {
-    auto & session = Session::singleton();
+    auto & session = Annotation::singleton();
     if (session.outsideMovementArea(state->viewerState->currentPosition)) {
         const Coordinate currPos = state->viewerState->currentPosition;
         const Coordinate newPos = state->viewerState->currentPosition.capped(session.movementAreaMin, session.movementAreaMax);
@@ -1051,11 +1051,11 @@ void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, 
 
     const Coordinate movement = step;
     auto newPos = viewerState.currentPosition + movement;
-    if (Session::singleton().outsideMovementArea(newPos)) {
+    if (Annotation::singleton().outsideMovementArea(newPos)) {
         const auto inc{state->skeletonState->displayMatlabCoordinates};
         qDebug() << tr("Position (%1, %2, %3) out of bounds").arg(newPos.x + inc).arg(newPos.y + inc).arg(newPos.z + inc);
     }
-    viewerState.currentPosition = newPos.capped(Session::singleton().movementAreaMin, Session::singleton().movementAreaMax);
+    viewerState.currentPosition = newPos.capped(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax);
     recalcTextureOffsets();
 
     const auto newPosition_dc = viewerState.currentPosition.cube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);

@@ -231,7 +231,7 @@ void SkeletonProxy::jump_to_node(nodeListElement *node) {
 }
 
 bool SkeletonProxy::has_unsaved_changes() {
-    return Session::singleton().unsavedChanges;
+    return Annotation::singleton().unsavedChanges;
 }
 
 void SkeletonProxy::delete_skeleton() {

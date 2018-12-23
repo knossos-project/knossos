@@ -22,10 +22,10 @@
 
 #include "snapshotwidget.h"
 
+#include "annotation/annotation.h"
 #include "dataset.h"
 #include "GuiConstants.h"
 #include "segmentation/segmentation.h"
-#include "session.h"
 #include "stateInfo.h"
 #include "viewer.h"
 
@@ -219,11 +219,11 @@ void SnapshotWidget::showViewer(const QImage & image) {
                    vpArbRadio.isChecked() ? "Arb" :
                                            "3D";
     auto pos = &state->viewerState->currentPosition;
-    auto annotationName = Session::singleton().annotationFilename;
-    annotationName.remove(0, annotationName.lastIndexOf("/") + 1); // remove directory structure from name
-    annotationName.chop(annotationName.endsWith(".k.zip") ? 6 : /* .nml */ 4); // remove file type
+    auto Annotationame = Annotation::singleton().annotationFilename;
+    Annotationame.remove(0, Annotationame.lastIndexOf("/") + 1); // remove directory structure from name
+    Annotationame.chop(Annotationame.endsWith(".k.zip") ? 6 : /* .nml */ 4); // remove file type
     const auto info = tr("%1 Viewport (%2)").arg(vp).arg(sizeCombo.currentText());
-    const auto defaultFilename = QString("%1_%2_%3_%4_%5.png").arg(vp).arg(pos->x).arg(pos->y).arg(pos->z).arg(annotationName.isEmpty() ? Dataset::current().experimentname : annotationName);
+    const auto defaultFilename = QString("%1_%2_%3_%4_%5.png").arg(vp).arg(pos->x).arg(pos->y).arg(pos->z).arg(Annotationame.isEmpty() ? Dataset::current().experimentname : Annotationame);
     SnapshotViewer previewer(image, info, saveDir, defaultFilename, this);
     previewer.exec();
     saveDir = previewer.getSaveDir();

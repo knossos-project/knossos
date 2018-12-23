@@ -22,8 +22,8 @@
 
 #include "taskloginwidget.h"
 
+#include "annotation/annotation.h"
 #include "network.h"
-#include "session.h"
 #include "widgets/GuiConstants.h"
 
 #include <QApplication>
@@ -84,7 +84,7 @@ void TaskLoginWidget::saveSettings() {
 }
 
 void TaskLoginWidget::setResponse(const QString &message) {
-    Session::singleton().task = {};
+    Annotation::singleton().task = {};
     response.setText(message);
     show();
 }

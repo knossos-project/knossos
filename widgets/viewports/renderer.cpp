@@ -20,6 +20,7 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
+#include "annotation/annotation.h"
 #include "dataset.h"
 #include "functions.h"
 #include "widgets/viewports/viewportarb.h"
@@ -30,7 +31,6 @@
 #include "profiler.h"
 #include "segmentation/cubeloader.h"
 #include "segmentation/segmentation.h"
-#include "session.h"
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
@@ -890,7 +890,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisable(GL_TEXTURE_2D);
     }
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Brush) && hasCursor) {
+    if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Brush) && hasCursor) {
         glPushMatrix();
         view();
         renderBrush(getMouseCoordinate());
@@ -1799,7 +1799,7 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
             glVertex3f(point.x, point.y, point.z);
         }
         glEnd();
-        if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint)) { // fill brush with object color
+        if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint)) { // fill brush with object color
             glBegin(GL_TRIANGLE_FAN);
             glColor4f(r, g, b, .25);
             glVertex3f(center.x, center.y, center.z);

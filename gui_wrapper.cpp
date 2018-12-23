@@ -22,7 +22,7 @@
 
 #include "gui_wrapper.h"
 
-#include "session.h"
+#include "annotation/annotation.h"
 #include "skeleton/skeletonizer.h"
 
 #include <QApplication>
@@ -56,7 +56,7 @@ nodeListElement * checkedPopBranchNode() {
 
 void checkedToggleNodeLink(nodeListElement & lhs, nodeListElement & rhs) {
     std::vector<nodeListElement *> nodes{&lhs, &rhs};
-    if (!Session::singleton().annotationMode.testFlag(AnnotationMode::SkeletonCycles) && !Skeletonizer::singleton().getPath(nodes).isEmpty()) {
+    if (!Annotation::singleton().annotationMode.testFlag(AnnotationMode::SkeletonCycles) && !Skeletonizer::singleton().getPath(nodes).isEmpty()) {
         QMessageBox prompt{QApplication::activeWindow()};
         prompt.setIcon(QMessageBox::Warning);
         prompt.setText(QObject::tr("Cycle detected!"));

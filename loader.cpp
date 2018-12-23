@@ -26,7 +26,6 @@
 #include "functions.h"
 #include "network.h"
 #include "segmentation/segmentation.h"
-#include "session.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
 #include "viewer.h"

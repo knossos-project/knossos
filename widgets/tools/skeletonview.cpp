@@ -22,10 +22,10 @@
 
 #include "skeletonview.h"
 
+#include "annotation/annotation.h"
 #include "action_helper.h"
 #include "gui_wrapper.h"
 #include "model_helper.h"
-#include "session.h"
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
@@ -241,7 +241,7 @@ void NodeModel::recreate(const bool matchAll = true) {
 }
 
 void NodeView::mousePressEvent(QMouseEvent * event) {
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_TracingAdvanced)) {
+    if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_TracingAdvanced)) {
         const auto index = proxy.mapToSource(indexAt(event->pos()));
         if (index.isValid()) {//enable drag’n’drop only for selected items to retain rubberband selection
             const auto selected = source.cache[index.row()].get().selected && !event->modifiers().testFlag(Qt::ControlModifier) && !event->modifiers().testFlag(Qt::ShiftModifier);
@@ -609,8 +609,8 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             }
         }
         const auto & selectedTrees = state->skeletonState->selectedTrees;
-        const auto nodeEditing = Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing);
-        const auto tracingAdvanced = Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_TracingAdvanced);
+        const auto nodeEditing = Annotation::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing);
+        const auto tracingAdvanced = Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_TracingAdvanced);
         mergeAction->setVisible(tracingAdvanced);
         moveNodesAction->setVisible(tracingAdvanced);
 
@@ -651,8 +651,8 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(&nodeView, &QTreeView::customContextMenuRequested, [this](const QPoint & pos){
         int i = 0, copyActionIndex, deleteActionIndex;
         const auto & selectedNodes = state->skeletonState->selectedNodes;
-        const auto nodeEditing = Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing);
-        const auto tracingAdvanced = Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_TracingAdvanced);
+        const auto nodeEditing = Annotation::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing);
+        const auto tracingAdvanced = Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_TracingAdvanced);
         const auto synapseNode = selectedNodes.size() == 1 && selectedNodes.front()->isSynapticNode;
         extractComponentAction->setVisible(tracingAdvanced);
         linkAction->setVisible(tracingAdvanced);
@@ -756,7 +756,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         });
     });
     deleteAction(treeContextMenu, treeView, tr("&Delete trees"), [](){// this is also a shortcut and needs checks here
-        if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing) && !state->skeletonState->selectedTrees.empty()) {
+        if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing) && !state->skeletonState->selectedTrees.empty()) {
             question([](){ Skeletonizer::singleton().deleteSelectedTrees(); }, tr("Delete"), tr("Delete selected trees?"));
         }
     });
@@ -912,7 +912,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         }
     });
     deleteAction(nodeContextMenu, nodeView, tr("&Delete nodes"), [](){// this is also a shortcut and needs checks here
-        if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing) && !state->skeletonState->selectedNodes.empty()) {
+        if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing) && !state->skeletonState->selectedNodes.empty()) {
             if (state->skeletonState->selectedNodes.size() == 1) {//don’t ask for one node
                 Skeletonizer::singleton().deleteSelectedNodes();
             } else {

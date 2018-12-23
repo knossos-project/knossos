@@ -22,9 +22,9 @@
 
 #include "segmentation.h"
 
-#include "file_io.h"
+#include "annotation/annotation.h"
+#include "annotation/file_io.h"
 #include "loader.h"
-#include "session.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
 #include "viewer.h"
@@ -540,7 +540,7 @@ void Segmentation::mergelistSave(QIODevice & file) const {
 }
 
 void Segmentation::mergelistClear() {
-    Session::singleton().unsavedChanges |= hasSegData();
+    Annotation::singleton().unsavedChanges |= hasSegData();
 
     selectedObjectIndices.clear();
     objects.clear();
@@ -646,7 +646,7 @@ void Segmentation::jobLoad(QIODevice & file) {
     job.worker = worker_line.isNull() ? "" : worker_line;
     job.submitPath = submit_line.isNull() ? "" : submit_line;
     if (job.id != 0) {
-        Session::singleton().annotationMode = AnnotationMode::Mode_MergeSimple;
+        Annotation::singleton().annotationMode = AnnotationMode::Mode_MergeSimple;
     }
 }
 

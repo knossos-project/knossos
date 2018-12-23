@@ -20,8 +20,8 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
-#ifndef SESSION_H
-#define SESSION_H
+#ifndef ANNOTATION_H
+#define ANNOTATION_H
 
 #include "coordinate.h"
 
@@ -58,7 +58,7 @@ enum AnnotationMode {
     Mode_Selection = (1 << 13) | NodeSelection | ObjectSelection,
 };
 
-class Session : public QObject {
+class Annotation : public QObject {
     Q_OBJECT
     class ActivityEventFilter;
 
@@ -91,9 +91,9 @@ public:
 
     QHash<QString, QByteArray> extraFiles;
 
-    Session();
-    static Session & singleton() {
-        static Session session;
+    Annotation();
+    static Annotation & singleton() {
+        static Annotation session;
         return session;
     }
     void clearAnnotation();
@@ -108,4 +108,4 @@ signals:
     void movementAreaChanged();
 };
 
-#endif//SESSION_H
+#endif//ANNOTATION_H

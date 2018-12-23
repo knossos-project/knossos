@@ -20,8 +20,9 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
+#include "annotation/annotation.h"
+#include "annotation/file_io.h"
 #include "buildinfo.h"
-#include "file_io.h"
 #include "GuiConstants.h"
 #include "gui_wrapper.h"
 #include "htmlmacros.h"
@@ -94,7 +95,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
 
     skeletonFileHistory.reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, [this]() { setSynapseState(SynapseState::Off); });
-    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::guiModeLoaded, [this]() { setProofReadingUI(Session::singleton().guiMode == GUIMode::ProofReading); });
+    QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::guiModeLoaded, [this]() { setProofReadingUI(Annotation::singleton().guiMode == GUIMode::ProofReading); });
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::lockedToNode, [this](const std::uint64_t nodeID) {
         nodeLockingLabel.setText(tr("Locked to node %1").arg(nodeID));
         nodeLockingLabel.show();
@@ -106,7 +107,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         AnnotationMode defaultMode = AnnotationMode::Mode_Tracing;
         if (!Segmentation::singleton().enabled) {
             rawModes = {{AnnotationMode::Mode_Tracing, workModes[AnnotationMode::Mode_Tracing]}, {AnnotationMode::Mode_TracingAdvanced, workModes[AnnotationMode::Mode_TracingAdvanced]}};
-        } else if (Session::singleton().guiMode == GUIMode::ProofReading) {
+        } else if (Annotation::singleton().guiMode == GUIMode::ProofReading) {
             rawModes = {{AnnotationMode::Mode_Merge, workModes[AnnotationMode::Mode_Merge]}, {AnnotationMode::Mode_Paint, workModes[AnnotationMode::Mode_Paint]}};
             defaultMode = AnnotationMode::Mode_Merge;
         }
@@ -135,7 +136,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &MainWindow::notifyUnsavedChanges);
 
-    QObject::connect(&Session::singleton(), &Session::autoSaveSignal, [this](){ save(); });
+    QObject::connect(&Annotation::singleton(), &Annotation::autoSaveSignal, [this](){ save(); });
 
     createToolbars();
     createMenus();
@@ -210,7 +211,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     statusBar()->addPermanentWidget(&unsavedChangesLabel);
     statusBar()->addPermanentWidget(&annotationTimeLabel);
 
-    QObject::connect(&Session::singleton(), &Session::annotationTimeChanged, &annotationTimeLabel, &QLabel::setText);
+    QObject::connect(&Annotation::singleton(), &Annotation::annotationTimeChanged, &annotationTimeLabel, &QLabel::setText);
 
     createGlobalAction(state->mainWindow, Qt::Key_F7, [](){
         state->viewer->gpuRendering = !state->viewer->gpuRendering;
@@ -467,7 +468,7 @@ void MainWindow::updateTodosLeft() {
     if(todosLeft > 0) {
         todosLeftLabel.setText(QString("<font color='#FF573E'>  %1 more left</font>").arg(todosLeft));
     }
-    else if(Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeSimple)) {
+    else if(Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeSimple)) {
         todosLeftLabel.setText(QString("<font color='#00D36F'>  %1 more left</font>").arg(todosLeft));
         // submit work
         QRegularExpression regex(R"regex(\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}\b)regex");
@@ -487,7 +488,7 @@ void MainWindow::updateTodosLeft() {
         msgBox.addButton(QObject::tr("Cancel"), QMessageBox::RejectRole);
         msgBox.exec();
         if (msgBox.clickedButton() == submit) {
-            auto jobFilename = "final_" + QFileInfo(Session::singleton().annotationFilename).fileName();
+            auto jobFilename = "final_" + QFileInfo(Annotation::singleton().annotationFilename).fileName();
             auto finishedJobPath = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/segmentationJobs/" + jobFilename;
             annotationFileSave(finishedJobPath);
             Network::singleton().submitSegmentationJob(finishedJobPath);
@@ -496,16 +497,16 @@ void MainWindow::updateTodosLeft() {
 }
 
 void MainWindow::notifyUnsavedChanges() {
-    Session::singleton().unsavedChanges = true;
+    Annotation::singleton().unsavedChanges = true;
     updateTitlebar();
 }
 
 void MainWindow::updateTitlebar() {
-    const auto & session = Session::singleton();
+    const auto & session = Annotation::singleton();
     QString title = QString("%1 %2 • ").arg(qApp->applicationDisplayName()).arg(KREVISION);
     title.append(QString("%1 • ").arg(Dataset::current().experimentname));
     if (!session.annotationFilename.isEmpty()) {
-        title.append(Session::singleton().annotationFilename);
+        title.append(Annotation::singleton().annotationFilename);
     } else {
         title.append("no annotation file");
     }
@@ -742,7 +743,7 @@ void MainWindow::createMenus() {
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
-    if (Session::singleton().unsavedChanges) {
+    if (Annotation::singleton().unsavedChanges) {
          QMessageBox question{QApplication::activeWindow()};
          question.setIcon(QMessageBox::Question);
          question.setText(tr("Really quit KNOSSOS despite changes?"));
@@ -798,7 +799,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
         mergeSegmentation = prompt.clickedButton() == keepAllButton || prompt.clickedButton() == segmenationKeepButton;
         mergeSkeleton = prompt.clickedButton() == keepAllButton || prompt.clickedButton() == skeletonKeepButton;
         if (prompt.clickedButton() == overrideAllButton) {
-            Session::singleton().clearAnnotation();
+            Annotation::singleton().clearAnnotation();
             updateTitlebar();
         } else {
             if (!mergeSegmentation) {
@@ -811,7 +812,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
     }
 
     bool multipleFiles = fileNames.size() > 1;
-    Session::singleton().guiMode = GUIMode::None; // always reset to default gui
+    Annotation::singleton().guiMode = GUIMode::None; // always reset to default gui
     auto nmlEndIt = std::stable_partition(std::begin(fileNames), std::end(fileNames), [](const QString & elem){
         return QFileInfo(elem).suffix() == "nml";
     });
@@ -845,7 +846,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
             fileErrorBox.exec();
         }
 
-        Session::singleton().unsavedChanges = false;// meh, don’t ask
+        Annotation::singleton().unsavedChanges = false;// meh, don’t ask
         newAnnotationSlot();
         if (silent) {
             throw;
@@ -854,10 +855,10 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
     }
     Skeletonizer::singleton().resetData();
 
-    Session::singleton().unsavedChanges = multipleFiles || mergeSkeleton || mergeSegmentation; //merge implies changes
+    Annotation::singleton().unsavedChanges = multipleFiles || mergeSkeleton || mergeSegmentation; //merge implies changes
     if (!mergeSkeleton && !mergeSegmentation) { // if an annotation was already open don't change its filename, otherwise…
         // if multiple files are loaded, let KNOSSOS generate a new filename. Otherwise either an .nml or a .k.zip was loaded
-        Session::singleton().annotationFilename = multipleFiles ? "" : !nmls.empty() ? nmls.front() : zips.front();
+        Annotation::singleton().annotationFilename = multipleFiles ? "" : !nmls.empty() ? nmls.front() : zips.front();
     }
     updateTitlebar();
 
@@ -872,7 +873,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
 }
 
 bool MainWindow::newAnnotationSlot() {
-    if (Session::singleton().unsavedChanges) {
+    if (Annotation::singleton().unsavedChanges) {
         QMessageBox question{QApplication::activeWindow()};
         question.setIcon(QMessageBox::Question);
         question.setText(tr("Create new annotation despite changes?"));
@@ -884,7 +885,7 @@ bool MainWindow::newAnnotationSlot() {
             return false;
         }
     }
-    Session::singleton().clearAnnotation();
+    Annotation::singleton().clearAnnotation();
     updateTitlebar();
     return true;
 }
@@ -912,7 +913,7 @@ void MainWindow::openSlot() {
 }
 
 void MainWindow::saveSlot() {
-    auto annotationFilename = Session::singleton().annotationFilename;
+    auto annotationFilename = Annotation::singleton().annotationFilename;
     if (annotationFilename.isEmpty()) {
         saveAsSlot();
     } else {
@@ -965,7 +966,7 @@ try {
             filename.chop(4);
             filename += ".k.zip";
         }
-        if (allocIncrement && Session::singleton().autoFilenameIncrementBool) {
+        if (allocIncrement && Annotation::singleton().autoFilenameIncrementBool) {
             int index = skeletonFileHistory.indexOf(filename);
             filename = updatedFileName(filename);
             if (index != -1) {//replace old filename with updated one
@@ -976,7 +977,7 @@ try {
     }
     emit aboutToSave();
     annotationFileSave(filename, onlySelectedTrees);
-    Session::singleton().annotationFilename = filename;
+    Annotation::singleton().annotationFilename = filename;
     updateRecentFile(filename);
     updateTitlebar();
 } catch (std::runtime_error & error) {
@@ -1001,11 +1002,11 @@ void MainWindow::exportToNml() {
         box.exec();
         return;
     }
-    auto info = QFileInfo(Session::singleton().annotationFilename);
+    auto info = QFileInfo(Annotation::singleton().annotationFilename);
     auto defaultpath = annotationFileDefaultPath();
     defaultpath.chop(6);
     defaultpath += ".nml";
-    const auto & suggestedFilepath = Session::singleton().annotationFilename.isEmpty() ? defaultpath : info.absoluteDir().path() + "/" + info.baseName() + ".nml";
+    const auto & suggestedFilepath = Annotation::singleton().annotationFilename.isEmpty() ? defaultpath : info.absoluteDir().path() + "/" + info.baseName() + ".nml";
     auto filename = state->viewer->suspend([this, &suggestedFilepath]{
         return QFileDialog::getSaveFileName(this, "Export to skeleton file", suggestedFilepath, "KNOSSOS skeleton file (*.nml)");
     });
@@ -1022,7 +1023,7 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
         workMode = AnnotationMode::Mode_Tracing;
     }
     modeCombo.setCurrentIndex(workModeModel.indexOf(workMode));
-    auto & mode = Session::singleton().annotationMode;
+    auto & mode = Annotation::singleton().annotationMode;
     mode = workMode;
     const bool trees = mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
     const bool skeleton = mode.testFlag(AnnotationMode::Mode_Tracing) || mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
@@ -1062,17 +1063,17 @@ void MainWindow::setSegmentState(const SegmentState newState) {
     case SegmentState::On:
         stateName = tr("<font color='#00D36F'>On</font>");
         nextState = tr("off once");
-        Session::singleton().annotationMode |= AnnotationMode::LinkedNodes;
+        Annotation::singleton().annotationMode |= AnnotationMode::LinkedNodes;
         break;
     case SegmentState::Off_Once:
         stateName = tr("<font color='darkGoldenRod'>Off once</font>");
         nextState = tr("off");
-        Session::singleton().annotationMode &= ~QFlags<AnnotationMode>(AnnotationMode::LinkedNodes);
+        Annotation::singleton().annotationMode &= ~QFlags<AnnotationMode>(AnnotationMode::LinkedNodes);
         break;
     case SegmentState::Off:
         stateName = tr("<font color='#34A4FF'>Off</font>");
         nextState = tr("on");
-        Session::singleton().annotationMode &= ~QFlags<AnnotationMode>(AnnotationMode::LinkedNodes);
+        Annotation::singleton().annotationMode &= ~QFlags<AnnotationMode>(AnnotationMode::LinkedNodes);
         break;
     }
     toggleSegmentsAction->setText(tr("Turn segments %1").arg(nextState));
@@ -1126,7 +1127,7 @@ void MainWindow::toggleSynapseState() {
 }
 
 void MainWindow::clearSkeletonSlot() {
-    if(Session::singleton().unsavedChanges || !state->skeletonState->trees.empty()) {
+    if(Annotation::singleton().unsavedChanges || !state->skeletonState->trees.empty()) {
         QMessageBox question{QApplication::activeWindow()};
         question.setIcon(QMessageBox::Question);
         question.setText(tr("Do you really want to clear the skeleton?"));
@@ -1219,7 +1220,7 @@ void MainWindow::saveSettings() {
     settings.setValue(OPEN_FILE_DIALOG_DIRECTORY, openFileDirectory);
     settings.setValue(SAVE_FILE_DIALOG_DIRECTORY, saveFileDirectory);
 
-    settings.setValue(GUI_MODE, static_cast<int>(Session::singleton().guiMode));
+    settings.setValue(GUI_MODE, static_cast<int>(Annotation::singleton().guiMode));
 
     settings.endGroup();
 
@@ -1258,7 +1259,7 @@ void MainWindow::loadSettings() {
 
     setSegmentState(static_cast<SegmentState>(settings.value(SEGMENT_STATE, static_cast<int>(SegmentState::On)).toInt()));
 
-    Session::singleton().guiMode = static_cast<GUIMode>(settings.value(GUI_MODE, static_cast<int>(GUIMode::None)).toInt());
+    Annotation::singleton().guiMode = static_cast<GUIMode>(settings.value(GUI_MODE, static_cast<int>(GUIMode::None)).toInt());
 
     settings.endGroup();
 
@@ -1274,7 +1275,7 @@ void MainWindow::loadSettings() {
     show();
     activateWindow();// prevent mainwin in background in gnome when other widgets are also visible
     state->viewer->loadSettings();// size vps after show() for proper maximized space
-    setProofReadingUI(Session::singleton().guiMode == GUIMode::ProofReading);
+    setProofReadingUI(Annotation::singleton().guiMode == GUIMode::ProofReading);
     forEachVPDo([](ViewportBase & vp) { // show undocked vps after mainwindow
         if (vp.isDocked == false) {
             vp.setDock(false);
@@ -1363,7 +1364,7 @@ void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
 }
 
 void MainWindow::resetViewports() {
-    if (Session::singleton().guiMode == GUIMode::ProofReading) {
+    if (Annotation::singleton().guiMode == GUIMode::ProofReading) {
         viewportXY.get()->setDock(true);
         viewportXY.get()->show();
         viewportXZ->setHidden(true);
@@ -1400,7 +1401,7 @@ void MainWindow::updateCommentShortcut(const int index, const QString & comment)
 }
 
 bool MainWindow::placeComment(const int index) {
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing) && state->skeletonState->activeNode != nullptr) {
+    if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing) && state->skeletonState->activeNode != nullptr) {
         CommentSetting comment = CommentSetting::comments[index];
         if (!comment.text.isEmpty()) {
             if(comment.appendComment) {
@@ -1423,7 +1424,7 @@ void MainWindow::resizeToFitViewports(int width, int height) {
     width = (width - DEFAULT_VP_MARGIN);
     height = (height - DEFAULT_VP_MARGIN);
     int mindim = std::min(width, height);
-    if (Session::singleton().guiMode == GUIMode::ProofReading) {
+    if (Annotation::singleton().guiMode == GUIMode::ProofReading) {
         viewportXY->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN, mindim - DEFAULT_VP_MARGIN, mindim - DEFAULT_VP_MARGIN);
     } else {
         mindim /= 2;

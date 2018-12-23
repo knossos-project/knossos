@@ -278,7 +278,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     }
 
     bool keepAnnotation = silent;
-    if (!silent && (!Session::singleton().annotationFilename.isEmpty() || Session::singleton().unsavedChanges)) {
+    if (!silent && (!Annotation::singleton().annotationFilename.isEmpty() || Annotation::singleton().unsavedChanges)) {
         QMessageBox question{QApplication::activeWindow()};
         question.setIcon(QMessageBox::Question);
         question.setText(tr("Keep the current annotation for the new dataset?"));
@@ -400,7 +400,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     emit updateDatasetCompression();
 
     if (changedBoundaryOrScale || !keepAnnotation) {
-        Session::singleton().updateMovementArea({0, 0, 0}, Dataset::current().boundary);
+        Annotation::singleton().updateMovementArea({0, 0, 0}, Dataset::current().boundary);
         // ...beginning with loading the middle of dataset
         state->viewer->setPosition({Dataset::current().boundary / 2});
     }

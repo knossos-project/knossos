@@ -22,7 +22,7 @@
 
 #include "navigationtab.h"
 
-#include "session.h"
+#include "annotation/annotation.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
 #include "viewer.h"
@@ -136,22 +136,22 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&topLeftButton, &QPushButton::clicked, [this](){
         const auto min = getCoordinateFromOrthogonalClick({}, *state->mainWindow->viewportXY);
         const auto max = maxAuto.isChecked() ? min + sizeSpins.get() : maxSpins.get() - state->skeletonState->displayMatlabCoordinates;
-        Session::singleton().updateMovementArea(min, max);
+        Annotation::singleton().updateMovementArea(min, max);
     });
     QObject::connect(&bottomRightButton, &QPushButton::clicked, [this](){
         const auto max = getCoordinateFromOrthogonalClick(QPointF(state->mainWindow->viewportXY->width() - 1, state->mainWindow->viewportXY->height() - 1), *state->mainWindow->viewportXY);
         const auto min = minAuto.isChecked() ? max - sizeSpins.get() : minSpins.get() - state->skeletonState->displayMatlabCoordinates;
-        Session::singleton().updateMovementArea(min, max);
+        Annotation::singleton().updateMovementArea(min, max);
     });
     QObject::connect(&minSpins, &CoordinateSpins::coordinatesChanged, this, &NavigationTab::updateMovementArea);
     QObject::connect(&sizeSpins, &CoordinateSpins::coordinatesChanged, this, &NavigationTab::updateMovementArea);
     QObject::connect(&maxSpins, &CoordinateSpins::coordinatesChanged, this, &NavigationTab::updateMovementArea);
 
     QObject::connect(&resetMovementAreaButton, &QPushButton::clicked, []() {
-        Session::singleton().resetMovementArea();
+        Annotation::singleton().resetMovementArea();
     });
-    QObject::connect(&Session::singleton(), &Session::movementAreaChanged, [this]() {
-        auto & session = Session::singleton();
+    QObject::connect(&Annotation::singleton(), &Annotation::movementAreaChanged, [this]() {
+        auto & session = Annotation::singleton();
         minSpins.set(session.movementAreaMin + state->skeletonState->displayMatlabCoordinates);
         maxSpins.set(session.movementAreaMax + state->skeletonState->displayMatlabCoordinates);
         const auto size = session.movementAreaMax - session.movementAreaMin;
@@ -184,11 +184,11 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
 void NavigationTab::updateMovementArea() {
     const auto min = minAuto.isChecked() ? maxSpins.get() - state->skeletonState->displayMatlabCoordinates - sizeSpins.get() : minSpins.get() - state->skeletonState->displayMatlabCoordinates;
     const auto max = maxAuto.isChecked() ? minSpins.get() - state->skeletonState->displayMatlabCoordinates + sizeSpins.get() : maxSpins.get() - state->skeletonState->displayMatlabCoordinates;
-    Session::singleton().updateMovementArea(min, max);
+    Annotation::singleton().updateMovementArea(min, max);
 }
 
 void NavigationTab::loadSettings(const QSettings & settings) {
-    Session::singleton().resetMovementArea();
+    Annotation::singleton().resetMovementArea();
 
     cubeCoordinateBox.setChecked(settings.value(SHOW_CUBE_COORDS, false).toBool());
     autoGroup.button(settings.value(LOCKED_BUTTON, -3).toInt())->setChecked(true);// size locked by default

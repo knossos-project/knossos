@@ -22,7 +22,8 @@
 
 #include "savetab.h"
 
-#include "file_io.h"
+#include "annotation/annotation.h"
+#include "annotation/file_io.h"
 #include "stateInfo.h"
 #include "viewer.h"
 #include "widgets/GuiConstants.h"
@@ -68,26 +69,26 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent) {
     setLayout(&mainLayout);
 
     QObject::connect(&autoincrementFileNameButton, &QCheckBox::stateChanged, [](const bool on) {
-        Session::singleton().autoFilenameIncrementBool = on;
+        Annotation::singleton().autoFilenameIncrementBool = on;
     });
     QObject::connect(&saveTimeButton, &QCheckBox::stateChanged, [](const bool on) {
-        Session::singleton().saveAnnotationTime = on;
+        Annotation::singleton().saveAnnotationTime = on;
     });
     QObject::connect(&autosaveIntervalSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](const int value) {
         if (autosaveGroup.isChecked()) {
-            Session::singleton().autoSaveTimer.start(value * 60 * 1000);
+            Annotation::singleton().autoSaveTimer.start(value * 60 * 1000);
         }
     });
     QObject::connect(&autosaveGroup, &QGroupBox::toggled, [this](const bool on) {
         if (on) {
-            Session::singleton().autoSaveTimer.start(autosaveIntervalSpinBox.value() * 60 * 1000);
+            Annotation::singleton().autoSaveTimer.start(autosaveIntervalSpinBox.value() * 60 * 1000);
         } else {
-            Session::singleton().autoSaveTimer.stop();
+            Annotation::singleton().autoSaveTimer.stop();
         }
         state->viewer->window->updateTitlebar();
     });
     QObject::connect(&plySaveButtonGroup, static_cast<void(QButtonGroup::*)(int id)>(&QButtonGroup::buttonClicked), [](auto id) {
-        Session::singleton().savePlyAsBinary = static_cast<bool>(id);
+        Annotation::singleton().savePlyAsBinary = static_cast<bool>(id);
     });
 }
 

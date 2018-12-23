@@ -22,11 +22,11 @@
 
 #include "file_io.h"
 
+#include "annotation/annotation.h"
 #include "loader.h"
 #include "widgets/mainwindow.h"
 #include "scriptengine/scripting.h"
 #include "segmentation/segmentation.h"
-#include "session.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
 #include "viewer.h"
@@ -81,7 +81,7 @@ void annotationFileLoad(const QString & filename, const bool mergeSkeleton, cons
         getSpecificFile("settings.ini", [&archive](auto & file){
             QTemporaryFile tempFile;
             if (file.open(QIODevice::ReadOnly | QIODevice::Text) && tempFile.open()) {
-                tempFile.write(Session::singleton().extraFiles[archive.getCurrentFileName()] = file.readAll());
+                tempFile.write(Annotation::singleton().extraFiles[archive.getCurrentFileName()] = file.readAll());
                 tempFile.close();// QSettings wants to reopen it
                 state->mainWindow->loadCustomPreferences(tempFile.fileName());
             } else {
@@ -135,7 +135,7 @@ void annotationFileLoad(const QString & filename, const bool mergeSkeleton, cons
                     state->scripting->runFile(file);
                 }
                 file.open(QIODevice::ReadOnly);
-                Session::singleton().extraFiles[archive.getCurrentFileName()] = file.readAll();
+                Annotation::singleton().extraFiles[archive.getCurrentFileName()] = file.readAll();
             }
         }
     } else {
@@ -154,7 +154,7 @@ void annotationFileSave(const QString & filename, const bool onlySelectedTrees) 
             fileinfo.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ReadGroup | QFileDevice::ReadOther);
             return file_write.open(QIODevice::WriteOnly, fileinfo, nullptr, 0, Z_DEFLATED, level);
         };
-        for (auto it = std::cbegin(Session::singleton().extraFiles); it != std::cend(Session::singleton().extraFiles); ++it) {
+        for (auto it = std::cbegin(Annotation::singleton().extraFiles); it != std::cend(Annotation::singleton().extraFiles); ++it) {
             QuaZipFile file_write(&archive_write);
             if (zipCreateFile(file_write, it.key(), 1)) {
                 file_write.write(it.value());
@@ -218,7 +218,7 @@ void annotationFileSave(const QString & filename, const bool onlySelectedTrees) 
         throw std::runtime_error(QObject::tr("opening %1 for writing failed").arg(filename).toStdString());
     }
 
-    Session::singleton().unsavedChanges = false;
+    Annotation::singleton().unsavedChanges = false;
     qDebug() << "save" << time.restart();
 }
 

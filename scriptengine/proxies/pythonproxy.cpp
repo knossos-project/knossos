@@ -22,11 +22,11 @@
 
 #include "pythonproxy.h"
 
+#include "annotation/annotation.h"
 #include "buildinfo.h"
 #include "functions.h"
 #include "loader.h"
 #include "segmentation/cubeloader.h"
-#include "session.h"
 #include "skeleton/node.h"
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
@@ -48,16 +48,16 @@ void PythonProxy::annotation_save(const QString & filename) {
 }
 
 void PythonProxy::annotation_add_file(const QString & name, const QByteArray & content) {
-    Session::singleton().extraFiles[name] = content;
-    Session::singleton().unsavedChanges = true;
+    Annotation::singleton().extraFiles[name] = content;
+    Annotation::singleton().unsavedChanges = true;
 }
 
 QByteArray PythonProxy::annotation_get_file(const QString & name) {
-    return Session::singleton().extraFiles.value(name);
+    return Annotation::singleton().extraFiles.value(name);
 }
 
 QString PythonProxy::annotation_filename() {
-    return Session::singleton().annotationFilename;
+    return Annotation::singleton().annotationFilename;
 }
 
 QString PythonProxy::get_knossos_version() {
@@ -120,15 +120,15 @@ void PythonProxy::refocus_viewport3d(const int x, const int y, const int z) {
 }
 
 void PythonProxy::reset_movement_area() {
-    Session::singleton().resetMovementArea();
+    Annotation::singleton().resetMovementArea();
 }
 
 void PythonProxy::set_movement_area(QList<int> minCoord, QList<int> maxCoord) {
-    Session::singleton().updateMovementArea(minCoord,maxCoord);
+    Annotation::singleton().updateMovementArea(minCoord,maxCoord);
 }
 
 QList<int> PythonProxy::get_movement_area() {
-    return  Session::singleton().movementAreaMin.list() + Session::singleton().movementAreaMax.list();
+    return  Annotation::singleton().movementAreaMin.list() + Annotation::singleton().movementAreaMax.list();
 }
 
 float PythonProxy::get_outside_movement_area_factor() {
@@ -156,11 +156,11 @@ void PythonProxy::set_magnification_lock(const bool locked) {
 }
 
 int PythonProxy::annotation_time() {
-    return Session::singleton().getAnnotationTime();
+    return Annotation::singleton().getAnnotationTime();
 }
 
 void PythonProxy::set_annotation_time(int ms) {
-    Session::singleton().setAnnotationTime(ms);
+    Annotation::singleton().setAnnotationTime(ms);
 }
 
 // UNTESTED

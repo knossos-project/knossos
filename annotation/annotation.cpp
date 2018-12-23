@@ -20,7 +20,7 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
-#include "session.h"
+#include "annotation.h"
 
 #include "dataset.h"
 #include "segmentation/segmentation.h"
@@ -29,10 +29,10 @@
 
 #include <QApplication>
 
-class Session::ActivityEventFilter : public QObject {
+class Annotation::ActivityEventFilter : public QObject {
     bool & timeSliceActivity;
 public:
-    ActivityEventFilter(Session & session) : QObject(&session), timeSliceActivity(session.timeSliceActivity) {}
+    ActivityEventFilter(Annotation & annotation) : QObject(&annotation), timeSliceActivity(annotation.timeSliceActivity) {}
     virtual bool eventFilter(QObject *object, QEvent *event) override {
         // mark time slice as valid on any user actions except just moving the mouse
         int type = event->type();
@@ -43,11 +43,11 @@ public:
     }
 };
 
-Session::Session() : annotationMode(AnnotationMode::Mode_Tracing) {
+Annotation::Annotation() : annotationMode(AnnotationMode::Mode_Tracing) {
     qApp->installEventFilter(new ActivityEventFilter(*this));
 
     annotationTimer.setTimerType(Qt::PreciseTimer);
-    QObject::connect(&annotationTimer, &QTimer::timeout, this, &Session::handleTimeSlice);
+    QObject::connect(&annotationTimer, &QTimer::timeout, this, &Annotation::handleTimeSlice);
     annotationTimer.start(TIME_SLICE_MS);
     lastTimeSlice.start();
 
@@ -59,7 +59,7 @@ Session::Session() : annotationMode(AnnotationMode::Mode_Tracing) {
     });
 }
 
-void Session::clearAnnotation() {
+void Annotation::clearAnnotation() {
     Skeletonizer::singleton().clearSkeleton();
     Segmentation::singleton().clear();
     resetMovementArea();
@@ -70,27 +70,27 @@ void Session::clearAnnotation() {
     unsavedChanges = false;
 }
 
-bool Session::outsideMovementArea(const Coordinate & pos) {
+bool Annotation::outsideMovementArea(const Coordinate & pos) {
     return pos.x < movementAreaMin.x || pos.x > movementAreaMax.x ||
            pos.y < movementAreaMin.y || pos.y > movementAreaMax.y ||
            pos.z < movementAreaMin.z || pos.z > movementAreaMax.z;
 }
 
-void Session::updateMovementArea(const Coordinate & min, const Coordinate & max) {
+void Annotation::updateMovementArea(const Coordinate & min, const Coordinate & max) {
     movementAreaMin = min.capped({0, 0, 0}, Dataset::current().boundary);
     movementAreaMax = max.capped({0, 0, 0}, Dataset::current().boundary);
     emit movementAreaChanged();
 }
 
-void Session::resetMovementArea() {
+void Annotation::resetMovementArea() {
     updateMovementArea({0, 0, 0}, Dataset::current().boundary);
 }
 
-decltype(Session::annotationTimeMilliseconds) Session::getAnnotationTime() const {
+decltype(Annotation::annotationTimeMilliseconds) Annotation::getAnnotationTime() const {
     return annotationTimeMilliseconds;
 }
 
-void Session::setAnnotationTime(const decltype(annotationTimeMilliseconds) & ms) {
+void Annotation::setAnnotationTime(const decltype(annotationTimeMilliseconds) & ms) {
     annotationTimeMilliseconds = ms;
 
     const auto absoluteMinutes = annotationTimeMilliseconds / 1000 / 60;
@@ -100,11 +100,11 @@ void Session::setAnnotationTime(const decltype(annotationTimeMilliseconds) & ms)
     emit annotationTimeChanged(QString("%1:%2 h annotation time").arg(hours).arg(minutes, 2, 10, QChar('0')));
 }
 
-decltype(Session::annotationTimeMilliseconds) Session::currentTimeSliceMs() const {
+decltype(Annotation::annotationTimeMilliseconds) Annotation::currentTimeSliceMs() const {
     return lastTimeSlice.elapsed();
 }
 
-void Session::handleTimeSlice() {
+void Annotation::handleTimeSlice() {
     if (timeSliceActivity) {
         setAnnotationTime(annotationTimeMilliseconds + TIME_SLICE_MS);
         timeSliceActivity = false;

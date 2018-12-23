@@ -22,6 +22,7 @@
 
 #include "taskmanagementwidget.h"
 
+#include "annotation/annotation.h"
 #include "network.h"
 #include "stateInfo.h"
 #include "viewer.h"
@@ -120,7 +121,7 @@ void TaskManagementWidget::updateAndRefreshWidget() {
         auto categoryDescription = jmap["task_category_description"].toString();
         const bool hasTask = !taskName.isEmpty();
 
-        Session::singleton().task = {taskCategory, taskName};
+        Annotation::singleton().task = {taskCategory, taskName};
         auto statusText = tr("Hello ") + fullName + tr("!");
         statusLabel.setText(statusText);
         logoutButton.setText("Logout");
@@ -238,7 +239,7 @@ bool TaskManagementWidget::submit(const bool final) {
 
     setCursor(Qt::BusyCursor);
     setEnabled(false);// disable until upload has finished
-    auto res = Network::singleton().submitHeidelbrain(baseUrl + "/submit/", Session::singleton().annotationFilename, submitCommentEdit.text(), final);
+    auto res = Network::singleton().submitHeidelbrain(baseUrl + "/submit/", Annotation::singleton().annotationFilename, submitCommentEdit.text(), final);
     setEnabled(true);
     setCursor(Qt::ArrowCursor);
 

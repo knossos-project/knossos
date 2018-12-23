@@ -23,9 +23,9 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "annotation/annotation.h"
 #include "cheatsheet.h"
 #include "scriptengine/proxies/skeletonproxy.h"
-#include "session.h"
 #include "viewports/viewportarb.h"
 #include "viewports/viewportbase.h"
 #include "viewports/viewportortho.h"
@@ -260,7 +260,7 @@ public slots:
     void saveSlot();
     void saveAsSlotWrap();
     void saveAsSlot(const bool onlySelectedTrees = false);
-    void save(QString filename = Session::singleton().annotationFilename, const bool silent = false, const bool allocIncrement = true, const bool onlySelectedTrees = false);
+    void save(QString filename = Annotation::singleton().annotationFilename, const bool silent = false, const bool allocIncrement = true, const bool onlySelectedTrees = false);
     void exportToNml();
     void updateCommentShortcut(const int index, const QString & comment);
 

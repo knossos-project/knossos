@@ -1,7 +1,7 @@
 #ifndef CHEATSHEET_H
 #define CHEATSHEET_H
 
-#include "session.h"
+#include "annotation/annotation.h"
 
 #include <QDockWidget>
 #include <QTextBrowser>

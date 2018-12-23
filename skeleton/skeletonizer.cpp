@@ -22,9 +22,9 @@
 
 #include "skeletonizer.h"
 
+#include "annotation/file_io.h"
 #include "buildinfo.h"
 #include "dataset.h"
-#include "file_io.h"
 #include "functions.h"
 #include "mesh/mesh.h"
 #include "segmentation/cubeloader.h"
@@ -234,27 +234,27 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     xml.writeEndElement();
 
     xml.writeStartElement("guiMode");
-    xml.writeAttribute("mode", (Session::singleton().guiMode == GUIMode::ProofReading) ? "proof reading" : "none");
+    xml.writeAttribute("mode", (Annotation::singleton().guiMode == GUIMode::ProofReading) ? "proof reading" : "none");
     xml.writeEndElement();
     xml.writeStartElement("dataset");
     xml.writeAttribute("path", state->viewer->window->widgetContainer.datasetLoadWidget.datasetUrl.toString());
     xml.writeAttribute("overlay", QString::number(static_cast<int>(Segmentation::singleton().enabled)));
     xml.writeEndElement();
 
-    if (!Session::singleton().task.first.isEmpty() || !Session::singleton().task.second.isEmpty()) {
+    if (!Annotation::singleton().task.first.isEmpty() || !Annotation::singleton().task.second.isEmpty()) {
         xml.writeStartElement("task");
-        xml.writeAttribute("category", Session::singleton().task.first);
-        xml.writeAttribute("name", Session::singleton().task.second);
+        xml.writeAttribute("category", Annotation::singleton().task.first);
+        xml.writeAttribute("name", Annotation::singleton().task.second);
         xml.writeEndElement();
     }
 
     xml.writeStartElement("MovementArea");
-    xml.writeAttribute("min.x", QString::number(Session::singleton().movementAreaMin.x));
-    xml.writeAttribute("min.y", QString::number(Session::singleton().movementAreaMin.y));
-    xml.writeAttribute("min.z", QString::number(Session::singleton().movementAreaMin.z));
-    xml.writeAttribute("max.x", QString::number(Session::singleton().movementAreaMax.x));
-    xml.writeAttribute("max.y", QString::number(Session::singleton().movementAreaMax.y));
-    xml.writeAttribute("max.z", QString::number(Session::singleton().movementAreaMax.z));
+    xml.writeAttribute("min.x", QString::number(Annotation::singleton().movementAreaMin.x));
+    xml.writeAttribute("min.y", QString::number(Annotation::singleton().movementAreaMin.y));
+    xml.writeAttribute("min.z", QString::number(Annotation::singleton().movementAreaMin.z));
+    xml.writeAttribute("max.x", QString::number(Annotation::singleton().movementAreaMax.x));
+    xml.writeAttribute("max.y", QString::number(Annotation::singleton().movementAreaMax.y));
+    xml.writeAttribute("max.z", QString::number(Annotation::singleton().movementAreaMax.z));
     xml.writeEndElement();
 
     xml.writeStartElement("scale");
@@ -270,7 +270,7 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     xml.writeEndElement();
 
     xml.writeStartElement("time");
-    const auto time = Session::singleton().saveAnnotationTime? Session::singleton().getAnnotationTime() : 0;
+    const auto time = Annotation::singleton().saveAnnotationTime? Annotation::singleton().getAnnotationTime() : 0;
     xml.writeAttribute("ms", QString::number(time));
     const auto timeData = QByteArray::fromRawData(reinterpret_cast<const char *>(&time), sizeof(time));
     const QString timeChecksum = QCryptographicHash::hash(timeData, QCryptographicHash::Sha256).toHex().constData();
@@ -411,7 +411,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     state->skeletonState->skeletonCreatedInVersion = "pre-3.2";
     state->skeletonState->skeletonLastSavedInVersion = "pre-3.2";
 
-    Session::singleton().guiMode = GUIMode::None;
+    Annotation::singleton().guiMode = GUIMode::None;
 
     bool matlabCoordinates{skeletonState.loadMatlabCoordinates};
     QString experimentName, taskCategory, taskName;
@@ -449,7 +449,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                     matlabCoordinates = attributes.value("index_origin").toInt();
                 } else if (xml.name() == "guiMode") {
                     if (attributes.value("mode").toString() == "proof reading") {
-                        Session::singleton().guiMode = GUIMode::ProofReading;
+                        Annotation::singleton().guiMode = GUIMode::ProofReading;
                     }
                 } else if(xml.name() == "dataset") {
                     const auto path = attributes.value("path").toString();
@@ -480,12 +480,12 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                             }
                         }
 
-                        Session::singleton().updateMovementArea(movementAreaMin, movementAreaMax);//range checked
+                        Annotation::singleton().updateMovementArea(movementAreaMin, movementAreaMax);//range checked
                     }
                 } else if(xml.name() == "time") { // in case of a merge the current annotation's time is kept.
                     if (!merge) {
                         const auto ms = attributes.value("ms").toULongLong();
-                        Session::singleton().setAnnotationTime(ms);
+                        Annotation::singleton().setAnnotationTime(ms);
                     }
                 } else if(xml.name() == "activeNode") {
                     if (!merge) {
@@ -538,10 +538,10 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                     if (!merge) {
                         QStringRef attribute = attributes.value("ms");
                         if (attribute.isNull() == false) {
-                            const auto annotationTime = Session::singleton().getAnnotationTime();
+                            const auto annotationTime = Annotation::singleton().getAnnotationTime();
                             const auto idleTime = attribute.toString().toInt();
                             //subract from annotationTime
-                            Session::singleton().setAnnotationTime(annotationTime - idleTime);
+                            Annotation::singleton().setAnnotationTime(annotationTime - idleTime);
                         }
                     }
                 } else if(xml.name() == "scale") {
@@ -809,8 +809,8 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     if (mismatchedDataset) {
         msg += tr("• The annotation (created in dataset “%1”) does not belong to the currently loaded dataset (“%2”).\n\n").arg(experimentName).arg(Dataset::current().experimentname);
     }
-    const auto currentTaskCategory = Session::singleton().task.first;
-    const auto currentTaskName = Session::singleton().task.second;
+    const auto currentTaskCategory = Annotation::singleton().task.first;
+    const auto currentTaskName = Annotation::singleton().task.second;
     const auto mismatchedTask = !currentTaskCategory.isEmpty() && !currentTaskName.isEmpty() && (currentTaskCategory != taskCategory || currentTaskName != taskName);
     if (mismatchedTask) {
         msg += tr("• The associated task “%1” (%2) is different from the currently active “%3” (%4).\n\n").arg(taskName).arg(taskCategory).arg(currentTaskName).arg(currentTaskCategory);
@@ -839,7 +839,7 @@ bool Skeletonizer::delSegment(std::list<segmentListElement>::iterator segToDelIt
 
     updateCircRadius(&source);
     updateCircRadius(&target);
-    Session::singleton().unsavedChanges = true;
+    Annotation::singleton().unsavedChanges = true;
     emit segmentRemoved(source.nodeID, target.nodeID);
     return true;
 }
@@ -916,7 +916,7 @@ bool Skeletonizer::delNode(std::uint64_t nodeID, nodeListElement *nodeToDel) {
         setActiveNode(newActiveNode);
     }
 
-    Session::singleton().unsavedChanges = true;
+    Annotation::singleton().unsavedChanges = true;
 
     return true;
 }
@@ -971,7 +971,7 @@ bool Skeletonizer::delTree(decltype(treeListElement::treeID) treeID) {
         setActiveTreeByID(skeletonState.trees.front().treeID);
     }
 
-    Session::singleton().unsavedChanges = true;
+    Annotation::singleton().unsavedChanges = true;
     return true;
 }
 
@@ -1035,7 +1035,7 @@ bool Skeletonizer::setActiveTreeByID(decltype(treeListElement::treeID) treeID) {
         setActiveNode(&currentTree->nodes.front());
     }
 
-    Session::singleton().unsavedChanges = true;
+    Annotation::singleton().unsavedChanges = true;
 
     return true;
 }
@@ -1049,14 +1049,14 @@ bool Skeletonizer::setActiveNode(nodeListElement *node) {
 
     if (node == nullptr) {
         selectNodes({});
-        if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
+        if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
             Segmentation::singleton().clearObjectSelection();
         }
     } else {
         if (!node->selected) {
             selectNodes({node});
         }
-        if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
+        if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
             selectObjectForNode(*node);
         }
         if (skeletonState.lockPositions && node->getComment().contains(skeletonState.lockingComment, Qt::CaseInsensitive)) {
@@ -1065,7 +1065,7 @@ bool Skeletonizer::setActiveNode(nodeListElement *node) {
         setActiveTreeByID(node->correspondingTree->treeID);
     }
 
-    Session::singleton().unsavedChanges = true;
+    Annotation::singleton().unsavedChanges = true;
 
     return true;
 }
@@ -1117,7 +1117,7 @@ boost::optional<nodeListElement &> Skeletonizer::addNode(boost::optional<std::ui
     }
 
     if (!time) {//time was not provided
-        time = Session::singleton().getAnnotationTime() + Session::singleton().currentTimeSliceMs();
+        time = Annotation::singleton().getAnnotationTime() + Annotation::singleton().currentTimeSliceMs();
     }
 
     tempTree->nodes.emplace_back(nodeID.get(), radius, position, inMag, VPtype, time.get(), properties, *tempTree);
@@ -1142,7 +1142,7 @@ boost::optional<nodeListElement &> Skeletonizer::addNode(boost::optional<std::ui
     if (nodeID == state->skeletonState->nextAvailableNodeID) {
         skeletonState.nextAvailableNodeID = findNextAvailableID(skeletonState.nextAvailableNodeID, skeletonState.nodesByNodeID);
     }
-    Session::singleton().unsavedChanges = true;
+    Annotation::singleton().unsavedChanges = true;
 
     emit nodeAddedSignal(tempNode);
 
@@ -1173,7 +1173,7 @@ bool Skeletonizer::addSegment(nodeListElement & sourceNode, nodeListElement & ta
     updateCircRadius(&sourceNode);
     updateCircRadius(&targetNode);
 
-    Session::singleton().unsavedChanges = true;
+    Annotation::singleton().unsavedChanges = true;
     emit segmentAdded(sourceNode.nodeID, targetNode.nodeID);
     return true;
 }
@@ -1371,7 +1371,7 @@ treeListElement & Skeletonizer::addTree(boost::optional<decltype(treeListElement
         skeletonState.nextAvailableTreeID = findNextAvailableID(skeletonState.nextAvailableTreeID, skeletonState.treesByID);
     }
 
-    Session::singleton().unsavedChanges = true;
+    Annotation::singleton().unsavedChanges = true;
 
     emit treeAddedSignal(newTree);
 
@@ -1422,7 +1422,7 @@ treeListElement * Skeletonizer::getTreeWithNextID(treeListElement * currentTree)
 void Skeletonizer::setColor(treeListElement & tree, const QColor & color) {
     tree.color = color;
     tree.colorSetManually = true;
-    Session::singleton().unsavedChanges = true;
+    Annotation::singleton().unsavedChanges = true;
     emit treeChangedSignal(tree);
 }
 
@@ -1441,7 +1441,7 @@ std::list<segmentListElement>::iterator Skeletonizer::findSegmentBetween(nodeLis
 void Skeletonizer::setRadius(nodeListElement & node, const float radius) {
     node.radius = radius;
     updateCircRadius(&node);
-    Session::singleton().unsavedChanges = true;
+    Annotation::singleton().unsavedChanges = true;
     emit nodeChangedSignal(node);
 }
 
@@ -1450,7 +1450,7 @@ void Skeletonizer::setPosition(nodeListElement & node, const Coordinate & positi
     node.position = position.capped({0, 0, 0}, Dataset::current().boundary);
     const quint64 newSubobjectId = readVoxel(position);
     Skeletonizer::singleton().movedHybridNode(node, newSubobjectId, oldPos);
-    Session::singleton().unsavedChanges = true;
+    Annotation::singleton().unsavedChanges = true;
     emit nodeChangedSignal(node);
 }
 
@@ -1499,7 +1499,7 @@ bool Skeletonizer::extractConnectedComponent(std::uint64_t nodeID) {
         newTree.nodes.splice(std::end(newTree.nodes), nodeIt->correspondingTree->nodes, nodeIt->iterator);
         nodeIt->correspondingTree = &newTree;
     }
-    Session::singleton().unsavedChanges = true;
+    Annotation::singleton().unsavedChanges = true;
     setActiveTreeByID(newTree.treeID);//the empty tree had no active node
 
     return true;
@@ -1535,7 +1535,7 @@ void Skeletonizer::setComment(T & elem, const QString & newContent) {
     } else {
         elem.setComment(newContent);
     }
-    Session::singleton().unsavedChanges = true;
+    Annotation::singleton().unsavedChanges = true;
     notifyChanged(elem);
 }
 template void Skeletonizer::setComment(treeListElement &, const QString & newContent);// explicit instantiation for other TUs
@@ -1640,7 +1640,7 @@ nodeListElement * Skeletonizer::popBranchNode() {
     state->viewer->userMove(branchNode->position - state->viewerState->currentPosition, USERMOVE_NEUTRAL);
 
     emit branchPoppedSignal();
-    Session::singleton().unsavedChanges = true;
+    Annotation::singleton().unsavedChanges = true;
     return branchNode;
 }
 
@@ -1650,7 +1650,7 @@ void Skeletonizer::pushBranchNode(nodeListElement & branchNode) {
         branchNode.isBranchNode = true;
         qDebug() << "Branch point" << branchNode.nodeID << "added.";
         emit branchPushedSignal();
-        Session::singleton().unsavedChanges = true;
+        Annotation::singleton().unsavedChanges = true;
     } else {
         qDebug() << "Active node is already a branch point";
     }
@@ -1667,7 +1667,7 @@ void Skeletonizer::restoreDefaultTreeColor(treeListElement & tree) {
                        , std::get<1>(state->viewerState->treeColors[index])
                        , std::get<2>(state->viewerState->treeColors[index]));
     tree.colorSetManually = false;
-    Session::singleton().unsavedChanges = true;
+    Annotation::singleton().unsavedChanges = true;
     emit treeChangedSignal(tree);
 }
 
@@ -2012,7 +2012,7 @@ void Skeletonizer::saveMesh(QIODevice & file, const treeListElement & tree) {
         ply.add_properties_to_element("vertex", {"red", "green", "blue", "alpha"}, colors);
     }
     ply.add_properties_to_element("face", {"vertex_indices"}, indices, 3, tinyply::PlyProperty::Type::UINT8);
-    if(ply.write(file, Session::singleton().savePlyAsBinary) == false) {
+    if(ply.write(file, Annotation::singleton().savePlyAsBinary) == false) {
         qDebug() << "mesh save failed for tree" << tree.treeID;
     }
 }
@@ -2090,7 +2090,7 @@ void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeI
 
     std::swap(tree->mesh, mesh);
 
-    Session::singleton().unsavedChanges = true;
+    Annotation::singleton().unsavedChanges = true;
 }
 
 void Skeletonizer::deleteMeshOfTree(treeListElement & tree) {

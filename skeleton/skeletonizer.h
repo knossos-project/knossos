@@ -23,7 +23,7 @@
 #ifndef SKELETONIZER_H
 #define SKELETONIZER_H
 
-#include "session.h"
+#include "annotation/annotation.h"
 #include "skeleton/skeleton_dfs.h"
 #include "skeleton/tree.h"
 #include "widgets/viewports/viewportbase.h"

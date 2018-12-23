@@ -22,8 +22,8 @@
 
 #include "cubeloader.h"
 
+#include "annotation/annotation.h"
 #include "loader.h"
-#include "session.h"
 #include "segmentation.h"
 #include "segmentationsplit.h"
 #include "stateInfo.h"
@@ -51,7 +51,7 @@ boost::multi_array_ref<uint64_t, 3> getCubeRef(void * const rawcube) {
 
 uint64_t readVoxel(const Coordinate & pos) {
     auto cubeIt = getRawCube(pos);
-    if (Session::singleton().outsideMovementArea(pos) || !cubeIt.first) {
+    if (Annotation::singleton().outsideMovementArea(pos) || !cubeIt.first) {
         return Segmentation::singleton().getBackgroundId();
     }
     const auto inCube = pos.insideCube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
@@ -60,7 +60,7 @@ uint64_t readVoxel(const Coordinate & pos) {
 
 bool writeVoxel(const Coordinate & pos, const uint64_t value, bool isMarkChanged) {
     auto cubeIt = getRawCube(pos);
-    if (Session::singleton().outsideMovementArea(pos) || !cubeIt.first) {
+    if (Annotation::singleton().outsideMovementArea(pos) || !cubeIt.first) {
         return false;
     }
     const auto inCube = pos.insideCube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
@@ -93,7 +93,7 @@ std::pair<Coordinate, Coordinate> getRegion(const floatCoordinate & centerPos, c
     auto min = floatCoordinate(1, 1, 1) * std::numeric_limits<int>::max();
     floatCoordinate max{0, 0, 0};
     for (const auto localCoord : localPoints) {
-        const auto worldCoord = localCoord.toWorldFrom(brush.v1, brush.v2, brush.n).capped(Session::singleton().movementAreaMin, Session::singleton().movementAreaMax);
+        const auto worldCoord = localCoord.toWorldFrom(brush.v1, brush.v2, brush.n).capped(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax);
         min = {std::min(worldCoord.x, min.x), std::min(worldCoord.y, min.y), std::min(worldCoord.z, min.z)};
         max = {std::max(worldCoord.x, max.x), std::max(worldCoord.y, max.y), std::max(worldCoord.z, max.z)};
     }
@@ -190,7 +190,7 @@ void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush
     //the brush differentiations were moved outside the core lambda which is called for every voxel
     CubeCoordSet cubeChangeSet;
     CubeCoordSet cubeChangeSetWholeCube;
-    if (Session::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint)) {
+    if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint)) {
         const auto region = getRegion(centerPos, brush);
         if (brush.shape == brush_t::shape_t::angular) {
             if (!brush.inverse || Segmentation::singleton().selectedObjectsCount() == 0) {
