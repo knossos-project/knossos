@@ -1,5 +1,5 @@
-#!/bin/sh
-set -x
+#!/bin/bash
+set -euxo pipefail
 
 # Fix Python headers
 # https://bugs.python.org/review/10910/diff2/2561:8559/Include/pyport.h
