@@ -817,7 +817,6 @@ void Viewer::calcDisplayedEdgeLength() {
         vpOrtho.screenPxYPerDataPx = vpOrtho.edgeLength / dataPx * voxelV2X;
 
         vpOrtho.displayedlengthInNmX = layer.scale.componentMul(vpOrtho.v1).length() * (texture.texUsedX / texture.texUnitsPerDataPx);
-        vpOrtho.displayedlengthInNmY = layer.scale.componentMul(vpOrtho.v2).length() * (texture.texUsedY / texture.texUnitsPerDataPx);
     });
 }
 

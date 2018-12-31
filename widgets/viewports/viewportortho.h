@@ -89,7 +89,6 @@ public:
     std::vector<std::atomic_bool> resliceNecessary{decltype(resliceNecessary)(2)};// FIXME legacy;
     float displayedIsoPx;
     float screenPxYPerDataPx;
-    float displayedlengthInNmY;
 
     char * viewPortData;
     viewportTexture texture;
