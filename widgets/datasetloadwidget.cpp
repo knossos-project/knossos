@@ -332,6 +332,12 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
                 layer.magnification = layers.front().magnification;
                 layer.lowestAvailableMag = layers.front().lowestAvailableMag;
                 layer.highestAvailableMag = layers.front().highestAvailableMag;
+                for (int mag = 1; mag <= layer.highestAvailableMag; mag *= 2) {
+                    layer.scales.emplace_back(layer.scale * mag);
+                }
+                layer.magIndex = static_cast<std::size_t>(std::log2(layer.magnification));
+                layer.scale = layer.scales[layer.magIndex];
+                layer.scaleFactor = layer.scale / layer.scales[0];
             }
         } catch (std::exception &) {
             if (!silent) {

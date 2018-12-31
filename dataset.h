@@ -100,6 +100,7 @@ struct Dataset {
             return datasets.front();
         } else {
             static Dataset dummy;
+            dummy.scales = {dummy.scale};
             return dummy;
         }
     }
