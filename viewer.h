@@ -284,7 +284,7 @@ public slots:
     void calculateMissingOrthoGPUCubes(TextureLayer & layer);
     void reslice_notify();
     void reslice_notify(const std::size_t layerId);
-    void reslice_notify_all(const std::size_t layerId, const Coordinate coord);
+    void reslice_notify_all(const std::size_t layerId, const Coordinate globalCoord);
     void segmentation_changed();
     void setMovementAreaFactor(float alpha);
     int highestMag();

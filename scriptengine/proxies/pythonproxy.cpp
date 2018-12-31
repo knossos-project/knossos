@@ -140,7 +140,7 @@ void PythonProxy::set_work_mode(const int mode) {
 }
 
 void PythonProxy::oc_reslice_notify_all(QList<int> coord) {
-    state->viewer->reslice_notify_all(Segmentation::singleton().layerId, Coordinate(coord));
+    state->viewer->reslice_notify_all(Segmentation::singleton().layerId, coord);
 }
 
 int PythonProxy::loader_loading_nr() {

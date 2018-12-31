@@ -525,7 +525,7 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
         const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
         const auto offset = vp.n * multiSlicei * Dataset::current().magnification;
         const auto offsetCube = (state->viewerState->currentPosition + offset).cube(cubeEdgeLen, Dataset::datasets[layerId].magnification) - state->viewerState->currentPosition.cube(cubeEdgeLen, Dataset::datasets[layerId].magnification);
-        const CoordInCube currentPosition_dc = (state->viewerState->currentPosition + offset).capped(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax).insideCube(cubeEdgeLen, Dataset::current().magnification);
+        const CoordInCube currentPosition_inside_dc = (state->viewerState->currentPosition + offset).capped(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax).insideCube(cubeEdgeLen, Dataset::current().magnification);
         if (Annotation::singleton().outsideMovementArea(state->viewerState->currentPosition + offset)) {
             continue;
         }
@@ -533,13 +533,13 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
         int slicePositionWithinCube;
         switch(vp.viewportType) {
         case VIEWPORT_XY:
-            slicePositionWithinCube = state->cubeSliceArea * currentPosition_dc.z;
+            slicePositionWithinCube = state->cubeSliceArea * currentPosition_inside_dc.z;
             break;
         case VIEWPORT_XZ:
-            slicePositionWithinCube = cubeEdgeLen * currentPosition_dc.y;
+            slicePositionWithinCube = cubeEdgeLen * currentPosition_inside_dc.y;
             break;
         case VIEWPORT_ZY:
-            slicePositionWithinCube = currentPosition_dc.x;
+            slicePositionWithinCube = currentPosition_inside_dc.x;
             break;
         default:
             qDebug("No such slice view: %d.", vp.viewportType);
@@ -1140,8 +1140,8 @@ void Viewer::reslice_notify(const std::size_t layerId) {
     reslice_notify_all(layerId, viewerState.currentPosition);
 }
 
-void Viewer::reslice_notify_all(const std::size_t layerId, const Coordinate coord) {
-    if (currentlyVisibleWrapWrap(state->viewerState->currentPosition, coord)) {
+void Viewer::reslice_notify_all(const std::size_t layerId, const Coordinate globalCoord) {
+    if (currentlyVisibleWrapWrap(state->viewerState->currentPosition, globalCoord)) {
         window->forEachOrthoVPDo([layerId](ViewportOrtho & vpOrtho) {
             vpOrtho.resliceNecessary[layerId] = true;
         });

@@ -62,16 +62,16 @@ enum GLNames {
     NodeOffset
 };
 
-auto uniformPointDiameter(const float nanometerPerPixel) {
-    return nanometerPerPixel * Dataset::current().scale.x * 2 * (state->viewerState->overrideNodeRadiusBool ? state->viewerState->overrideNodeRadiusVal : 1.5f);
+auto uniformPointDiameter(const float pixelPerNanometer) {
+    return pixelPerNanometer * Dataset::current().scale.x * 2 * (state->viewerState->overrideNodeRadiusBool ? state->viewerState->overrideNodeRadiusVal : 1.5f);
 }
 
 auto smallestVisibleNodeSize() {
     return state->viewerState->sampleBuffers == 0 ? 1 : 1.0f/state->viewerState->sampleBuffers;
 }
 
-auto pointSize(const float nanometerPerPixel) {
-    return std::max(smallestVisibleNodeSize(), uniformPointDiameter(nanometerPerPixel));
+auto pointSize(const float pixelPerNanometer) {
+    return std::max(smallestVisibleNodeSize(), uniformPointDiameter(pixelPerNanometer));
 }
 
 auto lineSize(const float nanometerPerPixel) {
