@@ -116,16 +116,8 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
 
         widgetContainer.annotationWidget.setSegmentationVisibility(Segmentation::singleton().enabled);
 
-        const auto & dsb = Dataset::current().boundary;
-        const auto & dss = Dataset::current().scale;
-
-        std::vector<int> mp {
-            static_cast<int>(dsb.x * dss.x),
-            static_cast<int>(dsb.y * dss.y),
-            static_cast<int>(dsb.z * dss.z)
-        };
-
-        widgetContainer.annotationWidget.segmentationTab.updateBrushEditRange(1, *(std::max_element(mp.begin(), mp.end())));
+        const Coordinate c = Dataset::current().boundary.componentMul(Dataset::current().scale);
+        widgetContainer.annotationWidget.segmentationTab.updateBrushEditRange(1, std::max({c.x, c.y, c.z}));
         Segmentation::singleton().brush.setRadius(Dataset::current().scale.x * 10);
     });
     QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::updateDatasetCompression,  this, &MainWindow::updateCompressionRatioDisplay);

@@ -1659,9 +1659,9 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glColor4f(0, 0, 0, 1);
         if (options.drawBoundaryAxes) {
             if (Viewport3D::showBoundariesInUm) {
-                renderAxis(floatCoordinate(scaledBoundary.x, 0, 0), QString("x: %1 µm").arg(Dataset::current().boundary.x * Dataset::current().scale.x * 0.001));
-                renderAxis(floatCoordinate(0, scaledBoundary.y, 0), QString("y: %1 µm").arg(Dataset::current().boundary.y * Dataset::current().scale.y * 0.001));
-                renderAxis(floatCoordinate(0, 0, scaledBoundary.z), QString("z: %1 µm").arg(Dataset::current().boundary.z * Dataset::current().scale.z * 0.001));
+                renderAxis(floatCoordinate(scaledBoundary.x, 0, 0), QString("x: %1 µm").arg(scaledBoundary.x * 1e-3));
+                renderAxis(floatCoordinate(0, scaledBoundary.y, 0), QString("y: %1 µm").arg(scaledBoundary.x * 1e-3));
+                renderAxis(floatCoordinate(0, 0, scaledBoundary.z), QString("z: %1 µm").arg(scaledBoundary.x * 1e-3));
             } else {
                 renderAxis(floatCoordinate(scaledBoundary.x, 0, 0), QString("x: %1 px").arg(Dataset::current().boundary.x + state->skeletonState->displayMatlabCoordinates));
                 renderAxis(floatCoordinate(0, scaledBoundary.y, 0), QString("y: %1 px").arg(Dataset::current().boundary.y + state->skeletonState->displayMatlabCoordinates));
