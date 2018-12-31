@@ -63,7 +63,7 @@ enum GLNames {
 };
 
 auto uniformPointDiameter(const float pixelPerNanometer) {
-    return pixelPerNanometer * Dataset::current().scale.x * 2 * (state->viewerState->overrideNodeRadiusBool ? state->viewerState->overrideNodeRadiusVal : 1.5f);
+    return pixelPerNanometer * Dataset::current().scales[0].x * 2 * (state->viewerState->overrideNodeRadiusBool ? state->viewerState->overrideNodeRadiusVal : 1.5f);
 }
 
 auto smallestVisibleNodeSize() {
@@ -99,10 +99,10 @@ QColor getPickingColor(const nodeListElement & node, const RenderOptions::Select
 }
 
 void ViewportBase::renderCylinder(const Coordinate & base, float baseRadius, const Coordinate & top, float topRadius, const QColor & color, const RenderOptions & options) {
-    const auto isoBase = Dataset::current().scale.componentMul(base);
-    const auto isoTop = Dataset::current().scale.componentMul(top);
-    baseRadius *= Dataset::current().scale.x;
-    topRadius *= Dataset::current().scale.x;
+    const auto isoBase = Dataset::current().scales[0].componentMul(base);
+    const auto isoTop = Dataset::current().scales[0].componentMul(top);
+    baseRadius *= Dataset::current().scales[0].x;
+    topRadius *= Dataset::current().scales[0].x;
 
     if (!options.useLinesAndPoints(std::max(baseRadius, topRadius) * screenPxXPerDataPx, smallestVisibleNodeSize())) {
         glColor4d(color.redF(), color.greenF(), color.blueF(), color.alphaF());
@@ -139,8 +139,8 @@ void ViewportBase::renderCylinder(const Coordinate & base, float baseRadius, con
 }
 
 void ViewportBase::renderSphere(const Coordinate & pos, float radius, const QColor & color, const RenderOptions & options) {
-    const auto isoPos = Dataset::current().scale.componentMul(pos);
-    radius *= Dataset::current().scale.x;
+    const auto isoPos = Dataset::current().scales[0].componentMul(pos);
+    radius *= Dataset::current().scales[0].x;
 
     if (!options.useLinesAndPoints(radius * screenPxXPerDataPx, smallestVisibleNodeSize())) {
         glColor4d(color.redF(), color.greenF(), color.blueF(), color.alphaF());
@@ -216,7 +216,7 @@ void ViewportOrtho::renderNode(const nodeListElement & node, const RenderOptions
         auto comment = node.getComment();
         comment = (ViewportOrtho::showNodeComments && comment.isEmpty() == false)? QString(":%1").arg(comment) : "";
         if (nodeID.isEmpty() == false || comment.isEmpty() == false) {
-            renderText(Dataset::current().scale.componentMul(node.position), nodeID.append(comment), options.enableTextScaling);
+            renderText(Dataset::current().scales[0].componentMul(node.position), nodeID.append(comment), options.enableTextScaling);
         }
     }
 }
@@ -227,7 +227,7 @@ void Viewport3D::renderNode(const nodeListElement & node, const RenderOptions & 
         // Render the node description
         if (state->viewerState->idDisplay.testFlag(IdDisplay::AllNodes) || (state->viewerState->idDisplay.testFlag(IdDisplay::ActiveNode) && state->skeletonState->activeNode == &node)) {
             glColor4f(0.f, 0.f, 0.f, 1.f);
-            renderText(Dataset::current().scale.componentMul(node.position), QString::number(node.nodeID), options.enableTextScaling);
+            renderText(Dataset::current().scales[0].componentMul(node.position), QString::number(node.nodeID), options.enableTextScaling);
         }
     }
 }
@@ -278,20 +278,20 @@ void ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segmen
     floatCoordinate tempVec2, tempVec, tempVec3, segDir, intPoint;
     GLUquadricObj *gluCylObj = NULL;
 
-    const auto isoCurPos = Dataset::current().scale.componentMul(state->viewerState->currentPosition);
+    const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
 
-    const auto sSp_local = Dataset::current().scale.componentMul(segment.source.position);
-    const auto sTp_local = Dataset::current().scale.componentMul(segment.target.position);
+    const auto sSp_local = Dataset::current().scales[0].componentMul(segment.source.position);
+    const auto sTp_local = Dataset::current().scales[0].componentMul(segment.target.position);
 
-    const auto sSr_local = segment.source.radius * Dataset::current().scale.x;
-    const auto sTr_local = segment.target.radius * Dataset::current().scale.x;
+    const auto sSr_local = segment.source.radius * Dataset::current().scales[0].x;
+    const auto sTr_local = segment.target.radius * Dataset::current().scales[0].x;
 
     //n contains the normal vectors of the 3 orthogonal planes
     float n[3][3] = {{1.,0.,0.},
                     {0.,1.,0.},
                     {0.,0.,1.}};
 
-    const auto distToCurrPos = 0.5 * (state->M / 2) * Dataset::current().cubeEdgeLength * Dataset::current().magnification * Dataset::current().scale.x;
+    const auto distToCurrPos = 0.5 * (state->M / 2) * Dataset::current().cubeEdgeLength * Dataset::current().magnification * Dataset::current().scales[0].x;
 
     //Check if there is an intersection between the given segment and one
     //of the slice planes.
@@ -368,7 +368,7 @@ void ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segmen
 
                 auto cylinderRadius = state->viewerState->overrideNodeRadiusBool ? state->viewerState->overrideNodeRadiusVal : radius;
                 cylinderRadius *= state->viewerState->segRadiusToNodeRadius * 1.2;
-                gluCylinder(gluCylObj, cylinderRadius, cylinderRadius, 1.5 * Dataset::current().scale.x, 3, 1);
+                gluCylinder(gluCylObj, cylinderRadius, cylinderRadius, 1.5 * Dataset::current().scales[0].x, 3, 1);
 
                 gluDeleteQuadric(gluCylObj);
                 glPopMatrix();
@@ -705,7 +705,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glLoadIdentity();
     glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, nearVal, farVal);// gluLookAt relies on an unaltered cartesian Projection
 
-    const auto isoCurPos = Dataset::current().scale.componentMul(state->viewerState->currentPosition);
+    const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
     auto view = [&](){
         glLoadIdentity();
         // place eye at the center so the depth cutoff is applied correctly
@@ -1289,7 +1289,7 @@ boost::optional<BufferSelection> ViewportBase::pickMesh(const QPoint pos) {
         treeIt->mesh->position_buf.release();
 
         coord = floatCoordinate{vertex_components[0], vertex_components[1], vertex_components[2]};
-        coord  /= Dataset::current().scale;
+        coord  /= Dataset::current().scales[0];
         if (viewportType != VIEWPORT_SKELETON) {
             // project point onto ortho plane. Necessary, because in reality user clicks a triangle behind the plane.
             auto * vp = state->mainWindow->viewportOrtho(viewportType);
@@ -1339,12 +1339,12 @@ void ViewportBase::pickMeshIdAtPosition() {
 
 void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     glEnable(GL_MULTISAMPLE);
-    const auto scaledBoundary = Dataset::current().scale.componentMul(Dataset::current().boundary);
+    const auto scaledBoundary = Dataset::current().scales[0].componentMul(Dataset::current().boundary);
 
     auto rotateMe = [this, scaledBoundary](auto x, auto y){
-        floatCoordinate rotationCenter{Dataset::current().scale.componentMul(state->viewerState->currentPosition)};
+        floatCoordinate rotationCenter{Dataset::current().scales[0].componentMul(state->viewerState->currentPosition)};
         if (state->viewerState->rotationCenter == RotationCenter::ActiveNode && state->skeletonState->activeNode != nullptr) {
-            rotationCenter = Dataset::current().scale.componentMul(state->skeletonState->activeNode->position);
+            rotationCenter = Dataset::current().scales[0].componentMul(state->skeletonState->activeNode->position);
         } else if (state->viewerState->rotationCenter == RotationCenter::DatasetCenter) {
             rotationCenter = scaledBoundary / 2;
         }
@@ -1388,7 +1388,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         rotateMe(90 * xz, -90 * zy);// updates rotationState and skeletonVpModelView, must therefore also be called for xy
         state->viewerState->rotationCenter = previousRotation;
 
-        const auto translate = Dataset::current().scale.componentMul(state->viewerState->currentPosition);
+        const auto translate = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
         translateX = translate.x;
         translateY = translate.y;
     } else if (state->skeletonState->definedSkeletonVpView == SKELVP_R90 || state->skeletonState->definedSkeletonVpView == SKELVP_R180) {
@@ -1454,7 +1454,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     if (options.drawViewportPlanes) { // Draw the slice planes for orientation inside the data stack
         glPushMatrix();
 
-        const auto isoCurPos = Dataset::current().scale.componentMul(state->viewerState->currentPosition);
+        const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
         glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
         // raw slice image
         glEnable(GL_TEXTURE_2D);
@@ -1583,11 +1583,11 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         if(options.drawBoundaryBox) {
             auto scalebarLenNm = std::get<1>(getScaleBarLabelNmAndPx(displayedlengthInNmX, edgeLength));
             if (scalebarLenNm == 0.0) {
-                scalebarLenNm = Dataset::current().boundary.x * Dataset::current().scale.x / 10.0;
+                scalebarLenNm = Dataset::current().boundary.x * Dataset::current().scales[0].x / 10.0;
             }
-            const auto grid_max_x = Dataset::current().boundary.x * Dataset::current().scale.x;
+            const auto grid_max_x = Dataset::current().boundary.x * Dataset::current().scales[0].x;
             const auto grid_spacing_x = scalebarLenNm;
-            const auto grid_max_y = Dataset::current().boundary.y * Dataset::current().scale.y;
+            const auto grid_max_y = Dataset::current().boundary.y * Dataset::current().scales[0].y;
             const auto grid_spacing_y = scalebarLenNm;
 
             glPushMatrix();
@@ -1697,12 +1697,12 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
     auto drawCursor = [this, &seg, coord](const float r, const float g, const float b) {
         const auto bradius = seg.brush.getRadius();
         const auto bview = seg.brush.getView();
-        const auto xsize = bradius / Dataset::current().scale.x;
-        const auto ysize = bradius / Dataset::current().scale.y;
-        const auto zsize = bradius / Dataset::current().scale.z;
+        const auto xsize = bradius / Dataset::current().scales[0].x;
+        const auto ysize = bradius / Dataset::current().scales[0].y;
+        const auto zsize = bradius / Dataset::current().scales[0].z;
 
         //move from center to cursor
-        glTranslatef(Dataset::current().scale.x * coord.x, Dataset::current().scale.y * coord.y, Dataset::current().scale.z * coord.z);
+        glTranslatef(Dataset::current().scales[0].x * coord.x, Dataset::current().scales[0].y * coord.y, Dataset::current().scales[0].z * coord.z);
         if (viewportType == VIEWPORT_XZ && bview == brush_t::view_t::xz) {
             glTranslatef(0, 0, Dataset::current().scale.z);//move origin to other corner of voxel, idrk why that’s necessary
             glRotatef(-90, 1, 0, 0);
@@ -1782,8 +1782,8 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
         }
         // scale
         for (auto && point : vertices) {
-            point.x *= Dataset::current().scale.componentMul(v1).length();
-            point.y *= Dataset::current().scale.componentMul(v2).length();
+            point.x *= Dataset::current().scales[0].componentMul(v1).length();
+            point.y *= Dataset::current().scales[0].componentMul(v2).length();
         }
         // sort by angle
         const auto center = std::accumulate(std::begin(vertices), std::end(vertices), floatCoordinate(0, 0, 0)) / vertices.size();
@@ -2047,7 +2047,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         glEnable(GL_LIGHTING);
         GLfloat ambientLight[] = {0.5, 0.5, 0.5, 0.8};
         GLfloat diffuseLight[] = {1., 1., 1., 1.};
-        GLfloat lightPos[] = {0, Dataset::current().boundary.y * Dataset::current().scale.y, 0, 1.};
+        GLfloat lightPos[] = {0, Dataset::current().boundary.y * Dataset::current().scales[0].y, 0, 1.};
 
         glLightfv(GL_LIGHT0,GL_AMBIENT,ambientLight);
         glLightfv(GL_LIGHT0,GL_DIFFUSE,diffuseLight);
@@ -2097,7 +2097,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
                 /* Every node is tested based on a precomputed circumsphere
                 that includes its segments. */
 
-                if (!sphereInFrustum(Dataset::current().scale.componentMul(nodeIt->position), nodeIt->circRadius)) {
+                if (!sphereInFrustum(Dataset::current().scales[0].componentMul(nodeIt->position), nodeIt->circRadius)) {
                     previousNode = lastRenderedNode = nullptr;
                     continue;
                 }

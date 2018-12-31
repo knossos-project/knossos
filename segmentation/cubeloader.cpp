@@ -72,18 +72,18 @@ bool writeVoxel(const Coordinate & pos, const uint64_t value, bool isMarkChanged
 }
 
 bool isInsideSphere(const double xi, const double yi, const double zi, const double radius) {
-    const auto x = xi * Dataset::current().scale.x;
-    const auto y = yi * Dataset::current().scale.y;
-    const auto z = zi * Dataset::current().scale.z;
+    const auto x = xi * Dataset::current().scales[0].x;
+    const auto y = yi * Dataset::current().scales[0].y;
+    const auto z = zi * Dataset::current().scales[0].z;
     const auto sqdistance = x*x + y*y + z*z;
     return sqdistance < radius * radius;
 }
 
 std::pair<Coordinate, Coordinate> getRegion(const floatCoordinate & centerPos, const brush_t & brush) { // calcs global AABB of local coordinate system's region
     const auto posArb = centerPos.toLocal(brush.v1, brush.v2, brush.n);
-    const auto width = brush.radius / Dataset::current().scale.componentMul(brush.v1).length();
-    const auto height = brush.radius / Dataset::current().scale.componentMul(brush.v2).length();
-    const auto depth = (brush.mode == brush_t::mode_t::three_dim) ? brush.radius / Dataset::current().scale.componentMul(brush.n).length() : 0;
+    const auto width = brush.radius / Dataset::current().scales[0].componentMul(brush.v1).length();
+    const auto height = brush.radius / Dataset::current().scales[0].componentMul(brush.v2).length();
+    const auto depth = (brush.mode == brush_t::mode_t::three_dim) ? brush.radius / Dataset::current().scales[0].componentMul(brush.n).length() : 0;
     std::vector<floatCoordinate> localPoints(8);
     for (std::size_t i = 0; i < localPoints.size(); ++i) { // all possible combinations. Ordering like in a truth table (with - and + instead of false and true). I just didn't want to type it all out…
         localPoints[i].x = (i < 4) ? posArb.x - width : posArb.x + width;

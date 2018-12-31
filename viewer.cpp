@@ -811,12 +811,12 @@ void Viewer::calcDisplayedEdgeLength() {
         texture.texUsedX = texture.usedSizeInCubePixels / texture.size * texture.FOV / voxelV1X;
         texture.texUsedY = texture.usedSizeInCubePixels / texture.size * texture.FOV / voxelV2X;
 
-        vpOrtho.displayedIsoPx = layer.scale.x * 0.5 * texture.usedSizeInCubePixels * texture.FOV * layer.magnification;// FOV is within current mag
+        vpOrtho.displayedIsoPx = layer.scales[0].x * 0.5 * texture.usedSizeInCubePixels * texture.FOV * layer.magnification;// FOV is within current mag
         const auto dataPx = texture.usedSizeInCubePixels * texture.FOV * layer.magnification;
         vpOrtho.screenPxXPerDataPx = vpOrtho.edgeLength / dataPx * voxelV1X;
         vpOrtho.screenPxYPerDataPx = vpOrtho.edgeLength / dataPx * voxelV2X;
 
-        vpOrtho.displayedlengthInNmX = layer.scale.componentMul(vpOrtho.v1).length() * (texture.texUsedX / texture.texUnitsPerDataPx);
+        vpOrtho.displayedlengthInNmX = layer.scales[0].componentMul(vpOrtho.v1).length() * (texture.texUsedX / texture.texUnitsPerDataPx);
     });
 }
 

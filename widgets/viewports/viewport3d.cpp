@@ -127,7 +127,7 @@ void Viewport3D::paintGL() {
 
 void Viewport3D::refocus(const boost::optional<Coordinate> position) {
     const auto pos = position ? position.get() : state->viewerState->currentPosition;
-    const auto scaledPos = Dataset::current().scale.componentMul(pos);
+    const auto scaledPos = Dataset::current().scales[0].componentMul(pos);
     translateX = scaledPos.x;
     translateY = scaledPos.y;
     glMatrixMode(GL_MODELVIEW);
