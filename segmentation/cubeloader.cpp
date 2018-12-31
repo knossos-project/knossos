@@ -54,7 +54,7 @@ uint64_t readVoxel(const Coordinate & pos) {
     if (Annotation::singleton().outsideMovementArea(pos) || !cubeIt.first) {
         return Segmentation::singleton().getBackgroundId();
     }
-    const auto inCube = pos.insideCube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
+    const auto inCube = pos.insideCube(Dataset::current().cubeEdgeLength, Dataset::current().scaleFactor);
     return getCubeRef(cubeIt.second)[inCube.z][inCube.y][inCube.x];
 }
 
@@ -63,10 +63,10 @@ bool writeVoxel(const Coordinate & pos, const uint64_t value, bool isMarkChanged
     if (Annotation::singleton().outsideMovementArea(pos) || !cubeIt.first) {
         return false;
     }
-    const auto inCube = pos.insideCube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
+    const auto inCube = pos.insideCube(Dataset::current().cubeEdgeLength, Dataset::current().scaleFactor);
     getCubeRef(cubeIt.second)[inCube.z][inCube.y][inCube.x] = value;
     if (isMarkChanged) {
-        Loader::Controller::singleton().markOcCubeAsModified(pos.cube(Dataset::current().cubeEdgeLength, Dataset::current().magnification), Dataset::current().magnification);
+        Loader::Controller::singleton().markOcCubeAsModified(pos.cube(Dataset::current().cubeEdgeLength, Dataset::current().scaleFactor), Dataset::current().magnification);
     }
     return true;
 }
@@ -93,7 +93,7 @@ std::pair<Coordinate, Coordinate> getRegion(const floatCoordinate & centerPos, c
     auto min = floatCoordinate(1, 1, 1) * std::numeric_limits<int>::max();
     floatCoordinate max{0, 0, 0};
     for (const auto localCoord : localPoints) {
-        const auto worldCoord = localCoord.toWorldFrom(brush.v1, brush.v2, brush.n).capped(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax);
+        const auto worldCoord = localCoord.toWorldFrom(brush.v1, brush.v2, brush.n).capped(Dataset::current().scaleFactor.componentMul(Annotation::singleton().movementAreaMin), Dataset::current().scaleFactor.componentMul(Annotation::singleton().movementAreaMax));
         min = {std::min(worldCoord.x, min.x), std::min(worldCoord.y, min.y), std::min(worldCoord.z, min.z)};
         max = {std::max(worldCoord.x, max.x), std::max(worldCoord.y, max.y), std::max(worldCoord.z, max.z)};
     }
@@ -150,14 +150,14 @@ CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  g
         auto rawcube = getRawCube(globalCubeBegin);
         if (rawcube.first) {
             auto cubeRef = getCubeRef(rawcube.second);
-            const auto globalCubeEnd = globalCubeBegin + cubeEdgeLen * Dataset::current().magnification - 1;
-            const auto localStart = globalFirst.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeEdgeLen, Dataset::current().magnification);
-            const auto localEnd = globalLast.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeEdgeLen, Dataset::current().magnification);
+            const auto globalCubeEnd = globalCubeBegin + Dataset::current().scaleFactor * cubeEdgeLen - 1;
+            const auto localStart = globalFirst.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeEdgeLen, Dataset::current().scaleFactor);
+            const auto localEnd = globalLast.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeEdgeLen, Dataset::current().scaleFactor);
 
             for (int z = localStart.z; z <= localEnd.z; ++z)
             for (int y = localStart.y; y <= localEnd.y; ++y)
             for (int x = localStart.x; x <= localEnd.x; ++x) {
-                const Coordinate globalCoord{globalCubeBegin.x + x * Dataset::current().magnification, globalCubeBegin.y + y * Dataset::current().magnification, globalCubeBegin.z + z * Dataset::current().magnification};
+                const Coordinate globalCoord{globalCubeBegin + Dataset::current().scaleFactor.componentMul(Coordinate{x, y, z})};
                 func(cubeRef[z][y][x], globalCoord);
             }
             cubeCoords.emplace(cubeCoord);

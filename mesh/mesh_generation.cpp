@@ -164,8 +164,9 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
             return cube;
         };
 
-        const auto scale = Dataset::current().scale * Dataset::current().magnification;
-        const auto cubeCoord = scale.componentMul(pair.first.cube2Global(cubeEdgeLen, 1));
+        const auto scale = Dataset::current().scale;
+        const auto inMagCoord = Coordinate{pair.first.x, pair.first.y, pair.first.z} * cubeEdgeLen;
+        const auto cubeCoord = scale.componentMul(inMagCoord);
 
         const std::array<double, 3> dims{{cubeEdgeLen * 1.0, cubeEdgeLen * 1.0, cubeEdgeLen * 1.0}};
         const std::array<double, 3> origin{{cubeCoord.x, cubeCoord.y, cubeCoord.z}};
@@ -175,7 +176,7 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
         marchingCubes(obj2points, obj2faces, obj2idCounter, extractedCubeForCoord(pair.first), soid2oid, origin, dims, spacing, extent);
         for (std::size_t i = 0; i < 6; ++i) {
             const std::array<double, 3> dims{{i < 2 ? 2.0 : cubeEdgeLen + 2, i % 4 < 2 ? cubeEdgeLen + 2 : 2.0, i < 4 ? cubeEdgeLen + 2 : 2.0}};
-            const floatCoordinate unscaledOrigin(pair.first.cube2Global(cubeEdgeLen, 1) + floatCoordinate(i == 1 ? 127 : -1, i == 3 ? 127 : -1, i == 5 ? 127 : -1));
+            const floatCoordinate unscaledOrigin(inMagCoord + floatCoordinate(i == 1 ? 127 : -1, i == 3 ? 127 : -1, i == 5 ? 127 : -1));
             const std::array<double, 6> extent{{0, dims[0], 0, dims[1], 0, dims[2]}};
 
             std::vector<std::uint64_t> data(2 * std::pow(cubeEdgeLen + 2, 2));
@@ -189,8 +190,8 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
                         if (globalPos.x < 0 || globalPos.y < 0 || globalPos.z < 0) {
                             continue;
                         }
-                        const CoordOfCube coord = globalPos.cube(cubeEdgeLen, 1);
-                        const auto inCube = globalPos.insideCube(cubeEdgeLen, 1);
+                        const CoordOfCube coord(globalPos.x / cubeEdgeLen, globalPos.y / cubeEdgeLen, globalPos.z / cubeEdgeLen);
+                        const CoordInCube inCube(globalPos.x % cubeEdgeLen, globalPos.y % cubeEdgeLen, globalPos.z % cubeEdgeLen);
                         auto & cube = extractedCubeForCoord(coord);
                         data[z * sliceSize + y * rowSize + x] = boost::multi_array_ref<uint64_t, 3>(reinterpret_cast<std::uint64_t *>(cube.data()), boost::extents[cubeEdgeLen][cubeEdgeLen][cubeEdgeLen])[inCube.z][inCube.y][inCube.x];
                     }

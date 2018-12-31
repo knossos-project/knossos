@@ -521,8 +521,8 @@ void ViewportOrtho::handleWheelEvent(const QWheelEvent *event) {
         applyZoom(event, -1.0f);
     } else if (event->modifiers() == Qt::NoModifier) {
         const float directionSign = event->delta() > 0 ? -1 : 1;
-        const auto multiplier = directionSign * state->viewerState->dropFrames * Dataset::current().magnification;
-        state->viewer->userMove(n * multiplier, USERMOVE_DRILL, n);
+        const auto multiplier = directionSign * state->viewerState->dropFrames;
+        state->viewer->userMove(Dataset::current().scaleFactor.componentMul(n) * multiplier, USERMOVE_DRILL, n);
     }
     ViewportBase::handleWheelEvent(event);
 }
@@ -624,10 +624,10 @@ void ViewportOrtho::handleKeyPress(const QKeyEvent *event) {
         const float directionSign = (keyLeft || keyUp) ? -1 : (keyRight || keyDown) ? 1 : direction * (keyD || keyE ? -1 : 1);
         if (singleVoxelKey) {
             const auto vector = (keyLeft || keyRight) ? v1 : (keyUp || keyDown) ? (v2 * -1) : (n * -1); // transform v2 and n from 1. to 8. octant
-            state->viewerState->repeatDirection = vector * directionSign * shiftMultiplier * state->viewerState->dropFrames * Dataset::current().magnification;
+            state->viewerState->repeatDirection = Dataset::current().scaleFactor.componentMul(vector) * directionSign * shiftMultiplier * state->viewerState->dropFrames;
             state->viewer->userMove(state->viewerState->repeatDirection, USERMOVE_HORIZONTAL, n);
         } else if(event->key() == Qt::Key_R || keyE) {
-            state->viewer->setPositionWithRecentering(state->viewerState->currentPosition - n * directionSign * shiftMultiplier * state->viewerState->walkFrames * Dataset::current().magnification);
+            state->viewer->setPositionWithRecentering(state->viewerState->currentPosition - Dataset::current().scaleFactor.componentMul(n) * directionSign * shiftMultiplier * state->viewerState->walkFrames);
         }
     } else if (singleVoxelKey) {
         state->viewerState->keyRepeat = true;

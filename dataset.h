@@ -64,10 +64,10 @@ struct Dataset {
     bool isOverlay() const;
 
     CoordOfCube global2cube(const Coordinate & globalCoord) const {
-        return globalCoord.cube(cubeEdgeLength, magnification);
+        return globalCoord.cube(cubeEdgeLength, scaleFactor);
     }
     Coordinate cube2global(const CoordOfCube & cubeCoord) const {
-        return cubeCoord.cube2Global(cubeEdgeLength, magnification);
+        return cubeCoord.cube2Global(cubeEdgeLength, scaleFactor);
     }
 
     API api{API::Heidelbrain};
@@ -87,6 +87,7 @@ struct Dataset {
     int magnification{1};
     int lowestAvailableMag{1};
     int highestAvailableMag{1};
+    floatCoordinate scaleFactor{1,1,1};
     // The edge length of a datacube is 2^N, which makes the size of a
     // datacube in bytes 2^3N which has to be <= 2^32 - 1 (unsigned int).
     // So N cannot be larger than 10.
