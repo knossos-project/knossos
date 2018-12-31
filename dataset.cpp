@@ -400,8 +400,7 @@ Dataset Dataset::createCorrespondingOverlayLayer() {
     return info;
 }
 
-QUrl Dataset::knossosCubeUrl(const Coordinate coord) const {
-    const auto cubeCoord = coord.cube(cubeEdgeLength, magnification);
+QUrl Dataset::knossosCubeUrl(const CoordOfCube cubeCoord) const {
     auto pos = QString("/mag%1/x%2/y%3/z%4/")
             .arg(magnification)
             .arg(cubeCoord.x, 4, 10, QChar('0'))
@@ -419,12 +418,12 @@ QUrl Dataset::knossosCubeUrl(const Coordinate coord) const {
     return base;
 }
 
-QUrl Dataset::openConnectomeCubeUrl(Coordinate coord) const {
+QUrl Dataset::openConnectomeCubeUrl(CoordOfCube coord) const {
     auto path = url.path();
 
     path += (!path.endsWith('/') ? "/" : "") + QString::number(static_cast<std::size_t>(std::log2(magnification)));// >= 0
-    coord.x /= magnification;
-    coord.y /= magnification;
+    coord.x *= cubeEdgeLength;
+    coord.y *= cubeEdgeLength;
     coord.z += 1;//offset
     path += "/" + QString("%1,%2").arg(coord.x).arg(coord.x + cubeEdgeLength);
     path += "/" + QString("%1,%2").arg(coord.y).arg(coord.y + cubeEdgeLength);
@@ -437,7 +436,7 @@ QUrl Dataset::openConnectomeCubeUrl(Coordinate coord) const {
     return base;
 }
 
-QNetworkRequest Dataset::apiSwitch(const Coordinate globalCoord) const {
+QNetworkRequest Dataset::apiSwitch(const CoordOfCube cubeCoord) const {
     switch (api) {
     case API::GoogleBrainmaps: {
         QNetworkRequest request{url.toString() + "/subvolume:binary"};
@@ -445,16 +444,16 @@ QNetworkRequest Dataset::apiSwitch(const Coordinate globalCoord) const {
         return request;
     }
     case API::Heidelbrain:
-        return QNetworkRequest{knossosCubeUrl(globalCoord)};
+        return QNetworkRequest{knossosCubeUrl(cubeCoord)};
     case API::PyKnossos: {
-        auto url = knossosCubeUrl(globalCoord);
+        auto url = knossosCubeUrl(cubeCoord);
         auto path = url.path();
         path.replace(QRegularExpression("mag\\d+"), QString{"mag%1"}.arg(std::log2(magnification)+1));
         url.setPath(path);
         return QNetworkRequest{url};
     }
     case API::OpenConnectome:
-        return QNetworkRequest{openConnectomeCubeUrl(globalCoord)};
+        return QNetworkRequest{openConnectomeCubeUrl(cubeCoord)};
     case API::WebKnossos:
         return QNetworkRequest{url};
     }

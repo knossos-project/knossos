@@ -588,9 +588,7 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
                 state->protectCube2Pointer.unlock();
 
                 // Take care of the data textures.
-                Coordinate cubePosInAbsPx = {currentDc.x * Dataset::datasets[layerId].magnification * cubeEdgeLen,
-                                             currentDc.y * Dataset::datasets[layerId].magnification * cubeEdgeLen,
-                                             currentDc.z * Dataset::datasets[layerId].magnification * cubeEdgeLen};
+                Coordinate cubePosInAbsPx = Dataset::datasets[layerId].cube2global(currentDc);
                 // This is used to index into the texture. overlayData[index] is the first
                 // byte of the datacube slice at position (x_dc, y_dc) in the texture.
                 const int index = 4 * (y_dc * state->viewerState->texEdgeLength * cubeEdgeLen + x_dc * cubeEdgeLen);
@@ -717,8 +715,8 @@ void Viewer::arbCubes(ViewportArb & vp) {
                     if (cubeIt != std::end(layer.textures)) {
                         cubeIt->second->vertices = /*std::move*/(points);
                     } else {
-                        const auto cubeCoord = globalCoord.cube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
-                        const auto offset = globalCoord - cubeCoord.cube2Global(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
+                        const auto cubeCoord = Dataset::current().global2cube(globalCoord);
+                        const auto offset = globalCoord - Dataset::current().cube2global(cubeCoord);
                         layer.pendingArbCubes.emplace_back(gpuCoord, offset);
                     }
                 }
@@ -1123,8 +1121,8 @@ void Viewer::calculateMissingOrthoGPUCubes(TextureLayer & layer) {
         const auto gpuCoord = CoordOfGPUCube{x, y, z};
         const auto globalCoord = gpuCoord.cube2Global(gpucubeedge, Dataset::current().magnification);
         if (currentlyVisible(globalCoord, state->viewerState->currentPosition, gpusupercube, gpucubeedge) && layer.textures.count(gpuCoord) == 0) {
-            const auto cubeCoord = globalCoord.cube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
-            const auto offset = globalCoord - cubeCoord.cube2Global(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
+            const auto cubeCoord = Dataset::current().global2cube(globalCoord);
+            const auto offset = globalCoord - Dataset::current().cube2global(cubeCoord);
             layer.pendingOrthoCubes.emplace_back(gpuCoord, offset);
         }
     }

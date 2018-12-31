@@ -57,11 +57,18 @@ struct Dataset {
     void checkMagnifications();
     Dataset createCorrespondingOverlayLayer();
 
-    QNetworkRequest apiSwitch(const Coordinate globalCoord) const;
-    QUrl knossosCubeUrl(const Coordinate coord) const;
-    QUrl openConnectomeCubeUrl(const Coordinate coord) const;
+    QNetworkRequest apiSwitch(const CoordOfCube cubeCoord) const;
+    QUrl knossosCubeUrl(const CoordOfCube cubeCoord) const;
+    QUrl openConnectomeCubeUrl(CoordOfCube coord) const;
 
     bool isOverlay() const;
+
+    CoordOfCube global2cube(const Coordinate & globalCoord) const {
+        return globalCoord.cube(cubeEdgeLength, magnification);
+    }
+    Coordinate cube2global(const CoordOfCube & cubeCoord) const {
+        return cubeCoord.cube2Global(cubeEdgeLength, magnification);
+    }
 
     API api{API::Heidelbrain};
     CubeType type{CubeType::RAW_UNCOMPRESSED};

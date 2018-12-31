@@ -80,8 +80,8 @@ private:
     using ptr = std::unique_ptr<T>;
     using DecompressionResult = std::pair<bool, void *>;
     using DecompressionOperationPtr = ptr<QFutureWatcher<DecompressionResult>>;
-    std::vector<std::unordered_map<Coordinate, QNetworkReply*>> slotDownload;
-    std::vector<std::unordered_map<Coordinate, DecompressionOperationPtr>> slotDecompression;
+    std::vector<std::unordered_map<CoordOfCube, QNetworkReply*>> slotDownload;
+    std::vector<std::unordered_map<CoordOfCube, DecompressionOperationPtr>> slotDecompression;
     std::vector<std::list<std::vector<std::uint8_t>>> slotChunk;// slot ownership
     std::vector<std::list<void *>> freeSlots;
     int currentMaxMetric;

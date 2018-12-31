@@ -34,7 +34,7 @@ std::pair<bool, void *> getRawCube(const Coordinate & pos) {
     if (!Segmentation::singleton().enabled) {
         return {false, nullptr};
     }
-    const auto posDc = pos.cube(Dataset::current().cubeEdgeLength, Dataset::current().magnification);
+    const auto posDc = Dataset::current().global2cube(pos);
 
     state->protectCube2Pointer.lock();
     auto * rawcube = cubeQuery(state->cube2Pointer, Segmentation::singleton().layerId, Dataset::current().magIndex, posDc);
@@ -107,16 +107,15 @@ void coordCubesMarkChanged(const CubeCoordSet & cubeChangeSet) {
 }
 
 auto wholeCubes = [](const Coordinate & globalFirst, const Coordinate & globalLast, const uint64_t value, CubeCoordSet & cubeChangeSet) {
-    const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
-    const auto wholeCubeBegin = (globalFirst + cubeEdgeLen - 1).cube(cubeEdgeLen, Dataset::current().magnification);
-    const auto wholeCubeEnd = globalLast.cube(cubeEdgeLen, Dataset::current().magnification);
+    const auto wholeCubeBegin = Dataset::current().global2cube(globalFirst + Dataset::current().cubeEdgeLength - 1);
+    const auto wholeCubeEnd = Dataset::current().global2cube(globalLast);
 
     //fill all whole cubes
     for (int z = wholeCubeBegin.z; z < wholeCubeEnd.z; ++z)
     for (int y = wholeCubeBegin.y; y < wholeCubeEnd.y; ++y)
     for (int x = wholeCubeBegin.x; x < wholeCubeEnd.x; ++x) {
         const auto cubeCoord = CoordOfCube(x, y, z);
-        const auto globalCoord = cubeCoord.cube2Global(cubeEdgeLen, Dataset::current().magnification);
+        const auto globalCoord = Dataset::current().cube2global(cubeCoord);
         auto rawcube = getRawCube(globalCoord);
         if (rawcube.first) {
             auto cubeRef = getCubeRef(rawcube.second);
@@ -137,8 +136,8 @@ auto wholeCubes = [](const Coordinate & globalFirst, const Coordinate & globalLa
 template<typename Func, typename Skip>
 CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  globalLast, Func func, Skip skip) {
     const auto & cubeEdgeLen = Dataset::current().cubeEdgeLength;
-    const auto cubeBegin = globalFirst.cube(cubeEdgeLen, Dataset::current().magnification);
-    const auto cubeEnd = globalLast.cube(cubeEdgeLen, Dataset::current().magnification) + 1;
+    const auto cubeBegin = Dataset::current().global2cube(globalFirst);
+    const auto cubeEnd = Dataset::current().global2cube(globalLast) + 1;
     CubeCoordSet cubeCoords;
 
     //traverse all remaining cubes
@@ -147,7 +146,7 @@ CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  g
     for (int x = cubeBegin.x; x < cubeEnd.x; ++x) {
         skip(x, y, z);//skip cubes which got processed before
         const auto cubeCoord = CoordOfCube(x, y, z);
-        const auto globalCubeBegin = cubeCoord.cube2Global(cubeEdgeLen, Dataset::current().magnification);
+        const auto globalCubeBegin = Dataset::current().cube2global(cubeCoord);
         auto rawcube = getRawCube(globalCubeBegin);
         if (rawcube.first) {
             auto cubeRef = getCubeRef(rawcube.second);
