@@ -281,7 +281,7 @@ Dataset::list_t Dataset::parseWebKnossosJson(const QUrl &, const QString & json_
         };
 
         for (const auto & mag : static_cast<const QJsonArray>(layer["resolutions"].toArray())) {
-            info.scales.emplace_back(info.scale.componentMul({
+            info.scales.emplace_back(info.scale.componentMul(floatCoordinate{
                 static_cast<float>(mag[0].toDouble()),
                 static_cast<float>(mag[1].toDouble()),
                 static_cast<float>(mag[2].toDouble())
