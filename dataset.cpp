@@ -244,20 +244,20 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
     return infos;
 }
 
-Dataset::list_t Dataset::parseWebKnossosJson(const QUrl & infoUrl, const QString & json_raw) {
+Dataset::list_t Dataset::parseWebKnossosJson(const QUrl &, const QString & json_raw) {
     Dataset info;
     info.api = API::WebKnossos;
 
     const auto jmap = QJsonDocument::fromJson(json_raw.toUtf8()).object();
 
-    info.url = jmap["dataStore"]["url"].toString() + "/data/datasets/" + jmap["name"].toString();
+    info.url = jmap["dataStore"]["url"].toString() + "/data/datasets/" + jmap["dataSource"]["id"]["team"].toString() + '/' + jmap["dataSource"]["id"]["name"].toString();
     info.experimentname = jmap["name"].toString();
 
     decltype(Dataset::datasets) layers;
     for (const auto & layer : static_cast<const QJsonArray>(jmap["dataSource"]["dataLayers"].toArray())) {
         const auto layerString = layer["name"].toString();
         const auto category = layer["category"].toString();
-        const auto download = Network::singleton().refresh(QString("https://demo.webknossos.org/dataToken/generate?dataSetName=%1&dataLayerName=%2").arg(infoUrl.path().split("/").back()).arg(layerString));
+        const auto download = Network::singleton().refresh(QString("https://demo.webknossos.org/api/userToken/generate"));
         if (download.first) {
             info.token = QJsonDocument::fromJson(download.second.toUtf8())["token"].toString();
         }
