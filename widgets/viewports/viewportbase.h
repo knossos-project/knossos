@@ -265,8 +265,8 @@ public:
     //data pixels can have a different axis. Keep this in mind.
     //These values depend on texUnitsPerDataPx (in struct viewportTexture),
     //the current zoom value and the data pixel voxel dimensions.
-    float screenPxXPerDataPx;
-    float displayedlengthInNmX;
+    double screenPxXPerDataPx;
+    double displayedlengthInNmX;
 
     uint edgeLength; //edge length in screen pixel coordinates; only squarish VPs are allowed
 

@@ -282,7 +282,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
 
 floatCoordinate ViewportOrtho::handleMovement(const QPoint & pos) {
     const QPointF posDelta(xrel(pos.x()), yrel(pos.y()));
-    const QPointF arbitraryMouseSlide = {-posDelta.x() / screenPxXPerDataPx, -posDelta.y() / screenPxYPerDataPx};
+    const QPointF arbitraryMouseSlide = {-posDelta.x() / screenPxXPerMag1Px, -posDelta.y() / screenPxYPerMag1Px};
     const auto move = v1 * arbitraryMouseSlide.x() - v2 * arbitraryMouseSlide.y();
     return move;
 }
@@ -674,8 +674,8 @@ void Viewport3D::focusOutEvent(QFocusEvent * event) {
 }
 
 Coordinate getCoordinateFromOrthogonalClick(const QPointF pos, ViewportOrtho & vp) {
-    const auto leftUpper = floatCoordinate{state->viewerState->currentPosition} - (vp.v1 * vp.edgeLength / vp.screenPxXPerDataPx - vp.v2 * vp.edgeLength / vp.screenPxYPerDataPx) * 0.5;
-    return leftUpper + vp.v1 * (pos.x() / vp.screenPxXPerDataPx - 0.5) - vp.v2 * (pos.y() / vp.screenPxYPerDataPx - 0.5);
+    const auto leftUpper = floatCoordinate{state->viewerState->currentPosition} - (vp.v1 * vp.edgeLength / vp.screenPxXPerMag1Px - vp.v2 * vp.edgeLength / vp.screenPxYPerMag1Px) * 0.5;
+    return leftUpper + vp.v1 * (pos.x() / vp.screenPxXPerMag1Px - 0.5) - vp.v2 * (pos.y() / vp.screenPxYPerMag1Px - 0.5);
 }
 
 QSet<nodeListElement*> ViewportBase::nodeSelection(int x, int y) {

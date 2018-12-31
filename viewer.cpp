@@ -805,8 +805,10 @@ void Viewer::calcDisplayedEdgeLength() {
     window->forEachOrthoVPDo([](ViewportOrtho & vpOrtho){
         const auto & layer = Dataset::current();
         auto & texture = vpOrtho.texture;
-        float voxelV1X = layer.scale.componentMul(vpOrtho.v1).length() / layer.scale.x;
-        float voxelV2X = std::abs(layer.scale.componentMul(vpOrtho.v2).length()) / layer.scale.x;
+        const auto voxelV1X = layer.scale.componentMul(vpOrtho.v1).length() / layer.scale.x;
+        const auto voxelV2X = std::abs(layer.scale.componentMul(vpOrtho.v2).length()) / layer.scale.x;
+        const auto voxelV1Xmag1 = layer.scales[0].componentMul(vpOrtho.v1).length() / layer.scales[0].x;
+        const auto voxelV2Xmag1 = std::abs(layer.scales[0].componentMul(vpOrtho.v2).length()) / layer.scales[0].x;
 
         texture.texUsedX = texture.usedSizeInCubePixels / texture.size * texture.FOV / voxelV1X;
         texture.texUsedY = texture.usedSizeInCubePixels / texture.size * texture.FOV / voxelV2X;
@@ -814,7 +816,8 @@ void Viewer::calcDisplayedEdgeLength() {
         vpOrtho.displayedIsoPx = layer.scales[0].x * 0.5 * texture.usedSizeInCubePixels * texture.FOV * layer.magnification;// FOV is within current mag
         const auto dataPx = texture.usedSizeInCubePixels * texture.FOV * layer.magnification;
         vpOrtho.screenPxXPerDataPx = vpOrtho.edgeLength / dataPx * voxelV1X;
-        vpOrtho.screenPxYPerDataPx = vpOrtho.edgeLength / dataPx * voxelV2X;
+        vpOrtho.screenPxXPerMag1Px = vpOrtho.edgeLength / dataPx * voxelV1Xmag1;
+        vpOrtho.screenPxYPerMag1Px = vpOrtho.edgeLength / dataPx * voxelV2Xmag1;
 
         vpOrtho.displayedlengthInNmX = layer.scales[0].componentMul(vpOrtho.v1).length() * (texture.texUsedX / texture.texUnitsPerDataPx);
     });
