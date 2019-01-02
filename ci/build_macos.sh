@@ -22,7 +22,7 @@ EOF
 git clone https://github.com/knossos-project/PythonQt.git
 mkdir PythonQt-build && cd PythonQt-build
 cmake ../PythonQt -DCMAKE_PREFIX_PATH=/usr/local/opt/qt -DPYTHON_INCLUDE_DIR=${TRAVIS_BUILD_DIR}/../python2.7
-make && make install
+make install
 
 # Fix QuaZip include directory name
 cd $TRAVIS_BUILD_DIR && cd ..
