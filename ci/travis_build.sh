@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euxo pipefail
 
+pacman -Sy archlinux-keyring --noconfirm
 time pacman -Syu --noconfirm
 
 cd ~
