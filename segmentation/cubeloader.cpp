@@ -157,8 +157,9 @@ CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  g
             for (int z = localStart.z; z <= localEnd.z; ++z)
             for (int y = localStart.y; y <= localEnd.y; ++y)
             for (int x = localStart.x; x <= localEnd.x; ++x) {
-                const Coordinate globalCoord{globalCubeBegin + Dataset::current().scaleFactor.componentMul(Coordinate{x, y, z})};
-                func(cubeRef[z][y][x], globalCoord);
+                const Coordinate globalFromVoxelCoord{globalCubeBegin + Dataset::current().scaleFactor.componentMul(Coordinate{x, y, z})};
+                const auto adjustedGlobalCoord = globalFromVoxelCoord.capped(globalFirst, globalLast);// fit to region boundaries that don’t exactly match mag2+ voxel coords
+                func(cubeRef[z][y][x], adjustedGlobalCoord);
             }
             cubeCoords.emplace(cubeCoord);
         } else {
