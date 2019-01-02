@@ -21,8 +21,8 @@ EOF
 # Build PythonQt
 time git clone https://github.com/knossos-project/PythonQt.git
 mkdir PythonQt-build && cd PythonQt-build
-time cmake ../PythonQt -DCMAKE_PREFIX_PATH=/usr/local/opt/qt -DPYTHON_INCLUDE_DIR=${TRAVIS_BUILD_DIR}/../python2.7
-time make install
+time cmake -G Ninja ../PythonQt -DCMAKE_PREFIX_PATH=/usr/local/opt/qt -DPYTHON_INCLUDE_DIR=${TRAVIS_BUILD_DIR}/../python2.7
+time ninja install
 
 # Fix QuaZip include directory name
 cd $TRAVIS_BUILD_DIR && cd ..
@@ -32,8 +32,8 @@ time cp -R /usr/local/Cellar/quazip/${QUAZIP_VERSION}/include/quazip/* quazip/qu
 
 # Build KNOSSOS
 mkdir knossos-build && cd knossos-build
-time cmake ../knossos -DCMAKE_PREFIX_PATH=/usr/local/opt/qt -DCMAKE_CXX_FLAGS=-isystem\ ${TRAVIS_BUILD_DIR}/../quazip
-time make
+time cmake -G Ninja ../knossos -DCMAKE_PREFIX_PATH=/usr/local/opt/qt -DCMAKE_CXX_FLAGS=-isystem\ ${TRAVIS_BUILD_DIR}/../quazip
+time ninja
 
 # OS X housekeeping
 mv knossos.app KNOSSOS.app

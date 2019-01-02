@@ -15,6 +15,7 @@ matrix:
         homebrew:
           packages:
             - boost
+            - ninja
             - qt
             - quazip
             - snappy
