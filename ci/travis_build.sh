@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euxo pipefail
 
-pacman -Sy archlinux-keyring --noconfirm
+time pacman -Sy archlinux-keyring --noconfirm
 time pacman -Syu --noconfirm
 
 cd ~
@@ -9,7 +9,7 @@ cd ~
 # run cmake and ninja
 mkdir knossos-build
 cd knossos-build
-cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH="/root/PythonQt-install/lib/cmake/" ../knossos
+time cmake -G Ninja -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_PREFIX_PATH="/root/PythonQt-install/lib/cmake/" ../knossos
 time ninja
 
 # create AppImage
