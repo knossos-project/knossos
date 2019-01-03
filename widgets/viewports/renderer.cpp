@@ -698,7 +698,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
 
     const auto scale = Dataset::current().scale.componentMul(n).length();
     const auto nears = scale * state->viewerState->depthCutOff;
-    const auto fars = -scale * state->viewerState->depthCutOff;;
+    const auto fars = -scale * state->viewerState->depthCutOff;
     const auto nearVal = -nears;
     const auto farVal = -fars;
     glMatrixMode(GL_PROJECTION);
@@ -765,7 +765,8 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         const auto & layerSettings = state->viewerState->layerRenderSettings[ordered_i];
         if (!options.nodePicking && layerSettings.visible && !Dataset::datasets[ordered_i].isOverlay()) {
             glColor4f(layerSettings.color.redF(), layerSettings.color.greenF(), layerSettings.color.blueF(), layerSettings.opacity);
-            slice(texture, ordered_i, n * fars);// offset to the far clipping plane to avoid clipping the skeleton
+            qDebug() << viewportType << n * fars << n * fars*0.9 << n * fars*0.99;
+            slice(texture, ordered_i, n * fars/**0.99*/);// offset to the far clipping plane to avoid clipping the skeleton
             break;
         }
     }
