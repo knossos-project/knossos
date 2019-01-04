@@ -28,7 +28,7 @@ script:
 deploy:
   - provider: releases
     api_key:
-      secure: WH5I/c6N4Ekb+dIWDxOEcwA6o1xNGkmI5nvDavO6PavvSzCydBTPQ5xXm7s1KD6M1+8MbF30REfO4mnRyjuzYbV7ap9Vm9S7YXOzXuHw19uxpGmnJyvcJnSJlPf7uNghGuoyBzZGS5SOoH/k6w6TGOitnE2PfI3pWQGbV8YTsyQ=
+      secure: "DHBayH59cTgSeuzw0umwjc52r5p1sR3EV1vOG77cK1NIb7fi2UVmx69V2mIzfGYp0t1uFDsVvDGtFYRQxKozCteBu2oinmbiSjbeWnyldQqTFnF4QONF+eWGiHNdOdHY7Tj37+eV5BlgfsXZ5MfLN3tXZ2y++D+yfoUItsbvC3I="
     file_glob: true
     file:
       - "*.AppImage"
