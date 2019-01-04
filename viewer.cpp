@@ -275,11 +275,11 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
     const std::size_t texNext = vp.viewportType == VIEWPORT_ZY ? state->viewerState->texEdgeLength * 4 : 4;// RGBA per pixel
     const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? 4 - 4 * cubeEdgeLen * state->viewerState->texEdgeLength : (state->viewerState->texEdgeLength - cubeEdgeLen) * 4;
 
-    const auto useCustomLUT = state->viewerState->layerRenderSettings[layerId].bias > 0 || state->viewerState->layerRenderSettings[layerId].rangeDelta < std::numeric_limits<uint8_t>::max();
+    const bool isDatasetAdjustment = state->viewerState->datasetColortableOn || state->viewerState->layerRenderSettings[layerId].bias > 0.0 || state->viewerState->layerRenderSettings[layerId].rangeDelta < 1.0;
     for (int yzz = 0; yzz < cubeEdgeLen; ++yzz) {
         for (int xxy = 0; xxy < cubeEdgeLen; ++xxy) {
             uint8_t r, g, b;
-            if (useCustomLUT) {
+            if (isDatasetAdjustment) {
                 std::tie(r, g, b) = datasetAdjustment(layerId, datacube[0]);
             } else {
                 r = g = b = datacube[0];
