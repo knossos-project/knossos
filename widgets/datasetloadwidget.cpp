@@ -382,7 +382,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     }
     if (!overlayPresent) {// add empty overlay channel
         const auto i = layers.size();
-        layers.emplace_back(layers.front());
+        layers.emplace_back(Dataset{layers.front()});// explicitly copy, because the reference will get invalidated
         layers[i].allocationEnabled = layers[i].loadingEnabled = Segmentation::singleton().enabled;
         Segmentation::singleton().layerId = i;
         layers.back().type = Dataset::CubeType::SNAPPY;
