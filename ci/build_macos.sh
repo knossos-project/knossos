@@ -18,11 +18,9 @@ a
 w
 EOF
 
-# Build PythonQt
-time git clone https://github.com/knossos-project/PythonQt.git
-mkdir PythonQt-build && cd PythonQt-build
-time cmake -G Ninja ../PythonQt -DCMAKE_PREFIX_PATH=/usr/local/opt/qt -DPYTHON_INCLUDE_DIR=${TRAVIS_BUILD_DIR}/../python2.7
-time ninja install
+# Download and install PythonQt
+time curl -JLO https://github.com/knossos-project/knossos/releases/download/nightly-dev/macOS-PythonQt.zip
+time unzip -d / macOS-PythonQt.zip
 
 # Fix QuaZip include directory name
 cd $TRAVIS_BUILD_DIR && cd ..
