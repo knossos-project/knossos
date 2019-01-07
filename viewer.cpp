@@ -934,7 +934,9 @@ void Viewer::run() {
     }
 
     window->forEachOrthoVPDo([](ViewportOrtho & vp) {
+        vp.setMouseTracking(false);
         vp.update();
+        vp.setMouseTracking(true);
     });
     window->viewport3D.get()->update();
     window->updateTitlebar(); //display changes after filename

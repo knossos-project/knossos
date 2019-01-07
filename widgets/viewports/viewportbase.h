@@ -223,6 +223,7 @@ protected:
     virtual void handleWheelEvent(const QWheelEvent *event);
 
 public:
+    QPoint currMouseMove;
     ViewportType viewportType; // floatparent requires this to be initialized first to set its title
     QViewportFloatWidget floatParent;
     const static int numberViewports = 5;

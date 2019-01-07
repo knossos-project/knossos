@@ -260,8 +260,8 @@ void MainWindow::createViewports() {
     format.setMinorVersion(0);
     format.setSamples(state->viewerState->sampleBuffers);
     format.setDepthBufferSize(24);
-//    format.setSwapInterval(0);
-//    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
+    format.setSwapInterval(0);
+    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
     format.setProfile(QSurfaceFormat::CompatibilityProfile);
     format.setOption(QSurfaceFormat::DeprecatedFunctions);
     if (ViewportBase::oglDebug) {
@@ -1518,7 +1518,7 @@ void MainWindow::updateCompressionRatioDisplay() {
 
 bool MainWindow::event(QEvent *event) {
     if (event->type() == QEvent::WindowActivate) {
-        state->viewer->run();
+//        state->viewer->run();
     }
     return QMainWindow::event(event);
 }

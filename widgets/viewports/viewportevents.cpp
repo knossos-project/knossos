@@ -139,6 +139,7 @@ void ViewportBase::handleLinkToggle(const QMouseEvent & event) {
 }
 
 void ViewportBase::handleMouseButtonLeft(const QMouseEvent *event) {
+    currMouseMove = event->pos();
     if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::NodeSelection)) {
         const bool selection = event->modifiers().testFlag(Qt::ShiftModifier) || event->modifiers().testFlag(Qt::ControlModifier);
         if (selection) {
@@ -703,5 +704,5 @@ QSet<nodeListElement*> ViewportBase::nodeSelection(int x, int y) {
 }
 
 Coordinate ViewportOrtho::getMouseCoordinate() {
-    return getCoordinateFromOrthogonalClick(prevMouseMove, *this);
+    return getCoordinateFromOrthogonalClick(mapFromGlobal(QCursor::pos()), *this);
 }

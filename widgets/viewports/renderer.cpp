@@ -721,7 +721,9 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     };
     auto slice = [&](auto & texture, std::size_t layerId, floatCoordinate offset = {}){
         if (!options.nodePicking) {
-            state->viewer->vpGenerateTexture(*this, layerId);
+            if (GetKeyState('Q') & 0x8000) {
+                state->viewer->vpGenerateTexture(*this, layerId);
+            }
             glEnable(GL_TEXTURE_2D);
             texture.texHandle[layerId].bind();
             glPushMatrix();
@@ -810,6 +812,18 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glColor4f(1, 1, 1, 1);
     glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
+    glBegin(GL_LINES);
+    glColor3f(1,0,0);
+    const auto prevPos = Dataset::current().scales[0].componentMul(getCoordinateFromOrthogonalClick(prevMouseMove, *this));
+    const auto currPos = Dataset::current().scales[0].componentMul(getCoordinateFromOrthogonalClick(mapFromGlobal(QCursor::pos()), *this));
+    const auto superCurrPos = Dataset::current().scales[0].componentMul(getCoordinateFromOrthogonalClick(currMouseMove, *this));
+    glVertex3f(prevPos.x, prevPos.y, prevPos.z);
+    glVertex3f(currPos.x, currPos.y, currPos.z);
+    glVertex3f(currPos.x, currPos.y, currPos.z);
+    glColor3f(0,1,0);
+    glVertex3f(superCurrPos.x, superCurrPos.y, superCurrPos.z);
+    glEnd();
+
     glDisable(GL_DEPTH_TEST);// don’t render skeleton above crosshairs
     if (options.drawCrosshairs) {
         glPushMatrix();
@@ -896,6 +910,12 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         renderBrush(getMouseCoordinate());
         glPopMatrix();
     }
+    static QElapsedTimer time;
+//    if (viewportType == VIEWPORT_XY) {
+        qDebug() << viewportType << time.nsecsElapsed() / 1e6;
+//    }
+    time.restart();
+//    context()->swapBuffers(context()->surface());
 }
 
 void Viewport3D::renderVolumeVP() {
@@ -1827,7 +1847,7 @@ void Viewport3D::renderArbitrarySlicePane(ViewportOrtho & vp, const RenderOption
 
     for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
         if (state->viewerState->layerRenderSettings[layerId].visible && (!Dataset::datasets[layerId].isOverlay() || options.drawOverlay)) {
-            state->viewer->vpGenerateTexture(vp, layerId);// update texture before use
+//            state->viewer->vpGenerateTexture(vp, layerId);// update texture before use
             auto & texture = vp.texture;
             texture.texHandle[layerId].bind();
             glBegin(GL_QUADS);

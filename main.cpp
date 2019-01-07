@@ -100,6 +100,45 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext &
 
 Q_DECLARE_METATYPE(std::string)
 
+#include <QAbstractNativeEventFilter>
+
+#ifndef HID_USAGE_PAGE_GENERIC
+#define HID_USAGE_PAGE_GENERIC         ((USHORT) 0x01)
+#endif
+#ifndef HID_USAGE_GENERIC_MOUSE
+#define HID_USAGE_GENERIC_MOUSE        ((USHORT) 0x02)
+#endif
+
+#include <strsafe.h>
+
+class rawFilter : public QAbstractNativeEventFilter {
+    bool nativeEventFilter(const QByteArray & eventType, void * message, long *) {
+        if (eventType == "windows_generic_MSG") {
+            MSG *msg = reinterpret_cast<MSG*>(message);
+            if (msg->message == WM_INPUT) {
+                UINT dwSize;
+                GetRawInputData((HRAWINPUT)msg->lParam, RID_INPUT, NULL, &dwSize, sizeof(RAWINPUTHEADER));
+                static std::vector<BYTE> lpb;
+                lpb.resize(dwSize);
+                GetRawInputData((HRAWINPUT)msg->lParam, RID_INPUT, lpb.data(), &dwSize, sizeof(RAWINPUTHEADER));
+                RAWINPUT * raw = reinterpret_cast<RAWINPUT *>(lpb.data());
+                if (raw->header.dwType == RIM_TYPEMOUSE) {
+                    int xPosRelative = raw->data.mouse.lLastX;
+                    int yPosRelative = raw->data.mouse.lLastY;
+//                    state->mainWindow->viewportXY->update();
+                    state->mainWindow->forEachOrthoVPDo([xPosRelative, yPosRelative](auto & vp){
+                        vp.currMouseMove += QPoint(xPosRelative, yPosRelative);
+//                        qDebug() << vp.currMouseMove;
+                    });
+                }
+            }
+        }
+        return false;
+    }
+};
+
+#include <QLoggingCategory>
+
 int main(int argc, char *argv[]) {
     QtConcurrent::run([](){ QSslSocket::supportsSsl(); });// workaround until https://bugreports.qt.io/browse/QTBUG-59750
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);// explicitly enable sharing for undocked viewports
@@ -110,6 +149,23 @@ int main(int argc, char *argv[]) {
     }) != end;
 #endif
     QApplication app(argc, argv);
+    QLoggingCategory::setFilterRules("qt.qpa.gl=true");
+
+//    {
+//        QSurfaceFormat format = QSurfaceFormat::defaultFormat();
+//        format.setMajorVersion(2);
+//        format.setMinorVersion(0);
+//        format.setSamples(8);
+//        format.setDepthBufferSize(24);
+//        format.setSwapInterval(0);
+//        format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+//        format.setProfile(QSurfaceFormat::CompatibilityProfile);
+//        format.setOption(QSurfaceFormat::DeprecatedFunctions);
+//        if (ViewportBase::oglDebug) {
+//            format.setOption(QSurfaceFormat::DebugContext);
+//        }
+//        QSurfaceFormat::setDefaultFormat(format);
+//    }
 
     QFile file(":/resources/style.qss");
     file.open(QFile::ReadOnly);
@@ -149,12 +205,24 @@ int main(int argc, char *argv[]) {
     Scripting scripts;
     state.mainWindow->loadSettings();// load settings after viewer and window are accessible through state and viewer
     state.mainWindow->widgetContainer.datasetLoadWidget.loadDataset();// load last used dataset or show
-    viewer.timer.start(0);
+//    viewer.timer.start(0);
 #ifdef NDEBUG
     splash.finish(state.mainWindow);
 #endif
     // ensure killed QNAM’s before QNetwork deinitializes
     std::unique_ptr<Loader::Controller> loader_deleter{&Loader::Controller::singleton()};
     std::unique_ptr<Network> network_deleter{&Network::singleton()};
+
+    rawFilter rf;
+    app.installNativeEventFilter(&rf);
+
+    RAWINPUTDEVICE Rid[1];
+    Rid[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
+    Rid[0].usUsage = HID_USAGE_GENERIC_MOUSE;
+    Rid[0].dwFlags = 0;RIDEV_INPUTSINK;
+    Rid[0].hwndTarget = nullptr;
+    RegisterRawInputDevices(Rid, 1, sizeof(Rid[0]));
+    qDebug() << QString::number(GetLastError());
+
     return app.exec();
 }

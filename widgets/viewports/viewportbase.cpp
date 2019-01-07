@@ -336,6 +336,8 @@ void ViewportBase::tabletEvent(QTabletEvent *event) {
 }
 
 void ViewportBase::mouseMoveEvent(QMouseEvent *event) {
+    QElapsedTimer time;
+    time.start();
     const auto mouseBtn = event->buttons();
     const auto penmode = state->viewerState->penmode || stylusDetected;
 
@@ -357,6 +359,7 @@ void ViewportBase::mouseMoveEvent(QMouseEvent *event) {
     handleMouseHover(event);
 
     prevMouseMove = event->pos();
+//    qDebug() << time.nsecsElapsed() / 1e6;
 }
 
 void ViewportBase::mousePressEvent(QMouseEvent *event) {
