@@ -61,6 +61,11 @@ TaskManagementWidget::TaskManagementWidget(QWidget *parent) : DialogVisibilityNo
     gridLayout.addWidget(&submitButton, 2, 0, 1, 1);
     gridLayout.addWidget(&submitFinalButton, 2, 1, 1, 1);
 
+    separator.setFrameShape(QFrame::HLine);
+    separator.setFrameShadow(QFrame::Sunken);
+    gridLayout.addWidget(&separator, 3, 0, 1, 2);
+    gridLayout.addWidget(&submitInvalidButton, 4, 0, 1, 1);
+
     taskManagementGroupBox.setLayout(&gridLayout);
 
     vLayout.addWidget(&taskManagementGroupBox);
@@ -75,12 +80,13 @@ TaskManagementWidget::TaskManagementWidget(QWidget *parent) : DialogVisibilityNo
 
     submitCommentEdit.setPlaceholderText("submission comment (optional)");
     submitFinalButton.setToolTip("marks your work as finished.");
+    submitInvalidButton.setToolTip("Flag task as invalid.");
 
     QObject::connect(&startNewTaskButton, &QPushButton::clicked, this, &TaskManagementWidget::startNewTaskButtonClicked);
     QObject::connect(&loadLastSubmitButton, &QPushButton::clicked, this, &TaskManagementWidget::loadLastSubmitButtonClicked);
-    QObject::connect(&submitButton, &QPushButton::clicked, this, &TaskManagementWidget::submit);
+    QObject::connect(&submitButton, &QPushButton::clicked, this, [this](const bool) { submit(); });
     QObject::connect(&submitFinalButton, &QPushButton::clicked, this, &TaskManagementWidget::submitFinal);
-
+    QObject::connect(&submitInvalidButton, &QPushButton::clicked, this, &TaskManagementWidget::submitInvalid);
     QObject::connect(&logoutButton, &QPushButton::clicked, this, &TaskManagementWidget::logoutButtonClicked);
 
     QObject::connect(&taskLoginWidget, &TaskLoginWidget::accepted, [this]{
@@ -145,6 +151,7 @@ void TaskManagementWidget::updateAndRefreshWidget() {
         submitCommentEdit.setEnabled(hasTask);
         submitButton.setEnabled(hasTask);
         submitFinalButton.setEnabled(hasTask);
+        submitInvalidButton.setEnabled(hasTask);
         DialogVisibilityNotify::setVisible(true);
     } else {
         emit visibilityChanged(false);
@@ -234,12 +241,26 @@ void TaskManagementWidget::submitFinal() {
     }
 }
 
-bool TaskManagementWidget::submit(const bool final) {
+void TaskManagementWidget::submitInvalid() {
+    QMessageBox confirm{this};
+    confirm.setIcon(QMessageBox::Question);
+    confirm.setText("Do you really want to flag the task as invalid?");
+    confirm.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+    auto result = static_cast<QMessageBox::StandardButton>(confirm.exec());
+    if (result == QMessageBox::Yes) {
+        if (submit(true, false)) {
+            updateAndRefreshWidget();
+            state->viewer->window->newAnnotationSlot();
+        }
+    }
+}
+
+bool TaskManagementWidget::submit(const bool final, const bool valid) {
     state->viewer->window->save();//save file to submit
 
     setCursor(Qt::BusyCursor);
     setEnabled(false);// disable until upload has finished
-    auto res = Network::singleton().submitHeidelbrain(baseUrl + "/submit/", Annotation::singleton().annotationFilename, submitCommentEdit.text(), final);
+    auto res = Network::singleton().submitHeidelbrain(baseUrl + "/submit/", Annotation::singleton().annotationFilename, submitCommentEdit.text(), final, valid);
     setEnabled(true);
     setCursor(Qt::ArrowCursor);
 

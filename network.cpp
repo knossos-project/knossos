@@ -194,7 +194,7 @@ QPair<bool, QPair<QString, QByteArray>> Network::getPost(const QUrl & url) {
     return blockDownloadExtractFilenameAndData(reply);
 }
 
-QPair<bool, QString> Network::submitHeidelbrain(const QUrl & url, const QString & filePath, const QString & comment, const bool final) {
+QPair<bool, QString> Network::submitHeidelbrain(const QUrl & url, const QString & filePath, const QString & comment, const bool final, const bool valid) {
     if (manager.cookieJar()->cookiesForUrl(url).empty()) {
         return {false, "no cookie"};
     }
@@ -214,6 +214,7 @@ QPair<bool, QString> Network::submitHeidelbrain(const QUrl & url, const QString 
     multipart.append(addFormDataPart("filename", filename.toUtf8()));
     multipart.append(addFormDataPart("submit_comment", comment.toUtf8()));
     multipart.append(addFormDataPart("submit_work_is_final", final ? "True" : "False"));
+    multipart.append(addFormDataPart("is_valid", valid ? "True" : "False"));
 
     QNetworkRequest request(url);
     request.setRawHeader("Referer", url.toString(QUrl::PrettyDecoded | QUrl::RemovePath).toUtf8());

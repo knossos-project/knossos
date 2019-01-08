@@ -52,7 +52,7 @@ public:
     QPair<bool, QString> refresh(const QUrl & url);
     QPair<bool, QPair<QString, QByteArray> > getFile(const QUrl & url);
     QPair<bool, QPair<QString, QByteArray> > getPost(const QUrl & url);
-    QPair<bool, QString> submitHeidelbrain(const QUrl & url, const QString & filePath, const QString & comment, const bool final);
+    QPair<bool, QString> submitHeidelbrain(const QUrl & url, const QString & filePath, const QString & comment, const bool final, const bool valid);
     void submitSegmentationJob(const QString &filename);
     std::pair<int, int> checkOnlineMags(const QUrl & url);
 

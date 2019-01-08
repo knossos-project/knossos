@@ -66,16 +66,19 @@ protected:
     QLineEdit submitCommentEdit;
     QPushButton submitButton{"Submit"};
     QPushButton submitFinalButton{"Final Submit"};
+    QFrame separator;
+    QPushButton submitInvalidButton{"Flag invalid"};
 
     QPushButton logoutButton{"Logout"};
 
+    bool submit(const bool final = false, const bool valid = true);
 public slots:
     virtual void setVisible(bool enable) override;// showOrLoginOrHide
 
     void updateAndRefreshWidget();
 
     void submitFinal();
-    bool submit(const bool final = false);
+    void submitInvalid();
 
     void startNewTaskButtonClicked();
     void loadLastSubmitButtonClicked();
