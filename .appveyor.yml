@@ -11,14 +11,14 @@ artifacts:
 
 build_script:
   - C:\msys64\usr\bin\pacman -Syuu --noconfirm
-  - C:\msys64\usr\bin\bash -lc "$(cygpath ${APPVEYOR_BUILD_FOLDER})/ci/appveyor_build.sh"
+  - C:\msys64\usr\bin\bash -lc "$(cygpath ${APPVEYOR_BUILD_FOLDER})/ci/build_windows.sh"
 
 deploy:
   - provider: GitHub
     tag: nightly
     auth_token:
       secure: 9tKkhsqR9qSoKt3390923aZ0EauffZQQ/6Ho0HdYlTEudtFJ1eTnw6B3TGclgqA0 # your encrypted token from GitHub
-      artifact: /.*\nightly.exe/ # artifact to release
+    artifact: win.KNOSSOS.nightly.exe
     prerelease: true
     force_update: true
     on:
@@ -27,6 +27,6 @@ deploy:
     tag: nightly-dev
     auth_token:
       secure: 9tKkhsqR9qSoKt3390923aZ0EauffZQQ/6Ho0HdYlTEudtFJ1eTnw6B3TGclgqA0 # your encrypted token from GitHub
-      artifact: /.*\nightly.exe/ # artifact to release
+    artifact: /win\..*-KNOSSOS.nightly\.exe/
     prerelease: true
     force_update: true

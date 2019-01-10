@@ -17,7 +17,7 @@ time ../knossos/installer/create_appimage.sh
 
 # Deploy
 BRANCH_PREFIX=""
-if [[ $TRAVIS_BRANCH != "master" ]]; then
+if [[ $TRAVIS_TAG == "nightly-dev" ]]; then
 	BRANCH_PREFIX=${TRAVIS_BRANCH}-
 fi
 cp deploy/*.AppImage ../knossos/linux.${BRANCH_PREFIX}KNOSSOS.nightly.AppImage

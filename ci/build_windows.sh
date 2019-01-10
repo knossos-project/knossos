@@ -18,8 +18,5 @@ time cmake -G Ninja -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=RELEASE $PROJECTP
 time ninja
 
 # Deploy
-BRANCH_PREFIX=""
-if [[ $APPVEYOR_REPO_BRANCH != "master" ]]; then
-	BRANCH_PREFIX=${APPVEYOR_REPO_BRANCH}-
-fi
-cp knossos.exe $PROJECTPATH/win.${BRANCH_PREFIX}KNOSSOS.nightly.exe
+cp knossos.exe $PROJECTPATH/win.KNOSSOS.nightly.exe
+cp knossos.exe $PROJECTPATH/win.${APPVEYOR_REPO_BRANCH}-KNOSSOS.nightly.exe
