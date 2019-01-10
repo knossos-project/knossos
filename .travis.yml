@@ -1,7 +1,3 @@
-env:
-  global:
-    - TRAVIS_TAG=nightly-dev
-
 language: minimal
 
 matrix:
@@ -9,8 +5,25 @@ matrix:
     - os: linux
       dist: xenial
       services: docker
+      env: TRAVIS_TAG=nightly
+    - os: linux
+      dist: xenial
+      services: docker
+      env: TRAVIS_TAG=nightly-dev
     - os: osx
       sudo: enabled
+      env: TRAVIS_TAG=nightly
+      addons:
+        homebrew:
+          packages:
+            - boost
+            - ninja
+            - qt
+            - quazip
+            - snappy
+    - os: osx
+      sudo: enabled
+      env: TRAVIS_TAG=nightly-dev
       addons:
         homebrew:
           packages:
@@ -37,4 +50,18 @@ deploy:
     overwrite: true
     on:
       repo: knossos-project/knossos
+      branch: master
+      condition: $TRAVIS_TAG = nightly
+  - provider: releases
+    api_key:
+      secure: "DHBayH59cTgSeuzw0umwjc52r5p1sR3EV1vOG77cK1NIb7fi2UVmx69V2mIzfGYp0t1uFDsVvDGtFYRQxKozCteBu2oinmbiSjbeWnyldQqTFnF4QONF+eWGiHNdOdHY7Tj37+eV5BlgfsXZ5MfLN3tXZ2y++D+yfoUItsbvC3I="
+    file_glob: true
+    file:
+      - "*.AppImage"
+      - "macos.*.zip"
+    skip_cleanup: true
+    overwrite: true
+    on:
+      repo: knossos-project/knossos
       all_branches: true
+      condition: $TRAVIS_TAG = nightly-dev
