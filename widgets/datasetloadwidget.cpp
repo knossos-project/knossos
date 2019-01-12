@@ -104,13 +104,6 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     QObject::connect(&cancelButton, &QPushButton::clicked, [this]() { resetSettings(); hide(); });
 
     QObject::connect(&state->viewer->mainWindow, &MainWindow::datasetDropped, [this](const QUrl & url) {
-        const auto existingEntries = tableWidget.findItems(url.url(), Qt::MatchFlag::MatchExactly);
-        if (existingEntries.size() == 0) {
-            insertDatasetRow(url.url(), tableWidget.rowCount() - 1);
-            tableWidget.selectRow(tableWidget.rowCount() - 2);
-        } else {
-            tableWidget.selectRow(existingEntries.front()->row());
-        }
         loadDataset(boost::none, url);
     });
     resize(600, 600);//random default size, will be overriden by settings if present
@@ -275,6 +268,13 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         }
         qDebug() << "no config at" << path;
         return false;
+    }
+    const auto existingEntries = tableWidget.findItems(path.url(), Qt::MatchFlag::MatchExactly);
+    if (existingEntries.size() == 0) {
+        insertDatasetRow(path.url(), tableWidget.rowCount() - 1);
+        tableWidget.selectRow(tableWidget.rowCount() - 2);
+    } else {
+        tableWidget.selectRow(existingEntries.front()->row());
     }
 
     bool keepAnnotation = silent;
