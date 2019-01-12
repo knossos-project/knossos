@@ -1697,9 +1697,9 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
     auto drawCursor = [this, &seg, coord](const float r, const float g, const float b) {
         const auto bradius = seg.brush.getRadius();
         const auto bview = seg.brush.getView();
-        const auto xsize = bradius / Dataset::current().scales[0].x;
-        const auto ysize = bradius / Dataset::current().scales[0].y;
-        const auto zsize = bradius / Dataset::current().scales[0].z;
+        const auto xsize = bradius / Dataset::current().scale.x;
+        const auto ysize = bradius / Dataset::current().scale.y;
+        const auto zsize = bradius / Dataset::current().scale.z;
 
         //move from center to cursor
         glTranslatef(Dataset::current().scales[0].x * coord.x, Dataset::current().scales[0].y * coord.y, Dataset::current().scales[0].z * coord.z);
@@ -1715,19 +1715,17 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
 
         const bool xy = viewportType == VIEWPORT_XY;
         const bool xz = viewportType == VIEWPORT_XZ;
+        const int xmax = xy || xz ? xsize : zsize;
+        const int ymax = xz ? zsize : ysize;
         const int z = 0;
         std::vector<floatCoordinate> vertices;
         if(seg.brush.getShape() == brush_t::shape_t::angular) {
-            const auto x = xy || xz ? xsize : zsize;
-            const auto y = xz ? zsize : ysize;
             //integer coordinates to round to voxel boundaries
-            vertices.emplace_back(-x    , -y    , z);
-            vertices.emplace_back( x + 1, -y    , z);
-            vertices.emplace_back( x + 1,  y + 1, z);
-            vertices.emplace_back(-x    ,  y + 1, z);
+            vertices.emplace_back(-xmax    , -ymax    , z);
+            vertices.emplace_back( xmax + 1, -ymax    , z);
+            vertices.emplace_back( xmax + 1,  ymax + 1, z);
+            vertices.emplace_back(-xmax    ,  ymax + 1, z);
         } else if(seg.brush.getShape() == brush_t::shape_t::round) {
-            const int xmax = xy ? xsize : xz ? xsize : zsize;
-            const int ymax = xy ? ysize : xz ? zsize : ysize;
             int y = 0;
             int x = xmax;
             auto addVerticalPixelBorder = [&vertices](float x, float y, float z) {
@@ -1738,8 +1736,17 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
                 vertices.emplace_back(x    , y, z);
                 vertices.emplace_back(x + 1, y, z);
             };
-            while (x >= y) { //first part of the ellipse (circle with anisotropic pixels), y dominant movement
-                auto val = isInsideSphere(xy ? x : xz ? x : z, xy ? y : xz ? z : y, xy ? z : xz ? y : x, bradius);
+            while (x * Dataset::current().scaleFactor.componentMul(v1).length() >= y * Dataset::current().scaleFactor.componentMul(v2).length()) { //first part of the ellipse (circle with anisotropic pixels), y dominant movement
+                bool val;
+                if (y > ymax) {
+                    val = isInsideSphere((xy || xz ? x : z) * Dataset::current().scaleFactor.x + std::fmod(coord.x, Dataset::current().scaleFactor.x),
+                                                    (xz ? z : y) * Dataset::current().scaleFactor.y + std::fmod(coord.y, Dataset::current().scaleFactor.y),
+                                                    (xy ? z : xz ? y : x) * Dataset::current().scaleFactor.z + std::fmod(coord.z, Dataset::current().scaleFactor.z), bradius);
+                } else {
+                    val = isInsideSphere((xy || xz ? x : z) * Dataset::current().scaleFactor.x,
+                                                    (xz ? z : y) * Dataset::current().scaleFactor.y,
+                                                    (xy ? z : xz ? y : x) * Dataset::current().scaleFactor.z, bradius);
+                }
                 if (val) {
                     addVerticalPixelBorder( x + 1,  y, z);
                     addVerticalPixelBorder(-x    ,  y, z);
@@ -1760,8 +1767,17 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
 
             x = 0;
             y = ymax;
-            while (y >= x) { //second part of the ellipse, x dominant movement
-                auto val = isInsideSphere(xy ? x : xz ? x : z, xy ? y : xz ? z : y, xy ? z : xz ? y : x, bradius);
+            while (y * Dataset::current().scaleFactor.componentMul(v2).length() >= x * Dataset::current().scaleFactor.componentMul(v1).length()) { //second part of the ellipse, x dominant movement
+                bool val;
+                if (x > xmax) {
+                    val = isInsideSphere((xy || xz ? x : z) * Dataset::current().scaleFactor.x + std::fmod(coord.x, Dataset::current().scaleFactor.x),
+                                                    (xz ? z : y) * Dataset::current().scaleFactor.y + std::fmod(coord.y, Dataset::current().scaleFactor.y),
+                                                    (xy ? z : xz ? y : x) * Dataset::current().scaleFactor.z + std::fmod(coord.z, Dataset::current().scaleFactor.z), bradius);
+                } else {
+                    val = isInsideSphere((xy || xz ? x : z) * Dataset::current().scaleFactor.x,
+                                                    (xz ? z : y) * Dataset::current().scaleFactor.y,
+                                                    (xy ? z : xz ? y : x) * Dataset::current().scaleFactor.z, bradius);
+                }
                 if (val) {
                     addHorizontalPixelBorder( x,  y + 1, z);
                     addHorizontalPixelBorder(-x,  y + 1, z);
@@ -1782,8 +1798,11 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
         }
         // scale
         for (auto && point : vertices) {
-            point.x *= Dataset::current().scales[0].componentMul(v1).length();
-            point.y *= Dataset::current().scales[0].componentMul(v2).length();
+            point.x -= std::fmod(coord.x, Dataset::current().scaleFactor.x) / Dataset::current().scaleFactor.x;
+            point.y -= std::fmod(coord.y, Dataset::current().scaleFactor.y) / Dataset::current().scaleFactor.y;
+            point.x *= Dataset::current().scale.componentMul(v1).length();
+            point.y *= Dataset::current().scale.componentMul(v2).length();
+//            point = Dataset::current().scaleFactor.componentMul(point);
         }
         // sort by angle
         const auto center = std::accumulate(std::begin(vertices), std::end(vertices), floatCoordinate(0, 0, 0)) / vertices.size();
