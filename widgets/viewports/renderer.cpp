@@ -1730,31 +1730,31 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
             const int ymax = xy ? ysize : xz ? zsize : ysize;
             int y = 0;
             int x = xmax;
-            auto addVerticalPixelBorder = [&vertices](float x, float y, float z) {
+            auto addVerticalPixelBorder = [this, &vertices](float x, float y, float z) {
                 vertices.emplace_back(x, y    , z);
-                vertices.emplace_back(x, y + 1, z);
+                vertices.emplace_back(x, y + Dataset::current().scaleFactor.componentMul(v2).length(), z);
             };
-            auto addHorizontalPixelBorder = [&vertices](float x, float y, float z) {
+            auto addHorizontalPixelBorder = [this, &vertices](float x, float y, float z) {
                 vertices.emplace_back(x    , y, z);
-                vertices.emplace_back(x + 1, y, z);
+                vertices.emplace_back(x + Dataset::current().scaleFactor.componentMul(v1).length(), y, z);
             };
             while (x >= y) { //first part of the ellipse (circle with anisotropic pixels), y dominant movement
                 auto val = isInsideSphere(xy ? x : xz ? x : z, xy ? y : xz ? z : y, xy ? z : xz ? y : x, bradius);
                 if (val) {
-                    addVerticalPixelBorder( x + 1,  y, z);
+                    addVerticalPixelBorder( x + Dataset::current().scaleFactor.componentMul(v1).length(),  y, z);
                     addVerticalPixelBorder(-x    ,  y, z);
                     addVerticalPixelBorder(-x    , -y, z);
-                    addVerticalPixelBorder( x + 1, -y, z);
+                    addVerticalPixelBorder( x + Dataset::current().scaleFactor.componentMul(v1).length(), -y, z);
                 } else if (x != xmax || y != 0) {
                     addHorizontalPixelBorder( x,  y    , z);
                     addHorizontalPixelBorder(-x,  y    , z);
-                    addHorizontalPixelBorder(-x, -y + 1, z);
-                    addHorizontalPixelBorder( x, -y + 1, z);
+                    addHorizontalPixelBorder(-x, -y + Dataset::current().scaleFactor.componentMul(v2).length(), z);
+                    addHorizontalPixelBorder( x, -y + Dataset::current().scaleFactor.componentMul(v2).length(), z);
                 }
                 if (val) {
-                    ++y;
+                    y += Dataset::current().scaleFactor.componentMul(v2).length();
                 } else {
-                    --x;
+                    x -= Dataset::current().scaleFactor.componentMul(v1).length();
                 }
             }
 
@@ -1763,20 +1763,20 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
             while (y >= x) { //second part of the ellipse, x dominant movement
                 auto val = isInsideSphere(xy ? x : xz ? x : z, xy ? y : xz ? z : y, xy ? z : xz ? y : x, bradius);
                 if (val) {
-                    addHorizontalPixelBorder( x,  y + 1, z);
-                    addHorizontalPixelBorder(-x,  y + 1, z);
+                    addHorizontalPixelBorder( x,  y + Dataset::current().scaleFactor.componentMul(v2).length(), z);
+                    addHorizontalPixelBorder(-x,  y + Dataset::current().scaleFactor.componentMul(v2).length(), z);
                     addHorizontalPixelBorder(-x, -y    , z);
                     addHorizontalPixelBorder( x, -y    , z);
                 } else if (y != ymax || x != 0) {
                     addVerticalPixelBorder( x    ,  y, z);
-                    addVerticalPixelBorder(-x + 1,  y, z);
-                    addVerticalPixelBorder(-x + 1, -y, z);
+                    addVerticalPixelBorder(-x + Dataset::current().scaleFactor.componentMul(v1).length(),  y, z);
+                    addVerticalPixelBorder(-x + Dataset::current().scaleFactor.componentMul(v1).length(), -y, z);
                     addVerticalPixelBorder( x    , -y, z);
                 }
                 if (val) {
-                    ++x;
+                    x += Dataset::current().scaleFactor.componentMul(v1).length();
                 } else {
-                    --y;
+                    y -= Dataset::current().scaleFactor.componentMul(v2).length();
                 }
             }
         }
