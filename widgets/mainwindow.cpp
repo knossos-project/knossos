@@ -623,7 +623,7 @@ void MainWindow::createMenus() {
             box.setText(tr("There are no cycles."));
             box.exec();
         }
-    }, Qt::Key_O);
+    }, Qt::Key_L);
     actionMenu.addSeparator();
     clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/menubar/trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlot()));
     actionMenu.addSeparator();
