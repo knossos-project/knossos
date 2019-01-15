@@ -71,9 +71,13 @@ void Annotation::clearAnnotation() {
 }
 
 bool Annotation::outsideMovementArea(const Coordinate & pos) {
-    return pos.x < movementAreaMin.x || pos.x > movementAreaMax.x ||
-           pos.y < movementAreaMin.y || pos.y > movementAreaMax.y ||
-           pos.z < movementAreaMin.z || pos.z > movementAreaMax.z;
+    const Coordinate magMinPos(pos.x - std::fmod(pos.x, Dataset::current().scaleFactor.x),
+                pos.y - std::fmod(pos.y, Dataset::current().scaleFactor.y),
+                pos.z - std::fmod(pos.z, Dataset::current().scaleFactor.z));
+    const auto maxMagPos = magMinPos + Dataset::current().scaleFactor - 1;
+    return maxMagPos.x < movementAreaMin.x || magMinPos.x > movementAreaMax.x ||
+           maxMagPos.y < movementAreaMin.y || magMinPos.y > movementAreaMax.y ||
+           maxMagPos.z < movementAreaMin.z || magMinPos.z > movementAreaMax.z;
 }
 
 void Annotation::updateMovementArea(const Coordinate & min, const Coordinate & max) {
