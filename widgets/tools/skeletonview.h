@@ -176,6 +176,7 @@ class SkeletonView : public QWidget {
     QCheckBox lockToActiveCheckbox{tr("Lock to active node")};
     QPushButton disableCurrentLockingButton{tr("Disable current locking")};
 
+    void exportSWC(const bool pixelSpace);
 public:
     explicit SkeletonView(QWidget * const parent = nullptr);
     void jumpToNextNode(const bool forward) const;

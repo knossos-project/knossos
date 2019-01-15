@@ -30,15 +30,18 @@
 #include "skeleton/skeletonizer.h"
 #include "skeleton/tree.h"
 #include "stateInfo.h"
+#include "skeleton/swc.h"
 #include "viewer.h"// Viewer::suspend
 
 #include <QApplication>
+#include <QFileDialog>
 #include <QFormLayout>
 #include <QHeaderView>
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QRegExpValidator>
 #include <QSignalBlocker>
+#include <QStandardPaths>
 
 template<typename Func>
 void question(Func func, const QString & acceptButtonText, const QString & text, const QString & extraText = "") {
@@ -639,6 +642,10 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//hide
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() > 0);//restore default color
         treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() > 0);//save selected trees
+        treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() == 1);//swc separator
+        treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() == 1);//export to µm swc
+        treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() == 1);//export to px swc
+        treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() == 1);//swc separator
         treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() > 0 && containsMesh);//remove mesh
         treeContextMenu.actions().at(deleteActionIndex = i++)->setEnabled(nodeEditing && selectedTrees.size() > 0);//delete
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
@@ -750,6 +757,10 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(treeContextMenu.addAction("&Save trees"), &QAction::triggered, [](){
         state->viewer->mainWindow.saveAsSlot(true);
     });
+    addDisabledSeparator(treeContextMenu);
+    QObject::connect(treeContextMenu.addAction("Export to µm SWC"), &QAction::triggered, [this](){ exportSWC(false); });
+    QObject::connect(treeContextMenu.addAction("Export to px SWC"), &QAction::triggered, [this](){ exportSWC(true); });
+    addDisabledSeparator(treeContextMenu);
     QObject::connect(treeContextMenu.addAction("&Remove meshes from trees"), &QAction::triggered, [](){
         Skeletonizer::singleton().bulkOperation(state->skeletonState->selectedTrees, [](auto & tree){
             if(tree.mesh) {
@@ -985,5 +996,15 @@ void SkeletonView::reverseSynapseDirection() {
         info.setText(tr("Select one or two corresponding synapse nodes first"));
         info.exec();
         return;
+    }
+}
+
+void SkeletonView::exportSWC(const bool pixelSpace) {
+    auto & tree = state->skeletonState->selectedTrees[0];
+    const auto suggestedPath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/" + QString::number(tree->treeID) + ".swc";
+    const auto saveName = QFileDialog::getSaveFileName(this, "Export to µm SWC file", suggestedPath, "SWC file (*.swc)");
+    if (!saveName.isNull()) {
+        QFile file{saveName};
+        writeSWC(file, *tree, pixelSpace);
     }
 }
