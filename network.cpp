@@ -41,6 +41,7 @@
 #include <QSettings>
 #include <QTimer>
 #include <QVariantList>
+#include <QXmlStreamWriter>
 
 Network::Network(const QObject *) {
     manager.setCookieJar(&cookieJar);
@@ -154,9 +155,15 @@ QPair<bool, QString> Network::refresh(const QUrl & url) {
 }
 
 QPair<bool, QString> Network::login(const QUrl & url, const QString & username, const QString & password) {
-    const auto postdata = QString("<login><username>%1</username><password>%2</password><knossos_version>%3</knossos_version></login>").arg(username).arg(password).arg(KREVISION);
+    QString postdata;
+    QXmlStreamWriter writer{&postdata};
+    writer.writeStartElement("login");
+    writer.writeTextElement("username", username);
+    writer.writeTextElement("password", password);
+    writer.writeTextElement("knossos_version", KREVISION);
+    writer.writeEndElement();
     QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain; charset=utf-8");
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "text/xml; charset=utf-8");
     auto & reply = *manager.post(request, postdata.toUtf8());
     return blockDownloadExtractData(reply);
 }
