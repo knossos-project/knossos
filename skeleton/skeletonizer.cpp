@@ -585,6 +585,8 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                         }
                         if (key == "category") {
                             loadedCategory = attribute.value().toString();
+                        } else if (key == "time_limit_ms") {
+                            Annotation::singleton().setAnnotationTimeLimit(attribute.value().toInt());
                         } else if (key == "name") {
                             loadedTaskName = attribute.value().toString();
                         }

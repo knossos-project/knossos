@@ -32,6 +32,8 @@
 #include <QString>
 #include <QTimer>
 
+#include <boost/optional.hpp>
+
 enum class GUIMode {
     None,
     ProofReading
@@ -58,12 +60,6 @@ enum AnnotationMode {
     Mode_Selection = (1 << 13) | NodeSelection | ObjectSelection,
 };
 
-struct AAMTask {
-    QString project;
-    QString category;
-    QString name;
-};
-
 class Annotation : public QObject {
     Q_OBJECT
     class ActivityEventFilter;
@@ -82,7 +78,12 @@ public:
     bool savePlyAsBinary{true};
     bool unsavedChanges = false;
 
-    AAMTask task;
+    struct {
+        QString project;
+        QString category;
+        QString name;
+        boost::optional<int> annotationTimeMax;
+    } task;
     QFlags<AnnotationMode> annotationMode;
     GUIMode guiMode{GUIMode::None};
 
@@ -101,13 +102,16 @@ public:
         static Annotation session;
         return session;
     }
+    void checkAnnotationTimeLimit();
     void clearAnnotation();
     decltype(annotationTimeMilliseconds) getAnnotationTime() const;
     void setAnnotationTime(const decltype(annotationTimeMilliseconds) & ms);
+    void setAnnotationTimeLimit(const decltype(annotationTimeMilliseconds) & ms);
     decltype(annotationTimeMilliseconds) currentTimeSliceMs() const;
 
 signals:
     void annotationTimeChanged(const QString & timeString);
+    void annotationTimeLimitReached();
     void autoSaveSignal();
     void clearedAnnotation();
     void movementAreaChanged();

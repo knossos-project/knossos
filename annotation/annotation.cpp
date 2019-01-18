@@ -66,6 +66,7 @@ void Annotation::clearAnnotation() {
     setAnnotationTime(0);
     annotationFilename = "";
     extraFiles.clear();
+    task = {};
     emit clearedAnnotation();
     unsavedChanges = false;
 }
@@ -94,6 +95,12 @@ decltype(Annotation::annotationTimeMilliseconds) Annotation::getAnnotationTime()
     return annotationTimeMilliseconds;
 }
 
+void Annotation::checkAnnotationTimeLimit() {
+    if (task.annotationTimeMax && annotationTimeMilliseconds >= task.annotationTimeMax.value()) {
+        emit annotationTimeLimitReached();
+    }
+}
+
 void Annotation::setAnnotationTime(const decltype(annotationTimeMilliseconds) & ms) {
     annotationTimeMilliseconds = ms;
 
@@ -102,6 +109,12 @@ void Annotation::setAnnotationTime(const decltype(annotationTimeMilliseconds) & 
     const auto minutes = absoluteMinutes % 60;
 
     emit annotationTimeChanged(QString("%1:%2 h annotation time").arg(hours).arg(minutes, 2, 10, QChar('0')));
+    checkAnnotationTimeLimit();
+}
+
+void Annotation::setAnnotationTimeLimit(const decltype(annotationTimeMilliseconds) & ms) {
+    task.annotationTimeMax = ms;
+    checkAnnotationTimeLimit();
 }
 
 decltype(Annotation::annotationTimeMilliseconds) Annotation::currentTimeSliceMs() const {

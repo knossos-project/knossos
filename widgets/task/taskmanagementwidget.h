@@ -71,7 +71,7 @@ protected:
     QPushButton rejectTaskButton{"Reject"};
 
     QPushButton logoutButton{"Logout"};
-
+public:
     bool submit(const bool final = false, const bool valid = true);
 public slots:
     virtual void setVisible(bool enable) override;// showOrLoginOrHide
