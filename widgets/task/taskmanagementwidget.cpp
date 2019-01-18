@@ -28,6 +28,7 @@
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 
+#include <QApplication>
 #include <QByteArray>
 #include <QDir>
 #include <QJsonDocument>
@@ -235,23 +236,26 @@ void TaskManagementWidget::startNewTaskButtonClicked() {
 }
 
 void TaskManagementWidget::submitFinal() {
-    if (submit(true)) {
-        updateAndRefreshWidget();//task infos changed
-        state->viewer->window->newAnnotationSlot();//clear the annotation to ease starting a new one
+    QMessageBox box{QApplication::activeWindow()};
+    box.setIcon(QMessageBox::Question);
+    box.setText("You are confident the task is done and you want to submit?");
+    const auto * accept = box.addButton(tr("Finish task"), QMessageBox::AcceptRole);
+    box.addButton(tr("Cancel"), QMessageBox::RejectRole);
+    box.exec();
+    if (box.clickedButton() == accept) {
+        submit(true);
     }
 }
 
 void TaskManagementWidget::submitInvalid() {
-    QMessageBox confirm{this};
-    confirm.setIcon(QMessageBox::Question);
-    confirm.setText("Do you really want to flag the task as invalid?");
-    confirm.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
-    auto result = static_cast<QMessageBox::StandardButton>(confirm.exec());
-    if (result == QMessageBox::Yes) {
-        if (submit(true, false)) {
-            updateAndRefreshWidget();
-            state->viewer->window->newAnnotationSlot();
-        }
+    QMessageBox box{QApplication::activeWindow()};
+    box.setIcon(QMessageBox::Question);
+    box.setText("Do you really want to flag the task as invalid?");
+    const auto * accept = box.addButton(tr("Flag invalid"), QMessageBox::AcceptRole);
+    box.addButton(tr("Cancel"), QMessageBox::RejectRole);
+    box.exec();
+    if (box.clickedButton() == accept) {
+        submit(true, false);
     }
 }
 
@@ -266,6 +270,10 @@ bool TaskManagementWidget::submit(const bool final, const bool valid) {
 
     if (handleError(res, "Task successfully submitted!")) {
         submitCommentEdit.clear();//clean comment if submit was successful
+        if (final) {
+            updateAndRefreshWidget();//task infos changed
+            state->viewer->window->newAnnotationSlot();//clear the annotation to ease starting a new one
+        }
         return true;
     }
     return false;
