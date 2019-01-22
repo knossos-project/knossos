@@ -1,5 +1,8 @@
 language: minimal
 
+git:
+  depth: false # tags for git describe may be farther away than the default depth
+
 matrix:
   include:
     - os: linux
