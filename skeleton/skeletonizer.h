@@ -179,7 +179,6 @@ struct SkeletonState {
     QString skeletonLastSavedInVersion;
 
     bool displayMatlabCoordinates{false};
-    bool loadMatlabCoordinates{true};
     bool saveMatlabCoordinates{true};
 };
 

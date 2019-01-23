@@ -229,9 +229,10 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     xml.writeAttribute("version", state->skeletonState->skeletonCreatedInVersion);
     xml.writeEndElement();
 
-    xml.writeStartElement("node_position_numbering");
-    xml.writeAttribute("index_origin", QString::number(skeletonState.saveMatlabCoordinates));
-    xml.writeEndElement();
+    if (!skeletonState.saveMatlabCoordinates) {
+        xml.writeStartElement("nodes_0_based");
+        xml.writeEndElement();
+    }
 
     xml.writeStartElement("guiMode");
     xml.writeAttribute("mode", (Annotation::singleton().guiMode == GUIMode::ProofReading) ? "proof reading" : "none");
@@ -413,7 +414,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
 
     Annotation::singleton().guiMode = GUIMode::None;
 
-    bool matlabCoordinates{skeletonState.loadMatlabCoordinates};
+    bool matlabCoordinates{true};
     QString experimentName, taskCategory, taskName;
     std::uint64_t activeNodeID = 0;
     auto nmlScale = Dataset::current().scales[0];
@@ -445,7 +446,9 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                     state->skeletonState->skeletonCreatedInVersion = attributes.value("version").toString();
                 } else if(xml.name() == "lastsavedin") {
                     state->skeletonState->skeletonLastSavedInVersion = attributes.value("version").toString();
-                } else if (xml.name() == "node_position_numbering") {
+                } else if (xml.name() == "nodes_0_based") {
+                    matlabCoordinates = false;
+                } else if (xml.name() == "node_position_numbering") {// legacy tag
                     matlabCoordinates = attributes.value("index_origin").toInt();
                 } else if (xml.name() == "guiMode") {
                     if (attributes.value("mode").toString() == "proof reading") {
