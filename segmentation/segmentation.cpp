@@ -592,6 +592,7 @@ void Segmentation::mergelistLoad(QTextStream & stream) {
     QString line;
     {
         QSignalBlocker blocker{this};
+        std::size_t line_i{0};
         while (!(line = stream.readLine()).isNull()) {
             std::istringstream lineStream(line.toStdString());
             std::istringstream coordColorLineStream(stream.readLine().toStdString());
@@ -625,8 +626,9 @@ void Segmentation::mergelistLoad(QTextStream & stream) {
                 obj.comment = comment;
             } else {
                 clear();
-                throw std::runtime_error("mergelistLoad parsing failed");
+                throw std::runtime_error("mergelistLoad parsing failed " + std::to_string(valid0) + std::to_string(valid1) + std::to_string(valid2) + std::to_string(valid3) + "@" + std::to_string(line_i));
             }
+            line_i += 4 + customColorValid;
         }
     }// QSignalBlocker
     emit resetData();
