@@ -51,11 +51,16 @@ std::ostream & operator<< (std::ostream & os, const nodeListElement & node) {
             break;
         }
     }
+
+    int neuronType = node.getComment() == "soma"? 1 :
+                     node.getComment() == "axon"? 2 :
+                     node.getComment() == "basal"? 3 :
+                     node.getComment() == "apical"? 4 : /* undefined */ 0;
     const auto pos = static_cast<floatCoordinate>(node.position) * multiplier;
     std::string nodeLine;
-    os << karma::format_delimited(uint_ << 0 << double_ << double_ << double_ << double_,
+    os << karma::format_delimited(uint_ << int_ << double_ << double_ << double_ << double_,
                                   boost::spirit::ascii::space,
-                                  node.nodeID, pos.x(), pos.y(), pos.z(), node.radius * multiplier.x);
+                                  node.nodeID, neuronType, pos.x(), pos.y(), pos.z(), node.radius * multiplier.x);
     // instead of a second format call here, the above rule could be:
     // uint_ << 0 << double_ << double_ << double_ << double_ << &bool_(true) << uint_ | uint_ << 0 << double_ << double_ << double_ << double_ << -1
     // but that is redundant and produces a trailing space.
