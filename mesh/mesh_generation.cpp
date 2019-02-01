@@ -93,6 +93,8 @@ void marchingCubes(std::unordered_map<U, std::unordered_map<floatCoordinate, int
                         for (auto & oindex : Segmentation::singleton().subobjectFromId(it->first, {}).objects) {
                             obj2index[Segmentation::singleton().objects[oindex].id] |= CASE_MASK[pi];
                         }
+                    } else if (soid2oid.empty() && cubeVals[pi] != Segmentation::singleton().backgroundId) {
+                        obj2index[cubeVals[pi]] |= CASE_MASK[pi];
                     }
                 }
                 for (auto pair : obj2index) {
@@ -264,24 +266,38 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
         progress.setValue(++value / obj2totalfaces.size() * 333);
     }
     value = 0;
-    for (const auto oid : objects) {
-        if (progress.wasCanceled()) {
-            break;
+    const auto addMesh = [&](auto & iterable, const auto func){
+        QSignalBlocker blocker(Skeletonizer::singleton());
+        for (auto && elem : iterable) {
+            if (progress.wasCanceled()) {
+                break;
+            }
+            func(elem, QVector<float>{}, QVector<std::uint8_t>{});
+            progress.setValue(++value / iterable.size() * 334);
         }
-        if (auto it = obj2verts.find(oid); it != std::end(obj2verts)) {// creating empty ogl meshes isn’t trivial
-            QVector<float> normals;
-            QVector<std::uint8_t> colors;
-            QSignalBlocker blocker(Skeletonizer::singleton());
-            Skeletonizer::singleton().addMeshToTree(oid, it->second, normals, obj2faces[oid], colors, GL_TRIANGLES);
-        }
-        progress.setValue(++value / objects.size() * 334);
+    };
+    if (!objects.empty()) {
+        addMesh(objects, [&](auto & elem, auto normals, auto colors){
+            if (auto it = obj2verts.find(elem); it != std::end(obj2verts)) {// creating empty ogl meshes isn’t trivial
+                Skeletonizer::singleton().addMeshToTree(it->first, it->second, normals, obj2faces[it->first], colors, GL_TRIANGLES);
+            }
+        });
+    } else {
+        QSignalBlocker blocker(Segmentation::singleton());
+        addMesh(obj2verts, [&](auto & elem, auto normals, auto colors){
+            const auto oid = Segmentation::singleton().largestObjectContainingSubobjectId(elem.first, floatCoordinate{elem.second[0], elem.second[1], elem.second[2]});
+            Skeletonizer::singleton().addMeshToTree(oid, elem.second, normals, obj2faces[elem.first], colors, GL_TRIANGLES);
+        });
+        blocker.unblock();
+        Segmentation::singleton().resetData();
     }
     Skeletonizer::singleton().resetData();
 }
 
 void generateMeshesForSubobjectsOfSelectedObjects() {
     const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
-    const auto msg = QObject::tr("Generating meshes for %1 objects over %2 cubes").arg(Segmentation::singleton().selectedObjectsCount()).arg(cubes[0].size());
+    const auto count = Segmentation::singleton().selectedObjectsCount();
+    const auto msg = QObject::tr("Generating meshes for %1 objects over %2 cubes").arg(count == 0 ? QObject::tr("all") : QString::number(count)).arg(cubes[0].size());
     QProgressDialog progress(msg, "Cancel", 0, Segmentation::singleton().selectedObjectsCount() * cubes[0].size(), QApplication::activeWindow());
     progress.setWindowModality(Qt::WindowModal);
     qDebug() << msg.toUtf8().constData();

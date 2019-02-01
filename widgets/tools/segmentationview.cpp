@@ -480,8 +480,9 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         contextMenu.actions().at(copyActionIndex = i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// copy selected contents
         ++i;// separator
         contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 1);// mergeAction
-        contextMenu.actions().at(i)->setText(tr("Generate mag%1 mesh").arg(Dataset::current().magnification));
-        contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() >= 1);// generate meshes
+        contextMenu.actions().at(i)->setText(tr("Generate mesh (%2, mag%1)").arg(Dataset::current().magnification)
+                                             .arg(Segmentation::singleton().selectedObjectsCount() > 0 ? "selected objects" : "all subobjects"));
+        contextMenu.actions().at(i++)->setEnabled(true);// generate meshes
         contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// restoreColorAction
         contextMenu.actions().at(deleteActionIndex = i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// deleteAction
         ++i;// separator
