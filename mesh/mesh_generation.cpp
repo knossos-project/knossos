@@ -263,7 +263,7 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
             }
             ++offseti;
         }
-        progress.setValue(++value / obj2totalfaces.size() * 333);
+        progress.setValue(333 + ++value / obj2totalfaces.size() * 333);
     }
     value = 0;
     const auto addMesh = [&](auto & iterable, const auto func){
@@ -273,7 +273,7 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
                 break;
             }
             func(elem, QVector<float>{}, QVector<std::uint8_t>{});
-            progress.setValue(++value / iterable.size() * 334);
+            progress.setValue(666 + ++value / iterable.size() * 334);
         }
     };
     if (!objects.empty()) {
