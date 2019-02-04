@@ -150,7 +150,7 @@ void annotationFileSave(const QString & filename, const bool onlySelectedTrees) 
     time.start();
     QuaZip archive_write(filename);
     if (archive_write.open(QuaZip::mdCreate)) {
-        auto zipCreateFile = [](QuaZipFile & file_write, const QString & name, const int level){
+        auto zipCreateFile = [](QuaZipFile & file_write, const QString & name, const int level = Z_BEST_SPEED){
             auto fileinfo = QuaZipNewInfo(name);
             //without permissions set, some archive utilities will not grant any on extract
             fileinfo.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ReadGroup | QFileDevice::ReadOther);
@@ -158,21 +158,21 @@ void annotationFileSave(const QString & filename, const bool onlySelectedTrees) 
         };
         for (auto it = std::cbegin(Annotation::singleton().extraFiles); it != std::cend(Annotation::singleton().extraFiles); ++it) {
             QuaZipFile file_write(&archive_write);
-            if (zipCreateFile(file_write, it.key(), 1)) {
+            if (zipCreateFile(file_write, it.key())) {
                 file_write.write(it.value());
             } else {
                 throw std::runtime_error((filename + ": saving extra file %1 failed").arg(it.key()).toStdString());
             }
         }
         QuaZipFile file_write(&archive_write);
-        if (zipCreateFile(file_write, "annotation.xml", 1)) {
+        if (zipCreateFile(file_write, "annotation.xml")) {
             Skeletonizer::singleton().saveXmlSkeleton(file_write, onlySelectedTrees);
         } else {
             throw std::runtime_error((filename + ": saving skeleton failed").toStdString());
         }
         if (Segmentation::singleton().hasObjects() && !onlySelectedTrees) {
             QuaZipFile file_write(&archive_write);
-            if (zipCreateFile(file_write, "mergelist.txt", 1)) {
+            if (zipCreateFile(file_write, "mergelist.txt")) {
                 Segmentation::singleton().mergelistSave(file_write);
             } else {
                 throw std::runtime_error((filename + ": saving mergelist failed").toStdString());
@@ -180,7 +180,7 @@ void annotationFileSave(const QString & filename, const bool onlySelectedTrees) 
         }
         if (Segmentation::singleton().job.id != 0) {
             QuaZipFile file_write(&archive_write);
-            if (zipCreateFile(file_write, "microworker.txt", 1)) {
+            if (zipCreateFile(file_write, "microworker.txt")) {
                 Segmentation::singleton().jobSave(file_write);
             } else {
                 throw std::runtime_error((filename + ": saving segmentation job failed").toStdString());
@@ -190,7 +190,7 @@ void annotationFileSave(const QString & filename, const bool onlySelectedTrees) 
             if ((!onlySelectedTrees || tree.selected) && tree.mesh != nullptr) {
                 QuaZipFile file_write(&archive_write);
                 const auto filename = QString::number(tree.treeID) + ".ply";
-                if (zipCreateFile(file_write, filename, 1)) {
+                if (zipCreateFile(file_write, filename)) {
                     Skeletonizer::singleton().saveMesh(file_write, tree);
                 } else {
                     throw std::runtime_error((filename + ": saving mesh failed").toStdString());
@@ -208,7 +208,7 @@ void annotationFileSave(const QString & filename, const bool onlySelectedTrees) 
                     QuaZipFile file_write(&archive_write);
                     const auto cubeCoord = pair.first;
                     const auto name = nameTemplate.arg(cubeCoord.x).arg(cubeCoord.y).arg(cubeCoord.z);
-                    if (zipCreateFile(file_write, name, 1)) {
+                    if (zipCreateFile(file_write, name)) {
                         file_write.write(pair.second.c_str(), pair.second.length());
                     } else {
                         throw std::runtime_error((filename + ": saving snappy cube failed").toStdString());
