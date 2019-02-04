@@ -68,7 +68,9 @@ void annotationFileLoad(const QString & filename, const bool mergeSkeleton, cons
                 QuaZipFile file(&archive);
                 file.open(QIODevice::ReadOnly);
                 const auto cubeCoord = CoordOfCube(match.captured("x").toInt(), match.captured("y").toInt(), match.captured("z").toInt());
-                Loader::Controller::singleton().snappyCacheSupplySnappy(cubeCoord, match.captured("mag").toInt(), file.readAll().toStdString());
+                const auto anisoMags = Dataset::current().api == Dataset::API::PyKnossos;
+                const auto cubeMagnification = anisoMags ? match.captured("mag").toInt() - 1 : static_cast<int>(std::log2(match.captured("mag").toInt()));
+                Loader::Controller::singleton().snappyCacheSupplySnappy(cubeCoord, cubeMagnification, file.readAll().toStdString());
             }
         }
         const auto getSpecificFile = [&archive, &nonExtraFiles](const QString & filename, auto func){
@@ -200,11 +202,12 @@ void annotationFileSave(const QString & filename, const bool onlySelectedTrees) 
             cubeTime.start();
             const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
             for (std::size_t i = 0; i < cubes.size(); ++i) {
-                const auto magName = QString("%1_mag%2x%3y%4z%5.seg.sz").arg(Dataset::current().experimentname).arg(QString::number(std::pow(2, i)));
+                const auto mag = Dataset::current().api == Dataset::API::PyKnossos ? i + 1 : std::pow(2, i);
+                const auto nameTemplate = QString("%1_mag%2x%3y%4z%5.seg.sz").arg(Dataset::current().experimentname).arg(QString::number(mag));
                 for (const auto & pair : cubes[i]) {
                     QuaZipFile file_write(&archive_write);
                     const auto cubeCoord = pair.first;
-                    const auto name = magName.arg(cubeCoord.x).arg(cubeCoord.y).arg(cubeCoord.z);
+                    const auto name = nameTemplate.arg(cubeCoord.x).arg(cubeCoord.y).arg(cubeCoord.z);
                     if (zipCreateFile(file_write, name, 1)) {
                         file_write.write(pair.second.c_str(), pair.second.length());
                     } else {
