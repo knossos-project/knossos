@@ -473,10 +473,13 @@ void DatasetLoadWidget::loadSettings() {
         QSignalBlocker blocker{tableWidget};// we don’t want to process these in datasetCellChanged
         // add datasets from file
         for (const auto & dataset : settings.value(DATASET_MRU).toStringList()) {
-            appendRowSelectIfLU(transitionedDataset(dataset).toString());
+            const auto obsoleteConfs = QSet<QString>{"file::/resources/datasets/e2006.k.conf", "file::/resources/datasets/ek0563.k.conf", "file::/resources/datasets/j0256.k.conf"};
+            if (!obsoleteConfs.contains(dataset)) {
+                appendRowSelectIfLU(transitionedDataset(dataset).toString());
+            }
         }
         // add public datasets
-        auto datasetsDir = QDir(":/resources/datasets");
+        const auto datasetsDir = QDir(":/resources/datasets");
         for (const auto & dataset : datasetsDir.entryInfoList()) {
             const auto url = QUrl::fromLocalFile(dataset.absoluteFilePath()).toString();
             if (tableWidget.findItems(url, Qt::MatchExactly).empty()) {
