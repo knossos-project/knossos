@@ -282,11 +282,12 @@ auto selectElems(View & view, Model & model, Proxy & proxy) {
 
 template<typename Model, typename Proxy>
 auto updateSelection(QTreeView & view, Model & model, Proxy & proxy) {
-    auto isSelectedFunc = [&model, &proxy, &selectionModel = *view.selectionModel()](const int rowIndex){
-        return selectionModel.isSelected(proxy.mapFromSource(model.index(rowIndex, 0)));
+    const auto isSelectedFunc = [&proxy, &view](const int rowIndex){
+        return view.selectionModel()->isSelected(proxy.index(rowIndex, 0));
     };
-    const auto selection = deltaBlockSelection(model, model.cache, isSelectedFunc);
-    const auto selectedIndices = proxy.mapSelectionFromSource(selection);
+    const auto selectedIndices = deltaBlockSelection(proxy, [&model, &proxy](const auto rowIndex){
+        return model.cache[proxy.mapToSource(proxy.index(rowIndex, 0)).row()];
+    }, isSelectedFunc);
 
     model.selectionProtection = true;
     if (!selectedIndices.isEmpty()) {// selecting an empty index range apparently clears

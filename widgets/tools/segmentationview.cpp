@@ -554,7 +554,8 @@ void SegmentationView::selectionChanged(const QItemSelection & selected, const Q
 }
 
 void SegmentationView::updateTouchedObjSelection() {
-    const auto & selectedItems = blockSelection(touchedObjectModel, touchedObjectModel.objectCache);
+    const auto dataFromIndex = [&data = touchedObjectModel.objectCache](auto index){ return data[index]; };
+    const auto & selectedItems = deltaBlockSelection(touchedObjectModel, dataFromIndex);
 
     touchedObjectSelectionProtection = true;//using block signals prevents update of the tableview
     touchedObjsTable.selectionModel()->select(selectedItems, QItemSelectionModel::ClearAndSelect);
@@ -562,15 +563,16 @@ void SegmentationView::updateTouchedObjSelection() {
 }
 
 void SegmentationView::updateSelection() {
-    const auto & selectedItems = blockSelection(objectModel, Segmentation::singleton().objects);
-    const auto & proxySelection = objectProxyModelComment.mapSelectionFromSource(objectProxyModelCategory.mapSelectionFromSource(selectedItems));
+    const auto & proxySelection = deltaBlockSelection(objectProxyModelComment, [&](const auto rowIndex){
+        return Segmentation::singleton().objects[objectProxyModelCategory.mapToSource(objectProxyModelComment.mapToSource(objectProxyModelComment.index(rowIndex, 0))).row()];
+    });
 
     objectSelectionProtection = true;//using block signals prevents update of the tableview
     objectsTable.selectionModel()->select(proxySelection, QItemSelectionModel::ClearAndSelect);
     objectSelectionProtection = false;
 
-    if (!selectedItems.indexes().isEmpty()) {// scroll to first selected entry
-        objectsTable.scrollTo(proxySelection.indexes().front());
+    if (const auto indexes = proxySelection.indexes(); !indexes.isEmpty()) {// scroll to first selected entry
+        objectsTable.scrollTo(indexes.front());
     }
 }
 
