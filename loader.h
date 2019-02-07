@@ -114,7 +114,7 @@ public://matsch
     void unloadCurrentMagnification(const std::size_t);
     void unloadCurrentMagnification();
     void markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification);
-    void snappyCacheSupplySnappy(const CoordOfCube, const int cubeMagnification, const std::string cube);
+    void snappyCacheSupplySnappy(const CoordOfCube, const quint64 cubeMagnification, const std::string cube);
     void flushIntoSnappyCache();
     void broadcastProgress(bool startup = false);
     Worker(const decltype(datasets) &);
@@ -178,7 +178,7 @@ signals:
     void unloadCurrentMagnificationSignal();
     void loadSignal(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset::list_t & changedDatasets, const size_t segmentationLayer);
     void markOcCubeAsModifiedSignal(const CoordOfCube &cubeCoord, const int magnification);
-    void snappyCacheSupplySnappySignal(const CoordOfCube, const int cubeMagnification, const std::string cube);
+    void snappyCacheSupplySnappySignal(const CoordOfCube, const quint64 cubeMagnification, const std::string cube);
 };
 }//namespace Loader
 
