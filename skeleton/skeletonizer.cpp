@@ -1904,26 +1904,24 @@ QSet<nodeListElement *> Skeletonizer::findCycle() {
         return {};
     }
     auto * root = Skeletonizer::singleton().skeletonState.nodesByNodeID.begin()->second;
-    std::deque<nodeListElement *> spanningTree{root};
-    std::unordered_map<nodeListElement *, nodeListElement *> predecessors{{root, root}};
-    std::unordered_map<nodeListElement *, std::unordered_set<nodeListElement *>> usedNodes{{root, {}}};
-    while (!spanningTree.empty()) {
-        auto * node = spanningTree.back();
-        spanningTree.pop_back();
-        for (const auto & segment : *(node->getSegments())) {
-            auto * neighbor = (node == &segment->source) ? &segment->target : &segment->source;
-            if (usedNodes.find(neighbor) == std::end(usedNodes)) {
-                predecessors[neighbor] = node;
-                spanningTree.push_back(neighbor);
-                usedNodes[neighbor] = {node};
+    std::deque<nodeListElement *> todo{root};
+    std::unordered_map<nodeListElement *, nodeListElement *> prev{{root, root}};
+    while (!todo.empty()) {
+        auto * const node = todo.back();
+        todo.pop_back();
+        for (const auto & segment : node->segments) {
+            auto * const neighbor = (node == &segment.source) ? &segment.target : &segment.source;
+            if (prev.find(neighbor) == std::end(prev)) {
+                todo.emplace_back(neighbor);
+                prev[neighbor] = node;
             } else if (neighbor == node) {
                 return {node};
-            } else if (usedNodes[node].find(neighbor) == std::end(usedNodes[node])) {
+            } else if (prev.find(node) == std::end(prev) || prev[node] != neighbor) {
                 QSet<nodeListElement *> cycle{neighbor, node};
-                auto * predecessor = predecessors[node];
-                while (usedNodes[neighbor].find(predecessor) == std::end(usedNodes[neighbor])) {
+                auto * predecessor = prev[node];
+                while (prev.find(neighbor) == std::end(prev) || prev[neighbor] != predecessor) {
                     cycle.insert(predecessor);
-                    predecessor = predecessors[predecessor];
+                    predecessor = prev[predecessor];
                 }
                 cycle.insert(predecessor);
                 return cycle;
