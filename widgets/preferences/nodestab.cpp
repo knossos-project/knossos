@@ -89,7 +89,6 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     propertyMaxSpin.setPrefix("Max: ");
 
     generalLayout.setFieldGrowthPolicy(QFormLayout::FieldsStayAtSizeHint);
-    generalLayout.setAlignment(Qt::AlignTop);
     generalLayout.addRow(tr("Show node IDs"), &idCombo);
     generalLayout.addRow(&nodeCommentsCheck);
     generalLayout.addRow(&overrideNodeRadiusCheck, &overrideNodeRadiusSpin);
@@ -107,6 +106,7 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     propertiesLayout.addWidget(&propertyLUTButton, ++row, 0);
     lutLabel.setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
     propertiesLayout.addWidget(&lutLabel, row, 1, 1, 3, Qt::AlignRight);
+    propertiesLayout.setAlignment(Qt::AlignTop);
     propertiesGroup.setLayout(&propertiesLayout);
     mainLayout.addWidget(&generalGroup);
     mainLayout.addWidget(&propertiesGroup);

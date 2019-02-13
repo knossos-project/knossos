@@ -93,6 +93,7 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     outVisibilityAdjustLayout.addWidget(&outVisibilitySlider);
     outVisibilityAdjustLayout.addWidget(&outVisibilitySpin);
     movementAreaLayout.addLayout(&outVisibilityAdjustLayout);
+    movementAreaLayout.setAlignment(Qt::AlignTop);
     movementAreaGroup.setLayout(&movementAreaLayout);
 
     movementSpeedSpinBox.setRange(1, 10000);

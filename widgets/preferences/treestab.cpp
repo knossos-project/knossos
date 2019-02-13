@@ -50,7 +50,6 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     vpOrthoButtonGroup.addButton(&vpOrthoAllTreesRadio, static_cast<int>(!TreeDisplay::OnlySelected));
     vpOrthoButtonGroup.addButton(&vpOrthoSelectedTreesRadio, static_cast<int>(TreeDisplay::OnlySelected));
     // trees
-    renderingLayout.setAlignment(Qt::AlignTop);
     renderingLayout.addRow(&highlightActiveTreeCheck);
     renderingLayout.addRow(&highlightIntersectionsCheck);
     renderingLayout.addRow(&lightEffectsCheck);
@@ -58,8 +57,8 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     renderingLayout.addRow(&ownTreeColorsCheck, &loadTreeLUTButton);
     renderingLayout.addRow(tr("Depth cutoff:"), &depthCutoffSpin);
     renderingLayout.addRow(tr("Skeleton rendering quality:"), &renderQualityCombo);
+    renderingLayout.setAlignment(Qt::AlignTop);
     renderingGroup.setLayout(&renderingLayout);
-    visibilityLayout.setAlignment(Qt::AlignTop);
 
     vp3dLayout.addWidget(&vp3dAllTreesRadio);
     vp3dLayout.addWidget(&vp3dSelectedTreesRadio);
@@ -70,6 +69,7 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     vpOrthoGroup.setLayout(&vpOrthoLayout);
     visibilityLayout.addWidget(&vpOrthoGroup);
     visibilityLayout.addWidget(&vp3dGroup);
+    visibilityLayout.setAlignment(Qt::AlignTop);
     visibilityGroup.setLayout(&visibilityLayout);
 
     mainLayout.addWidget(&renderingGroup);

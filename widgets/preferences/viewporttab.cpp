@@ -33,11 +33,11 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
     rotationCenterGroup.addButton(&rotateAroundActiveNodeRadioBtn, static_cast<int>(RotationCenter::ActiveNode));
     rotationCenterGroup.addButton(&rotateAroundDatasetCenterRadioBtn, static_cast<int>(RotationCenter::DatasetCenter));
     rotationCenterGroup.addButton(&rotateAroundCurrentPositionRadioBtn, static_cast<int>(RotationCenter::CurrentPosition));
-    generalLayout.setAlignment(Qt::AlignTop);
     generalLayout.addWidget(&showScalebarCheckBox);
     generalLayout.addWidget(&showVPDecorationCheckBox);
     generalLayout.addWidget(&drawIntersectionsCrossHairCheckBox);
     generalLayout.addWidget(&addArbVPCheckBox);
+    generalLayout.setAlignment(Qt::AlignTop);
     generalBox.setLayout(&generalLayout);
 
     planesLayout.addWidget(&showXYPlaneCheckBox);
@@ -52,9 +52,11 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
     rotationLayout.addWidget(&rotateAroundDatasetCenterRadioBtn);
     rotationLayout.addWidget(&rotateAroundCurrentPositionRadioBtn);
     rotationBox.setLayout(&rotationLayout);
+
     viewport3DLayout.addWidget(&planesBox);
     viewport3DLayout.addWidget(&boundaryBox);
     viewport3DLayout.addWidget(&rotationBox);
+    viewport3DLayout.setAlignment(Qt::AlignTop);
     viewport3DBox.setLayout(&viewport3DLayout);
 
     mainLayout.addWidget(&generalBox);

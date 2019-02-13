@@ -75,6 +75,7 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
 
     segmentationLayout.addWidget(&overlayGroup);
     segmentationLayout.addWidget(&volumeGroup);
+    segmentationLayout.setAlignment(Qt::AlignTop);
     segmentationGroup.setLayout(&segmentationLayout);
     mainLayout.addWidget(&datasetGroup);
     mainLayout.addWidget(&segmentationGroup);
