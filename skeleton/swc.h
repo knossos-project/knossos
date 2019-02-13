@@ -23,8 +23,11 @@
 #ifndef SWC_H
 #define SWC_H
 
+#include "skeleton/tree.h"
+
 #include <QIODevice>
 
 void parseSWC(QIODevice && file);
+void writeSWC(QIODevice & file, const treeListElement & tree, const bool pixelSpace);
 
 #endif//SWC_H
