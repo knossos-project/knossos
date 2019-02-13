@@ -269,7 +269,7 @@ bool TaskManagementWidget::submit(const bool final, const bool valid) {
     setEnabled(true);
     setCursor(Qt::ArrowCursor);
 
-    if (handleError(res, "Task successfully submitted!")) {
+    if (handleError(res, res.second)) {
         submitCommentEdit.clear();//clean comment if submit was successful
         if (final) {
             updateAndRefreshWidget();//task infos changed
