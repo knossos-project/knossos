@@ -60,8 +60,9 @@ const auto node = [](auto & ctx){
     //3169, 2905, 135
     //3380, 3178, 117
     //583 -2613 -306
-    const auto pos = floatCoordinate(-2613, -583, -306) + floatCoordinate(3380, 3178, 117) + floatCoordinate(-at_c<1>(attr), at_c<0>(attr), -at_c<2>(attr)) * 1000.0 / Dataset::current().scale;
+//    const auto pos = floatCoordinate(-2613, -583, -306) + floatCoordinate(3380, 3178, 117) + floatCoordinate(-at_c<1>(attr), at_c<0>(attr), -at_c<2>(attr)) * 1000.0 / Dataset::current().scale;
 //    const auto pos = floatCoordinate(at_c<0>(attr), at_c<1>(attr), at_c<2>(attr)) * 1000.0 / Dataset::current().scale;
+    const auto pos = floatCoordinate(at_c<0>(attr), at_c<1>(attr), at_c<2>(attr));
     auto node = Skeletonizer::singleton().addNode(boost::none, 0.5 * at_c<3>(attr), currentTreeId, pos, VIEWPORT_UNDEFINED, 1, boost::none, false);
     if (node) {
         if (lastNode) {
@@ -91,14 +92,14 @@ const rule<class asc_id> asc_ = "asc";
 
 const auto comment_ = '"' >> lexeme[*(char_ - '"')][comment] >> '"';
 const auto treeColor_ = lit("(Color ") >> lit("RGB (") >> (int_ >> ',' >> int_ >> ',' >> int_)[treeColor] >> ')' >> ')';
-const auto hardCodedColor_ = lit("(Color ") >> ((*(char_ - ')')) | string("Blue") | string("Cyan") | string("DarkCyan") | string("DarkGreen") | string("DarkRed")| string("DarkYellow") | string("Green") | string("Magenta") | string("MoneyGreen") | string("SkyBlue") | string("Yellow")) >> ')';
+const auto hardCodedColor_ = lit("(Color ") >> ((*(char_ - ')')) | string("Red") | string("Blue") | string("Cyan") | string("DarkCyan") | string("DarkGreen") | string("DarkRed")| string("DarkYellow") | string("Green") | string("Magenta") | string("MoneyGreen") | string("SkyBlue") | string("Yellow")) >> ')';
 const auto color_ = treeColor_ | hardCodedColor_[hardCodedColor];
-const auto type_ = '(' >> (string("Apical")[tree] | string("CellBody")[tree] | string("Dendrite")[tree]) >> ')';
+const auto type_ = '(' >> (string("Axon")[tree] | string("Apical")[tree] | string("CellBody")[tree] | string("Dendrite")[tree]) >> ')';
 const auto node_ = ('(' >> (double_ >> double_ >> double_ >> double_)[node] >> ')' >> ';' >> (lit("Root") | (int_ >> -(',' >> (int_ | ('R' >> *('-' >> int_)))))));// TODO after id
 const auto branch__def = *node_ >> (split_ | lit("Normal")[branchEnd]);
 const auto split__def = lit('(')[branchBegin] >> branch_ >> *('|' >> branch_) >> ')' >> ';' >> "End of split";
 const auto tree__def = '(' >> -comment_ >> color_ >> type_ >> branch_ >> ')' >> ';' >> "End of tree";
-const auto asc__def = lit(";\tV3 text file written for MicroBrightField products.") >> "(ImageCoords)"
+const auto asc__def = lit(";\tV3 text file written for MicroBrightField products.") >> (string("(ImageCoords)") | "(Sections)")
                  >> '(' >> -comment_ >> color_ >> type_ >> *node_ >> ')' >> ';' >> "End of contour"
                  >> *tree_;
 BOOST_SPIRIT_DEFINE(branch_, split_, tree_, asc_)
