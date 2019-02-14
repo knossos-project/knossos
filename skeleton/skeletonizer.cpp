@@ -1900,32 +1900,9 @@ void Skeletonizer::deleteSelectedNodes() {
 }
 
 QSet<nodeListElement *> Skeletonizer::findCycle() {
-    if (Skeletonizer::singleton().skeletonState.nodesByNodeID.empty()) {
-        return {};
-    }
-    auto * root = Skeletonizer::singleton().skeletonState.nodesByNodeID.begin()->second;
-    std::deque<nodeListElement *> todo{root};
-    std::unordered_map<nodeListElement *, nodeListElement *> prev{{root, root}};
-    while (!todo.empty()) {
-        auto * const node = todo.back();
-        todo.pop_back();
-        for (const auto & segment : node->segments) {
-            auto * const neighbor = (node == &segment.source) ? &segment.target : &segment.source;
-            if (prev.find(neighbor) == std::end(prev)) {
-                todo.emplace_back(neighbor);
-                prev[neighbor] = node;
-            } else if (neighbor == node) {
-                return {node};
-            } else if (prev.find(node) == std::end(prev) || prev[node] != neighbor) {
-                QSet<nodeListElement *> cycle{neighbor, node};
-                auto * predecessor = prev[node];
-                while (prev.find(neighbor) == std::end(prev) || prev[neighbor] != predecessor) {
-                    cycle.insert(predecessor);
-                    predecessor = prev[predecessor];
-                }
-                cycle.insert(predecessor);
-                return cycle;
-            }
+    for (TreeTraverser nodeTraverser(state->skeletonState->trees); !nodeTraverser.reachedEnd; ++nodeTraverser) {
+        if (!nodeTraverser.nodeIter.cycle.empty()) {
+            return nodeTraverser.nodeIter.cycle;
         }
     }
     return {};
