@@ -41,6 +41,16 @@ NodeGenerator & NodeGenerator::operator++() {
 
     if (queue.empty()) {
         reachedEnd = true;
+        if (queuedNodes.size() != node.correspondingTree->nodes.size()) {
+            for (auto & node : node.correspondingTree->nodes) {
+                if (queuedNodes.find(&node) == std::end(queuedNodes)) {
+                    queuedNodes.emplace(&node);
+                    queue.emplace_back(&node);
+                    reachedEnd = false;
+                    break;
+                }
+            }
+        }
     }
     return *this;
 }
