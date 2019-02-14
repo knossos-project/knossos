@@ -20,8 +20,8 @@
  *  or contact knossos-team@mpimf-heidelberg.mpg.de
  */
 
-#ifndef SKELETON_DFS
-#define SKELETON_DFS
+#ifndef SKELETON_DFS_H
+#define SKELETON_DFS_H
 
 #include "skeleton/node.h"
 
@@ -32,9 +32,10 @@
 struct NodeGenerator {
     enum class Direction { Forward, Backward, Any };
     std::vector<nodeListElement *> queue;
-    std::unordered_set<const nodeListElement *> queuedNodes;
+    std::unordered_map<nodeListElement *, nodeListElement *> queuedNodes;
     Direction direction{Direction::Any};
     bool reachedEnd{true};
+    QSet<nodeListElement *> cycle;
     NodeGenerator() = default;
     NodeGenerator(nodeListElement & node, const Direction direction);
     bool operator!=(NodeGenerator & other);
@@ -55,4 +56,4 @@ struct TreeTraverser {
     void next();
 };
 
-#endif
+#endif//SKELETON_DFS_H

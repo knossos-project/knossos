@@ -4,7 +4,7 @@
 #include "stateInfo.h"
 
 NodeGenerator::NodeGenerator(nodeListElement & node, const Direction direction) : direction(direction), reachedEnd{false} {
-    queuedNodes.emplace(&node);
+    queuedNodes.emplace(&node, &node);
     queue.emplace_back(&node);
 }
 
@@ -25,8 +25,16 @@ NodeGenerator & NodeGenerator::operator++() {
             direction == Direction::Any) {
             auto & neighbor = segment.forward ? segment.target : segment.source;
             if (queuedNodes.find(&neighbor) == std::end(queuedNodes)) {
-                queuedNodes.emplace(&neighbor);
+                queuedNodes.emplace(&neighbor, &node);
                 queue.emplace_back(&neighbor);
+            } else if (queuedNodes.at(&node) != &neighbor) {// not just a backward segment
+                auto * cycleBegin = queuedNodes.at(&neighbor);// previous node with that neighbor
+                cycle = {cycleBegin, &neighbor, &node};
+                auto * predecessor = queuedNodes.at(&node);
+                for (; queuedNodes.at(predecessor) != predecessor && predecessor != cycleBegin; predecessor = queuedNodes.at(predecessor)) {
+                    cycle.insert(predecessor);
+                }
+                break;
             }
         }
     }
@@ -69,7 +77,7 @@ void TreeTraverser::next() {
     if (nodeIter.reachedEnd) {
         for (; progress != std::end(state->skeletonState->nodesByNodeID); ++progress) {
             if (nodeIter.queuedNodes.find(progress->second) == std::end(nodeIter.queuedNodes)) {
-                nodeIter.queuedNodes.emplace(progress->second);
+                nodeIter.queuedNodes.emplace(progress->second, progress->second);
                 nodeIter.queue = {progress->second};
                 nodeIter.reachedEnd = false;
                 break;
