@@ -44,7 +44,7 @@ NodeGenerator & NodeGenerator::operator++() {
         if (queuedNodes.size() != node.correspondingTree->nodes.size()) {
             for (auto & node : node.correspondingTree->nodes) {
                 if (queuedNodes.find(&node) == std::end(queuedNodes)) {
-                    queuedNodes.emplace(&node);
+                    queuedNodes.emplace(&node, &node);
                     queue.emplace_back(&node);
                     reachedEnd = false;
                     break;
