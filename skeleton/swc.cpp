@@ -40,7 +40,9 @@ void parseSWC(QIODevice && file) {
             default: return "";
             };
         }(at_c<1>(attr)));
-        edges.emplace_back(trgid, srcid);
+        if (trgid != -1) {
+            edges.emplace_back(trgid, srcid);
+        }
     };
     using namespace boost::spirit::x3;
     const auto comment_ = lexeme['#' >> *(char_ - eol) >> (eol|eoi)];
@@ -53,7 +55,7 @@ void parseSWC(QIODevice && file) {
         if (srcNode && trgNode) {
             Skeletonizer::singleton().addSegment(*srcNode, *trgNode);
         } else {
-            qDebug() << "couldn’t find nodes for edge" << edge.first << edge.second;
+            throw std::runtime_error("couldn’t find nodes for edge " + std::to_string(edge.first) + " " + std::to_string(edge.second));
         }
     }
 
