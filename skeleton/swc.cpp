@@ -67,15 +67,13 @@ void parseSWC(QIODevice && file) {
 
 using namespace boost::spirit;
 static floatCoordinate multiplier;
+static std::uint64_t id;
+static std::unordered_map<std::uint64_t, std::uint64_t> idmap;
 
-std::ostream & operator<< (std::ostream & os, const nodeListElement & node) {
-    boost::optional<decltype(nodeListElement::nodeID)> parent_id;
-    for (const auto & segment : node.segments) {
-        if (segment.source.nodeID != node.nodeID) {
-            parent_id = segment.source.nodeID;
-            break;
-        }
-    }
+std::ostream & operator<< (std::ostream & os, std::pair<std::reference_wrapper<nodeListElement>, std::uint64_t> pair) {
+    const auto & node = pair.first.get();
+    idmap[node.nodeID] = ++id;
+    auto parent_id = idmap.at(pair.second);
 
     int neuronType = node.getComment() == "soma"? 1 :
                      node.getComment() == "axon"? 2 :
@@ -85,23 +83,25 @@ std::ostream & operator<< (std::ostream & os, const nodeListElement & node) {
     std::string nodeLine;
     os << karma::format_delimited(uint_ << int_ << double_ << double_ << double_ << double_,
                                   boost::spirit::ascii::space,
-                                  node.nodeID, neuronType, pos.x(), pos.y(), pos.z(), node.radius * multiplier.x);
+                                  id, neuronType, pos.x(), pos.y(), pos.z(), node.radius * multiplier.x);
     // instead of a second format call here, the above rule could be:
     // uint_ << 0 << double_ << double_ << double_ << double_ << &bool_(true) << uint_ | uint_ << 0 << double_ << double_ << double_ << double_ << -1
     // but that is redundant and produces a trailing space.
-    os << karma::format(&bool_(true) << uint_ | -1, !!parent_id, parent_id.value_or(0));
+    os << karma::format(&bool_(true) << uint_ | -1, parent_id != id, parent_id);
     return os;
 }
 
-template <typename OutputIterator>
-struct nodeList : karma::grammar<OutputIterator, decltype(treeListElement::nodes)()> {
+template <typename OutputIterator, typename value_type>
+struct nodeList : karma::grammar<OutputIterator, value_type()> {
     nodeList() : nodeList::base_type(list) {
-        list =  node << *('\n' << node) << '\n';
+        list = node << *('\n' << node) << '\n';
         node = karma::stream;
     }
-    karma::rule<OutputIterator, decltype(treeListElement::nodes)()> list;
-    karma::rule<OutputIterator, nodeListElement()> node;
+    karma::rule<OutputIterator, value_type()> list;
+    karma::rule<OutputIterator, typename value_type::value_type()> node;
 };
+
+#include "skeleton_dfs.h"
 
 void writeSWC(QIODevice & file, const treeListElement & tree, const bool pixelSpace) {
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -110,6 +110,12 @@ void writeSWC(QIODevice & file, const treeListElement & tree, const bool pixelSp
     std::string swcText;
     std::back_insert_iterator<std::string> sink{swcText};
     multiplier = pixelSpace ? floatCoordinate(1, 1, 1) : Dataset::current().scale / 1000.f;
-    karma::generate(sink, nodeList<std::back_insert_iterator<std::string>>{}, tree.nodes);
+    std::vector<std::pair<std::reference_wrapper<nodeListElement>, std::uint64_t>> nodes;
+    auto & root = *Skeletonizer::singleton().findNodesInTree(const_cast<treeListElement&>(tree), "soma").front();
+    for (NodeGenerator nodeGen(root, NodeGenerator::Direction::Any); !nodeGen.reachedEnd; ++nodeGen) {
+        nodes.emplace_back(*nodeGen, nodeGen.queuedNodes[&*nodeGen]->nodeID);
+    }
+    id = 0;
+    karma::generate(sink, nodeList<std::back_insert_iterator<std::string>, decltype(nodes)>{}, nodes);
     file.write(swcText.data());
 }
