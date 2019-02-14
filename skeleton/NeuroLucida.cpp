@@ -61,9 +61,9 @@ const auto node = [](auto & ctx){
     //3380, 3178, 117
     //583 -2613 -306
 //    const auto pos = floatCoordinate(-2613, -583, -306) + floatCoordinate(3380, 3178, 117) + floatCoordinate(-at_c<1>(attr), at_c<0>(attr), -at_c<2>(attr)) * 1000.0 / Dataset::current().scale;
-//    const auto pos = floatCoordinate(at_c<0>(attr), at_c<1>(attr), at_c<2>(attr)) * 1000.0 / Dataset::current().scale;
-    const auto pos = floatCoordinate(at_c<0>(attr), at_c<1>(attr), at_c<2>(attr));
-    auto node = Skeletonizer::singleton().addNode(boost::none, 0.5 * at_c<3>(attr), currentTreeId, pos, VIEWPORT_UNDEFINED, 1, boost::none, false);
+    const auto pos = floatCoordinate(at_c<0>(attr), at_c<1>(attr), at_c<2>(attr)) * 1000.0  / Dataset::current().scales[0];
+    const auto radius = 0.5 * at_c<3>(attr) * 1000.0  / Dataset::current().scales[0].x;
+    auto node = Skeletonizer::singleton().addNode(boost::none, radius, currentTreeId, pos, VIEWPORT_UNDEFINED, 1, boost::none, false);
     if (node) {
         if (lastNode) {
             Skeletonizer::singleton().addSegment(lastNode.get(), node.get());
