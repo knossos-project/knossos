@@ -203,8 +203,6 @@ Loader::Worker::Worker(const decltype(datasets) & layers)
     : slotDownload(static_cast<std::size_t>(layers.size())), slotDecompression(static_cast<std::size_t>(layers.size()))
     , slotChunk(static_cast<std::size_t>(layers.size())), freeSlots(static_cast<std::size_t>(layers.size()))
     , datasets{layers}, snappyLayerId{Segmentation::singleton().layerId}
-    , OcModifiedCacheQueue(static_cast<std::size_t>(std::log2(layers.front().highestAvailableMag)+1))
-    , snappyCache(static_cast<std::size_t>(std::log2(layers.front().highestAvailableMag)+1))
 {
     qnam.setRedirectPolicy(QNetworkRequest::NoLessSafeRedirectPolicy);// default is manual redirect
     state->cube2Pointer.resize(datasets.size());
@@ -497,7 +495,12 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     // datacube in memory becomes invalid, we add the pointer to its
     // memory location back into this list.
     for (std::size_t layerId{0}; layerId < changedDatasets.size(); ++layerId) {
-        state->cube2Pointer[layerId].resize(std::log2(changedDatasets[layerId].highestAvailableMag)+1);
+        const auto magCount = static_cast<std::size_t>(std::log2(changedDatasets[layerId].highestAvailableMag) + 1);
+        state->cube2Pointer[layerId].resize(magCount);
+        if (layerId == snappyLayerId) {
+            OcModifiedCacheQueue.resize(magCount);
+            snappyCache.resize(magCount);
+        }
         if (datasets[layerId].allocationEnabled && !changedDatasets[layerId].allocationEnabled) {
             unloadCurrentMagnification(layerId);
             slotChunk[layerId].clear();
