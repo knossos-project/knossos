@@ -653,6 +653,23 @@ void MainWindow::createMenus() {
             box.exec();
         }
     }, Qt::Key_L);
+    addApplicationShortcut(actionMenu, QIcon(), tr("Jump to potential overlap"), this, [this]() {
+        auto overlap = Skeletonizer::singleton().findOverlap();
+        if (!overlap.second.isEmpty()) {
+            for (auto & tree : Skeletonizer::singleton().skeletonState.trees) {
+                tree.render = false;
+            }
+            overlap.first.first->render = overlap.first.second->render = true;
+            Skeletonizer::singleton().selectNodes(overlap.second);
+            Skeletonizer::singleton().jumpToNode(**(overlap.second.begin()));
+            state->viewerState->AllTreesBuffers.regenVertBuffer = state->viewerState->selectedTreesBuffers.regenVertBuffer = true;
+        } else {
+            QMessageBox box{this};
+            box.setIcon(QMessageBox::Information);
+            box.setText(tr("There are no overlaps, i think."));
+            box.exec();
+        }
+    }, Qt::Key_O);
     actionMenu.addSeparator();
     clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/menubar/trash.png"), "Clear Skeleton", this, &MainWindow::clearSkeletonSlot);
     actionMenu.addSeparator();
@@ -704,7 +721,7 @@ void MainWindow::createMenus() {
         }
         viewport3D->refocus();
     }, Qt::Key_S);
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Forward-traverse Tree"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(NodeGenerator::Direction::Forward); }, Qt::Key_X);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("Forward-traverse Tree"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(NodeGenerator::Direction::Any); }, Qt::Key_X);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Backward-traverse Tree"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(NodeGenerator::Direction::Backward); }, Qt::SHIFT + Qt::Key_X);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Next Node in Table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(true);}, Qt::Key_N);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Previous Node in Table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(false);}, Qt::Key_P);

@@ -1975,6 +1975,58 @@ QSet<nodeListElement *> Skeletonizer::findCycle() {
     return {};
 }
 
+std::pair<std::pair<treeListElement*, treeListElement*>, QSet<nodeListElement*>> Skeletonizer::findOverlap() {
+    const float distanceThreshold = 3;
+    const auto dist = [](const auto & lineStart, const auto & lineEnd, const auto & point) {
+        const auto segVec = lineEnd - lineStart;
+        const float lengthSquared = std::pow(segVec.length(), 2.f);//81
+        const float scalar = std::max(0.f, std::min(1.f, (point - lineStart).dot(segVec) / lengthSquared));
+        const auto projectionPoint = lineStart + static_cast<floatCoordinate>(segVec) * scalar;
+        return (point - projectionPoint).length();
+    };
+    const auto findNearbySegment = [&dist, distanceThreshold](const auto & tree2, const auto & pos) -> boost::optional<const segmentListElement *> {
+        for (auto & node2 : tree2.nodes) {
+            for (auto & segment2 : node2.segments) {
+                const auto distance = dist(segment2.source.position, segment2.target.position, pos);
+                if (distance < distanceThreshold) {// found segment that is near node
+                    return boost::make_optional(&segment2);
+                }
+            }
+        }
+        return boost::none;
+    };
+    for (auto treeIt = std::begin(state->skeletonState->trees); treeIt != std::end(state->skeletonState->trees); ++treeIt) {
+        for (auto treeIt2 = std::next(treeIt); treeIt2 != std::end(state->skeletonState->trees); ++treeIt2) {
+            for (auto & node : treeIt->nodes) {
+                if (const auto segment2 = findNearbySegment(*treeIt2, node.position); segment2) {
+                    QSet<nodeListElement *> nodes;
+                    nodes.insert(&node);
+                    nodes.insert(&segment2.get()->source);
+                    nodes.insert(&segment2.get()->target);
+                    for (auto & segment : node.segments) {
+                        auto & neighbor = segment.forward ? segment.target : segment.source;
+                        for (NodeGenerator traverser{neighbor, node}; !traverser.reachedEnd; ++traverser) {
+                            auto overlapCandidate = findNearbySegment(*treeIt2, (*traverser).position);
+                            if (!overlapCandidate) {
+                                break;// and go down next branch
+                            }
+                            nodes.insert(&(*traverser));
+                            nodes.insert(&overlapCandidate.get()->source);
+                            nodes.insert(&overlapCandidate.get()->target);
+                        }
+                    }
+                    if (nodes.size() >= 3*2) {
+                        return {{&*treeIt, &*treeIt2}, nodes};
+                    } else {
+                        nodes.clear();
+                    }
+                }
+            }
+        }
+    }
+    return {};
+}
+
 QSet<nodeListElement *> Skeletonizer::getPath(std::vector<nodeListElement *> & nodes) {
     for (auto it1 = std::begin(nodes); it1 != std::end(nodes) - 1; it1++)  {
         for (auto it2 = it1+1; it2 != std::end(nodes); it2++) {

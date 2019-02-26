@@ -37,6 +37,7 @@ struct NodeGenerator {
     QSet<nodeListElement *> cycle;
     NodeGenerator() = default;
     NodeGenerator(nodeListElement & node, const Direction direction);
+    NodeGenerator(nodeListElement & node, nodeListElement & parent);
     bool operator!=(NodeGenerator & other);
     NodeGenerator & operator++();
     nodeListElement & operator*();

@@ -312,6 +312,7 @@ public:
 
     static bool updateCircRadius(nodeListElement *node);
     QSet<nodeListElement *> findCycle();
+    std::pair<std::pair<treeListElement *, treeListElement *>, QSet<nodeListElement *> > findOverlap();
     QSet<nodeListElement *> getPath(std::vector<nodeListElement *> & nodes);
     float radius(const nodeListElement &node) const;
     const QSet<QString> getNumberProperties() const { return numberProperties; }

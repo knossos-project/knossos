@@ -8,6 +8,12 @@ NodeGenerator::NodeGenerator(nodeListElement & node, const Direction direction) 
     queue.emplace_back(&node);
 }
 
+NodeGenerator::NodeGenerator(nodeListElement & node, nodeListElement & parent) : reachedEnd{false} {
+    queuedNodes.emplace(&parent, &parent);
+    queuedNodes.emplace(&node, &parent);
+    queue.emplace_back(&node);
+}
+
 bool NodeGenerator::operator!=(NodeGenerator & other) {
     return reachedEnd != other.reachedEnd;
 }
