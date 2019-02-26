@@ -245,16 +245,15 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
 }
 
 Dataset::list_t Dataset::parseWebKnossosJson(const QUrl &, const QString & json_raw) {
-    Dataset info;
-    info.api = API::WebKnossos;
-
     const auto jmap = QJsonDocument::fromJson(json_raw.toUtf8()).object();
-
-    info.url = jmap["dataStore"]["url"].toString() + "/data/datasets/" + jmap["dataSource"]["id"]["team"].toString() + '/' + jmap["dataSource"]["id"]["name"].toString();
-    info.experimentname = jmap["name"].toString();
-
     decltype(Dataset::datasets) layers;
     for (const auto & layer : static_cast<const QJsonArray>(jmap["dataSource"]["dataLayers"].toArray())) {
+        Dataset info;
+        info.api = API::WebKnossos;
+
+        info.url = jmap["dataStore"]["url"].toString() + "/data/datasets/" + jmap["dataSource"]["id"]["team"].toString() + '/' + jmap["dataSource"]["id"]["name"].toString();
+        info.experimentname = jmap["name"].toString();
+
         const auto layerString = layer["name"].toString();
         const auto category = layer["category"].toString();
         const auto download = Network::singleton().refresh(QString("https://demo.webknossos.org/api/userToken/generate"));
@@ -290,7 +289,7 @@ Dataset::list_t Dataset::parseWebKnossosJson(const QUrl &, const QString & json_
 
         info.lowestAvailableMag = 1;
         info.magnification = info.lowestAvailableMag;
-        info.highestAvailableMag = std::pow(2, info.scales.size() - 1);
+        info.highestAvailableMag = static_cast<int>(std::pow(2, info.scales.size() - 1));
 
         layers.push_back(info);
         layers.back().url.setPath(info.url.path() + "/layers/" + layerString + "/data");
