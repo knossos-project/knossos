@@ -394,9 +394,7 @@ void Segmentation::selectObject(Object & object) {
 }
 
 void Segmentation::unselectObject(const uint64_t & objectIndex) {
-    if (objectIndex < objects.size()) {
-        unselectObject(objects[objectIndex]);
-    }
+    unselectObject(objects[objectIndex]);
 }
 
 void Segmentation::unselectObject(Object & object) {

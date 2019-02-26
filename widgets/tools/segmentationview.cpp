@@ -385,9 +385,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         }
     });
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetData, [this](){
-        touchedObjsTable.clearSelection();
         touchedObjectModel.recreate();
-        objectsTable.clearSelection();
         objectModel.recreate();
         updateSelection();
         updateTouchedObjSelection();
