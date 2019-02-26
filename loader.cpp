@@ -605,14 +605,15 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 request.setPriority(QNetworkRequest::HighPriority);
             }
             auto * reply = [&]{
-                const auto inmagCoord = cubeCoord * dataset.cubeEdgeLength;
                 if (dataset.api == Dataset::API::GoogleBrainmaps) {
+                    const auto inmagCoord = cubeCoord * dataset.cubeEdgeLength;
                     request.setRawHeader("Content-Type", "application/octet-stream");
                     const QString json(R"json({"geometry":{"corner":"%1,%2,%3", "size":"%4,%4,%4", "scale":%5}, "subvolume_format":"SINGLE_IMAGE", "image_format_options":{"image_format":"JPEG", "jpeg_quality":70}})json");
                     payload = json.arg(inmagCoord.x).arg(inmagCoord.y).arg(inmagCoord.z).arg(dataset.cubeEdgeLength).arg(loaderMagnification).toUtf8();
                 } else if (dataset.api == Dataset::API::WebKnossos) {
+                    const auto globalCoord = dataset.cube2global(cubeCoord);
                     request.setRawHeader("Content-Type", "application/json");
-                    payload = QString{R"json([{"position":[%1,%2,%3],"zoomStep":%4,"cubeSize":%5,"fourBit":false}])json"}.arg(inmagCoord.x).arg(inmagCoord.y).arg(inmagCoord.z).arg(static_cast<std::size_t>(std::log2(dataset.magnification))).arg(dataset.cubeEdgeLength).toUtf8();
+                    payload = QString{R"json([{"position":[%1,%2,%3],"zoomStep":%4,"cubeSize":%5,"fourBit":false}])json"}.arg(globalCoord.x).arg(globalCoord.y).arg(globalCoord.z).arg(static_cast<std::size_t>(std::log2(dataset.magnification))).arg(dataset.cubeEdgeLength).toUtf8();
                 }
                 if (dataset.api == Dataset::API::WebKnossos || dataset.api == Dataset::API::GoogleBrainmaps) {
                     return qnam.post(request, payload);
