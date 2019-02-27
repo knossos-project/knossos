@@ -73,7 +73,6 @@ class Annotation : public QObject {
 public:
     QTimer autoSaveTimer;
     bool autoFilenameIncrementBool = true;
-    bool saveAnnotationTime = true;
     bool savePlyAsBinary{true};
     bool unsavedChanges = false;
 

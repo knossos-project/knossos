@@ -205,12 +205,12 @@ boost::optional<nodeListElement &> Skeletonizer::addSkeletonNodeAndLinkWithActiv
     return targetNode.get();
 }
 
-void Skeletonizer::saveXmlSkeleton(QIODevice & file, const bool onlySelected) {
+void Skeletonizer::saveXmlSkeleton(QIODevice & file, const bool onlySelected, const bool saveTime, const bool saveDatasetPath) {
     QXmlStreamWriter xml(&file);
-    saveXmlSkeleton(xml, onlySelected);
+    saveXmlSkeleton(xml, onlySelected, saveTime, saveDatasetPath);
 }
 
-void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelected) {
+void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelected, const bool saveTime, const bool saveDatasetPath) {
     xml.setAutoFormatting(true);
     xml.writeStartDocument();
 
@@ -238,7 +238,7 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     xml.writeAttribute("mode", (Annotation::singleton().guiMode == GUIMode::ProofReading) ? "proof reading" : "none");
     xml.writeEndElement();
     xml.writeStartElement("dataset");
-    xml.writeAttribute("path", state->viewer->window->widgetContainer.datasetLoadWidget.datasetUrl.toString());
+    xml.writeAttribute("path", saveDatasetPath? state->viewer->window->widgetContainer.datasetLoadWidget.datasetUrl.toString() : "");
     xml.writeAttribute("overlay", QString::number(static_cast<int>(Segmentation::singleton().enabled)));
     xml.writeEndElement();
 
@@ -271,7 +271,7 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     xml.writeEndElement();
 
     xml.writeStartElement("time");
-    const auto time = Annotation::singleton().saveAnnotationTime? Annotation::singleton().getAnnotationTime() : 0;
+    const auto time = saveTime? Annotation::singleton().getAnnotationTime() : 0;
     xml.writeAttribute("ms", QString::number(time));
     const auto timeData = QByteArray::fromRawData(reinterpret_cast<const char *>(&time), sizeof(time));
     const QString timeChecksum = QCryptographicHash::hash(timeData, QCryptographicHash::Sha256).toHex().constData();

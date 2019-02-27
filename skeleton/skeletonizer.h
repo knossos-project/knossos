@@ -283,8 +283,8 @@ public:
 
     std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> loadXmlSkeleton(QIODevice &file, const bool merge, const QString & treeCmtOnMultiLoad = "");
     std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> loadXmlSkeleton(QXmlStreamReader & xml, const bool merge, const QString & treeCmtOnMultiLoad);
-    void saveXmlSkeleton(QIODevice & file, const bool onlySelected = false);
-    void saveXmlSkeleton(QXmlStreamWriter & file, const bool onlySelected = false);
+    void saveXmlSkeleton(QIODevice & file, const bool onlySelected = false, const bool saveTime = true, const bool saveDatasetPath = true);
+    void saveXmlSkeleton(QXmlStreamWriter & file, const bool onlySelected = false, const bool saveTime = true, const bool saveDatasetPath = true);
 
     nodeListElement *popBranchNode();
     void pushBranchNode(nodeListElement & branchNode);

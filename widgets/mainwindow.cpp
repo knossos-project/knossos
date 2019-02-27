@@ -927,7 +927,7 @@ void MainWindow::saveAsSlotWrap() {
     saveAsSlot(false);
 }
 
-void MainWindow::saveAsSlot(const bool onlySelectedTrees) {
+void MainWindow::saveAsSlot(const bool onlySelectedTrees, const bool saveTime, const bool saveDatasetPath) {
     const auto & suggestedFile = saveFileDirectory.isEmpty() ? annotationFileDefaultPath() : saveFileDirectory + '/' + annotationFileDefaultName();
 
     QString fileName = state->viewer->suspend([this, suggestedFile]{
@@ -954,11 +954,11 @@ void MainWindow::saveAsSlot(const bool onlySelectedTrees) {
             }
         }
         saveFileDirectory = QFileInfo(fileName).absolutePath();
-        save(fileName + ".k.zip", false, false, onlySelectedTrees);
+        save(fileName + ".k.zip", false, false, onlySelectedTrees, saveTime, saveDatasetPath);
     }
 }
 
-void MainWindow::save(QString filename, const bool silent, const bool allocIncrement, const bool onlySelectedTrees)
+void MainWindow::save(QString filename, const bool silent, const bool allocIncrement, const bool onlySelectedTrees, const bool saveTime, const bool saveDatasetPath)
 try {
     LoadingCursor loadingcursor;
     if (filename.isEmpty()) {
@@ -978,7 +978,7 @@ try {
         }
     }
     emit aboutToSave();
-    annotationFileSave(filename, onlySelectedTrees);
+    annotationFileSave(filename, onlySelectedTrees, saveTime, saveDatasetPath);
     Annotation::singleton().annotationFilename = filename;
     updateRecentFile(filename);
     updateTitlebar();

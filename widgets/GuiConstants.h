@@ -51,9 +51,10 @@ const QString VISIBLE = "visible";
 // Autosave
 const QString AUTOINC_FILENAME = "autoinc_filename";
 const QString AUTO_SAVING = "auto_saving";
-const QString SAVE_ANNOTATION_TIME = "save_annotation_time";
-const QString SAVING_INTERVAL = "saving_interval";
 const QString PLY_SAVE_AS_BIN = "ply_save_as_bin";
+const QString SAVE_ANNOTATION_TIME = "save_annotation_time";
+const QString SAVE_DATASET_PATH = "save_dataset_path";
+const QString SAVING_INTERVAL = "saving_interval";
 
 // DataSet Switch
 const QString DATASET_CUBE_EDGE = "cube_edge";

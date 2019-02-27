@@ -44,7 +44,6 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent) {
     autosaveLocationLabel.setWordWrap(true);
 
     generalLayout.addWidget(&autoincrementFileNameButton);
-    generalLayout.addWidget(&saveTimeButton);
 
     locationFormLayout.addRow("Default location: ", &autosaveLocationLabel);
     generalLayout.addLayout(&locationFormLayout);
@@ -62,17 +61,21 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent) {
     plyLayout.setAlignment(Qt::AlignLeft);
     plyGroupBox.setLayout(&plyLayout);
 
+    customSaveLayout.addWidget(&saveTimeButton);
+    customSaveLayout.addWidget(&saveDatasetPathButton);
+    customSaveLayout.addWidget(&customSaveButton);
+    customSaveLayout.setAlignment(Qt::AlignLeft);
+    customSaveGroup.setLayout(&customSaveLayout);
+
     mainLayout.addWidget(&generalGroup);
     mainLayout.addWidget(&autosaveGroup);
     mainLayout.addWidget(&plyGroupBox);
+    mainLayout.addWidget(&customSaveGroup);
     mainLayout.addStretch();
     setLayout(&mainLayout);
 
     QObject::connect(&autoincrementFileNameButton, &QCheckBox::stateChanged, [](const bool on) {
         Annotation::singleton().autoFilenameIncrementBool = on;
-    });
-    QObject::connect(&saveTimeButton, &QCheckBox::stateChanged, [](const bool on) {
-        Annotation::singleton().saveAnnotationTime = on;
     });
     QObject::connect(&autosaveIntervalSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](const int value) {
         if (autosaveGroup.isChecked()) {
@@ -90,13 +93,16 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent) {
     QObject::connect(&plySaveButtonGroup, static_cast<void(QButtonGroup::*)(int id)>(&QButtonGroup::buttonClicked), [](auto id) {
         Annotation::singleton().savePlyAsBinary = static_cast<bool>(id);
     });
+    QObject::connect(&customSaveButton, &QPushButton::clicked, [this](const bool) {
+        state->viewer->window->saveAsSlot(true, saveTimeButton.isChecked(), saveDatasetPathButton.isChecked());
+    });
 }
 
 void SaveTab::loadSettings(const QSettings & settings) {
     autoincrementFileNameButton.setChecked(settings.value(AUTOINC_FILENAME, true).toBool());
     autoincrementFileNameButton.stateChanged(autoincrementFileNameButton.checkState());
     saveTimeButton.setChecked(settings.value(SAVE_ANNOTATION_TIME, true).toBool());
-    saveTimeButton.stateChanged(saveTimeButton.checkState());
+    saveTimeButton.setChecked(settings.value(SAVE_DATASET_PATH, true).toBool());
 
     // autosaveGroup.toggled will handle the autosave timer and its time (therefore load the time first)
     autosaveIntervalSpinBox.setValue(settings.value(SAVING_INTERVAL, 5).toInt());
@@ -110,7 +116,8 @@ void SaveTab::loadSettings(const QSettings & settings) {
 void SaveTab::saveSettings(QSettings & settings) {
     settings.setValue(AUTOINC_FILENAME, autoincrementFileNameButton.isChecked());
     settings.setValue(AUTO_SAVING, autosaveGroup.isChecked());
-    settings.setValue(SAVE_ANNOTATION_TIME, saveTimeButton.isChecked());
-    settings.setValue(SAVING_INTERVAL, autosaveIntervalSpinBox.value());
     settings.setValue(PLY_SAVE_AS_BIN, plySaveAsBinRadio.isChecked());
+    settings.setValue(SAVE_ANNOTATION_TIME, saveTimeButton.isChecked());
+    settings.setValue(SAVE_DATASET_PATH, saveDatasetPathButton.isChecked());
+    settings.setValue(SAVING_INTERVAL, autosaveIntervalSpinBox.value());
 }

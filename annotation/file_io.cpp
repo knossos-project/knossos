@@ -145,7 +145,7 @@ void annotationFileLoad(const QString & filename, const bool mergeSkeleton, cons
     }
 }
 
-void annotationFileSave(const QString & filename, const bool onlySelectedTrees) {
+void annotationFileSave(const QString & filename, const bool onlySelectedTrees, const bool saveTime, const bool saveDatasetPath) {
     QTime time;
     time.start();
     QuaZip archive_write(filename);
@@ -166,7 +166,7 @@ void annotationFileSave(const QString & filename, const bool onlySelectedTrees) 
         }
         QuaZipFile file_write(&archive_write);
         if (zipCreateFile(file_write, "annotation.xml")) {
-            Skeletonizer::singleton().saveXmlSkeleton(file_write, onlySelectedTrees);
+            Skeletonizer::singleton().saveXmlSkeleton(file_write, onlySelectedTrees, saveTime, saveDatasetPath);
         } else {
             throw std::runtime_error((filename + ": saving skeleton failed").toStdString());
         }

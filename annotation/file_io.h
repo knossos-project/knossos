@@ -31,7 +31,7 @@
 QString annotationFileDefaultName();
 QString annotationFileDefaultPath();
 void annotationFileLoad(const QString & filename, const bool mergeSkeleton, const QString & treeCmtOnMultiLoad = "");
-void annotationFileSave(const QString & filename, const bool onlySelectedTrees = false);
+void annotationFileSave(const QString & filename, const bool onlySelectedTrees = false, const bool saveTime = true, const bool saveDatasetPath = true);
 void nmlExport(const QString & filename);
 QString updatedFileName(QString fileName);
 std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> loadLookupTable(const QString & path);

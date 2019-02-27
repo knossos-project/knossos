@@ -43,7 +43,6 @@ class SaveTab : public QWidget {
     QGroupBox generalGroup{"General"};
     QVBoxLayout generalLayout;
     QCheckBox autoincrementFileNameButton{"Auto increment filename on every save"};
-    QCheckBox saveTimeButton{"Save annotation time"};
     QFormLayout locationFormLayout;
     QLabel autosaveLocationLabel;
 
@@ -56,6 +55,11 @@ class SaveTab : public QWidget {
     QButtonGroup plySaveButtonGroup;
     QRadioButton plySaveAsBinRadio{tr("binary files")};
     QRadioButton plySaveAsTxtRadio{tr("text files")};
+    QGroupBox customSaveGroup{"Custom Save"};
+    QHBoxLayout customSaveLayout;
+    QCheckBox saveTimeButton{"Include annotation time"};
+    QCheckBox saveDatasetPathButton{"Include dataset path"};
+    QPushButton customSaveButton{"Save as…"};
 public:
     explicit SaveTab(QWidget * parent = nullptr);
     void loadSettings(const QSettings &settings);
