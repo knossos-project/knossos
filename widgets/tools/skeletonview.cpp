@@ -674,6 +674,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         nodeContextMenu.actions().at(i++)->setEnabled(tracingAdvanced && selectedNodes.size() == 2);//link nodes needs two selected nodes
         nodeContextMenu.actions().at(i++)->setEnabled(nodeEditing && selectedNodes.size() > 0);//set comment
         nodeContextMenu.actions().at(i++)->setEnabled(nodeEditing && selectedNodes.size() > 0);//set radius
+        nodeContextMenu.actions().at(i++)->setEnabled(tracingAdvanced && selectedNodes.size() > 0);//propagate comment
         nodeContextMenu.actions().at(deleteActionIndex = i++)->setEnabled(nodeEditing && selectedNodes.size() > 0);//delete
         //display the context menu at pos in screen coordinates instead of widget coordinates of the content of the currently focused table
         nodeContextMenu.exec(nodeView.viewport()->mapToGlobal(pos));
@@ -911,6 +912,11 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             });
             prevRadius = radius;// save for the next time the dialog is opened
         }
+    });
+    QObject::connect(nodeContextMenu.addAction("propagate comment"), &QAction::triggered, [](){
+        Skeletonizer::singleton().bulkOperation(Skeletonizer::singleton().skeletonState.selectedNodes, [](auto & node){
+            Skeletonizer::singleton().propagateComments(node, {node.getComment()});
+        });
     });
     deleteAction(nodeContextMenu, nodeView, tr("&Delete nodes"), [](){// this is also a shortcut and needs checks here
         if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing) && !state->skeletonState->selectedNodes.empty()) {

@@ -205,6 +205,28 @@ boost::optional<nodeListElement &> Skeletonizer::addSkeletonNodeAndLinkWithActiv
     return targetNode.get();
 }
 
+void Skeletonizer::propagateComments(nodeListElement & root, const QSet<QString> & comments) {
+    std::vector<std::pair<nodeListElement *, nodeListElement *>> stack; // node and parent
+    std::unordered_set<nodeListElement *> visitedNodes;
+    stack.push_back({&root, nullptr});
+    while (!stack.empty()) {
+        auto [nextNode, parent] = stack.back();
+        stack.pop_back();
+        if (visitedNodes.find(nextNode) != visitedNodes.end()) {
+            continue;
+        }
+        visitedNodes.emplace(nextNode);
+
+        for (auto & segment : nextNode->segments) {
+            auto & neighbor = segment.forward ? segment.target : segment.source;
+            stack.push_back({&neighbor, nextNode});
+        }
+        if (parent && !parent->getComment().isEmpty() && comments.find(parent->getComment()) != std::end(comments)) {
+            nextNode->setComment(parent->getComment());
+        }
+    }
+}
+
 void Skeletonizer::saveXmlSkeleton(QIODevice & file, const bool onlySelected, const bool saveTime, const bool saveDatasetPath) {
     QXmlStreamWriter xml(&file);
     saveXmlSkeleton(xml, onlySelected, saveTime, saveDatasetPath);
