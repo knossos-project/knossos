@@ -37,6 +37,9 @@ void parseSWC(QIODevice && file) {
             case 2: return "axon";
             case 3: return "basal";
             case 4: return "apical";
+            case 5: return "fork point";
+            case 6: return "end point";
+            case 7: return "custom";
             default: return "";
             };
         }(at_c<1>(attr)));
@@ -77,8 +80,11 @@ std::ostream & operator<< (std::ostream & os, std::pair<std::reference_wrapper<n
 
     int neuronType = node.getComment() == "soma"? 1 :
                      node.getComment() == "axon"? 2 :
-                     node.getComment() == "basal"? 3 :
-                     node.getComment() == "apical"? 4 : /* undefined */ 0;
+                     node.getComment() == "basal" || node.getComment() == "dendrite"? 3 :
+                     node.getComment() == "apical"? 4 :
+                     node.getComment() == "fork point"? 5 :
+                     node.getComment() == "end point"? 6 :
+                     node.getComment() == "custom"? 7 : /* undefined */ 0;
     const auto pos = static_cast<floatCoordinate>(node.position) * multiplier;
     std::string nodeLine;
     os << karma::format_delimited(uint_ << int_ << double_ << double_ << double_ << double_,
