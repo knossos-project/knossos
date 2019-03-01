@@ -58,6 +58,7 @@ public:
 
     nodeListElement(const decltype(nodeID) nodeID, const decltype(radius) radius, const decltype(position) & position, const decltype(createdInMag) inMag
                     , const decltype(createdInVp) inVP, const decltype(timestamp) ms, const decltype(properties) & properties, decltype(*correspondingTree) & tree);
+    nodeListElement(const nodeListElement &) = delete;
     bool operator==(const nodeListElement & other) const;
 
     QList<segmentListElement *> *getSegments();
@@ -66,6 +67,7 @@ public:
 class segmentListElement {
 public:
     segmentListElement(nodeListElement & source, nodeListElement & target, const bool forward = true) : source{source}, target{target}, forward(forward) {}
+    segmentListElement(const segmentListElement &) = delete;
 
     nodeListElement & source;
     nodeListElement & target;
