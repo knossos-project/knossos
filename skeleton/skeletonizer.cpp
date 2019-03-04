@@ -2015,7 +2015,8 @@ std::pair<std::pair<treeListElement*, treeListElement*>, QSet<nodeListElement*>>
                             nodes.insert(&overlapCandidate.get()->target);
                         }
                     }
-                    if (nodes.size() >= 3*2) {
+                    const bool valid = std::find_if(std::cbegin(nodes), std::cend(nodes), [](auto * node){ return node->getComment() == "overlap fp"; }) == std::cend(nodes);
+                    if (valid && nodes.size() >= 3*2) {
                         return {{&*treeIt, &*treeIt2}, nodes};
                     } else {
                         nodes.clear();
