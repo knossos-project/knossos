@@ -297,7 +297,7 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
 void generateMeshesForSubobjectsOfSelectedObjects() {
     const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
     const auto count = Segmentation::singleton().selectedObjectsCount();
-    const auto msg = QObject::tr("Generating meshes for %1 objects over %2 cubes").arg(count == 0 ? QObject::tr("all") : QString::number(count)).arg(cubes[0].size());
+    const auto msg = QObject::tr("Generating meshes for %1 objects over %2 cubes").arg(count == 0 ? QObject::tr("all") : QString::number(count)).arg(cubes[Dataset::current().magIndex].size());
     QProgressDialog progress(msg, "Cancel", 0, Segmentation::singleton().selectedObjectsCount() * cubes[0].size(), QApplication::activeWindow());
     progress.setWindowModality(Qt::WindowModal);
     qDebug() << msg.toUtf8().constData();
