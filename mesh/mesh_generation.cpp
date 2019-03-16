@@ -278,9 +278,7 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
     };
     if (!objects.empty()) {
         addMesh(objects, [&](auto & elem, auto normals, auto colors){
-            if (auto it = obj2verts.find(elem); it != std::end(obj2verts)) {// creating empty ogl meshes isn’t trivial
-                Skeletonizer::singleton().addMeshToTree(it->first, it->second, normals, obj2faces[it->first], colors, GL_TRIANGLES);
-            }
+            Skeletonizer::singleton().addMeshToTree(elem, obj2verts[elem], normals, obj2faces[elem], colors, GL_TRIANGLES);
         });
     } else {
         QSignalBlocker blocker(Segmentation::singleton());
