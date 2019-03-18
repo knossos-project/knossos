@@ -1687,7 +1687,7 @@ void Skeletonizer::jumpToNode(const nodeListElement & node) {
 }
 
 void Skeletonizer::restoreDefaultTreeColor(treeListElement & tree) {
-    const auto index = (tree.treeID - 1) % state->viewerState->treeColors.size();
+    const auto index = tree.treeID % state->viewerState->treeColors.size();
     tree.color = QColor::fromRgb(std::get<0>(state->viewerState->treeColors[index])
                        , std::get<1>(state->viewerState->treeColors[index])
                        , std::get<2>(state->viewerState->treeColors[index]));
