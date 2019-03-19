@@ -42,7 +42,7 @@ void subobjectBucketFill(const Coordinate & seed, const Coordinate & center, con
         if (readVoxel(pos) == clickedsoid) {
             const auto walk = [&center, &visitedVoxels, &work](const auto x, const auto y, const auto z){
                 const bool wasntVisitedBefore = visitedVoxels.emplace(x, y, z).second;
-                if (wasntVisitedBefore && currentlyVisibleWrapWrap(center, {x, y, z})) {
+                if (wasntVisitedBefore) {
                     work.emplace_back(x, y, z);
                 }
             };
