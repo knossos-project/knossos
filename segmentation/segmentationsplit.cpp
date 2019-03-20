@@ -35,6 +35,8 @@ void subobjectBucketFill(const Coordinate & seed, const Coordinate & center, con
 
     const auto clickedsoid = readVoxel(seed);
 
+    const auto voxelSpacing = Dataset::datasets[Segmentation::singleton().layerId].scaleFactor;
+
     while (!work.empty()) {
         const auto pos = work.back();
         work.pop_back();
@@ -47,8 +49,8 @@ void subobjectBucketFill(const Coordinate & seed, const Coordinate & center, con
                 }
             };
 
-            const auto posDec = (pos - 1).capped(areaMin, areaMax);
-            const auto posInc = (pos + 1).capped(areaMin, areaMax);
+            const auto posDec = (pos - voxelSpacing).capped(areaMin, areaMax);
+            const auto posInc = (pos + voxelSpacing).capped(areaMin, areaMax);
 
             if (brush.view != brush_t::view_t::zy || brush.mode == brush_t::mode_t::three_dim) {
                 walk(posInc.x, pos.y, pos.z);
