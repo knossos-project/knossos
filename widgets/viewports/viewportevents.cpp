@@ -441,7 +441,7 @@ void ViewportOrtho::handleMouseReleaseMiddle(const QMouseEvent *event) {
             areaMin = areaMin.capped(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax);
             areaMax = areaMax.capped(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax);
 
-            subobjectBucketFill(clickedCoordinate, state->viewerState->currentPosition, soid, brush_copy, areaMin, areaMax);
+            subobjectBucketFill(clickedCoordinate, soid, brush_copy, areaMin, areaMax);
         }
     }
     //finish node drag

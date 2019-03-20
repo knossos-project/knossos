@@ -28,12 +28,16 @@
 #include "segmentation.h"
 
 #include <unordered_set>
+#include <vector>
 
-void subobjectBucketFill(const Coordinate & seed, const Coordinate & center, const uint64_t fillsoid, const brush_t & brush, const Coordinate & areaMin, const Coordinate & areaMax) {
+void subobjectBucketFill(const Coordinate & seed, const uint64_t fillsoid, const brush_t & brush, const Coordinate & areaMin, const Coordinate & areaMax) {
     std::vector<Coordinate> work = {seed};
-    std::unordered_set<Coordinate> visitedVoxels;
+    CubeCoordSet cubeCoords;
 
     const auto clickedsoid = readVoxel(seed);
+    if (clickedsoid == fillsoid) {
+        return;
+    }
 
     const auto voxelSpacing = Dataset::datasets[Segmentation::singleton().layerId].scaleFactor;
 
@@ -41,35 +45,32 @@ void subobjectBucketFill(const Coordinate & seed, const Coordinate & center, con
         const auto pos = work.back();
         work.pop_back();
 
-        if (readVoxel(pos) == clickedsoid) {
-            const auto walk = [&center, &visitedVoxels, &work](const auto x, const auto y, const auto z){
-                const bool wasntVisitedBefore = visitedVoxels.emplace(x, y, z).second;
-                if (wasntVisitedBefore) {
-                    work.emplace_back(x, y, z);
-                }
-            };
+        const auto walk = [&work, &cubeCoords, clickedsoid, fillsoid](const Coordinate coord){
+            if (readVoxel(coord) == clickedsoid) {
+                writeVoxel(coord, fillsoid, false);
+                work.emplace_back(coord);
+                cubeCoords.insert(Dataset::datasets[Segmentation::singleton().layerId].global2cube(coord));
+            }
+        };
 
-            const auto posDec = (pos - voxelSpacing).capped(areaMin, areaMax);
-            const auto posInc = (pos + voxelSpacing).capped(areaMin, areaMax);
+        const auto posDec = (pos - voxelSpacing).capped(areaMin, areaMax);
+        const auto posInc = (pos + voxelSpacing).capped(areaMin, areaMax);
 
-            if (brush.view != brush_t::view_t::zy || brush.mode == brush_t::mode_t::three_dim) {
-                walk(posInc.x, pos.y, pos.z);
-                walk(posDec.x, pos.y, pos.z);
-            }
-            if (brush.view != brush_t::view_t::xz || brush.mode == brush_t::mode_t::three_dim) {
-                walk(pos.x, posInc.y, pos.z);
-                walk(pos.x, posDec.y, pos.z);
-            }
-            if (brush.view != brush_t::view_t::xy || brush.mode == brush_t::mode_t::three_dim) {
-                walk(pos.x, pos.y, posInc.z);
-                walk(pos.x, pos.y, posDec.z);
-            }
-        } else {
-            visitedVoxels.erase(pos);
+        if (brush.view != brush_t::view_t::xy || brush.mode == brush_t::mode_t::three_dim) {
+            walk({pos.x, pos.y, posInc.z});
+            walk({pos.x, pos.y, posDec.z});
+        }
+        if (brush.view != brush_t::view_t::xz || brush.mode == brush_t::mode_t::three_dim) {
+            walk({pos.x, posInc.y, pos.z});
+            walk({pos.x, posDec.y, pos.z});
+        }
+        if (brush.view != brush_t::view_t::zy || brush.mode == brush_t::mode_t::three_dim) {
+            walk({posInc.x, pos.y, pos.z});
+            walk({posDec.x, pos.y, pos.z});
         }
     }
 
-    listFill(center, brush, fillsoid, visitedVoxels);
+    coordCubesMarkChanged(cubeCoords);
 }
 
 std::unordered_set<uint64_t> bucketFill(const Coordinate & seed, const uint64_t objIndexToSplit, const uint64_t newSubObjId, const std::unordered_set<uint64_t> & subObjectsToFill) {
