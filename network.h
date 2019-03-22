@@ -53,6 +53,7 @@ public:
     QPair<bool, QPair<QString, QByteArray> > getFile(const QUrl & url);
     QPair<bool, QPair<QString, QByteArray> > getPost(const QUrl & url);
     QPair<bool, QString> submitHeidelbrain(const QUrl & url, const QString & filePath, const QString & comment, const bool final, const bool valid);
+    QPair<bool, QString> rejectTask(const QUrl & url);
     void submitSegmentationJob(const QString &filename);
     std::pair<int, int> checkOnlineMags(const QUrl & url);
 

@@ -67,7 +67,7 @@ TaskManagementWidget::TaskManagementWidget(QWidget *parent) : DialogVisibilityNo
     separator.setFrameShadow(QFrame::Sunken);
     gridLayout.addWidget(&separator, 3, 0, 1, 2);
     gridLayout.addWidget(&submitInvalidButton, 4, 0, 1, 1);
-
+    gridLayout.addWidget(&rejectTaskButton, 4, 1, 1, 1);
     taskManagementGroupBox.setLayout(&gridLayout);
 
     vLayout.addWidget(&taskManagementGroupBox);
@@ -89,6 +89,7 @@ TaskManagementWidget::TaskManagementWidget(QWidget *parent) : DialogVisibilityNo
     QObject::connect(&submitButton, &QPushButton::clicked, this, [this](const bool) { submit(); });
     QObject::connect(&submitFinalButton, &QPushButton::clicked, this, &TaskManagementWidget::submitFinal);
     QObject::connect(&submitInvalidButton, &QPushButton::clicked, this, &TaskManagementWidget::submitInvalid);
+    QObject::connect(&rejectTaskButton, &QPushButton::clicked, this, &TaskManagementWidget::rejectTask);
     QObject::connect(&logoutButton, &QPushButton::clicked, this, &TaskManagementWidget::logoutButtonClicked);
 
     QObject::connect(&taskLoginWidget, &TaskLoginWidget::accepted, [this]{
@@ -123,6 +124,7 @@ void TaskManagementWidget::updateAndRefreshWidget() {
     if (res.first && !jmap.isEmpty()) {
 //        auto username = jmap["username"].toString();// username is not used
         auto fullName = jmap["first_name"].toString() + ' ' + jmap["last_name"].toString();
+        auto isAdmin = jmap["is_admin"].toBool();
         auto taskName = jmap["task_name"].toString("");
         auto taskComment = jmap["task_comment"].toString();
         auto taskCategory = jmap["task_category_name"].toString("");
@@ -154,6 +156,8 @@ void TaskManagementWidget::updateAndRefreshWidget() {
         submitButton.setEnabled(hasTask);
         submitFinalButton.setEnabled(hasTask);
         submitInvalidButton.setEnabled(hasTask);
+        rejectTaskButton.setVisible(isAdmin);
+        rejectTaskButton.setEnabled(hasTask);
         DialogVisibilityNotify::setVisible(true);
     } else {
         emit visibilityChanged(false);
@@ -245,6 +249,22 @@ void TaskManagementWidget::submitFinal() {
     box.exec();
     if (box.clickedButton() == accept) {
         submit(true);
+    }
+}
+
+void TaskManagementWidget::rejectTask() {
+    QMessageBox box{QApplication::activeWindow()};
+    box.setIcon(QMessageBox::Question);
+    box.setText("Do you want to reject this task to be able to pull a new one?");
+    const auto * accept = box.addButton(tr("Reject task"), QMessageBox::AcceptRole);
+    box.addButton(tr("Cancel"), QMessageBox::RejectRole);
+    box.exec();
+    if (box.clickedButton() == accept) {
+        auto res = Network::singleton().rejectTask(baseUrl + "/work/" + Annotation::singleton().task.first + "/" + Annotation::singleton().task.second);
+        if (handleError(res, res.second)) {
+            updateAndRefreshWidget();//task infos changed
+            statusLabel.setText("<font color='green'>Rejected task successfully.</font>");
+        }
     }
 }
 

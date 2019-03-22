@@ -68,6 +68,7 @@ protected:
     QPushButton submitFinalButton{"Final Submit"};
     QFrame separator;
     QPushButton submitInvalidButton{"Flag invalid"};
+    QPushButton rejectTaskButton{"Reject"};
 
     QPushButton logoutButton{"Logout"};
 
@@ -77,6 +78,7 @@ public slots:
 
     void updateAndRefreshWidget();
 
+    void rejectTask();
     void submitFinal();
     void submitInvalid();
 

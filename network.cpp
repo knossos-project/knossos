@@ -40,6 +40,7 @@
 #include <QSemaphore>
 #include <QSettings>
 #include <QTimer>
+#include <QUrlQuery>
 #include <QVariantList>
 #include <QXmlStreamWriter>
 
@@ -226,6 +227,18 @@ QPair<bool, QString> Network::submitHeidelbrain(const QUrl & url, const QString 
     QNetworkRequest request(url);
     request.setRawHeader("Referer", url.toString(QUrl::PrettyDecoded | QUrl::RemovePath).toUtf8());
     auto & reply = *manager.post(request, &multipart);
+    return blockDownloadExtractData(reply);
+}
+
+QPair<bool, QString> Network::rejectTask(const QUrl & url) {
+    QUrlQuery data;
+    const auto csrfcookie = getCSRF(cookieJar.cookiesForUrl(url));
+    data.addQueryItem("csrfmiddlewaretoken", csrfcookie);
+    data.addQueryItem("delete", "");
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+    request.setRawHeader("Referer", url.toString(QUrl::PrettyDecoded | QUrl::RemovePath).toUtf8());
+    auto & reply = *manager.post(request, data.toString().toUtf8());
     return blockDownloadExtractData(reply);
 }
 
