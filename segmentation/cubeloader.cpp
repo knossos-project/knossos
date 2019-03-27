@@ -174,6 +174,15 @@ CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  g
     return processRegion(globalFirst, globalLast, func, [](int &, int, int){});
 }
 
+void assignNewIdInMovementArea(const std::uint64_t newId) {
+    const auto cubeChangeSet = processRegion(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax, [newId](uint64_t & voxel, Coordinate){
+        if (Segmentation::singleton().isSubObjectIdSelected(voxel)) {
+            voxel = newId;
+        }
+    });
+    coordCubesMarkChanged(cubeChangeSet);
+}
+
 subobjectRetrievalMap readVoxels(const Coordinate & centerPos, const brush_t &brush) {
     subobjectRetrievalMap subobjects;
     const auto region = getRegion(centerPos, brush);

@@ -204,6 +204,9 @@ public:
     bool hasSegData() const;
     bool subobjectExists(const uint64_t & subobjectId) const;
     uint64_t oid(const uint64_t oidx) const;
+    const auto & highestSubobjectId() const {
+        return SubObject::highestId;
+    }
     //data access
     void createAndSelectObject(const Coordinate & position);
     SubObject & subobjectFromId(const uint64_t & subobjectId, const Coordinate & location);

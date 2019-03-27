@@ -37,6 +37,7 @@ bool isInsideSphere(const double xi, const double yi, const double zi, const dou
 void coordCubesMarkChanged(const CubeCoordSet & cubeChangeSet);
 uint64_t readVoxel(const Coordinate & pos);
 subobjectRetrievalMap readVoxels(const Coordinate & centerPos, const brush_t &);
+void assignNewIdInMovementArea(const std::uint64_t newId);
 bool writeVoxel(const Coordinate & pos, const uint64_t value, bool isMarkChanged = true);
 void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush_t &, bool isMarkChanged = true);
 void coordCubesMarkChanged(const CubeCoordSet & cubeChangeSet);

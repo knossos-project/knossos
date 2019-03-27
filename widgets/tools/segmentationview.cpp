@@ -26,12 +26,14 @@
 #include "dataset.h"
 #include "mesh/mesh_generation.h"
 #include "model_helper.h"
+#include "segmentation/cubeloader.h"
 #include "stateInfo.h"
 #include "viewer.h"
 
 #include <QApplication>
 #include <QEvent>
 #include <QHeaderView>
+#include <QInputDialog>
 #include <QMenu>
 #include <QMessageBox>
 #include <QPushButton>
@@ -460,6 +462,22 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
                 return qDebug() << "mesh generation" << time.nsecsElapsed() / 1e9;
             });
         });
+        QObject::connect(contextMenu.addAction("Assign new data id"), &QAction::triggered, [](){
+            state->viewer->suspend([](){
+                bool ok;
+                const auto newid = QInputDialog::getInt(QApplication::activeWindow(), "", "", Segmentation::singleton().highestSubobjectId()+1, 0, std::numeric_limits<int>::max(), 1, &ok);
+                if (!ok) {
+                    return qDebug();
+                }
+
+                QElapsedTimer time;
+                time.start();
+
+                assignNewIdInMovementArea(newid);
+
+                return qDebug() << "id assign" << time.nsecsElapsed() / 1e9;
+            });
+        });
         QObject::connect(contextMenu.addAction("Restore default color"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::restoreDefaultColorForSelectedObjects);
         deleteAction(contextMenu, table, "Delete", &Segmentation::singleton(), &Segmentation::deleteSelectedObjects);
         contextMenu.setDefaultAction(contextMenu.actions().front());
@@ -481,6 +499,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         contextMenu.actions().at(i)->setText(tr("Generate mesh (%2, mag%1)").arg(Dataset::current().magnification)
                                              .arg(Segmentation::singleton().selectedObjectsCount() > 0 ? "selected objects" : "all subobjects"));
         contextMenu.actions().at(i++)->setEnabled(true);// generate meshes
+        contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// assign new id
         contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// restoreColorAction
         contextMenu.actions().at(deleteActionIndex = i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// deleteAction
         ++i;// separator
