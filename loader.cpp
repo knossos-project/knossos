@@ -84,7 +84,7 @@ void Loader::Controller::unloadCurrentMagnification() {
 void Loader::Controller::markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification) {
     emit markOcCubeAsModifiedSignal(cubeCoord, magnification);
     state->viewer->window->notifyUnsavedChanges();
-    state->viewer->reslice_notify_all(worker.get()->snappyLayerId, Dataset::current().cube2global(cubeCoord));
+    state->viewer->reslice_notify_all(Segmentation::singleton().layerId, Dataset::current().cube2global(cubeCoord));
 }
 
 decltype(Loader::Worker::snappyCache) Loader::Controller::getAllModifiedCubes() {
