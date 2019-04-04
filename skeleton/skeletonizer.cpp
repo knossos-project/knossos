@@ -328,9 +328,9 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     xml.writeEndElement();
 
     xml.writeStartElement("vpSettingsZoom");
-    xml.writeAttribute("XYPlane", QString::number(state->viewer->window->viewportXY.get()->texture.FOV));
-    xml.writeAttribute("XZPlane", QString::number(state->viewer->window->viewportXZ.get()->texture.FOV));
-    xml.writeAttribute("YZPlane", QString::number(state->viewer->window->viewportZY.get()->texture.FOV));
+    xml.writeAttribute("XYPlane", QString::number(state->viewer->window->viewportXY->texture.FOV));
+    xml.writeAttribute("XZPlane", QString::number(state->viewer->window->viewportXZ->texture.FOV));
+    xml.writeAttribute("YZPlane", QString::number(state->viewer->window->viewportZY->texture.FOV));
     xml.writeAttribute("SkelVP", QString::number(-(0.5 / state->mainWindow->viewport3D->zoomFactor - 0.5)));// legacy zoom: 0 → 0.5
     xml.writeEndElement();
 
@@ -533,15 +533,15 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                 } else if(xml.name() == "vpSettingsZoom") {
                     QStringRef attribute = attributes.value("XYPlane");
                     if(attribute.isNull() == false) {
-                        state->viewer->window->viewportXY.get()->texture.FOV = attribute.toString().toFloat();
+                        state->viewer->window->viewportXY->texture.FOV = attribute.toString().toFloat();
                     }
                     attribute = attributes.value("XZPlane");
                     if(attribute.isNull() == false) {
-                        state->viewer->window->viewportXZ.get()->texture.FOV = attribute.toString().toFloat();
+                        state->viewer->window->viewportXZ->texture.FOV = attribute.toString().toFloat();
                     }
                     attribute = attributes.value("YZPlane");
                     if(attribute.isNull() == false) {
-                        state->viewer->window->viewportZY.get()->texture.FOV = attribute.toString().toFloat();
+                        state->viewer->window->viewportZY->texture.FOV = attribute.toString().toFloat();
                     }
                     if (!attributes.value("SkelVP").isEmpty()) {
                         // zoom can only be applied meaningfully with working rotation and translation

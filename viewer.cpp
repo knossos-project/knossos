@@ -936,7 +936,7 @@ void Viewer::run() {
     window->forEachOrthoVPDo([](ViewportOrtho & vp) {
         vp.update();
     });
-    window->viewport3D.get()->update();
+    window->viewport3D->update();
     window->updateTitlebar(); //display changes after filename
 }
 

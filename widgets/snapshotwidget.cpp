@@ -166,11 +166,11 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHO
         }
     });
     QObject::connect(state->viewer, &Viewer::changedDefaultVPSizeAndPos, [this]() {
-        const auto xy = state->viewer->window->viewportXY.get()->isVisibleTo(state->viewer->window);
-        const auto xz = state->viewer->window->viewportXZ.get()->isVisibleTo(state->viewer->window);
-        const auto zy = state->viewer->window->viewportZY.get()->isVisibleTo(state->viewer->window);
-        const auto arb = state->viewer->window->viewportArb.get()->isVisibleTo(state->viewer->window);
-        const auto skel = state->viewer->window->viewport3D.get()->isVisibleTo(state->viewer->window);
+        const auto xy = state->viewer->window->viewportXY->isVisibleTo(state->viewer->window);
+        const auto xz = state->viewer->window->viewportXZ->isVisibleTo(state->viewer->window);
+        const auto zy = state->viewer->window->viewportZY->isVisibleTo(state->viewer->window);
+        const auto arb = state->viewer->window->viewportArb->isVisibleTo(state->viewer->window);
+        const auto skel = state->viewer->window->viewport3D->isVisibleTo(state->viewer->window);
         vpXYRadio.setVisible(xy);
         vpXZRadio.setVisible(xz);
         vpZYRadio.setVisible(zy);

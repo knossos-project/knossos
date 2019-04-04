@@ -449,7 +449,7 @@ void MainWindow::setJobModeUI(bool enabled) {
         addToolBar(&segJobModeToolbar);
         segJobModeToolbar.show(); // toolbar is hidden by removeToolBar
         forEachVPDo([] (ViewportBase & vp) { vp.hide(); });
-        viewportXY.get()->resize(centralWidget()->height() - DEFAULT_VP_MARGIN, centralWidget()->height() - DEFAULT_VP_MARGIN);
+        viewportXY->resize(centralWidget()->height() - DEFAULT_VP_MARGIN, centralWidget()->height() - DEFAULT_VP_MARGIN);
         QObject::connect(&Segmentation::singleton(), &Segmentation::todosLeftChanged, this, &MainWindow::updateTodosLeft);
         QObject::connect(&Segmentation::singleton(), &Segmentation::resetData, this, &MainWindow::updateTodosLeft);
     } else {
@@ -1367,8 +1367,8 @@ void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
 
 void MainWindow::resetViewports() {
     if (Annotation::singleton().guiMode == GUIMode::ProofReading) {
-        viewportXY.get()->setDock(true);
-        viewportXY.get()->show();
+        viewportXY->setDock(true);
+        viewportXY->show();
         viewportXZ->setHidden(true);
         viewportZY->setHidden(true);
         viewportArb->setHidden(true);
