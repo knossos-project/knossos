@@ -91,15 +91,14 @@ signals:
 
 const QString PLUGIN_MGR_NAME = "pluginMgr";
 const QString PLUGIN_SETTINGS_PREFIX = "Plugin_";
-const QString PLUGIN_DIR_VAL_NAME = "PluginDir";
 const QString PLUGIN_NAMES_VAL_NAME = "PluginNames";
 
 const QString PLUGINS_DIRECTORY = "knossos_plugins";
 
 /** This class intializes the python qt engine */
-class Scripting : public QObject
-{
+class Scripting : public QObject {
     Q_OBJECT
+    friend class PythonPropertyWidget;
 public:
     explicit Scripting();
     void runFile(const QString &filename);
@@ -113,15 +112,21 @@ private:
     PythonQtObjectPtr _ctx;
     QStringList _customPathDirs;
     QVariant evalScript(const QString& script, int start = Py_file_input);
+    QString pluginDir;
+    QString workingDir;
+    void initialize();
     void moveSymbolIntoKnossosModule(const QString& name);
     void executeFromUserDirectory();
     void executeResourceStartup();
-    void changeWorkingDirectory();
+    void changeWorkingDirectory(const QString &newDir);
     void createDefaultPluginDir();
     void addPresetCustomPythonPaths();
     void addPythonPath(const QString &customPath);
     void addWidgets();
     bool pluginActionError(const QString &actionStr, const QString &pluginName, const QString &errorStr, bool isQuiet);
+signals:
+    void pluginDirChanged(const QString & newDir);
+    void workingDirChanged(const QString & newDir);
 public slots:
     QString getPluginInContainerStr(const QString &pluginName);
     QString getImportInContainerStr(const QString &pluginName);

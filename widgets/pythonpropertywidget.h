@@ -25,29 +25,32 @@
 
 #include "widgets/DialogVisibilityNotify.h"
 
+#include <QGridLayout>
+#include <QLabel>
+#include <QLineEdit>
+#include <QPushButton>
 #include <QTextEdit>
 #include <QWidget>
 
-class QPushButton;
-class QLineEdit;
-class QLabel;
-class QCheckBox;
+#include <vector>
 
 class PythonPropertyWidget : public DialogVisibilityNotify {
     Q_OBJECT
-public:
-    explicit PythonPropertyWidget(QWidget *parent = 0);
 protected:
-    QPushButton *autoStartFolderButton;
-    QPushButton *workingDirectoryButton;
-    QLineEdit *autoStartFolderEdit;
-    QLineEdit *workingDirectoryEdit;
-    QPushButton *customPathsAppendButton;
-    QTextEdit *customPathsEdit;
-
-    void closeEvent(QCloseEvent *e);
+    QGridLayout layout;
+    QLabel workingDirLabel{"Working directory:"};
+    QPushButton workingDirButton{"…"};
+    QPushButton resetWorkingDirButton{"Reset"};
+    QLabel pluginDirLabel{"Plugin folder:"};
+    QPushButton pluginDirButton{"…"};
+    QPushButton resetPluginDirButton{"Reset"};
+    QLabel customPathsLabel{"Custom paths"};
+    QPushButton customPathsAppendButton{"Add…"};
+    QTextEdit customPathsEdit;
+public:
+    explicit PythonPropertyWidget(QWidget *parent = nullptr);
 public slots:
-    void autoStartFolderButtonClicked();
+    void pluginFolderButtonClicked();
     void saveSettings();
     void loadSettings();
     void workingDirectoryButtonClicked();

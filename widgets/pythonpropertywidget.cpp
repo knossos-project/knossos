@@ -25,59 +25,57 @@
 #include "GuiConstants.h"
 #include "stateInfo.h"
 #include "viewer.h"
+#include "scriptengine/scripting.h"
 
-#include <Python.h>
-#include <PythonQt/PythonQt.h>
-#include <QApplication>
-#include <QCheckBox>
-#include <QDebug>
+#include <QCoreApplication>
 #include <QDesktopWidget>
 #include <QFileDialog>
-#include <QLineEdit>
 #include <QProcess>
-#include <QPushButton>
 #include <QSettings>
-#include <QVBoxLayout>
 
-PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) :
-    DialogVisibilityNotify(PYTHON_PROPERTY_WIDGET, parent)
-{
 
+PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) : DialogVisibilityNotify(PYTHON_PROPERTY_WIDGET, parent) {
     setWindowTitle("Python Properties");
-    QVBoxLayout *layout = new QVBoxLayout();
 
-    workingDirectoryButton = new QPushButton("Select working directory");
-    workingDirectoryEdit = new QLineEdit();
-    autoStartFolderEdit = new QLineEdit();
-    autoStartFolderEdit->setToolTip("Scripts in this folder were automatically started with KNOSSOS");
-    autoStartFolderButton = new QPushButton("Select Autostart Folder");
-    customPathsAppendButton = new QPushButton("Append Custom Path");
-    customPathsEdit = new QTextEdit();
+    pluginDirLabel.setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
+    workingDirLabel.setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::TextSelectableByKeyboard);
+    pluginDirLabel.setToolTip("Scripts in this folder are automatically started with KNOSSOS.");
 
-    layout->addWidget(workingDirectoryButton);
-    layout->addWidget(workingDirectoryEdit);
-    layout->addWidget(autoStartFolderButton);
-    layout->addWidget(autoStartFolderEdit);
-    layout->addWidget(customPathsAppendButton);
-    layout->addWidget(customPathsEdit);
+    int row = 0;
+    layout.addWidget(&workingDirLabel, row, 0);
+    layout.addWidget(&workingDirButton, row, 1, Qt::AlignRight);
+    layout.addWidget(&resetWorkingDirButton, row++, 2, Qt::AlignRight);
+    layout.addWidget(&pluginDirLabel, row, 0);
+    layout.addWidget(&pluginDirButton, row, 1, Qt::AlignRight);
+    layout.addWidget(&resetPluginDirButton, row++, 2, Qt::AlignRight);
+    layout.addWidget(&customPathsLabel, row, 0);
+    layout.addWidget(&customPathsAppendButton, row++, 2, Qt::AlignLeft);
+    layout.addWidget(&customPathsEdit, row, 0, 1, 3);
+    setLayout(&layout);
 
-    setLayout(layout);
-
-    connect(autoStartFolderButton, SIGNAL(clicked()), this, SLOT(autoStartFolderButtonClicked()));
-    connect(workingDirectoryButton, SIGNAL(clicked()), this, SLOT(workingDirectoryButtonClicked()));
-    connect(customPathsAppendButton, SIGNAL(clicked()), this, SLOT(appendCustomPathButtonClicked()));
+    QObject::connect(state->scripting, &Scripting::workingDirChanged, [this](const QString & newDir) {
+        workingDirLabel.setText(tr("Working directory: %1").arg(newDir));
+    });
+    QObject::connect(&resetWorkingDirButton, &QPushButton::clicked, []() {
+        state->scripting->changeWorkingDirectory(QCoreApplication::applicationDirPath());
+    });
+    QObject::connect(state->scripting, &Scripting::pluginDirChanged, [this](const QString & newDir) {
+        pluginDirLabel.setText(tr("Plugin folder: %1").arg(newDir));
+    });
+    QObject::connect(&pluginDirButton, &QPushButton::clicked, this, &PythonPropertyWidget::pluginFolderButtonClicked);
+    QObject::connect(&resetPluginDirButton, &QPushButton::clicked, []() {
+        state->scripting->setPluginDir(state->scripting->getDefaultPluginDir());
+    });
+    QObject::connect(&workingDirButton, &QPushButton::clicked, this, &PythonPropertyWidget::workingDirectoryButtonClicked);
+    QObject::connect(&customPathsAppendButton, &QPushButton::clicked, this, &PythonPropertyWidget::appendCustomPathButtonClicked);
 }
 
-void PythonPropertyWidget::closeEvent(QCloseEvent *) {
-    this->hide();
-}
-
-void PythonPropertyWidget::autoStartFolderButtonClicked() {
-     const QString selection = state->viewer->suspend([this]{
-         return QFileDialog::getExistingDirectory(this, "select the autostart folder", QDir::homePath());
+void PythonPropertyWidget::pluginFolderButtonClicked() {
+     const auto selection = state->viewer->suspend([this]{
+         return QFileDialog::getExistingDirectory(this, "select the plugin folder", QDir::homePath());
      });
      if(!selection.isEmpty()) {
-         autoStartFolderEdit->setText(selection);
+         state->scripting->setPluginDir(selection);
      }
 }
 
@@ -86,12 +84,11 @@ void PythonPropertyWidget::saveSettings() {
     settings.beginGroup(PYTHON_PROPERTY_WIDGET);
     settings.setValue(VISIBLE, isVisible());
 
-    settings.setValue(PYTHON_WORKING_DIRECTORY, workingDirectoryEdit->text());
-    settings.setValue(PYTHON_AUTOSTART_FOLDER, autoStartFolderEdit->text());
-    settings.setValue(PYTHON_CUSTOM_PATHS, customPathsEdit->toPlainText().split("\n"));
+    settings.setValue(PYTHON_WORKING_DIRECTORY, state->scripting->workingDir);
+    settings.setValue(PYTHON_PLUGIN_FOLDER, state->scripting->getPluginDir());
+    settings.setValue(PYTHON_CUSTOM_PATHS, customPathsEdit.toPlainText().split("\n"));
 
     settings.endGroup();
-
 }
 
 void PythonPropertyWidget::loadSettings() {
@@ -99,26 +96,28 @@ void PythonPropertyWidget::loadSettings() {
     settings.beginGroup(PYTHON_PROPERTY_WIDGET);
     restoreGeometry(settings.value(GEOMETRY).toByteArray());
 
-    autoStartFolderEdit->setText(settings.value(PYTHON_AUTOSTART_FOLDER, "").toString());
-    workingDirectoryEdit->setText(settings.value(PYTHON_WORKING_DIRECTORY, "").toString());
-    customPathsEdit->setText(settings.value(PYTHON_CUSTOM_PATHS).toStringList().join("\n"));
+    state->scripting->setPluginDir(settings.value(PYTHON_PLUGIN_FOLDER, state->scripting->getDefaultPluginDir()).toString());
+    state->scripting->changeWorkingDirectory(settings.value(PYTHON_WORKING_DIRECTORY, "").toString());
+    customPathsEdit.setText(settings.value(PYTHON_CUSTOM_PATHS).toStringList().join("\n"));
     settings.endGroup();
+
+    state->scripting->initialize();
 }
 
 void PythonPropertyWidget::workingDirectoryButtonClicked() {
-     const QString selection = state->viewer->suspend([this]{
+     const auto selection = state->viewer->suspend([this]{
          return QFileDialog::getExistingDirectory(this, "select a working directory", QDir::homePath());
      });
      if(!selection.isEmpty()) {
-         workingDirectoryEdit->setText(selection);
+         state->scripting->changeWorkingDirectory(selection);
      }
 }
 
 void PythonPropertyWidget::appendCustomPathButtonClicked() {
-     const QString selection = state->viewer->suspend([this]{
+     const auto selection = state->viewer->suspend([this]{
          return QFileDialog::getExistingDirectory(this, "select custom path directory", QDir::homePath());
      });
-     if(!selection.isEmpty()) {
-         customPathsEdit->append(selection);
+     if (!selection.isEmpty()) {
+        customPathsEdit.append(selection);
      }
 }

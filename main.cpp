@@ -145,8 +145,8 @@ int main(int argc, char *argv[]) {
     ::state = &state;
 
     SignalRelay signalRelay;
-    Viewer viewer;
     Scripting scripts;
+    Viewer viewer;
     state.mainWindow->loadSettings();// load settings after viewer and window are accessible through state and viewer
     state.mainWindow->widgetContainer.datasetLoadWidget.loadDataset();// load last used dataset or show
     viewer.timer.start(0);

@@ -89,6 +89,21 @@ const QString SCRIPTING_INSTANCE_KEY = "instance";
 Scripting::Scripting() : _ctx{PythonQtInit()} {
     state->scripting = this;
 
+    auto makeDecorator = [](QObject * decorator, const char * typeName){
+        // PythonQt tries to reparent the decorators, we do their missing work of pushing it into their thread first
+        // due to the QObject handling they also get deleted by PythonQt then
+        decorator->moveToThread(PythonQt::self()->thread());
+        PythonQt::self()->addDecorators(decorator);
+        PythonQt::self()->registerCPPClass(typeName, "", "internal");
+    };
+    makeDecorator(new CoordinateDecorator, "Coordinate");
+    makeDecorator(new FloatCoordinateDecorator, "floatCoordinate");
+    makeDecorator(new NodeListDecorator, "Node");
+    makeDecorator(new SegmentListDecorator, "Segment");
+    makeDecorator(new TreeListDecorator, "Tree");
+}
+
+void Scripting::initialize() {
     PythonQt::self()->registerClass(&EmitOnCtorDtor::staticMetaObject);
 
     evalScript("import sys");
@@ -135,19 +150,6 @@ Scripting::Scripting() : _ctx{PythonQtInit()} {
     addVariable("Mode_Selection", AnnotationMode::Mode_Selection);
     addWidgets();
 
-    auto makeDecorator = [](QObject * decorator, const char * typeName){
-        // PythonQt tries to reparent the decorators, we do their missing work of pushing it into their thread first
-        // due to the QObject handling they also get deleted by PythonQt then
-        decorator->moveToThread(PythonQt::self()->thread());
-        PythonQt::self()->addDecorators(decorator);
-        PythonQt::self()->registerCPPClass(typeName, "", "internal");
-    };
-    makeDecorator(new CoordinateDecorator, "Coordinate");
-    makeDecorator(new FloatCoordinateDecorator, "floatCoordinate");
-    makeDecorator(new NodeListDecorator, "Node");
-    makeDecorator(new SegmentListDecorator, "Segment");
-    makeDecorator(new TreeListDecorator, "Tree");
-
     createDefaultPluginDir();
     addPythonPath(getPluginDir());
     addPresetCustomPythonPaths();
@@ -158,17 +160,17 @@ Scripting::Scripting() : _ctx{PythonQtInit()} {
     _ctx.evalFile(QString("sys.path.append('%1')").arg("./python"));
 #endif
 
-    changeWorkingDirectory();
     executeResourceStartup();
     executeFromUserDirectory();
+
     const auto * snapshotWidget = &state->viewer->window->widgetContainer.snapshotWidget;
-    QObject::connect(&state->scripting->pythonProxy, &PythonProxy::viewport_snapshot_vp_size, snapshotWidget, &SnapshotWidget::snapshotVpSizeRequest);
-    QObject::connect(&state->scripting->pythonProxy, &PythonProxy::viewport_snapshot_dataset_size, snapshotWidget, &SnapshotWidget::snapshotDatasetSizeRequest);
-    QObject::connect(&state->scripting->pythonProxy, &PythonProxy::viewport_snapshot, snapshotWidget, &SnapshotWidget::snapshotRequest);
-    QObject::connect(&state->scripting->pythonProxy, &PythonProxy::set_layer_visibility, state->viewer, &Viewer::setLayerVisibility);
-    QObject::connect(&state->scripting->pythonProxy, &PythonProxy::set_mesh_3d_alpha_factor, state->viewer, &Viewer::setMesh3dAlphaFactor);
-    QObject::connect(&state->scripting->pythonProxy, &PythonProxy::set_mesh_slicing_alpha_factor, state->viewer, &Viewer::setMeshSlicingAlphaFactor);
-    QObject::connect(&state->scripting->pythonProxy, &PythonProxy::set_tree_visibility, &state->viewer->window->widgetContainer.preferencesWidget.treesTab, &TreesTab::setTreeVisibility);
+    QObject::connect(&pythonProxy, &PythonProxy::viewport_snapshot_vp_size, snapshotWidget, &SnapshotWidget::snapshotVpSizeRequest);
+    QObject::connect(&pythonProxy, &PythonProxy::viewport_snapshot_dataset_size, snapshotWidget, &SnapshotWidget::snapshotDatasetSizeRequest);
+    QObject::connect(&pythonProxy, &PythonProxy::viewport_snapshot, snapshotWidget, &SnapshotWidget::snapshotRequest);
+    QObject::connect(&pythonProxy, &PythonProxy::set_layer_visibility, state->viewer, &Viewer::setLayerVisibility);
+    QObject::connect(&pythonProxy, &PythonProxy::set_mesh_3d_alpha_factor, state->viewer, &Viewer::setMesh3dAlphaFactor);
+    QObject::connect(&pythonProxy, &PythonProxy::set_mesh_slicing_alpha_factor, state->viewer, &Viewer::setMeshSlicingAlphaFactor);
+    QObject::connect(&pythonProxy, &PythonProxy::set_tree_visibility, &state->viewer->window->widgetContainer.preferencesWidget.treesTab, &TreesTab::setTreeVisibility);
     state->viewer->window->widgetContainer.pythonInterpreterWidget.startConsole();
 }
 
@@ -181,15 +183,13 @@ QVariant getSettingsValue(const QString &key) {
 }
 
 void Scripting::setPluginDir(const QString &pluginDir) {
-    QSettings settings;
-    settings.beginGroup(PLUGIN_SETTINGS_PREFIX + PLUGIN_MGR_NAME);
-    settings.setValue(PLUGIN_DIR_VAL_NAME,pluginDir);
-    settings.endGroup();
+    this->pluginDir = pluginDir;
     addPythonPath(pluginDir);
+    emit pluginDirChanged(pluginDir);
 }
 
 QString Scripting::getPluginDir() {
-    return QSettings{}.value(PLUGIN_SETTINGS_PREFIX + PLUGIN_MGR_NAME + '/' + PLUGIN_DIR_VAL_NAME).toString();
+    return pluginDir;
 }
 
 QString Scripting::getPluginNames() {
@@ -212,30 +212,28 @@ QString Scripting::getDefaultPluginDir() {
 }
 
 void Scripting::createDefaultPluginDir() {
-    auto pluginDir = getPluginDir();
-    if (!pluginDir.isEmpty() && QDir(pluginDir).exists()) {
+    if (!getPluginDir().isEmpty() && QDir(getPluginDir()).exists()) {
         return;
     }
-    pluginDir = getDefaultPluginDir();
-    if (!QDir().mkpath(pluginDir)) {
+    const auto defaultPluginDir = getDefaultPluginDir();
+    if (!QDir().mkpath(defaultPluginDir)) {
         QMessageBox errorBox{QApplication::activeWindow()};
         errorBox.setIcon(QMessageBox::Warning);
         errorBox.setText(QObject::tr("Python Plugin Manager: Error"));
-        errorBox.setInformativeText(QObject::tr("Cannot create plugin directory:\n%1").arg(pluginDir));
+        errorBox.setInformativeText(QObject::tr("Cannot create plugin directory:\n%1").arg(defaultPluginDir));
         errorBox.exec();
         return;
     }
-    setPluginDir(pluginDir);
+    setPluginDir(defaultPluginDir);
 }
 
-void Scripting::changeWorkingDirectory() {
-    auto value = getSettingsValue(PYTHON_WORKING_DIRECTORY);
-    if (value.isNull()) { return; }
-    auto workingDir = value.toString();
-    if (workingDir.isEmpty()) { return; }
-
-    evalScript("import os");
-    evalScript(QString("os.chdir('%1')").arg(workingDir));
+void Scripting::changeWorkingDirectory(const QString & newDir) {
+    workingDir = newDir;
+    if (!workingDir.isEmpty()) {
+        evalScript("import os");
+        evalScript(QString("os.chdir('%1')").arg(workingDir));
+    }
+    emit workingDirChanged(workingDir);
 }
 
 void Scripting::addPythonPath(const QString &path) {
@@ -478,12 +476,7 @@ void Scripting::addVariable(const QString& name, const QVariant& v) {
 }
 
 void Scripting::executeFromUserDirectory() {
-    auto value = getSettingsValue(PYTHON_AUTOSTART_FOLDER);
-    if (value.isNull()) { return; }
-    auto autoStartFolder = value.toString();
-    if (autoStartFolder.isEmpty()) { return; }
-
-    QDir scriptDir(autoStartFolder);
+    QDir scriptDir(pluginDir);
     QStringList endings;
     endings << "*.py";
     scriptDir.setNameFilters(endings);
