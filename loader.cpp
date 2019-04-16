@@ -103,6 +103,18 @@ bool Loader::Controller::isFinished() {
     return worker != nullptr ? worker->isFinished.load() : true;//no loader == done?
 }
 
+bool Loader::Controller::hasSnappyCache() {
+    bool hasSnappyCacheVal;
+    const auto func = [](){
+        return !Loader::Controller::singleton().worker->snappyCache.empty();
+    };
+    if (QMetaObject::invokeMethod(Loader::Controller::singleton().worker.get(), func, Qt::BlockingQueuedConnection, &hasSnappyCacheVal)) {
+        return hasSnappyCacheVal;
+    } else {
+        throw std::runtime_error("hasSnappyCache failed");
+    }
+}
+
 void Loader::Worker::CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, const UserMoveType userMoveType, const floatCoordinate & direction, float *metrics) {
     const auto INNER_MULT_VECTOR = [](const floatCoordinate v) {
         return v.x * v.y * v.z;

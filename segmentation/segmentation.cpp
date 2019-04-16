@@ -100,7 +100,7 @@ Segmentation::Segmentation() {
 }
 
 bool Segmentation::hasSegData() const {
-    return hasObjects() || (Loader::Controller::singleton().worker != nullptr && !Loader::Controller::singleton().worker->snappyCache.empty());//we will change smth
+    return hasObjects() || (Loader::Controller::singleton().worker != nullptr && Loader::Controller::singleton().hasSnappyCache());//we will change smth
 }
 
 void Segmentation::clear() {

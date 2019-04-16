@@ -172,6 +172,7 @@ public:
     decltype(Loader::Worker::snappyCache) getAllModifiedCubes();
 public slots:
     bool isFinished();
+    bool hasSnappyCache();
 signals:
     void progress(int count);
     void refCountChange(bool isIncrement, int refCount);
