@@ -1037,6 +1037,8 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
     } else if (mode.testFlag(AnnotationMode::Mode_Tracing)) {
         setSegmentState(SegmentState::On);
     }
+    state->viewerState->showCombineSlices = Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_TracingAdvanced);
+    state->viewer->reslice_notify();
     newTreeAction->setVisible(trees);
     newObjectAction->setVisible(mode.testFlag(AnnotationMode::Mode_Paint));
     pushBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));

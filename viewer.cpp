@@ -477,6 +477,7 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
         return;
     }
     const int multiSliceiMax = viewerState.layerRenderSettings[layerId].combineSlicesEnabled
+            * viewerState.showCombineSlices
             * viewerState.layerRenderSettings[layerId].combineSlices
             * ((vp.viewportType == VIEWPORT_XY) || !viewerState.layerRenderSettings[layerId].combineSlicesXyOnly);
     static std::vector<std::uint8_t> texData;// reallocation for every run would be a waste

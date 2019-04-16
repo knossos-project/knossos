@@ -151,6 +151,7 @@ struct ViewerState {
     double luminanceRangeDelta{1.};
     double luminanceBias{0.};
     bool showOnlyRawData{false};
+    bool showCombineSlices{true};
     std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> datasetColortable;//user LUT
     bool datasetColortableOn{false};
     // skeleton rendering options

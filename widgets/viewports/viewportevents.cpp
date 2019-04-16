@@ -558,6 +558,8 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         }
     } else if(event->key() == Qt::Key_Space) {
         state->viewerState->showOnlyRawData = true;
+        state->viewerState->showCombineSlices = Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Tracing);
+        state->viewer->reslice_notify();
         state->viewer->mainWindow.forEachVPDo([] (ViewportBase & vp) {
             vp.showHideButtons(false);
         });
@@ -638,6 +640,8 @@ void ViewportOrtho::handleKeyPress(const QKeyEvent *event) {
 void ViewportBase::handleKeyRelease(const QKeyEvent *event) {
     if(event->key() == Qt::Key_Space) {
         state->viewerState->showOnlyRawData = false;
+        state->viewerState->showCombineSlices = Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_TracingAdvanced);
+        state->viewer->reslice_notify();
         state->viewer->mainWindow.forEachVPDo([] (ViewportBase & vp) {
             vp.showHideButtons(state->viewerState->showVpDecorations);
         });
