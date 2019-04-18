@@ -123,15 +123,16 @@ void TaskManagementWidget::updateAndRefreshWidget() {
     const auto jmap = QJsonDocument::fromJson(res.second.toUtf8()).object();
     if (res.first && !jmap.isEmpty()) {
 //        auto username = jmap["username"].toString();// username is not used
+        auto & task = Annotation::singleton().task;
         auto fullName = jmap["first_name"].toString() + ' ' + jmap["last_name"].toString();
         auto isAdmin = jmap["is_admin"].toBool();
-        auto taskName = jmap["task_name"].toString("");
+        task.name = jmap["task_name"].toString("");
+        task.project = jmap["task_project_name"].toString("");
+        task.category = jmap["task_category_name"].toString("");
         auto taskComment = jmap["task_comment"].toString();
-        auto taskCategory = jmap["task_category_name"].toString("");
         auto categoryDescription = jmap["task_category_description"].toString();
-        const bool hasTask = !taskName.isEmpty();
+        const bool hasTask = !task.name.isEmpty();
 
-        Annotation::singleton().task = {taskCategory, taskName};
         auto statusText = tr("Hello ") + fullName + tr("!");
         statusLabel.setText(statusText);
         logoutButton.setText("Logout");
@@ -140,7 +141,7 @@ void TaskManagementWidget::updateAndRefreshWidget() {
         gridLayout.removeWidget(&loadLastSubmitButton);
         gridLayout.removeWidget(&startNewTaskButton);
         if (hasTask) {
-            taskLabel.setText(tr("“%1” (%2)").arg(taskName).arg(taskCategory));
+            taskLabel.setText(tr("“%1” (%2, %3)").arg(task.name, task.project, task.category));
             gridLayout.addWidget(&loadLastSubmitButton, 0, 0, 1, 2);
         } else {
             taskLabel.setText(tr("None"));
@@ -260,7 +261,8 @@ void TaskManagementWidget::rejectTask() {
     box.addButton(tr("Cancel"), QMessageBox::RejectRole);
     box.exec();
     if (box.clickedButton() == accept) {
-        auto res = Network::singleton().rejectTask(baseUrl + "/work/" + Annotation::singleton().task.first + "/" + Annotation::singleton().task.second);
+        const auto & task = Annotation::singleton().task;
+        auto res = Network::singleton().rejectTask(baseUrl + "/work/" + task.project + "/" + task.category + "/" + task.name);
         if (handleError(res, res.second)) {
             updateAndRefreshWidget();//task infos changed
             statusLabel.setText("<font color='green'>Rejected task successfully.</font>");

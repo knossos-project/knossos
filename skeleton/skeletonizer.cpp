@@ -263,11 +263,12 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     xml.writeAttribute("path", saveDatasetPath? state->viewer->window->widgetContainer.datasetLoadWidget.datasetUrl.toString() : "");
     xml.writeAttribute("overlay", QString::number(static_cast<int>(Segmentation::singleton().enabled)));
     xml.writeEndElement();
-
-    if (!Annotation::singleton().task.first.isEmpty() || !Annotation::singleton().task.second.isEmpty()) {
+    const auto & task = Annotation::singleton().task;
+    if (!task.project.isEmpty() || !task.category.isEmpty() || !task.name.isEmpty()) {
         xml.writeStartElement("task");
-        xml.writeAttribute("category", Annotation::singleton().task.first);
-        xml.writeAttribute("name", Annotation::singleton().task.second);
+        xml.writeAttribute("project", task.project);
+        xml.writeAttribute("category", task.category);
+        xml.writeAttribute("name", task.name);
         xml.writeEndElement();
     }
 
@@ -437,7 +438,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     Annotation::singleton().guiMode = GUIMode::None;
 
     bool matlabCoordinates{true};
-    QString experimentName, taskCategory, taskName;
+    QString experimentName, loadedProject, loadedCategory, loadedTaskName;
     std::uint64_t activeNodeID = 0;
     auto nmlScale = Dataset::current().scales[0];
     auto loadedPosition = boost::make_optional(false, floatCoordinate{});// make_optional gets around GCCs false positive maybe-uninitialized
@@ -575,10 +576,13 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                 } else if(xml.name() == "task") {
                     for (auto && attribute : attributes) {
                         auto key = attribute.name();
+                        if (key == "project") {
+                            loadedProject = attribute.value().toString();
+                        }
                         if (key == "category") {
-                            taskCategory = attribute.value().toString();
+                            loadedCategory = attribute.value().toString();
                         } else if (key == "name") {
-                            taskName = attribute.value().toString();
+                            loadedTaskName = attribute.value().toString();
                         }
                     }
                 } else if (knownElements.find(xml.name().toString()) == std::end(knownElements)) {// known but unused legacy elements are not reported
@@ -834,11 +838,10 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     if (mismatchedDataset) {
         msg += tr("• The annotation (created in dataset “%1”) does not belong to the currently loaded dataset (“%2”).\n\n").arg(experimentName).arg(Dataset::current().experimentname);
     }
-    const auto currentTaskCategory = Annotation::singleton().task.first;
-    const auto currentTaskName = Annotation::singleton().task.second;
-    const auto mismatchedTask = !currentTaskCategory.isEmpty() && !currentTaskName.isEmpty() && (currentTaskCategory != taskCategory || currentTaskName != taskName);
+    const auto task = Annotation::singleton().task;
+    const auto mismatchedTask = !task.project.isEmpty() && !task.category.isEmpty() && !task.name.isEmpty() && (task.project != loadedProject || task.category != loadedCategory || task.name != loadedTaskName);
     if (mismatchedTask) {
-        msg += tr("• The associated task “%1” (%2) is different from the currently active “%3” (%4).\n\n").arg(taskName).arg(taskCategory).arg(currentTaskName).arg(currentTaskCategory);
+        msg += tr("• The associated task “%1” (%2, %3) is different from the currently active “%4” (%5, %6).\n\n").arg(loadedTaskName, loadedProject, loadedCategory, task.name, task.project, task.category);
     }
     msg.chop(2);// remove the 2 newlines at the end
     if (!msg.isEmpty()) {

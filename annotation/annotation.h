@@ -58,6 +58,12 @@ enum AnnotationMode {
     Mode_Selection = (1 << 13) | NodeSelection | ObjectSelection,
 };
 
+struct AAMTask {
+    QString project;
+    QString category;
+    QString name;
+};
+
 class Annotation : public QObject {
     Q_OBJECT
     class ActivityEventFilter;
@@ -76,7 +82,7 @@ public:
     bool savePlyAsBinary{true};
     bool unsavedChanges = false;
 
-    QPair<QString, QString> task;
+    AAMTask task;
     QFlags<AnnotationMode> annotationMode;
     GUIMode guiMode{GUIMode::None};
 
