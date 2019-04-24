@@ -17,7 +17,7 @@
 
 
     For further information, visit https://knossos.app
-    or contact knossos-team@mpimf-heidelberg.mpg.de
+    or contact knossosteam@gmail.com
 ]]
 cmake_minimum_required(VERSION 3.8)
 project(knossos)

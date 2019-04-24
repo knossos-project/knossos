@@ -267,7 +267,7 @@ margin-top: 8px;
          <item>
           <widget class="QLabel" name="emailLabel">
            <property name="text">
-            <string>&lt;a href=&quot;mailto:knossos-team@mpimf-heidelberg.mpg.de&quot;&gt;knossos-team@mpimf-heidelberg.mpg.de&lt;/a&gt;</string>
+            <string>&lt;a href=&quot;mailto:knossosteam@gmail.com&quot;&gt;knossosteam@gmail.com&lt;/a&gt;</string>
            </property>
            <property name="openExternalLinks">
             <bool>true</bool>

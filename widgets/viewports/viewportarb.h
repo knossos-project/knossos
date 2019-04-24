@@ -17,7 +17,7 @@
  *
  *
  *  For further information, visit https://knossos.app
- *  or contact knossos-team@mpimf-heidelberg.mpg.de
+ *  or contact knossosteam@gmail.com
  */
 
 #ifndef VIEWPORTARB_H
