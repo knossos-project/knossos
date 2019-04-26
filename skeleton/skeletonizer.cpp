@@ -440,7 +440,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     bool matlabCoordinates{true};
     QString experimentName, loadedProject, loadedCategory, loadedTaskName;
     std::uint64_t activeNodeID = 0;
-    auto nmlScale = Dataset::current().scales[0];
+    auto nmlScale = boost::make_optional(false, floatCoordinate{});
     auto loadedPosition = boost::make_optional(false, floatCoordinate{});// make_optional gets around GCCs false positive maybe-uninitialized
     std::vector<std::uint64_t> branchVector;
     std::vector<std::pair<std::uint64_t, QString>> commentsVector;
@@ -521,7 +521,11 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                     Segmentation::singleton().setBackgroundId(attributes.value("backgroundId").toULongLong());
                 } else if(xml.name() == "editPosition") {
                     loadedPosition = floatCoordinate(attributes.value("x").toDouble(), attributes.value("y").toDouble(), attributes.value("z").toDouble());
-                    loadedPosition = (nmlScale / Dataset::current().scales[0]).componentMul(loadedPosition.get()) - matlabCoordinates;
+                    if (nmlScale) {
+                        loadedPosition = (nmlScale.get() / Dataset::current().scales[0]).componentMul(loadedPosition.get()) - matlabCoordinates;
+                    } else {
+                        loadedPosition = loadedPosition.get() - matlabCoordinates;
+                    }
                 } else if(xml.name() == "skeletonVPState") {
                     if (!merge) {
                           // non-working code for skelvp rotation and translation restoration
@@ -700,13 +704,13 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                                 if (name == "id") {
                                     nodeID = value.toULongLong();
                                 } else if (name == "radius") {
-                                    radius = nmlScale.x / Dataset::current().scales[0].x * value.toDouble();
+                                    radius = (nmlScale ? nmlScale->x / Dataset::current().scales[0].x : 1) * value.toDouble();
                                 } else if (name == "x") {
-                                    currentCoordinate.x = nmlScale.x / Dataset::current().scales[0].x * value.toDouble() - matlabCoordinates;
+                                    currentCoordinate.x = (nmlScale ? nmlScale->x / Dataset::current().scales[0].x : 1) * value.toDouble() - matlabCoordinates;
                                 } else if (name == "y") {
-                                    currentCoordinate.y = nmlScale.y / Dataset::current().scales[0].y * value.toDouble() - matlabCoordinates;
+                                    currentCoordinate.y = (nmlScale ? nmlScale->y / Dataset::current().scales[0].y : 1) * value.toDouble() - matlabCoordinates;
                                 } else if (name == "z") {
-                                    currentCoordinate.z = nmlScale.z / Dataset::current().scales[0].z * value.toDouble() - matlabCoordinates;
+                                    currentCoordinate.z = (nmlScale ? nmlScale->z / Dataset::current().scales[0].z : 1) * value.toDouble() - matlabCoordinates;
                                 } else if (name == "inVp") {
                                     inVP = static_cast<ViewportType>(value.toInt());
                                 } else if (name == "inMag") {
