@@ -245,8 +245,8 @@ void MainWindow::updateCursorLabel(const Coordinate & position, const ViewportTy
     const auto inc{state->skeletonState->displayMatlabCoordinates};
     QString cubePosText = "";
     if (state->viewerState->showCubeCoordinates) {
-        const auto cubePosition = position / Dataset::current().cubeEdgeLength;
-        cubePosText = QString(" | %1, %2, %3").arg(cubePosition.x).arg(cubePosition.y).arg(cubePosition.z);
+        auto cubePos = Dataset::current().global2cube(position);
+        cubePosText = QString(" | %1, %2, %3 (mag %4)").arg(cubePos.x).arg(cubePos.y).arg(cubePos.z).arg(Dataset::current().magnification);
     }
     cursorPositionLabel.setText(QString("%1, %2, %3%4").arg(position.x + inc).arg(position.y + inc).arg(position.z + inc).arg(cubePosText));
 }
