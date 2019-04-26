@@ -722,14 +722,18 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         }
     };
 
-    const auto workaroundProcessLocalImmediately = datasets[0].url.scheme() == "file" ? [](){QCoreApplication::processEvents();} : [](){};
+    const auto workaroundProcessLocalImmediately = [](auto dataset){
+        if (dataset.url.scheme() == "file") {
+            QCoreApplication::processEvents();
+        }
+    };
     for (auto [layerId, cubeCoord] : allCubes) {
         if (loadingNr == Loader::Controller::singleton().loadingNr) {
             if (datasets[layerId].loadingEnabled) {
                 try {
                     startDownload(layerId, datasets[layerId], cubeCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer.at(layerId).at(loaderMagnification));
                 } catch (const std::out_of_range &) {}
-                workaroundProcessLocalImmediately();//https://bugreports.qt.io/browse/QTBUG-45925
+                workaroundProcessLocalImmediately(datasets[layerId]);//https://bugreports.qt.io/browse/QTBUG-45925
             }
         }
     }
