@@ -100,14 +100,12 @@ Segmentation::Segmentation() {
 }
 
 bool Segmentation::hasSegData() const {
-    return hasObjects() || (Loader::Controller::singleton().worker != nullptr && Loader::Controller::singleton().hasSnappyCache());//we will change smth
+    return hasObjects() || Loader::Controller::singleton().hasSnappyCache();//we will change smth
 }
 
 void Segmentation::clear() {
-    if (Loader::Controller::singleton().worker != nullptr) {
-        //dispatch to loader thread, original cubes are reloaded automatically
-        QTimer::singleShot(0, Loader::Controller::singleton().worker.get(), &Loader::Worker::snappyCacheClear);
-    }
+    //dispatch to loader thread, original cubes are reloaded automatically
+    QTimer::singleShot(0, Loader::Controller::singleton().worker.get(), &Loader::Worker::snappyCacheClear);
     mergelistClear();
 }
 

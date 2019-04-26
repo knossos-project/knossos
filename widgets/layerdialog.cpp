@@ -79,10 +79,7 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 }
 
-void reloadLayers(bool layerCountChanged = false) {
-    if (layerCountChanged) {
-        Loader::Controller::singleton().restart(Dataset::datasets);// state->cube2Pointer needs to be resized
-    }
+void reloadLayers() {
     state->viewer->loader_notify();
     emit state->mainWindow->widgetContainer.datasetLoadWidget.datasetChanged();// HACK
 }
@@ -226,7 +223,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
             if (Segmentation::singleton().layerId >= layeri) {
                 ++Segmentation::singleton().layerId;
             }
-            reloadLayers(true);
+            reloadLayers();
         }
     });
     QObject::connect(&addLayerButton, &QToolButton::clicked, [this](){
@@ -247,7 +244,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
             if (Segmentation::singleton().layerId >= layeri) {
                 --Segmentation::singleton().layerId;
             }
-            reloadLayers(true);
+            reloadLayers();
         }
     });
 

@@ -67,9 +67,20 @@ void Loader::Controller::suspendLoader() {
     ++loadingNr;
     workerThread.quit();
     workerThread.wait();
-    if (worker != nullptr) {
-        worker->abortDownloadsFinishDecompression();
-    }
+    worker->abortDownloadsFinishDecompression();
+}
+
+Loader::Controller::Controller() {
+    worker = std::make_unique<Loader::Worker>();
+    workerThread.setObjectName("Loader");
+    worker->moveToThread(&workerThread);
+    QObject::connect(worker.get(), &Loader::Worker::progress, this, [this](bool, int count){emit progress(count);});
+    QObject::connect(worker.get(), &Loader::Worker::progress, this, &Loader::Controller::refCountChange);
+    QObject::connect(this, &Loader::Controller::loadSignal, worker.get(), &Loader::Worker::downloadAndLoadCubes);
+    QObject::connect(this, &Loader::Controller::unloadCurrentMagnificationSignal, worker.get(), static_cast<void(Loader::Worker::*)()>(&Loader::Worker::unloadCurrentMagnification), Qt::BlockingQueuedConnection);
+    QObject::connect(this, &Loader::Controller::markOcCubeAsModifiedSignal, worker.get(), &Loader::Worker::markOcCubeAsModified, Qt::BlockingQueuedConnection);
+    QObject::connect(this, &Loader::Controller::snappyCacheSupplySnappySignal, worker.get(), &Loader::Worker::snappyCacheSupplySnappy, Qt::BlockingQueuedConnection);
+    workerThread.start();
 }
 
 Loader::Controller::~Controller() {
@@ -78,7 +89,11 @@ Loader::Controller::~Controller() {
 
 void Loader::Controller::unloadCurrentMagnification() {
     ++loadingNr;
-    emit unloadCurrentMagnificationSignal();
+    // blocking queued connections stall when there is no receiver
+    // and loader is suspended when updateDatasetMag tries to load a new dataset
+    if (workerThread.isRunning()) {
+        emit unloadCurrentMagnificationSignal();
+    }
 }
 
 void Loader::Controller::markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification) {
@@ -88,19 +103,15 @@ void Loader::Controller::markOcCubeAsModified(const CoordOfCube &cubeCoord, cons
 }
 
 decltype(Loader::Worker::snappyCache) Loader::Controller::getAllModifiedCubes() {
-    if (worker != nullptr) {
-        QMutexLocker locker(&worker->snappyMutex);
-        //signal to run in loader thread
-        QTimer::singleShot(0, worker.get(), &Loader::Worker::flushIntoSnappyCache);
-        worker->snappyFlushCondition.wait(&worker->snappyMutex);
-        return worker->snappyCache;
-    } else {
-        return decltype(Loader::Worker::snappyCache)();//{} is not working
-    }
+    QMutexLocker locker(&worker->snappyMutex);
+    //signal to run in loader thread
+    QTimer::singleShot(0, worker.get(), &Loader::Worker::flushIntoSnappyCache);
+    worker->snappyFlushCondition.wait(&worker->snappyMutex);
+    return worker->snappyCache;
 }
 
 bool Loader::Controller::isFinished() {
-    return worker != nullptr ? worker->isFinished.load() : true;//no loader == done?
+    return worker->isFinished.load();
 }
 
 bool Loader::Controller::hasSnappyCache() {
@@ -211,16 +222,8 @@ std::vector<CoordOfCube> Loader::Worker::DcoiFromPos(const CoordOfCube & current
     return cubes;
 }
 
-Loader::Worker::Worker(const decltype(datasets) & layers)
-    : slotDownload(static_cast<std::size_t>(layers.size())), slotDecompression(static_cast<std::size_t>(layers.size()))
-    , slotChunk(static_cast<std::size_t>(layers.size())), freeSlots(static_cast<std::size_t>(layers.size()))
-    , datasets{layers}, snappyLayerId{Segmentation::singleton().layerId}
-{
+Loader::Worker::Worker() {
     qnam.setRedirectPolicy(QNetworkRequest::NoLessSafeRedirectPolicy);// default is manual redirect
-    state->cube2Pointer.resize(datasets.size());
-    for (auto && layer : datasets) {
-        layer.allocationEnabled = false;// signify that nothing is allocated yet
-    }
 }
 
 Loader::Worker::~Worker() {
@@ -484,10 +487,9 @@ void Loader::Worker::cleanup(const Coordinate center) {
 }
 
 void Loader::Controller::startLoading(const Coordinate & center, const UserMoveType userMoveType, const floatCoordinate & direction) {
-    if (worker != nullptr) {
-        worker->isFinished = false;
-        emit loadSignal(++loadingNr, center, userMoveType, direction, Dataset::datasets, Segmentation::singleton().layerId);
-    }
+    worker->isFinished = false;
+    workerThread.start();
+    emit loadSignal(++loadingNr, center, userMoveType, direction, Dataset::datasets, Segmentation::singleton().layerId);
 }
 
 void Loader::Worker::broadcastProgress(bool startup) {
@@ -499,26 +501,43 @@ void Loader::Worker::broadcastProgress(bool startup) {
     emit progress(startup, count);
 }
 
-void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset::list_t & changedDatasets, const size_t segmentationLayer) {
+void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, Dataset::list_t changedDatasets, const size_t segmentationLayer) {
     cleanup(center);
     // freeSlots[] are lists of pointers to locations that
     // can hold data or overlay cubes. Whenever we want to load a new
     // datacube, we load it into a location from this list. Whenever a
     // datacube in memory becomes invalid, we add the pointer to its
     // memory location back into this list.
+    if (changedDatasets.size() != datasets.size()) {
+        if (changedDatasets.size() < datasets.size()) {
+            unloadCurrentMagnification();
+        }
+        slotDownload.resize(changedDatasets.size());
+        slotDecompression.resize(changedDatasets.size());
+        slotChunk.resize(changedDatasets.size());
+        freeSlots.resize(changedDatasets.size());
+        snappyLayerId = segmentationLayer;
+        {
+            QMutexLocker locker(&state->protectCube2Pointer);
+            state->cube2Pointer.resize(changedDatasets.size());
+        }
+    }
     for (std::size_t layerId{0}; layerId < changedDatasets.size(); ++layerId) {
         const auto magCount = static_cast<std::size_t>(std::log2(changedDatasets[layerId].highestAvailableMag) + 1);
-        state->cube2Pointer[layerId].resize(magCount);
+        {
+            QMutexLocker locker(&state->protectCube2Pointer);
+            state->cube2Pointer[layerId].resize(magCount);
+        }
         if (layerId == snappyLayerId) {
             OcModifiedCacheQueue.resize(magCount);
             snappyCache.resize(magCount);
         }
-        if (datasets[layerId].allocationEnabled && !changedDatasets[layerId].allocationEnabled) {
+        if (layerId < datasets.size() && (datasets[layerId].allocationEnabled && !changedDatasets[layerId].allocationEnabled)) {
             unloadCurrentMagnification(layerId);
             slotChunk[layerId].clear();
             freeSlots[layerId].clear();
         }
-        if (!changedDatasets[layerId].allocationEnabled || datasets[layerId].allocationEnabled) {
+        if (!changedDatasets[layerId].allocationEnabled || (layerId < datasets.size() && datasets[layerId].allocationEnabled)) {
             continue;
         }
         const auto overlayFactor = changedDatasets[layerId].isOverlay() ? OBJID_BYTES : 1;
@@ -531,7 +550,10 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     datasets = changedDatasets;
     snappyLayerId = segmentationLayer;
 
-    loaderMagnification = datasets[0].magIndex;
+    if (loaderMagnification != datasets[0].magIndex) {
+        unloadCurrentMagnification();
+        loaderMagnification = datasets[0].magIndex;
+    }
     const auto Dcoi = DcoiFromPos(datasets[0].global2cube(center), userMoveType, direction);//datacubes of interest prioritized around the current position
     //split dcoi into slice planes and rest
     std::vector<std::pair<std::size_t, CoordOfCube>> allCubes;

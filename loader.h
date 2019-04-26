@@ -117,13 +117,13 @@ public://matsch
     void snappyCacheSupplySnappy(const CoordOfCube, const quint64 cubeMagnification, const std::string cube);
     void flushIntoSnappyCache();
     void broadcastProgress(bool startup = false);
-    Worker(const decltype(datasets) &);
+    Worker();
     virtual ~Worker() override;
 signals:
     void progress(bool incremented, int count);
 public slots:
     void cleanup(const Coordinate center);
-    void downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset::list_t & changedDatasets, const size_t segmentationLayer);
+    void downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, Dataset::list_t changedDatasets, const size_t segmentationLayer);
 };
 
 class Controller : public QObject {
@@ -138,31 +138,10 @@ public:
         return loader;
     }
     void suspendLoader();
+    Controller();
     virtual ~Controller() override;
     void unloadCurrentMagnification();
 
-    void restart(const decltype(Dataset::datasets) & datasets) {
-        suspendLoader();
-        if (worker != nullptr) {
-            worker->flushIntoSnappyCache();
-            auto snappyCache = worker->snappyCache;
-            worker = std::make_unique<Loader::Worker>(datasets);
-            const auto newSize = worker->snappyCache.size();
-            worker->snappyCache = snappyCache;
-            worker->snappyCache.resize(newSize);// mag count may change when switching datasets
-        } else {
-            worker = std::make_unique<Loader::Worker>(datasets);
-        }
-        workerThread.setObjectName("Loader");
-        worker->moveToThread(&workerThread);
-        QObject::connect(worker.get(), &Loader::Worker::progress, this, [this](bool, int count){emit progress(count);});
-        QObject::connect(worker.get(), &Loader::Worker::progress, this, &Loader::Controller::refCountChange);
-        QObject::connect(this, &Loader::Controller::loadSignal, worker.get(), &Loader::Worker::downloadAndLoadCubes);
-        QObject::connect(this, &Loader::Controller::unloadCurrentMagnificationSignal, worker.get(), static_cast<void(Loader::Worker::*)()>(&Loader::Worker::unloadCurrentMagnification), Qt::BlockingQueuedConnection);
-        QObject::connect(this, &Loader::Controller::markOcCubeAsModifiedSignal, worker.get(), &Loader::Worker::markOcCubeAsModified, Qt::BlockingQueuedConnection);
-        QObject::connect(this, &Loader::Controller::snappyCacheSupplySnappySignal, worker.get(), &Loader::Worker::snappyCacheSupplySnappy, Qt::BlockingQueuedConnection);
-        workerThread.start();
-    }
     void startLoading(const Coordinate & center, const UserMoveType userMoveType, const floatCoordinate &direction);
     template<typename... Args>
     void snappyCacheSupplySnappy(Args&&... args) {

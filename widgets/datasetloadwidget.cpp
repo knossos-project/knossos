@@ -401,8 +401,6 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         }
     }
 
-    Loader::Controller::singleton().restart(Dataset::datasets);
-
     emit updateDatasetCompression();
 
     if (changedBoundaryOrScale || !keepAnnotation) {
