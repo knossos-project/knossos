@@ -33,8 +33,11 @@
 
 #include <quazip5/quazipfile.h>
 
+#include <QBuffer>
+#include <QByteArray>
 #include <QDateTime>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -56,7 +59,15 @@ QString annotationFileDefaultPath() {
 void annotationFileLoad(const QString & filename, const bool mergeSkeleton, const QString & treeCmtOnMultiLoad) {
     QSet<QString> nonExtraFiles;
     QRegularExpression cubeRegEx(R"regex(.*mag(?P<mag>[0-9]+)x(?P<x>[0-9]+)y(?P<y>[0-9]+)z(?P<z>[0-9]+)(\.seg\.sz|\.segmentation\.snappy))regex");
-    QuaZip archive(filename);
+    QFile f(filename);
+    f.open(QIODevice::ReadOnly);
+    auto * fmap = f.map(0, f.size());
+    auto data = QByteArray::fromRawData(reinterpret_cast<const char *>(fmap), f.size());
+    QBuffer buffer = fmap ? &data : QBuffer{};
+    QuaZip archive = fmap ? QuaZip(&buffer) : QuaZip(filename);
+    if (!fmap) {
+        qDebug() << "loading file without memory map (because it failed)";
+    }
     if (archive.open(QuaZip::mdUnzip)) {
         for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) {
             const auto match = cubeRegEx.match(archive.getCurrentFileName());
