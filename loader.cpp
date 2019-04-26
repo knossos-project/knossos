@@ -489,7 +489,7 @@ void Loader::Worker::cleanup(const Coordinate center) {
 void Loader::Controller::startLoading(const Coordinate & center, const UserMoveType userMoveType, const floatCoordinate & direction) {
     worker->isFinished = false;
     workerThread.start();
-    emit loadSignal(++loadingNr, center, userMoveType, direction, Dataset::datasets, Segmentation::singleton().layerId);
+    emit loadSignal(++loadingNr, center, userMoveType, direction, Dataset::datasets, Segmentation::singleton().layerId, state->M);
 }
 
 void Loader::Worker::broadcastProgress(bool startup) {
@@ -501,7 +501,7 @@ void Loader::Worker::broadcastProgress(bool startup) {
     emit progress(startup, count);
 }
 
-void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, Dataset::list_t changedDatasets, const size_t segmentationLayer) {
+void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, Dataset::list_t changedDatasets, const size_t segmentationLayer, const size_t cacheSize) {
     cleanup(center);
     // freeSlots[] are lists of pointers to locations that
     // can hold data or overlay cubes. Whenever we want to load a new
@@ -532,12 +532,12 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             OcModifiedCacheQueue.resize(magCount);
             snappyCache.resize(magCount);
         }
-        if (layerId < datasets.size() && (datasets[layerId].allocationEnabled && !changedDatasets[layerId].allocationEnabled)) {
+        if (layerId < datasets.size() && (datasets[layerId].allocationEnabled && (!changedDatasets[layerId].allocationEnabled || loaderCacheSize != cacheSize))) {
             unloadCurrentMagnification(layerId);
             slotChunk[layerId].clear();
             freeSlots[layerId].clear();
         }
-        if (!changedDatasets[layerId].allocationEnabled || (layerId < datasets.size() && datasets[layerId].allocationEnabled)) {
+        if (!changedDatasets[layerId].allocationEnabled || (layerId < datasets.size() && datasets[layerId].allocationEnabled && loaderCacheSize == cacheSize)) {
             continue;
         }
         const auto overlayFactor = changedDatasets[layerId].isOverlay() ? OBJID_BYTES : 1;
@@ -549,6 +549,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     }
     datasets = changedDatasets;
     snappyLayerId = segmentationLayer;
+    loaderCacheSize = cacheSize;
 
     if (loaderMagnification != datasets[0].magIndex) {
         unloadCurrentMagnification();
