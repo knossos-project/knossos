@@ -216,7 +216,6 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         for (int x = cpos.x; x < cpos.x + state->M; ++x) {
             Loader::Controller::singleton().markOcCubeAsModified({x, y, z}, Dataset::current().magnification);
         }
-
     });
 
     addDockWidget(Qt::RightDockWidgetArea, &cheatsheet);
