@@ -117,7 +117,12 @@ bool Loader::Controller::isFinished() {
 bool Loader::Controller::hasSnappyCache() {
     bool hasSnappyCacheVal;
     const auto func = [](){
-        return !Loader::Controller::singleton().worker->snappyCache.empty();
+        for (const auto & mag : Loader::Controller::singleton().worker->snappyCache) {
+            if (!mag.empty()) {
+                return true;
+            }
+        }
+        return false;
     };
     if (QMetaObject::invokeMethod(Loader::Controller::singleton().worker.get(), func, Qt::BlockingQueuedConnection, &hasSnappyCacheVal)) {
         return hasSnappyCacheVal;
