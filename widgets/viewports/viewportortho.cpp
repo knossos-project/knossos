@@ -95,14 +95,21 @@ void ViewportOrtho::initializeGL() {
     }
 }
 
+#include "profiler.h"
+
 void ViewportOrtho::paintGL() {
     glClear(GL_DEPTH_BUFFER_BIT);
     glEnable(GL_BLEND);
     glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     if (state->gpuSlicer && state->viewer->gpuRendering) {
         renderViewportFast();
-    } else {
+    } else if (viewportType == 0) {
+        static std::array<Profiler, 3> profiler;
+        profiler[viewportType].start();
         renderViewport();
+        profiler[viewportType].end();
+        qDebug() << profiler[0].average_time() + profiler[1].average_time() + profiler[2].average_time() << profiler[0].average_time() << profiler[1].average_time() << profiler[2].average_time();
+        qDebug() << 1.0/(profiler[0].average_time() + profiler[1].average_time() + profiler[2].average_time()) << 1.0/profiler[0].average_time() << 1.0/profiler[1].average_time() << 1.0/profiler[2].average_time();
     }
     renderViewportFrontFace();
 }

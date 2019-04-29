@@ -283,6 +283,9 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
                 std::tie(r, g, b) = datasetAdjustment(layerId, datacube[0]);
             } else {
                 r = g = b = datacube[0];
+//                if (r == 0 && g == 0 && b == 0 || r == 11 && g == 11 && b == 11) {
+//                    r = g = b = 255;
+//                }
             }
             if (partlyOutsideMovementArea) {
                 const auto offsetx = Dataset::current().scaleFactor.componentMul(Coordinate(vp.viewportType == VIEWPORT_XY || vp.viewportType == VIEWPORT_XZ, vp.viewportType == VIEWPORT_ZY, 0) * xxy);
@@ -881,6 +884,7 @@ bool Viewer::updateDatasetMag(const int mag) {
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::run() {
     if (state->quitSignal) {//don’t do anything, when the rest is already going to sleep
+//        timer.stop();
         qDebug() << "viewer returned";
         return;
     }

@@ -766,6 +766,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     // event loop will stop after this
     QApplication::closeAllWindows();// generates – otherwise missing – hideEvents for saveGeometry
     event->accept();
+    QCoreApplication::quit();
 }
 
 //file menu functionality
@@ -1527,7 +1528,8 @@ void MainWindow::updateCompressionRatioDisplay() {
 }
 
 bool MainWindow::event(QEvent *event) {
-    if (event->type() == QEvent::WindowActivate) {
+    if (/*!state->quitSignal && */event->type() == QEvent::WindowActivate) {
+        qDebug() << "QEvent::WindowActivate";
         state->viewer->run();
     }
     return QMainWindow::event(event);
