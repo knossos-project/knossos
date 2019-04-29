@@ -87,6 +87,7 @@ std::pair<int, int> Network::checkOnlineMags(const QUrl & url) {
                 highestAvailableMag = std::max(highestAvailableMag, currMag);
             }
             if (--downloadCounter == 0) {// exit event loop after last download finished
+                qDebug() << reply.errorString() << reply.readAll();
                 pause.exit();
             }
         });
