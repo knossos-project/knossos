@@ -37,6 +37,7 @@
 #include <QSemaphore>
 #include <QThread>
 #include <QThreadPool>
+#include <QtGlobal>
 #include <QTimer>
 #include <QWaitCondition>
 
@@ -157,7 +158,7 @@ signals:
     void progress(int count);
     void refCountChange(bool isIncrement, int refCount);
     void unloadCurrentMagnificationSignal();
-    void loadSignal(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset::list_t & changedDatasets, const size_t segmentationLayer, const size_t cacheSize);
+    void loadSignal(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset::list_t & changedDatasets, const quint64 segmentationLayer, const quint64 cacheSize);
     void markOcCubeAsModifiedSignal(const CoordOfCube &cubeCoord, const int magnification);
     void snappyCacheSupplySnappySignal(const CoordOfCube, const quint64 cubeMagnification, const std::string cube);
 };
