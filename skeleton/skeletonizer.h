@@ -281,7 +281,7 @@ public:
     void jumpToNode(const nodeListElement & node);
     bool setActiveTreeByID(decltype(treeListElement::treeID) treeID);
 
-    void propagateComments(nodeListElement & root, const QSet<QString> & comments);
+    void propagateComments(nodeListElement & root, const QSet<QString> & comments, const bool overwrite);
 
     std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> loadXmlSkeleton(QIODevice &file, const bool merge, const QString & treeCmtOnMultiLoad = "");
     std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> loadXmlSkeleton(QXmlStreamReader & xml, const bool merge, const QString & treeCmtOnMultiLoad);

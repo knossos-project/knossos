@@ -205,17 +205,20 @@ boost::optional<nodeListElement &> Skeletonizer::addSkeletonNodeAndLinkWithActiv
     return targetNode.get();
 }
 
-void Skeletonizer::propagateComments(nodeListElement & root, const QSet<QString> & comments) {
+void Skeletonizer::propagateComments(nodeListElement & root, const QSet<QString> & comments, const bool overwrite) {
     std::vector<std::pair<nodeListElement *, nodeListElement *>> stack; // node and parent
     std::unordered_set<nodeListElement *> visitedNodes;
     stack.push_back({&root, nullptr});
     while (!stack.empty()) {
-        auto [nextNode, parent] = stack.back();
+        const auto [nextNode, parent] = stack.back();
         stack.pop_back();
         if (visitedNodes.find(nextNode) != visitedNodes.end()) {
             continue;
         }
         visitedNodes.emplace(nextNode);
+        if (!overwrite && nextNode != &root && nextNode->getComment() != "") {
+            continue;
+        }
 
         for (auto & segment : nextNode->segments) {
             auto & neighbor = segment.forward ? segment.target : segment.source;

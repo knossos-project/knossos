@@ -915,7 +915,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     });
     QObject::connect(nodeContextMenu.addAction("propagate comment"), &QAction::triggered, [](){
         Skeletonizer::singleton().bulkOperation(Skeletonizer::singleton().skeletonState.selectedNodes, [](auto & node){
-            Skeletonizer::singleton().propagateComments(node, {node.getComment()});
+            Skeletonizer::singleton().propagateComments(node, {node.getComment()}, false);
         });
     });
     deleteAction(nodeContextMenu, nodeView, tr("&Delete nodes"), [](){// this is also a shortcut and needs checks here
