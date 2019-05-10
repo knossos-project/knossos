@@ -1957,12 +1957,12 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
         return decltype(glBuffers.lineVertBuffer.colors)::value_type{{static_cast<std::uint8_t>(color.red()), static_cast<std::uint8_t>(color.green()), static_cast<std::uint8_t>(color.blue()), static_cast<std::uint8_t>(color.alpha())}};
     };
 
-    auto addSegment = [arrayFromQColor, &glBuffers](const segmentListElement & segment, const QColor & color) {
+    auto addSegment = [arrayFromQColor, &glBuffers](const segmentListElement & segment, const QColor & color, const QColor & color2) {
         const auto isoBase = Dataset::current().scales[0].componentMul(segment.source.position);
         const auto isoTop = Dataset::current().scales[0].componentMul(segment.target.position);
 
         glBuffers.lineVertBuffer.emplace_back(isoBase, arrayFromQColor(color));
-        glBuffers.lineVertBuffer.emplace_back(isoTop, arrayFromQColor(color));
+        glBuffers.lineVertBuffer.emplace_back(isoTop, arrayFromQColor(color2));
     };
 
     auto addNode = [arrayFromQColor, options, &glBuffers](const nodeListElement & node) {
@@ -2005,7 +2005,7 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
                 if (currentSegment.forward) {
                     continue;
                 }
-                addSegment(currentSegment, currentColor);
+                addSegment(currentSegment, state->viewer->getNodeColor(currentSegment.source), state->viewer->getNodeColor(currentSegment.target));
             }
 
             addNode(*nodeIt);
@@ -2013,7 +2013,7 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
     }
 
     synapseLoop([&addSegment](const auto &, const auto & virtualSegment, const auto & color){
-        addSegment(virtualSegment, color);
+        addSegment(virtualSegment, color, color);
     }, viewportType);
 
     const auto uploadVertexData = [](auto & buf, const auto & vertices){
