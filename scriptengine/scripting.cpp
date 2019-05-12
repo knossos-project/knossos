@@ -298,12 +298,12 @@ void Scripting::registerPlugin(PyObject * plugin, const QString & version) {
     }
 }
 
-void Scripting::runFile(const QString &filename, bool runExistingFirst) {
-    if (filename.isNull()) {
+void Scripting::runFile(const QString & filepath, bool runExistingFirst) {
+    if (filepath.isNull()) {
         return;
     }
-    QFile pyFile(filename);
-    runFile(pyFile, QFileInfo{filename}.fileName(), runExistingFirst);
+    QFile pyFile(filepath);
+    runFile(pyFile, QFileInfo{filepath}.fileName(), runExistingFirst);
 }
 
 void Scripting::runFile(QIODevice & pyFile, const QString & filename, bool runExistingFirst) {

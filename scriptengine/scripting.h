@@ -103,7 +103,7 @@ class Scripting : public QObject {
     friend class PythonPropertyWidget;
 public:
     explicit Scripting();
-    void runFile(const QString &filename, bool runExistingFirst = false);
+    void runFile(const QString & filepath, bool runExistingFirst = false);
     void runFile(QIODevice & pyFile, const QString &filename, bool runExistingFirst = false);
     void addObject(const QString& name, QObject* object);
     void addVariable(const QString& name, const QVariant& v);
