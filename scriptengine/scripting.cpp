@@ -161,7 +161,6 @@ void Scripting::initialize() {
 #endif
 
     executeResourceStartup();
-    executeFromUserDirectory();
 
     const auto * snapshotWidget = &state->viewer->window->widgetContainer.snapshotWidget;
     QObject::connect(&pythonProxy, &PythonProxy::viewport_snapshot_vp_size, snapshotWidget, &SnapshotWidget::snapshotVpSizeRequest);
