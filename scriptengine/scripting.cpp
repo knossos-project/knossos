@@ -46,6 +46,7 @@
 #include <QIODevice>
 #include <QMessageBox>
 #include <QSettings>
+#include <QSignalBlocker>
 #include <QStandardPaths>
 
 SignalRelay::SignalRelay() {
@@ -310,31 +311,35 @@ void Scripting::runFile(QIODevice & pyFile, const QString & filename, bool runEx
     if(!pyFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
         throw std::runtime_error("runFile open failed");
     }
-    if (runExistingFirst && registeredPlugins.contains(filename)) {
-        qDebug() << "Running existing plugin first:" << filename;
-        try {
-            runFile(registeredPlugins[filename]);
-        } catch(const std::runtime_error & e) {
-            qDebug() << "Failed to load existing plugin:" << e.what();
+    {
+        QSignalBlocker blocker{Skeletonizer::singleton()}; // prevent spam-triggering of slots in plugin, before it is successfully registered
+        if (runExistingFirst && registeredPlugins.contains(filename)) {
+            qDebug() << "Running existing plugin first:" << filename;
+            try {
+                runFile(registeredPlugins[filename]);
+            } catch(const std::runtime_error & e) {
+                qDebug() << "Failed to load existing plugin:" << e.what();
+            }
         }
-    }
-    QTextStream textStream(&pyFile);
-    auto destinationPath = getPluginDir() + '/' + filename;
-    loadedPlugin = destinationPath;
-    auto pluginContent = textStream.readAll();
-    evalScript(pluginContent, Py_file_input);
-    if (loadedPlugin) {
-        QFile destinationFile{destinationPath};
-        destinationFile.remove();
-        if(destinationFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            destinationFile.write(pluginContent.toUtf8());
-            state->mainWindow->refreshScriptingMenu();
-        } else {
-            registeredPlugins.remove(filename);
-            qDebug() << "Failed to save plugin at" << destinationPath << ".";
+        QTextStream textStream(&pyFile);
+        auto destinationPath = getPluginDir() + '/' + filename;
+        loadedPlugin = destinationPath;
+        auto pluginContent = textStream.readAll();
+        evalScript(pluginContent, Py_file_input);
+        if (loadedPlugin) {
+            QFile destinationFile{destinationPath};
+            destinationFile.remove();
+            if(destinationFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+                destinationFile.write(pluginContent.toUtf8());
+                state->mainWindow->refreshScriptingMenu();
+            } else {
+                registeredPlugins.remove(filename);
+                qDebug() << "Failed to save plugin at" << destinationPath << ".";
+            }
         }
+        pyFile.close();
     }
-    pyFile.close();
+    Skeletonizer::singleton().resetData();
 }
 
 void Scripting::moveSymbolIntoKnossosModule(const QString& name) {
