@@ -279,6 +279,13 @@ bool isNewer(const QString & v, const QString & otherV) {
 const auto Py_TYPE_name = [](auto ob){ return reinterpret_cast<PyObject*>(ob)->ob_type->tp_name; };
 
 void Scripting::registerPlugin(PyObject * plugin, const QString & version) {
+    if (!PyObject_TypeCheck(plugin, &PythonQtInstanceWrapper_Type)) {
+        QMessageBox errorMsg;
+        errorMsg.setIcon(QMessageBox::Warning);
+        errorMsg.setText(tr("Plugin registration is only possible for QObjects!"));
+        errorMsg.exec();
+        return;
+    }
     PyObject * sibling = nullptr;
     for (auto & elem : runningPlugins.keys()) {
         if (Py_TYPE_name(plugin) == Py_TYPE_name(elem)) {
