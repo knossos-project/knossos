@@ -79,7 +79,7 @@ auto PythonQtInit = []() {
     return PythonQt::self()->getMainModule();
 };
 
-QVariant Scripting::evalScript(const QString& script, int start) {
+QVariant Scripting::evalScript(const QString & script, int start) {
     return _ctx.evalScript(script, start);
 }
 
@@ -290,11 +290,18 @@ void Scripting::registerPlugin(PyObject * plugin, const QString & version) {
             runningPlugins.remove(sibling);
         }
         runningPlugins[plugin] = version;
-        if (!loadedPlugin) {
+        if (!pluginOverwritePath) {
             throw std::runtime_error("no loadedPlugin in registerPlugin");
         }
-        registeredPlugins[QFileInfo{loadedPlugin.get()}.fileName()] = loadedPlugin.get();
+        const auto & filename = QFileInfo{pluginOverwritePath.get()}.fileName();
+        qDebug() << registeredPlugins.contains(filename) << isNewer(version, registeredPlugins[filename].second);
+        if (!registeredPlugins.contains(filename) || isNewer(version, registeredPlugins[filename].second)) {
+            registeredPlugins[filename] = {pluginOverwritePath.get(), version};
+        } else {
+            pluginOverwritePath = boost::none;
+        }
     } else {
+        pluginOverwritePath = boost::none;
         PyObject_CallMethod(plugin, const_cast<char*>("delete"), const_cast<char*>(""));
     }
 }
@@ -316,17 +323,17 @@ void Scripting::runFile(QIODevice & pyFile, const QString & filename, bool runEx
         if (runExistingFirst && registeredPlugins.contains(filename)) {
             qDebug() << "Running existing plugin first:" << filename;
             try {
-                runFile(registeredPlugins[filename]);
-            } catch(const std::runtime_error & e) {
+                runFile(registeredPlugins[filename].first);
+            } catch (const std::runtime_error & e) {
                 qDebug() << "Failed to load existing plugin:" << e.what();
             }
         }
         QTextStream textStream(&pyFile);
         auto destinationPath = getPluginDir() + '/' + filename;
-        loadedPlugin = destinationPath;
+        pluginOverwritePath = destinationPath;
         auto pluginContent = textStream.readAll();
         evalScript(pluginContent, Py_file_input);
-        if (loadedPlugin) {
+        if (!PythonQt::self()->hadError() && (pluginOverwritePath || !QFileInfo{destinationPath}.exists())) {
             QFile destinationFile{destinationPath};
             destinationFile.remove();
             if(destinationFile.open(QIODevice::WriteOnly | QIODevice::Text)) {

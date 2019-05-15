@@ -90,7 +90,12 @@ void PythonPropertyWidget::saveSettings() {
 
     settings.beginGroup(PYTHON_REGISTERED_PLUGINS);
     for (auto iter = std::begin(state->scripting->registeredPlugins); iter != std::end(state->scripting->registeredPlugins); iter++) {
-        settings.setValue(iter.key(), iter.value());
+        if (QFileInfo{iter.value().first}.exists()) {
+            settings.beginGroup(iter.key());
+            settings.setValue(PYTHON_PLUGIN_PATH, iter.value().first);
+            settings.setValue(PYTHON_PLUGIN_VERSION, iter.value().second);
+            settings.endGroup();
+        }
     }
     settings.endGroup();
 
@@ -108,7 +113,11 @@ void PythonPropertyWidget::loadSettings() {
 
     settings.beginGroup(PYTHON_REGISTERED_PLUGINS);
     for (auto & key :  settings.childKeys()) {
-        state->scripting->registeredPlugins[key] = settings.value(key).toString();
+        settings.beginGroup(key);
+        auto absPath = settings.value(PYTHON_PLUGIN_PATH).toString();
+        auto version = settings.value(PYTHON_PLUGIN_VERSION).toString();
+        state->scripting->registeredPlugins[key] = {absPath, version};
+        settings.endGroup();
     }
     settings.endGroup();
 
