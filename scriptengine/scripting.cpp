@@ -300,6 +300,10 @@ void Scripting::registerPlugin(PyObject * plugin, const QString & version) {
         } else {
             pluginOverwritePath = boost::none;
         }
+
+        QObject::connect(reinterpret_cast<PythonQtInstanceWrapper *>(plugin)->_obj.data(), &QObject::destroyed, [this, plugin](QObject *) {
+            runningPlugins.remove(plugin);
+        });
     } else {
         pluginOverwritePath = boost::none;
         PyObject_CallMethod(plugin, const_cast<char*>("delete"), const_cast<char*>(""));
