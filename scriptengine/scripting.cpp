@@ -109,11 +109,6 @@ void Scripting::initialize() {
     PythonQt::self()->registerClass(&EmitOnCtorDtor::staticMetaObject);
 
     evalScript("import sys");
-    evalScript("sys.argv = ['']");  // <- this is needed to import the ipython module from the site-package
-#ifdef Q_OS_OSX
-    // as ipython does not export it's sys paths after the installation we refer to that site-package
-    evalScript("sys.path.append('/Library/Python/2.7/site-packages')");
-#endif
     evalScript("try: import site\nexcept ImportError: nosite = True\nelse:\n    nosite = False", Py_single_input);
     if (evalScript("nosite", Py_eval_input).toBool()) {
         QMessageBox box;
@@ -154,12 +149,6 @@ void Scripting::initialize() {
     createDefaultPluginDir();
     addPythonPath(getPluginDir());
     addPresetCustomPythonPaths();
-
-#ifdef Q_OS_LINUX //in linux there’s an explicit symlink to a python 2 binary
-    _ctx.evalFile(QString("sys.path.append('%1')").arg("./python2"));
-#else
-    _ctx.evalFile(QString("sys.path.append('%1')").arg("./python"));
-#endif
 
     executeResourceStartup();
 
