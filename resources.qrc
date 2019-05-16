@@ -53,6 +53,7 @@
         <file>resources/icons/zoom-original.png</file>
         <file>resources/icons/zoom-out.png</file>
         <file>resources/icons/zoom.png</file>
+        <file>resources/plugins/knossos.py</file>
         <file>resources/plugins/pluginMgr.py</file>
         <file>resources/shaders/mesh/meshidshader.frag</file>
         <file>resources/shaders/mesh/meshidshader.vert</file>

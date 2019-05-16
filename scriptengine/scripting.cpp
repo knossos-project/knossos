@@ -128,9 +128,8 @@ void Scripting::initialize() {
         box.addButton("Ignore", QMessageBox::AcceptRole);
         box.exec();
     }
-    PythonQt::self()->createModuleFromScript(SCRIPTING_KNOSSOS_MODULE);
+    PythonQt::self()->createModuleFromFile(SCRIPTING_KNOSSOS_MODULE, ":/resources/plugins/knossos.py");
     evalScript(QString("import %1").arg(SCRIPTING_KNOSSOS_MODULE));
-
     evalScript(QString("%1.%2 = {}").arg(SCRIPTING_KNOSSOS_MODULE).arg(SCRIPTING_PLUGIN_CONTAINER));
 
     addObject("signal_relay", state->signalRelay);
