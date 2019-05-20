@@ -115,6 +115,7 @@ public://matsch
     void unloadCurrentMagnification(const std::size_t);
     void unloadCurrentMagnification();
     void markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification);
+    void snappyCacheMergeSnappy(const CoordOfCube, const quint64 cubeMagnification, const std::string cube);
     void snappyCacheSupplySnappy(const CoordOfCube, const quint64 cubeMagnification, const std::string cube);
     void flushIntoSnappyCache();
     void broadcastProgress(bool startup = false);

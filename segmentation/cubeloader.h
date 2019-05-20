@@ -24,6 +24,8 @@
 
 #include "coordinate.h"
 
+#include <boost/multi_array.hpp>
+
 #include <cstdint>
 #include <unordered_set>
 #include <unordered_map>
@@ -33,6 +35,9 @@ using CubeCoordSet = std::unordered_set<CoordOfCube>;
 using subobjectRetrievalMap = std::unordered_map<uint64_t, Coordinate>;
 
 bool isInsideSphere(const double xi, const double yi, const double zi, const double radius);
+
+std::pair<bool, void *> getRawCube(const Coordinate & pos);
+boost::multi_array_ref<uint64_t, 3> getCubeRef(void * const rawcube);
 
 void coordCubesMarkChanged(const CubeCoordSet & cubeChangeSet);
 uint64_t readVoxel(const Coordinate & pos);

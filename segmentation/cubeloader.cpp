@@ -28,8 +28,6 @@
 #include "segmentationsplit.h"
 #include "stateInfo.h"
 
-#include <boost/multi_array.hpp>
-
 std::pair<bool, void *> getRawCube(const Coordinate & pos) {
     if (!Segmentation::singleton().enabled) {
         return {false, nullptr};

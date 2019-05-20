@@ -79,7 +79,7 @@ Loader::Controller::Controller() {
     QObject::connect(this, &Loader::Controller::loadSignal, worker.get(), &Loader::Worker::downloadAndLoadCubes);
     QObject::connect(this, &Loader::Controller::unloadCurrentMagnificationSignal, worker.get(), static_cast<void(Loader::Worker::*)()>(&Loader::Worker::unloadCurrentMagnification), Qt::BlockingQueuedConnection);
     QObject::connect(this, &Loader::Controller::markOcCubeAsModifiedSignal, worker.get(), &Loader::Worker::markOcCubeAsModified, Qt::BlockingQueuedConnection);
-    QObject::connect(this, &Loader::Controller::snappyCacheSupplySnappySignal, worker.get(), &Loader::Worker::snappyCacheSupplySnappy, Qt::BlockingQueuedConnection);
+    QObject::connect(this, &Loader::Controller::snappyCacheSupplySnappySignal, worker.get(), &Loader::Worker::snappyCacheMergeSnappy, Qt::BlockingQueuedConnection);
     workerThread.start();
 }
 
@@ -296,6 +296,47 @@ void Loader::Worker::unloadCurrentMagnification() {
 
 void Loader::Worker::markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification) {
     OcModifiedCacheQueue[static_cast<std::size_t>(std::log2(magnification))].emplace(cubeCoord);
+}
+
+void Loader::Worker::snappyCacheMergeSnappy(const CoordOfCube cubeCoord, const quint64 cubeMagnification, const std::string cube) {
+    if (cubeMagnification >= snappyCache.size()) {
+        qWarning() << QObject::tr("ignored snappy cube (%1, %2, %3) for higher than available log2(mag) = %4 ≥ %5)")
+                      .arg(cubeCoord.x).arg(cubeCoord.y).arg(cubeCoord.z).arg(cubeMagnification).arg(snappyCache.size());
+        return;
+    }
+    std::vector<uint64_t> tmpcube(state->cubeBytes);
+    if (cubeMagnification == loaderMagnification) {//unload if currently loaded
+        auto downloadIt = slotDownload[snappyLayerId].find(cubeCoord);
+        if (downloadIt != std::end(slotDownload[snappyLayerId])) {
+            downloadIt->second->abort();
+        }
+        auto decompressionIt = slotDecompression[snappyLayerId].find(cubeCoord);
+        if (decompressionIt != std::end(slotDecompression[snappyLayerId])) {
+            decompressionIt->second->waitForFinished();
+        }
+        QMutexLocker locker(&state->protectCube2Pointer);
+        uint64_t * cubePtr = reinterpret_cast<uint64_t*>(cubeQuery(state->cube2Pointer, snappyLayerId, loaderMagnification, cubeCoord));
+        if (cubePtr != nullptr) {
+            std::copy(cubePtr, cubePtr + state->cubeBytes, std::begin(tmpcube));
+            freeSlots[snappyLayerId].emplace_back(reinterpret_cast<void*>(cubePtr));
+            state->cube2Pointer[snappyLayerId][loaderMagnification].erase(cubeCoord);
+        }
+    }
+    if (auto snappyIt = snappyCache[cubeMagnification].find(cubeCoord); snappyIt != std::end(snappyCache[cubeMagnification])) {
+        if (!snappy::RawUncompress(snappyIt->second.c_str(), snappyIt->second.size(), reinterpret_cast<char*>(tmpcube.data()))) {
+            qCritical() << cubeCoord << "merge snappy extract existing failed" << snappyIt->second.size();
+        }
+    }
+    std::vector<uint64_t> tmpcube2(state->cubeBytes);
+    if (!snappy::RawUncompress(cube.c_str(), cube.size(), reinterpret_cast<char*>(tmpcube2.data()))) {
+        qCritical() << cubeCoord << "merge snappy extract new failed" << cube.size();
+    }
+    for (std::size_t i{0}; i != tmpcube.size(); ++i) {
+        if (tmpcube[i] == 0) {
+            tmpcube[i] = tmpcube2[i];
+        }
+    }
+    snappyCacheBackupRaw(cubeCoord, tmpcube.data());
 }
 
 void Loader::Worker::snappyCacheSupplySnappy(const CoordOfCube cubeCoord, const quint64 cubeMagnification, const std::string cube) {
@@ -650,6 +691,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             auto request = dataset.apiSwitch(cubeCoord);
 //            request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
 //            request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
+//            request.setAttribute(QNetworkRequest::BackgroundRequestAttribute, true);
 
             QByteArray payload;
             if (cubeCoord == dataset.global2cube(center)) {
