@@ -366,11 +366,10 @@ void Loader::Worker::snappyCacheSupplySnappy(const CoordOfCube cubeCoord, const 
 }
 
 void Loader::Worker::snappyCacheBackupRaw(const CoordOfCube & cubeCoord, const void * cube) {
-    std::string data;
-    snappy::Compress(reinterpret_cast<const char *>(cube), OBJID_BYTES * state->cubeBytes, &data);
-    qDebug() << data.capacity() << data.capacity() / data.size();
-    data.shrink_to_fit();
-    snappyCache[loaderMagnification].emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple(std::move(data)));
+    //insert empty string into snappy cache
+    auto snappyIt = snappyCache[loaderMagnification].emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple()).first;
+    //compress cube into the new string
+    snappy::Compress(reinterpret_cast<const char *>(cube), OBJID_BYTES * state->cubeBytes, &snappyIt->second);
 }
 
 void Loader::Worker::snappyCacheClear() {
