@@ -224,7 +224,7 @@ void Skeletonizer::propagateComments(nodeListElement & root, const QSet<QString>
             auto & neighbor = segment.forward ? segment.target : segment.source;
             stack.push_back({&neighbor, nextNode});
         }
-        if (parent && !parent->getComment().isEmpty() && comments.find(parent->getComment()) != std::end(comments)) {
+        if (parent && !parent->getComment().isEmpty() && comments.find(parent->getComment()) != std::end(comments) && comments.find(nextNode->getComment()) == std::end(comments)) {
             nextNode->setComment(parent->getComment());
         }
     }
