@@ -264,6 +264,7 @@ public:
     boost::optional<nodeListElement &> UI_addSkeletonNode(const Coordinate & clickedCoordinate, ViewportType VPtype);
     bool setActiveNode(nodeListElement *node);
     void setColor(treeListElement & tree, const QColor &color);
+    void setRender(treeListElement & tree, const bool render);
     void continueSynapse();
     void addFinishedSynapse(treeListElement & cleft, nodeListElement & pre, nodeListElement & post);
     void addSynapseFromNodes(std::vector<nodeListElement *> & nodes);

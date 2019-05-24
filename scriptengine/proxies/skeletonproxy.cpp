@@ -308,10 +308,12 @@ void SkeletonProxy::set_tree_color(quint64 tree_id, const QColor & color) {
     Skeletonizer::singleton().setColor(treeFromId(tree_id), color);
 }
 
+bool SkeletonProxy::get_tree_render(quint64 tree_id) {
+    return treeFromId(tree_id).render;
+}
+
 void SkeletonProxy::set_tree_render(quint64 tree_id, const bool render) {
-    auto & tree = treeFromId(tree_id);
-    tree.render = render;
-    emit Skeletonizer::singleton().treeChangedSignal(tree);
+    Skeletonizer::singleton().setRender(treeFromId(tree_id), render);
 }
 
 QColor SkeletonProxy::get_tree_color(quint64 tree_id) {

@@ -114,7 +114,7 @@ bool TreeModel::setData(const QModelIndex & index, const QVariant & value, int r
     auto & tree = cache[index.row()].get();
 
     if (index.column() == 2 && role == Qt::CheckStateRole) {
-        tree.render = value.toBool();
+        Skeletonizer::singleton().setRender(tree, value.toBool());
     } else if ((role == Qt::DisplayRole || role == Qt::EditRole) && index.column() == 1) {
         Skeletonizer::singleton().setColor(tree, value.value<QColor>());
     } else if ((role == Qt::DisplayRole || role == Qt::EditRole) && index.column() == 4) {
@@ -734,14 +734,15 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         }
     });
     QObject::connect(treeContextMenu.addAction("Show selected trees"), &QAction::triggered, [](){
-        for (auto * tree : state->skeletonState->selectedTrees) {
-            tree->render = true;
-        }
+        Skeletonizer::singleton().bulkOperation(state->skeletonState->selectedTrees, [](auto & tree){
+            Skeletonizer::singleton().setRender(tree, true);
+        });
     });
     QObject::connect(treeContextMenu.addAction("Hide selected trees"), &QAction::triggered, [](){
-        for (auto * tree : state->skeletonState->selectedTrees) {
-            tree->render = false;
-        }});
+        Skeletonizer::singleton().bulkOperation(state->skeletonState->selectedTrees, [](auto & tree){
+            Skeletonizer::singleton().setRender(tree, false);
+        });
+    });
     QObject::connect(treeContextMenu.addAction("Restore default color"), &QAction::triggered, [](){
         Skeletonizer::singleton().bulkOperation(state->skeletonState->selectedTrees, [](auto & tree){
             Skeletonizer::singleton().restoreDefaultTreeColor(tree);

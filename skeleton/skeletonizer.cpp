@@ -1461,6 +1461,11 @@ void Skeletonizer::setColor(treeListElement & tree, const QColor & color) {
     emit treeChangedSignal(tree);
 }
 
+void Skeletonizer::setRender(treeListElement & tree, const bool render) {
+    tree.render = render;
+    emit Skeletonizer::singleton().treeChangedSignal(tree);
+}
+
 std::list<segmentListElement>::iterator Skeletonizer::findSegmentBetween(nodeListElement & sourceNode, const nodeListElement & targetNode) {
     for (auto segmentIt = std::begin(sourceNode.segments); segmentIt != std::end(sourceNode.segments); ++segmentIt) {
         if (!segmentIt->forward) {
