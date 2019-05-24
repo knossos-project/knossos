@@ -1033,7 +1033,7 @@ void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, 
             for (const auto & pair : layer.textures) {
                 const auto pos = pair.first;
                 const auto globalCoord = pos.cube2Global(gpucubeedge, Dataset::current().scaleFactor);
-                if (!currentlyVisible(globalCoord, viewerState.currentPosition, supercubeedge, gpucubeedge)) {
+                if (!currentlyVisible(globalCoord, viewerState.currentPosition, supercubeedge, Dataset::current().scaleFactor * gpucubeedge)) {
                     obsoleteCubes.emplace_back(pos);
                 }
             }
@@ -1077,7 +1077,7 @@ void Viewer::calculateMissingOrthoGPUCubes(TextureLayer & layer) {
     for (int z = edge.z; z < end.z; ++z) {
         const auto gpuCoord = CoordOfGPUCube{x, y, z};
         const auto globalCoord = gpuCoord.cube2Global(gpucubeedge, Dataset::current().scaleFactor);
-        if (currentlyVisible(globalCoord, state->viewerState->currentPosition, gpusupercube, gpucubeedge) && layer.textures.count(gpuCoord) == 0) {
+        if (currentlyVisible(globalCoord, state->viewerState->currentPosition, gpusupercube, Dataset::current().scaleFactor * gpucubeedge) && layer.textures.count(gpuCoord) == 0) {
             const auto cubeCoord = Dataset::current().global2cube(globalCoord);
             const auto offset = globalCoord - Dataset::current().cube2global(cubeCoord);
             layer.pendingOrthoCubes.emplace_back(gpuCoord, offset);

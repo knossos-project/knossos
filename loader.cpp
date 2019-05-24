@@ -51,16 +51,16 @@
 //generalizing this needs polymorphic lambdas or return type deduction
 auto currentlyVisibleWrap = [](const Coordinate & center, const Dataset & dataset){
     return [&center, &dataset](const CoordOfCube & coord){
-        return currentlyVisible(dataset.cube2global(coord), center, state->M, dataset.cubeEdgeLength * dataset.magnification);
+        return currentlyVisible(dataset.cube2global(coord), center, state->M, dataset.scaleFactor * dataset.cubeEdgeLength);
     };
 };
 auto insideCurrentSupercubeWrap = [](const Coordinate & center, const Dataset & dataset){
     return [center, dataset](const CoordOfCube & coord){
-        return insideCurrentSupercube(dataset.cube2global(coord), center, state->M, dataset.cubeEdgeLength * dataset.magnification);
+        return insideCurrentSupercube(dataset.cube2global(coord), center, state->M, dataset.scaleFactor * dataset.cubeEdgeLength);
     };
 };
 bool currentlyVisibleWrapWrap(const Coordinate & center, const Coordinate & coord) {// only for use from main thread
-    return currentlyVisible(coord, center, state->M, Dataset::current().cubeEdgeLength * Dataset::current().magnification);
+    return currentlyVisible(coord, center, state->M, Dataset::current().scaleFactor * Dataset::current().cubeEdgeLength);
 }
 
 void Loader::Controller::suspendLoader() {
