@@ -192,11 +192,20 @@ QString Scripting::getPluginDir() {
     return pluginDir;
 }
 
-QString Scripting::getPluginNames() {
+std::set<QString> Scripting::getPluginNames() {
     QSettings settings;
     settings.beginGroup(PLUGIN_SETTINGS_PREFIX + PLUGIN_MGR_NAME);
     auto pluginNamesVal = settings.value(PLUGIN_NAMES_VAL_NAME);
-    return pluginNamesVal.isNull() ? "" : pluginNamesVal.toString();
+    std::set<QString> plugins;
+    for (const auto & elem : pluginNamesVal.toString().split(";")) {
+        plugins.emplace(elem);
+    }
+    for (auto elem : QDir{pluginDir}.entryList(QStringList() << "*.py")) {
+        if (plugins.find(elem.chopped(3)) == std::end(plugins)) {
+            plugins.emplace(elem);
+        }
+    }
+    return plugins;
 }
 
 void Scripting::setPluginNames(const QString &pluginNamesStr) {
@@ -204,7 +213,7 @@ void Scripting::setPluginNames(const QString &pluginNamesStr) {
     settings.beginGroup(PLUGIN_SETTINGS_PREFIX + PLUGIN_MGR_NAME);
     settings.setValue(PLUGIN_NAMES_VAL_NAME, pluginNamesStr);
     settings.endGroup();
-    state->viewer->window->refreshPluginMenu();
+    state->viewer->window->refreshScriptingMenu();
 }
 
 QString Scripting::getDefaultPluginDir() {
@@ -319,6 +328,7 @@ void Scripting::runFile(QIODevice & pyFile, const QString & filename, bool runEx
         destinationFile.remove();
         if(destinationFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
             destinationFile.write(pluginContent.toUtf8());
+            state->mainWindow->refreshScriptingMenu();
         } else {
             registeredPlugins.remove(filename);
             qDebug() << "Failed to save plugin at" << destinationPath << ".";

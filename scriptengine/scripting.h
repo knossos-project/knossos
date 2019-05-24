@@ -35,6 +35,7 @@
 #include <QObject>
 
 #include <functional>
+#include <set>
 #include <utility>
 
 /*
@@ -150,7 +151,7 @@ public slots:
     bool showPlugin(const QString &pluginName, bool isQuiet);
     bool hidePlugin(const QString &pluginName, bool isQuiet);
     bool openPlugin(const QString &pluginName, bool isQuiet);
-    QString getPluginNames();
+    std::set<QString> getPluginNames();
     void setPluginNames(const QString &pluginNamesStr);
     QString getPluginDir();
     void setPluginDir(const QString &pluginDir);

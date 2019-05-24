@@ -151,7 +151,7 @@ class MainWindow : public QMainWindow {
     CoordinateSpins currentPosSpins;
     QMenu fileMenu{"&File"};
     QMenu actionMenu{"&Action"};
-    QMenu *pluginMenu;
+    QMenu *scriptingMenu{nullptr};
     QString openFileDirectory;
     QString saveFileDirectory;
     QList<QString> skeletonFileHistory;
@@ -245,7 +245,7 @@ signals:
     void datasetDropped(const QUrl &);
     void overlayOpacityChanged();
 public slots:
-    void refreshPluginMenu();
+    void refreshScriptingMenu();
     void setProofReadingUI(const bool on);
     void setJobModeUI(bool enabled);
     void updateLoaderProgress(int refCount);

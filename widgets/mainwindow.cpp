@@ -725,13 +725,7 @@ void MainWindow::createMenus() {
     windowMenu->addAction(QIcon(":/resources/icons/menubar/zoom.png"), tr("Zoom"), &widgetContainer.zoomWidget, SLOT(show()));
     windowMenu->addAction(QIcon(":/resources/icons/menubar/snapshot.png"), tr("Take a Snapshot"), &widgetContainer.snapshotWidget, SLOT(show()));
 
-    auto scriptingMenu = menuBar()->addMenu("&Scripting");
-    scriptingMenu->addAction("Properties", this, SLOT(pythonPropertiesSlot()));
-    scriptingMenu->addAction("Run File", this, SLOT(pythonFileSlot()));
-    scriptingMenu->addAction("Plugin Manager", this, SLOT(pythonPluginMgrSlot()));
-    scriptingMenu->addAction(QIcon(":/resources/icons/menubar/python.png"), "Interpreter", this, SLOT(pythonInterpreterSlot()));
-    pluginMenu = scriptingMenu->addMenu("Plugins");
-    refreshPluginMenu();
+    scriptingMenu = menuBar()->addMenu("&Scripting");
 
     auto & helpMenu = *menuBar()->addMenu("&Help");
 
@@ -1272,6 +1266,7 @@ void MainWindow::loadSettings() {
     widgetContainer.zoomWidget.loadSettings();
     widgetContainer.pythonInterpreterWidget.loadSettings();
     widgetContainer.pythonPropertyWidget.loadSettings();
+    refreshScriptingMenu();
     widgetContainer.snapshotWidget.loadSettings();
 
     show();
@@ -1451,40 +1446,57 @@ void MainWindow::pythonFileSlot() {
     state->scripting->runFile(pyFileName, true);
 }
 
-void MainWindow::refreshPluginMenu() {
-    auto actions = pluginMenu->actions();
-    for (auto action : actions) {
-        pluginMenu->removeAction(action);
-    }
-    QObject::connect(pluginMenu->addAction("Open Plugins Directory"),
+void MainWindow::refreshScriptingMenu() {
+    scriptingMenu->clear();
+    scriptingMenu->addAction("Properties", this, SLOT(pythonPropertiesSlot()));
+    scriptingMenu->addAction("Run File", this, SLOT(pythonFileSlot()));
+    scriptingMenu->addAction("Plugin Manager", this, SLOT(pythonPluginMgrSlot()));
+    scriptingMenu->addAction(QIcon(":/resources/icons/menubar/python.png"), "Interpreter", this, SLOT(pythonInterpreterSlot()));
+
+    QObject::connect(scriptingMenu->addAction("Open Plugins Directory"),
                      &QAction::triggered,
                      [](){QDesktopServices::openUrl(QUrl::fromLocalFile(state->scripting->getPluginDir()));});
-    pluginMenu->addSeparator();
 
-    QStringList pluginNames = state->scripting->getPluginNames().split(";");
+    scriptingMenu->addSeparator();
+    const auto & pluginNames = state->scripting->getPluginNames();
     for (auto pluginName : pluginNames) {
         if (pluginName.isEmpty()) {
             continue;
         }
-        auto pluginSubMenu = pluginMenu->addMenu(pluginName);
-        QObject::connect(pluginSubMenu->addAction("Open"), &QAction::triggered,
-                         [pluginName](){state->scripting->openPlugin(pluginName,true);});
-        QObject::connect(pluginSubMenu->addAction("Close"), &QAction::triggered,
-                         [pluginName](){state->scripting->closePlugin(pluginName,false);});
-        QObject::connect(pluginSubMenu->addAction("Show"), &QAction::triggered,
-                         [pluginName](){state->scripting->showPlugin(pluginName,true);});
-        QObject::connect(pluginSubMenu->addAction("Hide"), &QAction::triggered,
-                         [pluginName](){state->scripting->hidePlugin(pluginName,false);});
-        QObject::connect(pluginSubMenu->addAction("Reload"), &QAction::triggered,
-                         [pluginName](){state->scripting->reloadPlugin(pluginName,false);});
-        QObject::connect(pluginSubMenu->addAction("Instantiate"), &QAction::triggered,
-                         [pluginName](){state->scripting->instantiatePlugin(pluginName,false);});
-        QObject::connect(pluginSubMenu->addAction("Remove instance"), &QAction::triggered,
-                         [pluginName](){state->scripting->removePluginInstance(pluginName,false);});
-        QObject::connect(pluginSubMenu->addAction("Import"), &QAction::triggered,
-                         [pluginName](){state->scripting->importPlugin(pluginName,false);});
-        QObject::connect(pluginSubMenu->addAction("Remove import"), &QAction::triggered,
-                         [pluginName](){state->scripting->removePluginImport(pluginName,false);});
+        if (pluginName.endsWith(".py")) {
+            QObject::connect(scriptingMenu->addAction(pluginName), &QAction::triggered, [pluginName](bool) {
+                const auto & pluginPath = state->scripting->getPluginDir() + "/" + pluginName;
+                if (QFileInfo{pluginPath}.exists()) {
+                    state->scripting->runFile(pluginPath);
+                } else {
+                    QMessageBox warning(QApplication::activeWindow());
+                    warning.setIcon(QMessageBox::Warning);
+                    warning.setText(tr("The plugin does not exist anymore:"));
+                    warning.setInformativeText(pluginPath);
+                    warning.exec();
+                }
+            });
+        } else { // legacy plugins
+            auto pluginSubMenu = scriptingMenu->addMenu(pluginName);
+            QObject::connect(pluginSubMenu->addAction("Open"), &QAction::triggered,
+                             [pluginName](){state->scripting->openPlugin(pluginName,true);});
+            QObject::connect(pluginSubMenu->addAction("Close"), &QAction::triggered,
+                             [pluginName](){state->scripting->closePlugin(pluginName,false);});
+            QObject::connect(pluginSubMenu->addAction("Show"), &QAction::triggered,
+                             [pluginName](){state->scripting->showPlugin(pluginName,true);});
+            QObject::connect(pluginSubMenu->addAction("Hide"), &QAction::triggered,
+                             [pluginName](){state->scripting->hidePlugin(pluginName,false);});
+            QObject::connect(pluginSubMenu->addAction("Reload"), &QAction::triggered,
+                             [pluginName](){state->scripting->reloadPlugin(pluginName,false);});
+            QObject::connect(pluginSubMenu->addAction("Instantiate"), &QAction::triggered,
+                             [pluginName](){state->scripting->instantiatePlugin(pluginName,false);});
+            QObject::connect(pluginSubMenu->addAction("Remove instance"), &QAction::triggered,
+                             [pluginName](){state->scripting->removePluginInstance(pluginName,false);});
+            QObject::connect(pluginSubMenu->addAction("Import"), &QAction::triggered,
+                             [pluginName](){state->scripting->importPlugin(pluginName,false);});
+            QObject::connect(pluginSubMenu->addAction("Remove import"), &QAction::triggered,
+                             [pluginName](){state->scripting->removePluginImport(pluginName,false);});
+        }
     }
 }
 
