@@ -189,10 +189,7 @@ void Scripting::setPluginDir(const QString &pluginDir) {
 }
 
 QString Scripting::getPluginDir() {
-    QSettings settings;
-    settings.beginGroup(PLUGIN_SETTINGS_PREFIX + PLUGIN_MGR_NAME);
-    auto pluginDirVal = settings.value(PLUGIN_DIR_VAL_NAME);
-    return pluginDirVal.isNull() ? QString() : pluginDirVal.toString();
+    return QSettings{}.value(PLUGIN_SETTINGS_PREFIX + PLUGIN_MGR_NAME + '/' + PLUGIN_DIR_VAL_NAME).toString();
 }
 
 QString Scripting::getPluginNames() {
