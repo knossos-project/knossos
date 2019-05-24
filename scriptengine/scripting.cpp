@@ -256,6 +256,9 @@ void Scripting::addPresetCustomPythonPaths() {
 }
 
 void Scripting::runFile(const QString &filename) {
+    if (filename.isNull()) {
+        return;
+    }
     QFile pyFile(filename);
     runFile(pyFile);
 }
