@@ -53,7 +53,11 @@ void PythonProxy::annotation_add_file(const QString & name, const QByteArray & c
 }
 
 QByteArray PythonProxy::annotation_get_file(const QString & name) {
-    return Annotation::singleton().extraFiles.value(name);
+    if (auto it = Annotation::singleton().extraFiles.find(name); it != std::end(Annotation::singleton().extraFiles)) {
+        return *it;
+    } else {
+        throw std::runtime_error("annotation_get_file not available " + name.toUtf8());
+    }
 }
 
 QString PythonProxy::annotation_filename() {
