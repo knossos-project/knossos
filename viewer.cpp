@@ -881,6 +881,7 @@ bool Viewer::updateDatasetMag(const int mag) {
 //Entry point for viewer thread, general viewer coordination, "main loop"
 void Viewer::run() {
     if (state->quitSignal) {//don’t do anything, when the rest is already going to sleep
+        timer.stop();
         qDebug() << "viewer returned";
         return;
     }
