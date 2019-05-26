@@ -241,7 +241,7 @@ void Scripting::addPythonPath(const QString &path) {
         return;
     }
     _customPathDirs.append(path);
-    evalScript(QString("sys.path.append('%1')").arg(path));
+    evalScript(QString("import sys; sys.path.append('%1')").arg(path));
 }
 
 void Scripting::addPresetCustomPythonPaths() {
