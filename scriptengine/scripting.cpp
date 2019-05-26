@@ -40,6 +40,7 @@
 #endif
 
 #include <QApplication>
+#include <QCollator>
 #include <QDir>
 #include <QFileInfoList>
 #include <QIODevice>
@@ -252,20 +253,77 @@ void Scripting::addPresetCustomPythonPaths() {
     }
 }
 
-void Scripting::runFile(const QString &filename) {
+bool isNewer(const QString & v, const QString & otherV) {
+    const auto & parts = v.split(".");
+    const auto & otherParts = otherV.split(".");
+    QCollator collator;
+    collator.setNumericMode(true);
+    for (int i{0}; i != std::min(parts.size(), otherParts.size()); ++i) {
+        if (parts[i] != otherParts[i]) {
+            return collator.compare(parts[i], otherParts[i]) > 0;
+        }
+    }
+    return parts.size() > otherParts.size();
+}
+
+void Scripting::registerPlugin(PyObject * plugin, const QString & version) {
+    PyObject * sibling = nullptr;
+    for (auto & elem : runningPlugins.keys()) {
+        if (Py_TYPE(plugin)->tp_name == Py_TYPE(elem)->tp_name) {
+            sibling = elem;
+            break;
+        }
+    }
+    if (sibling == nullptr || isNewer(version, runningPlugins[sibling])) {
+        if (sibling != nullptr) {
+            PyObject_CallMethod(sibling, const_cast<char*>("delete"), const_cast<char*>(""));
+            runningPlugins.remove(sibling);
+        }
+        runningPlugins[plugin] = version;
+        if (!loadedPlugin) {
+            throw std::runtime_error("no loadedPlugin in registerPlugin");
+        }
+        registeredPlugins[QFileInfo{loadedPlugin.get()}.fileName()] = loadedPlugin.get();
+    } else {
+        PyObject_CallMethod(plugin, const_cast<char*>("delete"), const_cast<char*>(""));
+    }
+}
+
+void Scripting::runFile(const QString &filename, bool runExistingFirst) {
     if (filename.isNull()) {
         return;
     }
     QFile pyFile(filename);
-    runFile(pyFile);
+    runFile(pyFile, QFileInfo{filename}.fileName(), runExistingFirst);
 }
 
-void Scripting::runFile(QIODevice & pyFile) {
+void Scripting::runFile(QIODevice & pyFile, const QString & filename, bool runExistingFirst) {
     if(!pyFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
         throw std::runtime_error("runFile open failed");
     }
+    if (runExistingFirst && registeredPlugins.contains(filename)) {
+        qDebug() << "Running existing plugin first:" << filename;
+        try {
+            runFile(registeredPlugins[filename]);
+        } catch(const std::runtime_error & e) {
+            qDebug() << "Failed to load existing plugin:" << e.what();
+        }
+    }
     QTextStream textStream(&pyFile);
-    evalScript(textStream.readAll(), Py_file_input);
+    auto destinationPath = getPluginDir() + '/' + filename;
+    loadedPlugin = destinationPath;
+    auto pluginContent = textStream.readAll();
+    evalScript(pluginContent, Py_file_input);
+    if (loadedPlugin) {
+        QFile destinationFile{destinationPath};
+        destinationFile.remove();
+        if(destinationFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            destinationFile.write(pluginContent.toUtf8());
+        } else {
+            registeredPlugins.remove(filename);
+            qDebug() << "Failed to save plugin at" << destinationPath << ".";
+        }
+    }
     pyFile.close();
 }
 

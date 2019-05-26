@@ -1448,7 +1448,7 @@ void MainWindow::pythonFileSlot() {
     const QString pyFileName = state->viewer->suspend([this]{
         return QFileDialog::getOpenFileName(this, "Select python file", QDir::homePath(), "*.py");
     });
-    state->scripting->runFile(pyFileName);
+    state->scripting->runFile(pyFileName, true);
 }
 
 void MainWindow::refreshPluginMenu() {

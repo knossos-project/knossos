@@ -153,7 +153,7 @@ void annotationFileLoad(const QString & filename, bool mergeSkeleton, const QStr
             if (!nonExtraFiles.contains(archive.getCurrentFileName())) {
                 QuaZipFile file(&archive);
                 if (archive.getCurrentFileName().endsWith(".py")) {
-                    state->scripting->runFile(file);
+                    state->scripting->runFile(file, archive.getCurrentFileName(), true);
                 }
                 file.open(QIODevice::ReadOnly);
                 Annotation::singleton().extraFiles[archive.getCurrentFileName()] = file.readAll();

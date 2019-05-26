@@ -30,6 +30,7 @@
 
 #include <PythonQt/PythonQtObjectPtr.h>
 
+#include <QMap>
 #include <QMouseEvent>
 #include <QObject>
 
@@ -101,14 +102,17 @@ class Scripting : public QObject {
     friend class PythonPropertyWidget;
 public:
     explicit Scripting();
-    void runFile(const QString &filename);
-    void runFile(QIODevice & pyFile);
+    void runFile(const QString &filename, bool runExistingFirst = false);
+    void runFile(QIODevice & pyFile, const QString &filename, bool runExistingFirst = false);
     void addObject(const QString& name, QObject* object);
     void addVariable(const QString& name, const QVariant& v);
     SkeletonProxy skeletonProxy;
     SegmentationProxy segmentationProxy;
     PythonProxy pythonProxy;
+    QMap<PyObject *, QString> runningPlugins;
+    QMap<QString, QString> registeredPlugins;
 private:
+    boost::optional<QString> loadedPlugin;
     PythonQtObjectPtr _ctx;
     QStringList _customPathDirs;
     QVariant evalScript(const QString& script, int start = Py_file_input);
@@ -128,6 +132,7 @@ signals:
     void pluginDirChanged(const QString & newDir);
     void workingDirChanged(const QString & newDir);
 public slots:
+    void registerPlugin(PyObject * plugin, const QString & version);
     QString getPluginInContainerStr(const QString &pluginName);
     QString getImportInContainerStr(const QString &pluginName);
     QString getInstanceInContainerStr(const QString &pluginName);

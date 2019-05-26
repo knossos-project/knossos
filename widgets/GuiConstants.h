@@ -166,8 +166,9 @@ const QString SEGMENT_STATE = "segment_state";
 const QString PYTHON_TERMINAL_WIDGET = "python_terminal_widget";
 
 // Python Property Widget
-const QString PYTHON_PLUGIN_FOLDER = "python_plugin_folder";
 const QString PYTHON_CUSTOM_PATHS = "python_custom_paths";
+const QString PYTHON_PLUGIN_FOLDER = "python_plugin_folder";
+const QString PYTHON_REGISTERED_PLUGINS = "python_registered_plugins";
 const QString PYTHON_WORKING_DIRECTORY = "python_working_directory";
 
 // Heidelbrain Integration

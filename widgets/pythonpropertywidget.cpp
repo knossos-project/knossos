@@ -88,6 +88,12 @@ void PythonPropertyWidget::saveSettings() {
     settings.setValue(PYTHON_PLUGIN_FOLDER, state->scripting->getPluginDir());
     settings.setValue(PYTHON_CUSTOM_PATHS, customPathsEdit.toPlainText().split("\n"));
 
+    settings.beginGroup(PYTHON_REGISTERED_PLUGINS);
+    for (auto iter = std::begin(state->scripting->registeredPlugins); iter != std::end(state->scripting->registeredPlugins); iter++) {
+        settings.setValue(iter.key(), iter.value());
+    }
+    settings.endGroup();
+
     settings.endGroup();
 }
 
@@ -99,6 +105,13 @@ void PythonPropertyWidget::loadSettings() {
     state->scripting->setPluginDir(settings.value(PYTHON_PLUGIN_FOLDER, state->scripting->getDefaultPluginDir()).toString());
     state->scripting->changeWorkingDirectory(settings.value(PYTHON_WORKING_DIRECTORY, "").toString());
     customPathsEdit.setText(settings.value(PYTHON_CUSTOM_PATHS).toStringList().join("\n"));
+
+    settings.beginGroup(PYTHON_REGISTERED_PLUGINS);
+    for (auto & key :  settings.childKeys()) {
+        state->scripting->registeredPlugins[key] = settings.value(key).toString();
+    }
+    settings.endGroup();
+
     settings.endGroup();
 
     state->scripting->initialize();
