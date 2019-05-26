@@ -665,7 +665,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 }
             }();
 
-            reply->setParent(nullptr);//reparent, so it don’t gets destroyed with qnam
+            reply->setParent(nullptr);// reparent, so it doesn’t get destroyed with qnam
             downloads[cubeCoord] = reply;
             broadcastProgress(true);
             QObject::connect(reply, &QNetworkReply::finished, this, [this, layerId, dataset, reply, cubeCoord, &downloads, &decompressions, &freeSlots, &cubeHash](){

@@ -89,11 +89,11 @@ void marchingCubes(std::unordered_map<U, std::unordered_map<floatCoordinate, int
                 for (std::size_t pi = 0; pi < 8; ++pi) {
                     // for discrete marching cubes, we are looking for an
                     // exact match of a scalar at a vertex to a value
-                    if (auto it = soid2oid.find(cubeVals[pi]); it != std::end(soid2oid)) {
+                    if (auto it = soid2oid.find(cubeVals[pi]); it != std::end(soid2oid)) {// subobject and object already existed so we can do a non-mutating lookup without synchronization
                         for (auto & oindex : Segmentation::singleton().subobjectFromId(it->first, {}).objects) {
                             obj2index[Segmentation::singleton().objects[oindex].id] |= CASE_MASK[pi];
                         }
-                    } else if (soid2oid.empty() && cubeVals[pi] != Segmentation::singleton().backgroundId) {
+                    } else if (soid2oid.empty() && cubeVals[pi] != Segmentation::singleton().backgroundId) {// mesh soids when no objects were selected
                         obj2index[cubeVals[pi]] |= CASE_MASK[pi];
                     }
                 }
