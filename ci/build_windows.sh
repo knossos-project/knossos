@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euxo pipefail
 
+pacman -R mingw-w64-{i686,x86_64}-gcc-{ada,objc} --noconfirm # https://github.com/msys2/MINGW-packages/issues/5434
 time pacman -Syuu --needed --noconfirm $MINGW_PACKAGE_PREFIX-{boost,cmake,jasper,ninja,python2,qt5-static,snappy,toolchain}
 
 # Download and install static PythonQt and QuaZIP
