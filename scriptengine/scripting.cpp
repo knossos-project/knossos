@@ -83,7 +83,7 @@ QVariant Scripting::evalScript(const QString & script, int start) {
     return _ctx.evalScript(script, start);
 }
 
-const QString SCRIPTING_KNOSSOS_MODULE = "KnossosModule";
+const QString SCRIPTING_KNOSSOS_MODULE = "knossos";
 const QString SCRIPTING_PLUGIN_CONTAINER = "plugin_container";
 const QString SCRIPTING_IMPORT_KEY = "import";
 const QString SCRIPTING_INSTANCE_KEY = "instance";
