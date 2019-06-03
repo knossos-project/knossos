@@ -128,7 +128,8 @@ void Scripting::initialize() {
     evalScript(QString("%1.%2 = {}").arg(SCRIPTING_KNOSSOS_MODULE).arg(SCRIPTING_PLUGIN_CONTAINER));
 
     addObject("signal_relay", state->signalRelay);
-    addObject("knossos", &pythonProxy);
+    _ctx.addObject("pythonProxy", &pythonProxy);// workaround name collision with module
+    evalScript(QString("%1.%2 = %3; del %3").arg(SCRIPTING_KNOSSOS_MODULE).arg("knossos").arg("pythonProxy"));
     addObject("scripting", this);
     addObject("segmentation", &segmentationProxy);
     addObject("skeleton", &skeletonProxy);
