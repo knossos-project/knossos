@@ -94,7 +94,7 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent) {
         Annotation::singleton().savePlyAsBinary = static_cast<bool>(id);
     });
     QObject::connect(&customSaveButton, &QPushButton::clicked, [this](const bool) {
-        state->viewer->window->saveAsSlot(true, saveTimeButton.isChecked(), saveDatasetPathButton.isChecked());
+        state->viewer->window->saveAsSlot(false, saveTimeButton.isChecked(), saveDatasetPathButton.isChecked());
     });
 }
 
