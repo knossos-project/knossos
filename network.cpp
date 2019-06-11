@@ -152,7 +152,9 @@ QPair<bool, QPair<QString, QByteArray>> blockDownloadExtractFilenameAndData(QNet
 }
 
 QPair<bool, QString> Network::refresh(const QUrl & url) {
-    auto & reply = *manager.get(QNetworkRequest(url));
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::UserAgentHeader, QApplication::applicationName() + "/" + KREVISION);
+    auto & reply = *manager.get(request);
     return blockDownloadExtractData(reply);
 }
 
@@ -162,9 +164,9 @@ QPair<bool, QString> Network::login(const QUrl & url, const QString & username, 
     writer.writeStartElement("login");
     writer.writeTextElement("username", username);
     writer.writeTextElement("password", password);
-    writer.writeTextElement("knossos_version", KREVISION);
     writer.writeEndElement();
     QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::UserAgentHeader, QApplication::applicationName() + "/" + KREVISION);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "text/xml; charset=utf-8");
     auto & reply = *manager.post(request, postdata.toUtf8());
     return blockDownloadExtractData(reply);
