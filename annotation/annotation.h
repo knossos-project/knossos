@@ -62,6 +62,16 @@ struct AAMTask {
     QString project;
     QString category;
     QString name;
+
+    bool isEmpty() const {
+        return project.isEmpty() && category.isEmpty() && name.isEmpty();
+    }
+    bool operator==(const AAMTask & other) const {
+        return project == other.project && category == other.category && name == other.name;
+    }
+    bool operator!=(const AAMTask & other) const {
+        return !(*this == other);
+    }
 };
 
 class Annotation : public QObject {
@@ -82,7 +92,8 @@ public:
     bool savePlyAsBinary{true};
     bool unsavedChanges = false;
 
-    AAMTask task;
+    AAMTask activeTask;
+    AAMTask fileTask;
     QFlags<AnnotationMode> annotationMode;
     GUIMode guiMode{GUIMode::None};
 

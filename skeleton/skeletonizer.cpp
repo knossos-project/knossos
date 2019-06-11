@@ -266,7 +266,7 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     xml.writeAttribute("path", saveDatasetPath? state->viewer->window->widgetContainer.datasetLoadWidget.datasetUrl.toString() : "");
     xml.writeAttribute("overlay", QString::number(static_cast<int>(Segmentation::singleton().enabled)));
     xml.writeEndElement();
-    const auto & task = Annotation::singleton().task;
+    const auto & task = Annotation::singleton().fileTask;
     if (!task.project.isEmpty() || !task.category.isEmpty() || !task.name.isEmpty()) {
         xml.writeStartElement("task");
         xml.writeAttribute("project", task.project);
@@ -585,8 +585,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                         auto key = attribute.name();
                         if (key == "project") {
                             loadedProject = attribute.value().toString();
-                        }
-                        if (key == "category") {
+                        } else if (key == "category") {
                             loadedCategory = attribute.value().toString();
                         } else if (key == "name") {
                             loadedTaskName = attribute.value().toString();
@@ -845,15 +844,16 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     if (mismatchedDataset) {
         msg += tr("• The annotation (created in dataset “%1”) does not belong to the currently loaded dataset (“%2”).\n\n").arg(experimentName).arg(Dataset::current().experimentname);
     }
-    const auto task = Annotation::singleton().task;
-    const auto mismatchedTask = !task.project.isEmpty() && !task.category.isEmpty() && !task.name.isEmpty() && (task.project != loadedProject || task.category != loadedCategory || task.name != loadedTaskName);
+    const auto task = Annotation::singleton().activeTask;
+    Annotation::singleton().fileTask = {loadedProject, loadedCategory, loadedTaskName};
+    const auto mismatchedTask = !task.isEmpty() && task != Annotation::singleton().fileTask;
     if (mismatchedTask) {
         msg += tr("• The associated task “%1” (%2, %3) is different from the currently active “%4” (%5, %6).\n\n").arg(loadedTaskName, loadedProject, loadedCategory, task.name, task.project, task.category);
     }
     msg.chop(2);// remove the 2 newlines at the end
     if (!msg.isEmpty()) {
         msgBox.setIcon(QMessageBox::Warning);
-        msgBox.setText(tr("Incompatible Annotation File\nAlthough the file was loaded successfully, working with it is not recommended."));
+        msgBox.setText(tr("Incompatible Annotation File<br>Although the file was loaded successfully, <strong>working with it is not recommended.</strong>"));
         msgBox.setInformativeText(msg);
         msgBox.exec();
     }

@@ -123,12 +123,11 @@ void TaskManagementWidget::updateAndRefreshWidget() {
     const auto jmap = QJsonDocument::fromJson(res.second.toUtf8()).object();
     if (res.first && !jmap.isEmpty()) {
 //        auto username = jmap["username"].toString();// username is not used
-        auto & task = Annotation::singleton().task;
+        auto & task = Annotation::singleton().activeTask;
         auto fullName = jmap["first_name"].toString() + ' ' + jmap["last_name"].toString();
         auto isAdmin = jmap["is_admin"].toBool();
-        task.name = jmap["task_name"].toString("");
-        task.project = jmap["task_project_name"].toString("");
-        task.category = jmap["task_category_name"].toString("");
+        task = {jmap["task_project_name"].toString(""), jmap["task_category_name"].toString(""), jmap["task_name"].toString("")};
+
         auto taskComment = jmap["task_comment"].toString();
         auto categoryDescription = jmap["task_category_description"].toString();
         const bool hasTask = !task.name.isEmpty();
@@ -261,7 +260,7 @@ void TaskManagementWidget::rejectTask() {
     box.addButton(tr("Cancel"), QMessageBox::RejectRole);
     box.exec();
     if (box.clickedButton() == accept) {
-        const auto & task = Annotation::singleton().task;
+        const auto & task = Annotation::singleton().activeTask;
         auto res = Network::singleton().rejectTask(baseUrl + "/work/" + task.project + "/" + task.category + "/" + task.name);
         if (handleError(res, res.second)) {
             updateAndRefreshWidget();//task infos changed
@@ -283,6 +282,24 @@ void TaskManagementWidget::submitInvalid() {
 }
 
 bool TaskManagementWidget::submit(const bool final, const bool valid) {
+    const auto & fileTask = Annotation::singleton().fileTask;
+    const auto & activeTask = Annotation::singleton().activeTask;
+    if (fileTask != activeTask) {
+        QMessageBox rejectMsg(this);
+        rejectMsg.setIcon(QMessageBox::Critical);
+        rejectMsg.setText(tr("Mismatching submission rejected.\n"
+                             "You submitted: “%1” (%2, %3)\n"
+                             "Expected task: “%4” (%5, %6)\n"
+                             "You can retrieve a valid annotation via Load last Submit.")
+                          .arg(fileTask.name, fileTask.project, fileTask.category, activeTask.name, activeTask.project, activeTask.category));
+        const auto * loadButton = rejectMsg.addButton("Load last Submit", QMessageBox::AcceptRole);
+        rejectMsg.addButton(QMessageBox::Close);
+        rejectMsg.exec();
+        if (rejectMsg.clickedButton() == loadButton) {
+            loadLastSubmitButtonClicked();
+        }
+        return false;
+    }
     state->viewer->window->save();//save file to submit
 
     setCursor(Qt::BusyCursor);

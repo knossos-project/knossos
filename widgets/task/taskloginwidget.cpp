@@ -84,7 +84,7 @@ void TaskLoginWidget::saveSettings() {
 }
 
 void TaskLoginWidget::setResponse(const QString &message) {
-    Annotation::singleton().task = {};
+    Annotation::singleton().activeTask = {};
     response.setText(message);
     show();
 }
