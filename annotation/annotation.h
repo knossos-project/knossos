@@ -112,6 +112,7 @@ public:
         static Annotation session;
         return session;
     }
+    bool isEmpty() const;
     void clearAnnotation();
     decltype(annotationTimeMilliseconds) getAnnotationTime() const;
     void setAnnotationTime(const decltype(annotationTimeMilliseconds) & ms);

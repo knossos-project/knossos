@@ -115,6 +115,16 @@ bool TaskManagementWidget::handleError(const QPair<bool, QString> & res, const Q
     }
 }
 
+bool loginGuardMsg() {
+    QMessageBox overwriteMsg(QApplication::activeWindow());
+    overwriteMsg.setIcon(QMessageBox::Question);
+    overwriteMsg.setText(QObject::tr("You have unsaved changes that will be lost on login."));
+    const auto  * discard = overwriteMsg.addButton(QObject::tr("Discard current changes and login."), QMessageBox::AcceptRole);
+    overwriteMsg.addButton(QObject::tr("Cancel"), QMessageBox::RejectRole);
+    overwriteMsg.exec();
+    return overwriteMsg.clickedButton() == discard;
+}
+
 void TaskManagementWidget::updateAndRefreshWidget() {
     setCursor(Qt::BusyCursor);
     const auto res = Network::singleton().refresh(baseUrl + "/session/");
@@ -127,6 +137,13 @@ void TaskManagementWidget::updateAndRefreshWidget() {
         auto fullName = jmap["first_name"].toString() + ' ' + jmap["last_name"].toString();
         auto isAdmin = jmap["is_admin"].toBool();
         task = {jmap["task_project_name"].toString(""), jmap["task_category_name"].toString(""), jmap["task_name"].toString("")};
+
+        if (!Annotation::singleton().isEmpty() && (Annotation::singleton().fileTask != Annotation::singleton().activeTask)) {
+            if (!loginGuardMsg()) {
+                return;
+            }
+            Annotation::singleton().clearAnnotation();
+        }
 
         auto taskComment = jmap["task_comment"].toString();
         auto categoryDescription = jmap["task_category_description"].toString();
@@ -166,6 +183,12 @@ void TaskManagementWidget::updateAndRefreshWidget() {
 }
 
 void TaskManagementWidget::loginButtonClicked(QUrl host, const QString & username, const QString & password) {
+    if (Annotation::singleton().unsavedChanges) {
+        if (!loginGuardMsg()) {
+            return;
+        }
+        Annotation::singleton().clearAnnotation();
+    }
     if (host.scheme().isEmpty()) {// qnam cannot handle url without protocol
         host = "https://" + taskLoginWidget.urlField.text();
     }
@@ -183,12 +206,7 @@ void TaskManagementWidget::loginButtonClicked(QUrl host, const QString & usernam
     }
 }
 
-void TaskManagementWidget::logoutButtonClicked() {
-    updateAndRefreshWidget();
-    if (!isVisible()) {// quit if session got invalidated
-        return;
-    }
-
+void TaskManagementWidget::logout() {
     setCursor(Qt::BusyCursor);
     const auto res = Network::singleton().refresh(baseUrl + "/logout/");
     setCursor(Qt::ArrowCursor);
@@ -196,6 +214,13 @@ void TaskManagementWidget::logoutButtonClicked() {
     if (handleError(res)) {
         hide();
         taskLoginWidget.setResponse("<font color='green'>Logged out successfully.</font>");
+    }
+}
+
+void TaskManagementWidget::logoutButtonClicked() {
+    updateAndRefreshWidget();
+    if (isVisible()) {// logout only in valid session
+        logout();
     }
 }
 
@@ -220,6 +245,18 @@ void TaskManagementWidget::saveAndLoadFile(const QString & filename, const QByte
 }
 
 void TaskManagementWidget::loadLastSubmitButtonClicked() {
+    if (Annotation::singleton().unsavedChanges) {
+        QMessageBox overwriteMsg(this);
+        overwriteMsg.setIcon(QMessageBox::Question);
+        overwriteMsg.setText(tr("You have unsaved changes that will be overwritten when loading the last submission."));
+        overwriteMsg.addButton(tr("Load and lose current changes"), QMessageBox::AcceptRole);
+        const auto * cancel = overwriteMsg.addButton(tr("Cancel"), QMessageBox::RejectRole);
+        overwriteMsg.exec();
+        if (overwriteMsg.clickedButton() == cancel) {
+            return;
+        }
+    }
+    Annotation::singleton().clearAnnotation();
     setCursor(Qt::BusyCursor);
     const auto res = Network::singleton().getFile(baseUrl + "/current_file/");
 
@@ -282,24 +319,6 @@ void TaskManagementWidget::submitInvalid() {
 }
 
 bool TaskManagementWidget::submit(const bool final, const bool valid) {
-    const auto & fileTask = Annotation::singleton().fileTask;
-    const auto & activeTask = Annotation::singleton().activeTask;
-    if (fileTask != activeTask) {
-        QMessageBox rejectMsg(this);
-        rejectMsg.setIcon(QMessageBox::Critical);
-        rejectMsg.setText(tr("Mismatching submission rejected.\n"
-                             "You submitted: “%1” (%2, %3)\n"
-                             "Expected task: “%4” (%5, %6)\n"
-                             "You can retrieve a valid annotation via Load last Submit.")
-                          .arg(fileTask.name, fileTask.project, fileTask.category, activeTask.name, activeTask.project, activeTask.category));
-        const auto * loadButton = rejectMsg.addButton("Load last Submit", QMessageBox::AcceptRole);
-        rejectMsg.addButton(QMessageBox::Close);
-        rejectMsg.exec();
-        if (rejectMsg.clickedButton() == loadButton) {
-            loadLastSubmitButtonClicked();
-        }
-        return false;
-    }
     state->viewer->window->save();//save file to submit
 
     setCursor(Qt::BusyCursor);

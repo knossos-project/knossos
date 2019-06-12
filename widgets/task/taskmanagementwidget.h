@@ -85,6 +85,7 @@ public slots:
     void startNewTaskButtonClicked();
     void loadLastSubmitButtonClicked();
     void loginButtonClicked(QUrl host, const QString & username, const QString & password);
+    void logout();
     void logoutButtonClicked();
 
 private:

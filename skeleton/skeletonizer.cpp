@@ -848,7 +848,9 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     Annotation::singleton().fileTask = {loadedProject, loadedCategory, loadedTaskName};
     const auto mismatchedTask = !task.isEmpty() && task != Annotation::singleton().fileTask;
     if (mismatchedTask) {
-        msg += tr("• The associated task “%1” (%2, %3) is different from the currently active “%4” (%5, %6).\n\n").arg(loadedTaskName, loadedProject, loadedCategory, task.name, task.project, task.category);
+        state->viewer->mainWindow.widgetContainer.taskManagementWidget.logout();
+        msg += tr("• The loaded file’s task “%1” (%2, %3) does not belong to your current task “%4” (%5, %6), so you have been logged out from AAM.\n")
+               .arg(loadedTaskName, loadedProject, loadedCategory, task.name, task.project, task.category);
     }
     msg.chop(2);// remove the 2 newlines at the end
     if (!msg.isEmpty()) {

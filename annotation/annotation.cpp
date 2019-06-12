@@ -59,6 +59,10 @@ Annotation::Annotation() : annotationMode(AnnotationMode::Mode_Tracing) {
     });
 }
 
+bool Annotation::isEmpty() const {
+    return annotationFilename.isEmpty() && !Annotation::singleton().unsavedChanges;
+}
+
 void Annotation::clearAnnotation() {
     Skeletonizer::singleton().clearSkeleton();
     Segmentation::singleton().clear();

@@ -278,7 +278,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     }
 
     bool keepAnnotation = silent;
-    if (!silent && (!Annotation::singleton().annotationFilename.isEmpty() || Annotation::singleton().unsavedChanges)) {
+    if (!silent && !Annotation::singleton().isEmpty()) {
         QMessageBox question{QApplication::activeWindow()};
         question.setIcon(QMessageBox::Question);
         question.setText(tr("Keep the current annotation for the new dataset?"));
