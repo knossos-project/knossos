@@ -49,6 +49,8 @@ TaskLoginWidget::TaskLoginWidget(QWidget * parent) : QDialog(parent) {
     host = settings.value(HEIDELBRAIN_HOST, "https://heidelbrain.org").toString();
     Network::singleton().setCookies(settings.value(HEIDELBRAIN_COOKIES).toList());
     settings.endGroup();
+    response.setOpenExternalLinks(true);
+    response.setTextInteractionFlags(Qt::TextBrowserInteraction);
 
     urlField.setText(host.toString());
     passwordField.setEchoMode(QLineEdit::Password);
