@@ -344,6 +344,12 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         }
     });
 
+    createGlobalAction(state->mainWindow, Qt::CTRL + Qt::Key_M, [this](){// R for radius
+        combineSlicesCheck.toggle();
+        combineSlicesCheck.clicked(combineSlicesCheck.isChecked());
+    });
+
+
     QObject::connect(&treeView, &QTreeView::doubleClicked, [this](const QModelIndex & index) {
         if (index.column() == 8) {
             colorDialog.setCurrentColor(treeView.model()->data(index, Qt::BackgroundRole).value<QColor>());
