@@ -206,7 +206,7 @@ void DatasetLoadWidget::updateDatasetInfo() {
     }
     cubeEdgeSpin.setParent(nullptr);
     cubeEdgeLabel.setParent(nullptr);
-    if (!(Dataset::isHeidelbrain(dataset) || Dataset::isPyKnossos(dataset))) {
+    if (!(datasetinfo.api == Dataset::API::Heidelbrain || datasetinfo.api == Dataset::API::PyKnossos)) {
         datasetSettingsLayout.insertRow(0, &cubeEdgeSpin, &cubeEdgeLabel);
     }
 }
@@ -366,7 +366,9 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
     const auto cubeEdgeLen = cubeEdgeSpin.text().toInt();
     for (auto && layer : layers) {
-        layer.cubeEdgeLength = cubeEdgeLen;
+        if (!(layer.api == Dataset::API::Heidelbrain || layer.api == Dataset::API::PyKnossos)) {
+            layer.cubeEdgeLength = cubeEdgeLen;
+        }
     }
     state->M = (fovSpin.value() + cubeEdgeLen) / cubeEdgeLen;
     if (loadOverlay != boost::none) {
