@@ -331,8 +331,8 @@ bool TaskManagementWidget::submit(const bool final, const bool valid) {
     if (handleError(res, res.second)) {
         submitCommentEdit.clear();//clean comment if submit was successful
         if (final) {
-            updateAndRefreshWidget();//task infos changed
             state->viewer->window->newAnnotationSlot();//clear the annotation to ease starting a new one
+            updateAndRefreshWidget();//task infos changed. Do this after clearing annotation, else a mismatching task will be detected.
         }
         return true;
     }
