@@ -53,7 +53,7 @@ SignalRelay::SignalRelay() {
      state->signalRelay = this;
 }
 
-auto PythonQtInit = []() {
+void PythonQtInit() {
     PythonQt::init();
 #ifdef QtAll
     PythonQt_QtAll::init();
@@ -76,11 +76,10 @@ auto PythonQtInit = []() {
             text.clear();
         }
     });
-    return PythonQt::self()->getMainModule();
-};
+}
 
-QVariant Scripting::evalScript(const QString & script, int start) {
-    return _ctx.evalScript(script, start);
+QVariant Scripting::evalScript(const QString & script, int start = Py_file_input) {
+    return PythonQt::self()->getMainModule().evalScript(script, start);
 }
 
 const QString SCRIPTING_KNOSSOS_MODULE = "knossos";
@@ -88,7 +87,8 @@ const QString SCRIPTING_PLUGIN_CONTAINER = "plugin_container";
 const QString SCRIPTING_IMPORT_KEY = "import";
 const QString SCRIPTING_INSTANCE_KEY = "instance";
 
-Scripting::Scripting() : _ctx{PythonQtInit()} {
+Scripting::Scripting() {
+    PythonQtInit();
     state->scripting = this;
 
     auto makeDecorator = [](QObject * decorator, const char * typeName){
@@ -128,7 +128,7 @@ void Scripting::initialize() {
     evalScript(QString("%1.%2 = {}").arg(SCRIPTING_KNOSSOS_MODULE).arg(SCRIPTING_PLUGIN_CONTAINER));
 
     addObject("signal_relay", state->signalRelay);
-    _ctx.addObject("pythonProxy", &pythonProxy);// workaround name collision with module
+    PythonQt::self()->getMainModule().addObject("pythonProxy", &pythonProxy);// workaround name collision with module
     evalScript(QString("%1.%2 = %3; del %3").arg(SCRIPTING_KNOSSOS_MODULE).arg("knossos").arg("pythonProxy"));
     addObject("scripting", this);
     addObject("segmentation", &segmentationProxy);
@@ -547,12 +547,12 @@ bool Scripting::openPlugin(const QString &pluginName, bool isQuiet) {
 }
 
 void Scripting::addObject(const QString& name, QObject* object) {
-    _ctx.addObject(name, object);
+    PythonQt::self()->getMainModule().addObject(name, object);
     moveSymbolIntoKnossosModule(name);
 }
 
 void Scripting::addVariable(const QString& name, const QVariant& v) {
-    _ctx.addVariable(name, v);
+    PythonQt::self()->getMainModule().addVariable(name, v);
     moveSymbolIntoKnossosModule(name);
 }
 
@@ -567,7 +567,7 @@ void Scripting::executeFromUserDirectory() {
         if(!file.open(QIODevice::Text | QIODevice::ReadOnly)) {
             continue;
         }
-        _ctx.evalFile(script.canonicalFilePath());
+        PythonQt::self()->getMainModule().evalFile(script.canonicalFilePath());
     }
 }
 

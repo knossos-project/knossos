@@ -39,7 +39,6 @@
 #include "viewports/viewportbase.h"
 #include "widgetcontainer.h"
 
-#include <PythonQt/PythonQt.h>
 #include <QAction>
 #include <QApplication>
 #include <QCheckBox>

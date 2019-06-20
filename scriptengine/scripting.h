@@ -28,8 +28,6 @@
 #include "proxies/skeletonproxy.h"
 #include "widgets/viewports/viewportbase.h"
 
-#include <PythonQt/PythonQtObjectPtr.h>
-
 #include <QMap>
 #include <QMouseEvent>
 #include <QObject>
@@ -114,9 +112,8 @@ public:
     QMap<QString, QPair<QString, QString>> registeredPlugins;
 private:
     boost::optional<QString> pluginOverwritePath;
-    PythonQtObjectPtr _ctx;
     QStringList _customPathDirs;
-    QVariant evalScript(const QString & script, int start = Py_file_input);
+    QVariant evalScript(const QString & script, int start);
     QString pluginDir;
     QString workingDir;
     void initialize();
