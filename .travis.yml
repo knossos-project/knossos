@@ -24,6 +24,7 @@ matrix:
             - qt
             - quazip
             - snappy
+          update: true
     - os: osx
       sudo: enabled
       env: TRAVIS_TAG=nightly-dev
@@ -35,6 +36,7 @@ matrix:
             - qt
             - quazip
             - snappy
+          update: true
 
 script:
   - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then docker pull knossostool/knossos; fi
