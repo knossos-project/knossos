@@ -670,6 +670,23 @@ void MainWindow::createMenus() {
             box.exec();
         }
     }, Qt::Key_O);
+    addApplicationShortcut(actionMenu, QIcon(), tr("Jump to potential Z merger"), this, [this]() {
+        const auto & [tree, zMerger] = Skeletonizer::singleton().findZMerger();
+        if (!zMerger.isEmpty()) {
+            for (auto & tree : Skeletonizer::singleton().skeletonState.trees) {
+                tree.render = false;
+            }
+            tree->render = true;
+            Skeletonizer::singleton().selectNodes(zMerger);
+            Skeletonizer::singleton().jumpToNode(**(zMerger.begin()));
+            state->viewerState->AllTreesBuffers.regenVertBuffer = state->viewerState->selectedTreesBuffers.regenVertBuffer = true;
+        } else {
+            QMessageBox box{this};
+            box.setIcon(QMessageBox::Information);
+            box.setText(tr("There are no Z mergers, i think."));
+            box.exec();
+        }
+    }, Qt::CTRL + Qt::Key_Z);
     actionMenu.addSeparator();
     clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/menubar/trash.png"), "Clear Skeleton", this, &MainWindow::clearSkeletonSlot);
     actionMenu.addSeparator();

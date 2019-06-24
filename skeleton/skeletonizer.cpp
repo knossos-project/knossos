@@ -43,6 +43,7 @@
 #include <QDataStream>
 #include <QElapsedTimer>
 #include <QMessageBox>
+#include <QSet>
 #include <QSignalBlocker>
 #include <QXmlStreamAttributes>
 
@@ -51,6 +52,7 @@
 #include <iterator>
 #include <queue>
 #include <type_traits>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -2021,6 +2023,126 @@ std::pair<std::pair<treeListElement*, treeListElement*>, QSet<nodeListElement*>>
                     } else {
                         nodes.clear();
                     }
+                }
+            }
+        }
+    }
+    return {};
+}
+
+std::pair<treeListElement *, QSet<nodeListElement *>> Skeletonizer::findZMerger() {
+    auto xyLength = [](auto && vec) {
+        return std::sqrt(std::pow(vec[0], 2) + std::pow(vec[1], 2));
+    };
+    auto mainlyZorXYmove = [&xyLength](auto && vec, bool z) {
+        auto iter = std::max_element(vec.begin(), vec.end(), [] (const auto a, const auto b) { return std::abs(a) < std::abs(b); });
+        auto majorComponent = std::distance(vec.begin(), iter);
+        auto threshold = 0.3;
+        if (z) {
+            return majorComponent == 2 && (std::fabs(vec[0])/std::abs(vec[2]) <= threshold || std::fabs(vec[1])/std::abs(vec[2]) <= threshold);
+        } else {
+            return majorComponent != 2 && (std::fabs(vec[2])/std::abs(vec[majorComponent]) <= threshold);
+        }
+    };
+    const auto xyThreshold = (5000.f / Dataset::current().scales[0].x); // 5 µm in x px
+    const auto zThreshold = (3000.f / Dataset::current().scales[0].z);
+    const auto jumpThreshold = (4000.f / Dataset::current().scales[0].z);
+
+    for (TreeTraverser skelTraverser(Skeletonizer::singleton().skeletonState.trees); !skelTraverser.reachedEnd; ++skelTraverser) {
+        auto & currentNode = *skelTraverser;
+        auto zMove = false; auto xyMove = false;
+        std::unordered_map<nodeListElement *, int> zMoveNeighbors;
+        std::unordered_map<nodeListElement *, int> xyMoveNeighbors;
+        std::pair<int, nodeListElement *> maxZDiff = {0, nullptr};
+        for (auto & seg : currentNode.segments) {
+            auto * neighbor = (seg.source == currentNode) ? &seg.target : &seg.source;
+            Coordinate diff = neighbor->position - currentNode.position;
+            const auto mainMoveZ = mainlyZorXYmove(diff.vector(), true);
+            const auto mainMoveXY = mainlyZorXYmove(diff.vector(), false);
+            zMove |= mainMoveZ;
+            xyMove |= mainMoveXY;
+            if (diff.z > maxZDiff.first) { //track for z jump check
+                maxZDiff = {diff.z, neighbor};
+            }
+            if (mainMoveZ) {
+                zMoveNeighbors.emplace(neighbor, diff.z);
+            } else if (mainMoveXY) {
+                xyMoveNeighbors.emplace(neighbor, xyLength(diff.vector()));
+            }
+        }
+        QSet<nodeListElement *> zNodes{&currentNode};
+        const auto haveZJump = std::abs(maxZDiff.first) >= jumpThreshold;
+        auto haveLongZAndLongXY = false;
+        if (xyMove && haveZJump) {
+            zNodes.insert(maxZDiff.second);
+        }
+        else if (xyMove && zMove) { // curved location. find long z move followed by long xy move
+            for (auto & [neighbor, zDiff] : zMoveNeighbors) {
+                zNodes.insert(neighbor);
+                auto haveLongZMove = false;
+                auto xyDiff = 0;
+                auto * lastNode = neighbor;
+                std::unordered_map<nodeListElement *, int> xyNodes;
+                NodeGenerator branchTraverser(*neighbor, NodeGenerator::Direction::Any);
+                branchTraverser.queuedNodes.emplace(&currentNode, neighbor); // add current node to prevent traverser going backwards
+                for (++branchTraverser; !branchTraverser.reachedEnd && (*branchTraverser).segments.size() == 2; ++branchTraverser) {
+                    auto nextDiff = (*branchTraverser).position - lastNode->position;
+                    auto nextIsZMove = mainlyZorXYmove(nextDiff.vector(), true);
+                    if (!haveLongZMove && (nextIsZMove && ((nextDiff.z < 0 && zDiff < 0) || (nextDiff.z > 0 && zDiff > 0)))) {
+                        zDiff += nextDiff.z;
+                        zNodes.insert(&*branchTraverser);
+                    } else if (haveLongZMove || std::abs(zDiff) >= zThreshold) { // have z movement, check if we have long xy movement
+                        haveLongZMove = true;
+                        if (mainlyZorXYmove(nextDiff.vector(), false)) {
+                            xyDiff += xyLength(nextDiff.vector());
+                            xyNodes.emplace(&*branchTraverser, xyLength(nextDiff.vector()));
+                            if (std::abs(xyDiff) >= xyThreshold) { // have long z movement and long xy movement
+                                haveLongZAndLongXY = true;
+                                qDebug() << "zNodes";
+                                for (const auto * node : zNodes) { qDebug() << node->nodeID; }
+                                qDebug() << "xyNodes";
+                                for (const auto & [node, dist] : xyNodes) { qDebug() << node->nodeID << dist; }
+                                break;
+                            }
+                        } else { // found long z movement but no long xy movement
+                            break;
+                        }
+                    } else {
+                        break; // no long z and subsequent xy movement found
+                    }
+                    lastNode = &*branchTraverser;
+                }
+                if (haveLongZAndLongXY) {
+                    break;
+                }
+            }
+        }
+        if (std::find_if(std::cbegin(zNodes), std::cend(zNodes), [](auto * node){ return node->getComment().contains("zmerger fp"); }) != std::cend(zNodes)) {
+            continue;
+        } else if (haveZJump) {
+            qDebug() << "z jump";
+            for (const auto * node : zNodes) { qDebug() << node->nodeID; }
+            return {currentNode.correspondingTree, zNodes};
+        } else if (haveLongZAndLongXY) { // find long xy move before z movement
+            for (auto & [neighbor, xyDiff] : xyMoveNeighbors) {
+                auto * lastNode = neighbor;
+                NodeGenerator branchTraverser(*neighbor, NodeGenerator::Direction::Any);
+                branchTraverser.queuedNodes.emplace(&currentNode, neighbor); // add current node to prevent traverser going backwards
+                std::unordered_map<nodeListElement *, int> xyNodes;
+                for (++branchTraverser; !branchTraverser.reachedEnd && (*branchTraverser).segments.size() < 3; ++branchTraverser) {
+                    auto nextDiff = (*branchTraverser).position - lastNode->position;
+                    if (mainlyZorXYmove(nextDiff.vector(), false)) {
+                        xyDiff += xyLength(nextDiff.vector());
+                        xyNodes.emplace(&*branchTraverser, xyLength(nextDiff.vector()));
+                        if (std::abs(xyDiff) >= xyThreshold) {
+                            qDebug() << "xyNodes other side";
+                            for (const auto & [node, dist] : xyNodes) { qDebug() << node->nodeID << dist; }
+                            return {neighbor->correspondingTree, zNodes};
+                        }
+                    } else {
+                        break;
+                    }
+                    lastNode = &*branchTraverser;
                 }
             }
         }
