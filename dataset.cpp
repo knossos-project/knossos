@@ -404,14 +404,15 @@ Dataset Dataset::createCorrespondingOverlayLayer() {
 }
 
 QUrl Dataset::knossosCubeUrl(const CoordOfCube cubeCoord) const {
+    const auto mag = api == API::PyKnossos ? std::log2(magnification) + 1 : magnification;
     auto pos = QString("/mag%1/x%2/y%3/z%4/")
-            .arg(magnification)
+            .arg(mag)
             .arg(cubeCoord.x, 4, 10, QChar('0'))
             .arg(cubeCoord.y, 4, 10, QChar('0'))
             .arg(cubeCoord.z, 4, 10, QChar('0'));
     auto filename = QString(("%1_mag%2_x%3_y%4_z%5%6"))//2012-03-07_AreaX14_mag1_x0000_y0000_z0000.j2k
             .arg(experimentname.section(QString("_mag"), 0, 0))
-            .arg(magnification)
+            .arg(mag)
             .arg(cubeCoord.x, 4, 10, QChar('0'))
             .arg(cubeCoord.y, 4, 10, QChar('0'))
             .arg(cubeCoord.z, 4, 10, QChar('0'))
@@ -447,13 +448,8 @@ QNetworkRequest Dataset::apiSwitch(const CoordOfCube cubeCoord) const {
         return request;
     }
     case API::Heidelbrain:
-        return QNetworkRequest{knossosCubeUrl(cubeCoord)};
     case API::PyKnossos: {
-        auto url = knossosCubeUrl(cubeCoord);
-        auto path = url.path();
-        path.replace(QRegularExpression("mag\\d+"), QString{"mag%1"}.arg(std::log2(magnification)+1));
-        url.setPath(path);
-        return QNetworkRequest{url};
+        return QNetworkRequest{knossosCubeUrl(cubeCoord)};
     }
     case API::OpenConnectome:
         return QNetworkRequest{openConnectomeCubeUrl(cubeCoord)};
