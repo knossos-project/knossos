@@ -2122,9 +2122,13 @@ std::pair<treeListElement *, QSet<nodeListElement *>> Skeletonizer::findZMerger(
         } else if (xyMove && haveZJump) {
             qDebug() << "z jump";
             for (auto * node : zNodes) { qDebug() << node->nodeID; node->setComment("z jump zmerger fp"); }
-            auto & segment = (*zNodes.begin())->segments.front();
-            Skeletonizer::singleton().toggleLink(**zNodes.begin(), &segment.source == *zNodes.begin() ? segment.target : segment.source);
-            Skeletonizer::singleton().extractConnectedComponent((*zNodes.begin())->nodeID);
+            (*zNodes.begin())->setComment("skip-unconnected-check z jump zmerger fp");
+            for (const auto & segment : (*zNodes.begin())->segments) {
+                if (segment.source == currentNode || segment.target == currentNode) {
+                    Skeletonizer::singleton().toggleLink(**zNodes.begin(), &segment.source == *zNodes.begin() ? segment.target : segment.source);
+                    break;
+                }
+            }
             continue;
 //            return {currentNode.correspondingTree, zNodes};
         } else if (haveLongZAndLongXY) { // find long xy move before z movement
@@ -2142,11 +2146,7 @@ std::pair<treeListElement *, QSet<nodeListElement *>> Skeletonizer::findZMerger(
                         if (std::abs(xyDiff) >= xyThreshold) {
                             haveZMerger =  true;
                             qDebug() << "z merger";
-//                            for (const auto & [node, dist] : xyNodes) { qDebug() << node->nodeID << dist; }
-                            (*zNodes.begin())->setComment("z merger zmerger fp");
-//                            auto & segment = (*zNodes.begin())->segments.front();
-//                            Skeletonizer::singleton().toggleLink(**zNodes.begin(), &segment.source == *zNodes.begin() ? segment.target : segment.source);
-//                            Skeletonizer::singleton().extractConnectedComponent((*zNodes.begin())->nodeID);
+                            for (const auto & node : zNodes) { node->setComment("z merger zmerger fp"); }
                             break;
 //                            return {neighbor->correspondingTree, zNodes};
                         }
