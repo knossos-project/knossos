@@ -2037,7 +2037,7 @@ std::pair<treeListElement *, QSet<nodeListElement *>> Skeletonizer::findZMerger(
     auto mainlyZorXYmove = [&xyLength](auto && vec, bool z) {
         auto iter = std::max_element(vec.begin(), vec.end(), [] (const auto a, const auto b) { return std::abs(a) < std::abs(b); });
         auto majorComponent = std::distance(vec.begin(), iter);
-        auto threshold = 0.3;
+        auto threshold = 0.4;
         if (z) {
             return majorComponent == 2 && (std::fabs(vec[0])/std::abs(vec[2]) <= threshold || std::fabs(vec[1])/std::abs(vec[2]) <= threshold);
         } else {
@@ -2046,7 +2046,7 @@ std::pair<treeListElement *, QSet<nodeListElement *>> Skeletonizer::findZMerger(
     };
     const auto xyThreshold = (5000.f / Dataset::current().scales[0].x); // 5 µm in x px
     const auto zThreshold = (3000.f / Dataset::current().scales[0].z);
-    const auto jumpThreshold = (4000.f / Dataset::current().scales[0].z);
+    const auto jumpThreshold = (7000.f / Dataset::current().scales[0].z);
 
     for (TreeTraverser skelTraverser(Skeletonizer::singleton().skeletonState.trees); !skelTraverser.reachedEnd; ++skelTraverser) {
         auto & currentNode = *skelTraverser;
@@ -2098,10 +2098,10 @@ std::pair<treeListElement *, QSet<nodeListElement *>> Skeletonizer::findZMerger(
                             xyNodes.emplace(&*branchTraverser, xyLength(nextDiff.vector()));
                             if (std::abs(xyDiff) >= xyThreshold) { // have long z movement and long xy movement
                                 haveLongZAndLongXY = true;
-                                qDebug() << "zNodes";
-                                for (const auto * node : zNodes) { qDebug() << node->nodeID; }
-                                qDebug() << "xyNodes";
-                                for (const auto & [node, dist] : xyNodes) { qDebug() << node->nodeID << dist; }
+//                                qDebug() << "zNodes";
+//                                for (const auto * node : zNodes) { qDebug() << node->nodeID; }
+//                                qDebug() << "xyNodes";
+//                                for (const auto & [node, dist] : xyNodes) { qDebug() << node->nodeID << dist; }
                                 break;
                             }
                         } else { // found long z movement but no long xy movement
@@ -2117,13 +2117,18 @@ std::pair<treeListElement *, QSet<nodeListElement *>> Skeletonizer::findZMerger(
                 }
             }
         }
-        if (std::find_if(std::cbegin(zNodes), std::cend(zNodes), [](auto * node){ return node->getComment().contains("zmerger fp"); }) != std::cend(zNodes)) {
+        if (std::find_if(std::cbegin(zNodes), std::cend(zNodes), [](auto * node){ return node->getComment().contains("zmerger fp") || node->getComment().contains("soma"); }) != std::cend(zNodes)) {
             continue;
-        } else if (haveZJump) {
+        } else if (xyMove && haveZJump) {
             qDebug() << "z jump";
-            for (const auto * node : zNodes) { qDebug() << node->nodeID; }
-            return {currentNode.correspondingTree, zNodes};
+            for (auto * node : zNodes) { qDebug() << node->nodeID; node->setComment("z jump zmerger fp"); }
+            auto & segment = (*zNodes.begin())->segments.front();
+            Skeletonizer::singleton().toggleLink(**zNodes.begin(), &segment.source == *zNodes.begin() ? segment.target : segment.source);
+            Skeletonizer::singleton().extractConnectedComponent((*zNodes.begin())->nodeID);
+            continue;
+//            return {currentNode.correspondingTree, zNodes};
         } else if (haveLongZAndLongXY) { // find long xy move before z movement
+            auto haveZMerger = false;
             for (auto & [neighbor, xyDiff] : xyMoveNeighbors) {
                 auto * lastNode = neighbor;
                 NodeGenerator branchTraverser(*neighbor, NodeGenerator::Direction::Any);
@@ -2135,14 +2140,23 @@ std::pair<treeListElement *, QSet<nodeListElement *>> Skeletonizer::findZMerger(
                         xyDiff += xyLength(nextDiff.vector());
                         xyNodes.emplace(&*branchTraverser, xyLength(nextDiff.vector()));
                         if (std::abs(xyDiff) >= xyThreshold) {
-                            qDebug() << "xyNodes other side";
-                            for (const auto & [node, dist] : xyNodes) { qDebug() << node->nodeID << dist; }
-                            return {neighbor->correspondingTree, zNodes};
+                            haveZMerger =  true;
+                            qDebug() << "z merger";
+//                            for (const auto & [node, dist] : xyNodes) { qDebug() << node->nodeID << dist; }
+                            (*zNodes.begin())->setComment("z merger zmerger fp");
+//                            auto & segment = (*zNodes.begin())->segments.front();
+//                            Skeletonizer::singleton().toggleLink(**zNodes.begin(), &segment.source == *zNodes.begin() ? segment.target : segment.source);
+//                            Skeletonizer::singleton().extractConnectedComponent((*zNodes.begin())->nodeID);
+                            break;
+//                            return {neighbor->correspondingTree, zNodes};
                         }
                     } else {
                         break;
                     }
                     lastNode = &*branchTraverser;
+                }
+                if (haveZMerger) {
+                    break;
                 }
             }
         }
