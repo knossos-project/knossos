@@ -769,7 +769,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
 
     bool mergeSegmentation = mergeAll;
     bool mergeSkeleton = mergeAll;
-    bool existingSegmentation = Segmentation::singleton().hasObjects();
+    bool existingSegmentation = Segmentation::singleton().hasSegData();
     bool existingSkeleton = !state->skeletonState->trees.empty();
     bool existingBoth = existingSegmentation && existingSkeleton;
     if (!mergeAll && (existingSegmentation || existingSkeleton)) {
