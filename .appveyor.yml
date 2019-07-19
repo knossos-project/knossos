@@ -3,8 +3,10 @@ version: 5.1-{branch}+{build}
 image: Visual Studio 2015
 
 environment:
+  MSYSTEM: MINGW64
   matrix:
-  - MSYSTEM: MINGW64
+    - WITH_DEBUG_SYMBOLS: false
+    - WITH_DEBUG_SYMBOLS: true
 
 artifacts:
   - path: '*nightly.exe'
@@ -23,6 +25,7 @@ deploy:
     force_update: true
     on:
       branch: master
+      WITH_DEBUG_SYMBOLS: false
   - provider: GitHub
     tag: nightly-dev
     auth_token:
@@ -30,3 +33,5 @@ deploy:
     artifact: /win\..*-KNOSSOS.nightly\.exe/
     prerelease: true
     force_update: true
+    on:
+      WITH_DEBUG_SYMBOLS: true
