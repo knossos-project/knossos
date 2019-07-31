@@ -88,6 +88,8 @@ const auto branchEnd = [](auto&){
 const rule<class branch_id> branch_ = "branch";
 const rule<class split_id> split_ = "split";
 const rule<class tree_id> tree_ = "tree";
+const rule<class file_id> file_ = "file";
+const rule<class imgcoords_id> imgcoords_ = "imgcoords";
 const rule<class asc_id> asc_ = "asc";
 
 const auto comment_ = '"' >> lexeme[*(char_ - '"')][comment] >> '"';
@@ -98,11 +100,13 @@ const auto type_ = '(' >> (string("Axon")[tree] | string("Apical")[tree] | strin
 const auto node_ = ('(' >> (double_ >> double_ >> double_ >> double_)[node] >> ')' >> ';' >> (lit("Root") | (int_ >> -(',' >> (int_ | ('R' >> *('-' >> int_)))))));// TODO after id
 const auto branch__def = *node_ >> (split_ | lit("Normal")[branchEnd]);
 const auto split__def = lit('(')[branchBegin] >> branch_ >> *('|' >> branch_) >> ')' >> ';' >> "End of split";
-const auto tree__def = '(' >> -comment_ >> color_ >> type_ >> branch_ >> ')' >> ';' >> "End of tree";
-const auto asc__def = lit(";\tV3 text file written for MicroBrightField products.") >> (string("(ImageCoords)") | "(Sections)")
+const auto tree__def = '(' >> -comment_ >> color_ >> type_ >> branch_ >> ')' >> -(';' >> lit("End of tree"));
+const auto file__def = "Filename" >> comment_ >> "Merge" >> int_ >> int_ >> int_ >> int_ >> "Coords" >> *double_;// reusing comment for quoted filename here
+const auto imgcoords__def = string("(ImageCoords") >> *file_ >> ')' >> ';' >> "End of ImageCoords";
+const auto asc__def = lit(";\tV3 text file written for MicroBrightField products.") >> (imgcoords_ | "(Sections)")
                  >> '(' >> -comment_ >> color_ >> type_ >> *node_ >> ')' >> ';' >> "End of contour"
                  >> *tree_;
-BOOST_SPIRIT_DEFINE(branch_, split_, tree_, asc_)
+BOOST_SPIRIT_DEFINE(branch_, split_, tree_, file_, imgcoords_, asc_)
 }
 
 void parseNeuroLucida(QIODevice && file) {
