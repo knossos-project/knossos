@@ -93,8 +93,8 @@ const rule<class imgcoords_id> imgcoords_ = "imgcoords";
 const rule<class asc_id> asc_ = "asc";
 
 const auto comment_ = '"' >> lexeme[*(char_ - '"')][comment] >> '"';
-const auto treeColor_ = lit("(Color ") >> lit("RGB (") >> (int_ >> ',' >> int_ >> ',' >> int_)[treeColor] >> ')' >> ')';
-const auto hardCodedColor_ = lit("(Color ") >> ((*(char_ - ')')) | string("Red") | string("Blue") | string("Cyan") | string("DarkCyan") | string("DarkGreen") | string("DarkRed")| string("DarkYellow") | string("Green") | string("Magenta") | string("MoneyGreen") | string("SkyBlue") | string("Yellow")) >> ')';
+const auto treeColor_ = lit("(Color") >> lit("RGB") >> '(' >> (int_ >> ',' >> int_ >> ',' >> int_)[treeColor] >> ')' >> ')';
+const auto hardCodedColor_ = lit("(Color") >> ((*(char_ - ')')) | string("Red") | string("Blue") | string("Cyan") | string("DarkCyan") | string("DarkGreen") | string("DarkRed")| string("DarkYellow") | string("Green") | string("Magenta") | string("MoneyGreen") | string("SkyBlue") | string("Yellow")) >> ')';
 const auto color_ = treeColor_ | hardCodedColor_[hardCodedColor];
 const auto type_ = '(' >> (string("Axon")[tree] | string("Apical")[tree] | string("CellBody")[tree] | string("Dendrite")[tree]) >> ')';
 const auto node_ = ('(' >> (double_ >> double_ >> double_ >> double_)[node] >> ')' >> ';' >> (lit("Root") | (int_ >> -(',' >> (int_ | ('R' >> *('-' >> int_)))))));// TODO after id
