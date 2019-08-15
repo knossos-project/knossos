@@ -4,9 +4,19 @@ image: Visual Studio 2015
 
 environment:
   MSYSTEM: MINGW64
-  matrix:
-    - WITH_DEBUG_SYMBOLS: false
-    - WITH_DEBUG_SYMBOLS: true
+
+for:
+-
+  branches:
+    only:
+      - master
+  environment:
+    matrix:
+      - WITH_DEBUG_SYMBOLS: false
+      - WITH_DEBUG_SYMBOLS: true    
+-
+  environment:
+    WITH_DEBUG_SYMBOLS: true
 
 artifacts:
   - path: '*nightly.exe'
