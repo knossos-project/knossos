@@ -440,22 +440,24 @@ std::pair<bool, void*> decompressCube(void * currentSlot, QIODevice & reply, con
             std::copy(std::begin(data), std::end(data), reinterpret_cast<std::uint64_t *>(currentSlot));
             success = true;
         }
-    } else if (dataset.type == Dataset::CubeType::SEGMENTATION_SZ_ZIP) {
-        QBuffer buffer(&data);
-        QuaZip archive(&buffer);//QuaZip needs a random access QIODevice
-        if (archive.open(QuaZip::mdUnzip)) {
-            archive.goToFirstFile();
-            QuaZipFile file(&archive);
-            if (file.open(QIODevice::ReadOnly)) {
-                auto data = file.readAll();
-                std::size_t uncompressedSize;
-                snappy::GetUncompressedLength(data.data(), data.size(), &uncompressedSize);
-                const std::size_t expectedSize = state->cubeBytes * OBJID_BYTES;
-                if (uncompressedSize == expectedSize) {
-                    success = snappy::RawUncompress(data.data(), data.size(), reinterpret_cast<char*>(currentSlot));
+    } else if (dataset.type == Dataset::CubeType::SEGMENTATION_SZ_ZIP || dataset.type == Dataset::CubeType::SEGMENTATION_SZ) {
+        if (dataset.type == Dataset::CubeType::SEGMENTATION_SZ_ZIP) {
+            QBuffer buffer(&data);
+            QuaZip archive(&buffer);//QuaZip needs a random access QIODevice
+            if (archive.open(QuaZip::mdUnzip)) {
+                archive.goToFirstFile();
+                QuaZipFile file(&archive);
+                if (file.open(QIODevice::ReadOnly)) {
+                    data = file.readAll();
                 }
+                archive.close();
             }
-            archive.close();
+        }
+        std::size_t uncompressedSize;
+        snappy::GetUncompressedLength(data.data(), data.size(), &uncompressedSize);
+        const std::size_t expectedSize = state->cubeBytes * OBJID_BYTES;
+        if (uncompressedSize == expectedSize) {
+            success = snappy::RawUncompress(data.data(), data.size(), reinterpret_cast<char*>(currentSlot));
         }
     } else {
         qDebug() << "unsupported format";
@@ -651,8 +653,8 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 if (dataset.api == Dataset::API::GoogleBrainmaps) {
                     const auto inmagCoord = cubeCoord * dataset.cubeEdgeLength;
                     request.setRawHeader("Content-Type", "application/octet-stream");
-                    const QString json(R"json({"geometry":{"corner":"%1,%2,%3", "size":"%4,%4,%4", "scale":%5}, "subvolume_format":"SINGLE_IMAGE", "image_format_options":{"image_format":"JPEG", "jpeg_quality":70}})json");
-                    payload = json.arg(inmagCoord.x).arg(inmagCoord.y).arg(inmagCoord.z).arg(dataset.cubeEdgeLength).arg(loaderMagnification).toUtf8();
+                    const QString json(R"json({"geometry":{"corner":"%1,%2,%3", "size":"%4,%4,%4", "scale":%5}, "subvolume_format":"%6", "image_format_options":{"image_format":"JPEG", "jpeg_quality":70}})json");
+                    payload = json.arg(inmagCoord.x).arg(inmagCoord.y).arg(inmagCoord.z).arg(dataset.cubeEdgeLength).arg(loaderMagnification).arg(dataset.type == Dataset::CubeType::SEGMENTATION_SZ ? "RAW_SNAPPY" : "SINGLE_IMAGE").toUtf8();
                 } else if (dataset.api == Dataset::API::WebKnossos) {
                     const auto globalCoord = dataset.cube2global(cubeCoord);
                     request.setRawHeader("Content-Type", "application/json");

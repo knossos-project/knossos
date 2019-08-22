@@ -60,6 +60,7 @@ QString Dataset::compressionString() const {
     case Dataset::CubeType::RAW_PNG: return "png";
     case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_16: return "16 bit id";
     case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64: return "64 bit id";
+    case Dataset::CubeType::SEGMENTATION_SZ: return "seg.sz";
     case Dataset::CubeType::SEGMENTATION_SZ_ZIP: return "seg.sz.zip";
     case Dataset::CubeType::SNAPPY: return "snappy";
     }
@@ -138,7 +139,7 @@ Dataset::list_t Dataset::parseGoogleJson(const QUrl & infoUrl, const QString & j
     info.lowestAvailableMag = 1;
     info.magnification = info.lowestAvailableMag;
     info.highestAvailableMag = std::pow(2,(jmap["geometry"].toArray().size()-1)); //highest google mag
-    info.type = CubeType::RAW_JPG;
+    info.type = jmap["geometry"][0]["channelType"] == "UINT64" ? CubeType::SEGMENTATION_SZ : CubeType::RAW_PNG;
 
     info.url = infoUrl;
 
@@ -174,6 +175,9 @@ Dataset::list_t Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QSt
     return {info};
 }
 
+#include "brainmaps.h"
+#include <QNetworkRequest>
+
 Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString config) {
     Dataset::list_t infos;
     QTextStream stream(&config);
@@ -204,7 +208,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         } else if (token == "_Password") {
             info.url.setPassword(value);
         } else if (token == "_ServerFormat") {
-            info.api = value == "knossos" ? API::Heidelbrain : value == "1" ? API::OpenConnectome : API::PyKnossos;
+            info.api = value == "knossos" ? API::Heidelbrain : value == "1" ? API::OpenConnectome : "brainmaps" ? API::GoogleBrainmaps : API::PyKnossos;
         } else if (token == "_BaseExt") {
             info.fileextension = value;
             info.type = typeMap.left.at(info.fileextension);
@@ -241,6 +245,35 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         if (&info != &infos.front()) {// disable all layers expect the first TODO multi layer
             info.allocationEnabled = info.loadingEnabled = false;
         }
+        if (info.api == API::GoogleBrainmaps) {
+            const auto pair = getBrainmapsToken();
+            if (!pair.first) {
+                qDebug() << "getBrainmapsToken failed";
+                throw std::runtime_error("couldn’t fetch brainmaps token");
+            }
+            const auto token = pair.second;
+
+            auto googleRequest = [&token](auto path){
+                QNetworkRequest request(path);
+                request.setRawHeader("Authorization", (QString("Bearer ") + token).toUtf8());
+                return request;
+            };
+
+            auto * reply = Network::singleton().manager.get(googleRequest(QUrl("https://brainmaps.googleapis.com/v1/volumes")));
+            const auto datasets = blockDownloadExtractData(*reply);
+            qDebug() << datasets.second;
+
+            reply = Network::singleton().manager.get(googleRequest(info.url));
+            const auto config = blockDownloadExtractData(*reply);
+
+            if (config.first) {
+                info = parseGoogleJson(info.url, config.second).front();
+                info.token = token;
+            } else {
+                qDebug() << "download failed";
+                throw std::runtime_error("couldn’t fetch brainmaps config");
+            }
+        }
     }
 
     return infos;
@@ -265,7 +298,7 @@ Dataset::list_t Dataset::parseWebKnossosJson(const QUrl &, const QString & json_
         if (category == "color") {
             info.type = CubeType::RAW_UNCOMPRESSED;
         } else {// "segmentation"
-            info.type = CubeType::SEGMENTATION_UNCOMPRESSED_16;
+            info.type = CubeType::SEGMENTATION_SZ;
         }
         const auto boundary_json = layer["boundingBox"];
         info.boundary = {
@@ -462,6 +495,7 @@ QNetworkRequest Dataset::apiSwitch(const CoordOfCube cubeCoord) const {
 bool Dataset::isOverlay() const {
     return type == CubeType::SEGMENTATION_UNCOMPRESSED_16
             || type == CubeType::SEGMENTATION_UNCOMPRESSED_64
+            || type == CubeType::SEGMENTATION_SZ
             || type == CubeType::SEGMENTATION_SZ_ZIP
             || type == CubeType::SNAPPY;
 }
