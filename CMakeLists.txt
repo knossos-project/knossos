@@ -199,13 +199,12 @@ target_link_libraries(${PROJECT_NAME}
     ${GAPI_LIB_DIR}/libgoogleapis_http.a
     ${GAPI_LIB_DIR}/libgoogleapis_utils.a
     ${GAPI_LIB_DIR}/libgoogleapis_internal.a
-    $<$<OR:$<AND:$<PLATFORM_ID:Windows>,$<CONFIG:Debug>>,$<PLATFORM_ID:Linux>>:jsoncpp>
-    $<$<AND:$<PLATFORM_ID:Windows>,$<CONFIG:Release>>:jsoncpp_static>
+    jsoncpp#$<$<OR:$<AND:$<PLATFORM_ID:Windows>,$<CONFIG:Debug>>,$<PLATFORM_ID:Linux>>:>$<$<AND:$<PLATFORM_ID:Windows>,$<CONFIG:Release>>:jsoncpp_static>
     glog::glog
     $<$<PLATFORM_ID:Windows>:gflags_static>
     ${LINUXLINKER}
     $<$<PLATFORM_ID:Windows>:-Wl,--dynamicbase># use ASLR, required by the »Windows security features test« for »Windows Desktop App Certification«
-    -Wl,--allow-multiple-definition
+    #-Wl,--allow-multiple-definition
 )
 
 find_program(LSBRELEASE lsb_release)
