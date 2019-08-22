@@ -57,6 +57,8 @@ Q_OBJECT
     friend class SegmentationView;
     friend class SegmentationProxy;
 
+    friend class MainWindow;
+
     class Object;
     class SubObject {
         template<typename T, typename U>

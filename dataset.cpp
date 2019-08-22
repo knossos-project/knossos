@@ -271,6 +271,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
                 info.token = token;
             } else {
                 qDebug() << "download failed";
+                return {Dataset{}};
                 throw std::runtime_error("couldn’t fetch brainmaps config");
             }
         }

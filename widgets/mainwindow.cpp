@@ -965,6 +965,14 @@ void MainWindow::saveAsSlot(const bool onlySelectedTrees, const bool saveTime, c
     }
 }
 
+#include <QBuffer>
+#include <QJsonDocument>
+#include <QJsonObject>
+
+#include <snappy.h>
+
+#include <iostream>
+
 void MainWindow::save(QString filename, const bool silent, const bool allocIncrement, const bool onlySelectedTrees, const bool saveTime, const bool saveDatasetPath)
 try {
     LoadingCursor loadingcursor;
@@ -989,6 +997,59 @@ try {
     Annotation::singleton().annotationFilename = filename;
     updateRecentFile(filename);
     updateTitlebar();
+
+    for (const auto & dataset : Dataset::datasets) {
+        if (dataset.isOverlay() && dataset.api == Dataset::API ::GoogleBrainmaps) {
+            const auto change_id = "np_test";
+            const auto url = dataset.url.toString().replace("volumes", "changes") + QString("/%1/patches:push").arg(change_id);
+            QNetworkAccessManager qnam;
+
+            std::vector<std::uint64_t> cube(std::pow(dataset.cubeEdgeLength, 3) * OBJID_BYTES);
+            const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
+            for (std::size_t scale = 0; scale < cubes.size(); ++scale) {
+                for (const auto & pair : cubes[scale]) {
+                    const auto cubeCoord = pair.first;
+                    const auto inmagCoord = cubeCoord * dataset.cubeEdgeLength;
+
+                    for (const auto & so : Segmentation::singleton().subobjects) {
+                        if (!snappy::RawUncompress(pair.second.data(), pair.second.size(), reinterpret_cast<char*>(cube.data()))) {
+                            throw std::runtime_error("failed to unsnappy");
+                        }
+                        std::vector<std::uint8_t> vec;
+                        vec.reserve(cube.size());
+                        for (auto && elem : cube) {
+                            vec.emplace_back(elem == so.first ? 255 : 0);
+                        }
+                        for (std::size_t offset{0}; offset < 1/*dataset.cubeEdgeLength*/; ++offset) {
+    //                        QImage outimage(vec.data(), 128, 128*128, 128, QImage::Format_Grayscale8);
+                            QImage alphaimage(vec.data() + offset * dataset.cubeEdgeLength * dataset.cubeEdgeLength, dataset.cubeEdgeLength, dataset.cubeEdgeLength, dataset.cubeEdgeLength, QImage::Format_Alpha8);
+                            const auto outimage = alphaimage.convertToFormat(QImage::Format_ARGB32);
+                            outimage.save("foo.png");
+                            QBuffer buffer;
+                            buffer.open(QIODevice::WriteOnly);
+                            if (!outimage.save(&buffer, "PNG")) {
+                                throw std::runtime_error("failed to save PNG");
+                            }
+
+                            QNetworkRequest request{url};
+                            request.setRawHeader("Authorization", (QString("Bearer ") + dataset.token).toUtf8());
+                            request.setRawHeader("Content-Type", "application/octet-stream");
+                            const QString json(R"json({"metadata":{"geometry":{"scale":%1,"corner":"%2,%3,%4","size":"%5,%5,1"},"timeStamp":"%6","value":"%7","comment":"it’s always good to bring a towel","computerGenerated":false},"blob":{"patchBlobFormat":"PNG","data":"%8",}})json");
+                            const auto payload = json.arg(scale).arg(inmagCoord.x).arg(inmagCoord.y).arg(inmagCoord.z + offset).arg(dataset.cubeEdgeLength).arg(QDateTime::currentSecsSinceEpoch()).arg(so.first).arg(QString{buffer.data().toBase64()}).toUtf8();
+
+                            const auto pair = blockDownloadExtractData(*qnam.post(request, payload));
+                            if (!pair.first) {
+                                std::cout << pair.second.data();
+                                throw std::runtime_error("failed to push patch\n" + pair.second);
+                            }
+                            std::cout << pair.second.data();
+                            qDebug() << "foo";
+                        }
+                    }
+                }
+            }
+        }
+    }
 } catch (std::runtime_error & error) {
     if (silent) {
         throw;
