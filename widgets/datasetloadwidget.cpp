@@ -296,35 +296,35 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     }
     auto data = download.second;
 
-    QString token;
-    if (Dataset::isGoogleBrainmaps(path)) {
-        const auto pair = getBrainmapsToken();
-        if (!pair.first) {
-            qDebug() << "getBrainmapsToken failed";
-            return false;
-        }
-        token = pair.second;
+//    QString token;
+//    if (Dataset::isGoogleBrainmaps(path)) {
+//        const auto pair = getBrainmapsToken();
+//        if (!pair.first) {
+//            qDebug() << "getBrainmapsToken failed";
+//            return false;
+//        }
+//        token = pair.second;
 
-        auto googleRequest = [&token](auto path){
-            QNetworkRequest request(path);
-            request.setRawHeader("Authorization", (QString("Bearer ") + token).toUtf8());
-            return request;
-        };
+//        auto googleRequest = [&token](auto path){
+//            QNetworkRequest request(path);
+//            request.setRawHeader("Authorization", (QString("Bearer ") + token).toUtf8());
+//            return request;
+//        };
 
-        auto * reply = Network::singleton().manager.get(googleRequest(QUrl("https://brainmaps.googleapis.com/v1/volumes")));
-        const auto datasets = blockDownloadExtractData(*reply);
-        qDebug() << datasets.second;
+//        auto * reply = Network::singleton().manager.get(googleRequest(QUrl("https://brainmaps.googleapis.com/v1/volumes")));
+//        const auto datasets = blockDownloadExtractData(*reply);
+//        qDebug() << datasets.second;
 
-        reply = Network::singleton().manager.get(googleRequest(path));
-        const auto config = blockDownloadExtractData(*reply);
+//        reply = Network::singleton().manager.get(googleRequest(path));
+//        const auto config = blockDownloadExtractData(*reply);
 
-        if (config.first) {
-            data = config.second;
-        } else {
-            qDebug() << "download failed";
-            return false;
-        }
-    }
+//        if (config.first) {
+//            data = config.second;
+//        } else {
+//            qDebug() << "download failed";
+//            return false;
+//        }
+//    }
 
     auto layers = Dataset::parse(path, data);
     if (Dataset::isHeidelbrain(path)) {
@@ -353,11 +353,12 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
             qDebug() << "no mags";
             return false;
         }
-    } else if (Dataset::isGoogleBrainmaps(path)) {
-        for (auto & layer : layers) {
-            layer.token = token;
-        }
     }
+//    else if (Dataset::isGoogleBrainmaps(path)) {
+//        for (auto & layer : layers) {
+//            layer.token = token;
+//        }
+//    }
 
     qDebug() << "loading dataset" << datasetUrl;
 
@@ -494,7 +495,7 @@ void DatasetLoadWidget::loadSettings() {
         appendRowSelectIfLU("");
         tableWidget.cellWidget(tableWidget.rowCount() - 1, 2)->setEnabled(false);//don’t delete empty row
     }// QSignalBlocker
-    updateDatasetInfo();
+//    updateDatasetInfo();
     auto & cubeEdgeLen = Dataset::current().cubeEdgeLength;
     cubeEdgeLen = settings.value(DATASET_CUBE_EDGE, 128).toInt();
     state->M = settings.value(DATASET_SUPERCUBE_EDGE, 3).toInt();

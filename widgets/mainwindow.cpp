@@ -73,6 +73,20 @@
 
 #include <boost/optional.hpp>
 
+
+#include "brainmaps.h"
+
+#include <QBuffer>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+
+#include <snappy.h>
+
+#include <iostream>
+
+
+
 LoadingCursor::LoadingCursor() {
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 }
@@ -238,6 +252,98 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         } else if(anchor.endsWith(NAVIGATION)) {
             prefWidget.tabs.setCurrentIndex(6); prefWidget.show(); prefWidget.raise();
         }
+    });
+
+    QObject::connect(&Segmentation::singleton(), &Segmentation::selectionChanged, [](){
+        const auto & dataset = Dataset::datasets[Segmentation::singleton().layerId];
+//        const auto url = dataset.url.toString().replace("volumes", "objects") + "/meshes";
+        //{"name": "simp", "type": "TRIANGLES"},
+        const auto mesh = "simp";
+        const auto oid = Segmentation::singleton().objects[Segmentation::singleton().selectedObjectIndices.front()].subobjects.front().get().id;
+        const auto url = dataset.url.toString().replace("volumes", "objects") + QString("/meshes/%1:listfragments?objectId=%2").arg(mesh).arg(oid);
+//        const QString json(R"json({"metadata":{"geometry":{"scale":%1,"corner":"%2,%3,%4","size":"%5,%5,1"},"timeStamp":"%6","value":"%7","comment":"it’s always good to bring a towel","computerGenerated":false},"blob":{"patchBlobFormat":"PNG","data":"%8",}})json");
+//        const auto payload = json.arg(scale).arg(inmagCoord.x).arg(inmagCoord.y).arg(inmagCoord.z + offset).arg(dataset.cubeEdgeLength).arg(QDateTime::currentSecsSinceEpoch()).arg(so.first).arg(QString{buffer.data().toBase64()}).toUtf8();
+        const auto pair = googleRequest(dataset.token, url);
+
+        if (!pair.first) {
+            qDebug() << ("failed \n");
+        }
+        qDebug() << "foo" << pair.first << pair.second.data();
+        const auto & fragids = QJsonDocument::fromJson(pair.second).object()["fragmentKey"].toArray();
+
+        QVector<float> vertices;
+        QVector<std::uint32_t> indices;
+        int index_offset{0};
+        for (const auto & fragment : fragids) {
+            const auto url = dataset.url.toString().replace("volumes", "objects") + QString("/meshes/%1/fragment:get?objectId=%2&fragmentKey=%3").arg(mesh).arg(oid).arg(fragment.toString());
+            const auto pair = googleRequest(dataset.token, url);
+            qDebug() << "frag" << pair.first << pair.second.size();
+            const auto jmap = QJsonDocument::fromJson(pair.second)["meshFragment"];
+            for (const auto & v : jmap["vertices"].toArray()) {
+                vertices.push_back(v.toDouble());
+            }
+            for (const auto & i : jmap["indices"].toArray()) {
+                indices.push_back(i.toInt() + index_offset);
+            }
+            index_offset = vertices.size() / 3;
+            qDebug() << vertices.size() << indices.size();
+        }
+        QVector<float> normals;
+        QVector<std::uint8_t> colors;
+        Skeletonizer::singleton().addMeshToTree(oid, vertices, normals, indices, colors);
+        /*
+        QJsonObject request;
+        QJsonArray batches;
+        QJsonObject frags;
+        frags["objectId"] = QString::number(oid);
+        frags["fragmentKeys"] = fragids;
+        batches.append(frags);
+        request["volumeId"] = url.section('/', 5, 5);
+        request["meshName"] = mesh;
+        request["batches"] = batches;
+
+        if (!fragids.empty()) {
+            const QUrl url{"https://brainmaps.googleapis.com/v1/objects/meshes:batch"};
+            const auto pair = googleRequest(dataset.token, url, QJsonDocument{request}.toJson());
+            qDebug() << "frag" << pair.first << pair.second.size() << pair.second.left(50);
+            QDataStream ds(pair.second);
+            std::uint64_t oid, fragkeys, verts, idx;
+            ds >> oid;
+            ds >> fragkeys;
+            qDebug() << oid << fragkeys;
+            for (std::size_t i{0}; i < fragkeys; ++i) {
+                QChar frag;
+                ds >> frag;
+            }
+            ds >> verts >> idx;
+            qDebug() << verts << idx;
+            QVector<float> vertices;
+            QVector<std::uint32_t> indices;
+            for (std::size_t i{0}; i < verts; ++i) {
+                float x, y, z;
+                ds >> x >> y >> z;
+                vertices.push_back(x);
+                vertices.push_back(y);
+                vertices.push_back(z);
+            }
+            for (std::size_t i{0}; i < idx; ++i) {
+                std::uint32_t idx, idy, idz;
+                ds >> idx >> idy >> idz;
+                indices.push_back(idx);
+                indices.push_back(idy);
+                indices.push_back(idz);
+            }
+            qDebug() << "end" << ds.atEnd();
+        }
+        */
+        for (const auto oidx : Segmentation::singleton().selectedObjectIndices) {
+            for (const auto & so : Segmentation::singleton().objects[oidx].subobjects) {
+                so.get().id;
+            }
+        }
+    });
+    QObject::connect(&Segmentation::singleton(), &Segmentation::merged, [this](auto oid0, auto oid1){
+
     });
 }
 
@@ -965,14 +1071,6 @@ void MainWindow::saveAsSlot(const bool onlySelectedTrees, const bool saveTime, c
     }
 }
 
-#include <QBuffer>
-#include <QJsonDocument>
-#include <QJsonObject>
-
-#include <snappy.h>
-
-#include <iostream>
-
 void MainWindow::save(QString filename, const bool silent, const bool allocIncrement, const bool onlySelectedTrees, const bool saveTime, const bool saveDatasetPath)
 try {
     LoadingCursor loadingcursor;
@@ -1002,7 +1100,6 @@ try {
         if (dataset.isOverlay() && dataset.api == Dataset::API ::GoogleBrainmaps) {
             const auto change_id = "np_test";
             const auto url = dataset.url.toString().replace("volumes", "changes") + QString("/%1/patches:push").arg(change_id);
-            QNetworkAccessManager qnam;
 
             std::vector<std::uint64_t> cube(std::pow(dataset.cubeEdgeLength, 3) * OBJID_BYTES);
             const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
@@ -1031,13 +1128,10 @@ try {
                                 throw std::runtime_error("failed to save PNG");
                             }
 
-                            QNetworkRequest request{url};
-                            request.setRawHeader("Authorization", (QString("Bearer ") + dataset.token).toUtf8());
-                            request.setRawHeader("Content-Type", "application/octet-stream");
                             const QString json(R"json({"metadata":{"geometry":{"scale":%1,"corner":"%2,%3,%4","size":"%5,%5,1"},"timeStamp":"%6","value":"%7","comment":"it’s always good to bring a towel","computerGenerated":false},"blob":{"patchBlobFormat":"PNG","data":"%8",}})json");
                             const auto payload = json.arg(scale).arg(inmagCoord.x).arg(inmagCoord.y).arg(inmagCoord.z + offset).arg(dataset.cubeEdgeLength).arg(QDateTime::currentSecsSinceEpoch()).arg(so.first).arg(QString{buffer.data().toBase64()}).toUtf8();
 
-                            const auto pair = blockDownloadExtractData(*qnam.post(request, payload));
+                            const auto pair = googleRequest(dataset.token, url, payload);
                             if (!pair.first) {
                                 std::cout << pair.second.data();
                                 throw std::runtime_error("failed to push patch\n" + pair.second);

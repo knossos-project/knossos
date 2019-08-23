@@ -261,7 +261,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
 
             auto * reply = Network::singleton().manager.get(googleRequest(QUrl("https://brainmaps.googleapis.com/v1/volumes")));
             const auto datasets = blockDownloadExtractData(*reply);
-            qDebug() << datasets.second;
+            qDebug() << datasets.second.data();
 
             reply = Network::singleton().manager.get(googleRequest(info.url));
             const auto config = blockDownloadExtractData(*reply);
