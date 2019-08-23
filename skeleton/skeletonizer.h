@@ -321,7 +321,7 @@ public:
     std::tuple<QVector<GLfloat>, QVector<std::uint8_t>, QVector<GLuint>> getMesh(const treeListElement & tree);
     void saveMesh(QIODevice & file, const treeListElement & tree);
     void saveMesh(QIODevice & file, const treeListElement & tree, QVector<GLfloat> vertex_components, QVector<std::uint8_t> colors, QVector<GLuint> indices);
-    void addMeshToTree(boost::optional<decltype(treeListElement::treeID)> treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, QVector<std::uint8_t> & colors, int draw_mode = 0/*GL_POINTS*/, bool swap_xy = false);
+    void addMeshToTree(boost::optional<decltype(treeListElement::treeID)> treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, QVector<std::uint8_t> & colors, int draw_mode = 4/*GL_TRIANGLES*/, bool swap_xy = false);
     void deleteMeshOfTree(treeListElement & tree);
 signals:
     void guiModeLoaded();
