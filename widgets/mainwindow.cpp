@@ -271,27 +271,6 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         qDebug() << "foo" << pair.first << pair.second.data();
         const auto & fragids = QJsonDocument::fromJson(pair.second).object()["fragmentKey"].toArray();
 
-        QVector<float> vertices;
-        QVector<std::uint32_t> indices;
-        int index_offset{0};
-        for (const auto & fragment : fragids) {
-            const auto url = dataset.url.toString().replace("volumes", "objects") + QString("/meshes/%1/fragment:get?objectId=%2&fragmentKey=%3").arg(mesh).arg(oid).arg(fragment.toString());
-            const auto pair = googleRequest(dataset.token, url);
-            qDebug() << "frag" << pair.first << pair.second.size();
-            const auto jmap = QJsonDocument::fromJson(pair.second)["meshFragment"];
-            for (const auto & v : jmap["vertices"].toArray()) {
-                vertices.push_back(v.toDouble());
-            }
-            for (const auto & i : jmap["indices"].toArray()) {
-                indices.push_back(i.toInt() + index_offset);
-            }
-            index_offset = vertices.size() / 3;
-            qDebug() << vertices.size() << indices.size();
-        }
-        QVector<float> normals;
-        QVector<std::uint8_t> colors;
-        Skeletonizer::singleton().addMeshToTree(oid, vertices, normals, indices, colors);
-        /*
         QJsonObject request;
         QJsonArray batches;
         QJsonObject frags;
@@ -302,40 +281,52 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         request["meshName"] = mesh;
         request["batches"] = batches;
 
+        qDebug() << request;
+
+        QVector<float> vertices;
+        QVector<std::uint32_t> indices;
         if (!fragids.empty()) {
             const QUrl url{"https://brainmaps.googleapis.com/v1/objects/meshes:batch"};
             const auto pair = googleRequest(dataset.token, url, QJsonDocument{request}.toJson());
             qDebug() << "frag" << pair.first << pair.second.size() << pair.second.left(50);
             QDataStream ds(pair.second);
-            std::uint64_t oid, fragkeys, verts, idx;
-            ds >> oid;
-            ds >> fragkeys;
-            qDebug() << oid << fragkeys;
-            for (std::size_t i{0}; i < fragkeys; ++i) {
-                QChar frag;
-                ds >> frag;
+            ds.setByteOrder(QDataStream::LittleEndian);
+            ds.setFloatingPointPrecision(QDataStream::FloatingPointPrecision::SinglePrecision);
+            int index_offset{0};
+            std::uint32_t oid, fragkeys, verts, idx, dummy;
+            ds >> oid >> dummy;
+            while (!ds.atEnd()) {
+                ds >> fragkeys >> dummy;
+                while (oid == fragkeys) {
+                    ds >> fragkeys >> dummy;
+                }
+                qDebug() << oid << fragkeys;
+                for (std::size_t i{0}; i < fragkeys; ++i) {
+                    quint8 frag;
+                    ds >> frag;
+                }
+                ds >> verts >> dummy >> idx >> dummy;
+                qDebug() << verts << idx;
+                for (std::size_t i{0}; i < verts; ++i) {
+                    float x, y, z;
+                    ds >> x >> y >> z;
+                    vertices.push_back(x);
+                    vertices.push_back(y);
+                    vertices.push_back(z);
+                }
+                for (std::size_t i{0}; i < idx; ++i) {
+                    std::uint32_t idx, idy, idz;
+                    ds >> idx >> idy >> idz;
+                    indices.push_back(idx + index_offset);
+                    indices.push_back(idy + index_offset);
+                    indices.push_back(idz + index_offset);
+                }
+                index_offset = vertices.size() / 3;
             }
-            ds >> verts >> idx;
-            qDebug() << verts << idx;
-            QVector<float> vertices;
-            QVector<std::uint32_t> indices;
-            for (std::size_t i{0}; i < verts; ++i) {
-                float x, y, z;
-                ds >> x >> y >> z;
-                vertices.push_back(x);
-                vertices.push_back(y);
-                vertices.push_back(z);
-            }
-            for (std::size_t i{0}; i < idx; ++i) {
-                std::uint32_t idx, idy, idz;
-                ds >> idx >> idy >> idz;
-                indices.push_back(idx);
-                indices.push_back(idy);
-                indices.push_back(idz);
-            }
-            qDebug() << "end" << ds.atEnd();
         }
-        */
+        QVector<float> normals;
+        QVector<std::uint8_t> colors;
+        Skeletonizer::singleton().addMeshToTree(oid, vertices, normals, indices, colors);
         for (const auto oidx : Segmentation::singleton().selectedObjectIndices) {
             for (const auto & so : Segmentation::singleton().objects[oidx].subobjects) {
                 so.get().id;
