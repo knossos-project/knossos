@@ -156,6 +156,7 @@ void Segmentation::removeObject(Object & object) {
             subobjects.erase(subobject.id);
         }
     }
+    object.subobjects.clear();
     //swap with last, so no intermediate rows need to be deleted
     if (objects.size() > 1 && object.index != objects.back().index) {
         //replace object index in subobjects
