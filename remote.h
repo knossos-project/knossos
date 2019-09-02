@@ -36,7 +36,6 @@ class Remote {
     Coordinate targetPos;
     floatCoordinate recenteringOffset;
     bool rotate{false};
-    floatCoordinate normal;
     QTimer timer;
     QElapsedTimer elapsed;
     static const qint64 ms;
@@ -47,7 +46,7 @@ class Remote {
 
 public:
     Remote();
-    void process(const Coordinate & pos, boost::optional<floatCoordinate> normal = boost::none);
+    void process(const Coordinate & pos, bool rotate = false);
 };
 
 #endif // REMOTE_H

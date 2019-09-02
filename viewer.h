@@ -265,7 +265,7 @@ public slots:
     bool updateDatasetMag(const int mag = 0);
     void setPosition(const floatCoordinate & pos, UserMoveType userMoveType = USERMOVE_NEUTRAL, const Coordinate & viewportNormal = {0, 0, 0});
     void setPositionWithRecentering(const Coordinate &pos);
-    void setPositionWithRecenteringAndRotation(const Coordinate &pos, const floatCoordinate normal);
+    void setPositionWithRecenteringAndRotation(const Coordinate &pos);
     void userMoveVoxels(const Coordinate &step, UserMoveType userMoveType, const floatCoordinate & viewportNormal);
     void userMove(const floatCoordinate & floatStep, UserMoveType userMoveType = USERMOVE_NEUTRAL, const floatCoordinate & viewportNormal = {0, 0, 0});
     void userMoveRound(UserMoveType userMoveType = USERMOVE_NEUTRAL, const floatCoordinate & viewportNormal = {0, 0, 0});

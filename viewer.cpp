@@ -974,8 +974,8 @@ void Viewer::setPositionWithRecentering(const Coordinate &pos) {
     remote.process(pos);
 }
 
-void Viewer::setPositionWithRecenteringAndRotation(const Coordinate &pos, const floatCoordinate normal) {
-    remote.process(pos, normal);
+void Viewer::setPositionWithRecenteringAndRotation(const Coordinate &pos) {
+    remote.process(pos, true);
 }
 
 void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, const floatCoordinate & viewportNormal) {

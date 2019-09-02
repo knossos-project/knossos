@@ -42,15 +42,14 @@ Remote::Remote() {
     QObject::connect(&timer, &QTimer::timeout, [this](){remoteWalk();});
 }
 
-void Remote::process(const Coordinate & pos, boost::optional<floatCoordinate> normal) {
+void Remote::process(const Coordinate & pos, bool rotate) {
     //distance vector
     floatCoordinate deltaPos = pos - state->viewerState->currentPosition;
     const float jumpThreshold = 0.5f * Dataset::current().cubeEdgeLength * state->M * Dataset::current().magnification;//approximately inside sc
     if (deltaPos.length() > jumpThreshold) {
         state->viewer->setPosition(pos);
     } else if (pos != state->viewerState->currentPosition) {
-        rotate = normal.is_initialized();
-        normal = normal.get_value_or({});
+        this->rotate = rotate;
         targetPos = pos;
         recenteringOffset = pos - state->viewerState->currentPosition;
         elapsed.restart();
@@ -134,6 +133,7 @@ void Remote::remoteWalk() {
 
             const auto target = state->viewerState->currentPosition + recenteringOffset;
             floatCoordinate delta = target - avg;
+            const auto normal = state->viewer->window->viewportArb->n;
             quaternion = QQuaternion::rotationTo({normal.x, normal.y, normal.z}, {delta.x, delta.y, delta.z});
         }
     }

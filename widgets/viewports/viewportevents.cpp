@@ -257,7 +257,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
         // Move to the new node position
         if (state->viewerState->autoTracingMode != Recentering::Off) {
             if (viewportType == VIEWPORT_ARBITRARY) {
-                state->viewer->setPositionWithRecenteringAndRotation(clickedCoordinate, n);
+                state->viewer->setPositionWithRecenteringAndRotation(clickedCoordinate);
             } else {
                 state->viewer->setPositionWithRecentering(clickedCoordinate);
             }
