@@ -98,7 +98,7 @@ struct LayerRenderSettings {
         min, max
     } combineSlicesType;
     int combineSlices{4};
-    QOpenGLTexture::Filter textureFilter;
+    QOpenGLTexture::Filter textureFilter{QOpenGLTexture::Nearest};
     QColor color{Qt::white};
 };
 
