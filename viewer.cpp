@@ -1097,6 +1097,9 @@ void Viewer::reslice_notify(const std::size_t layerId) {
 }
 
 void Viewer::reslice_notify_all(const std::size_t layerId, const Coordinate globalCoord) {
+    if (layerId >= window->viewportArb->resliceNecessary.size()) {
+        return;// loader may notify for layers that don’t exist anymore
+    }
     if (currentlyVisibleWrapWrap(state->viewerState->currentPosition, globalCoord)) {
         window->forEachOrthoVPDo([layerId](ViewportOrtho & vpOrtho) {
             vpOrtho.resliceNecessary[layerId] = true;
