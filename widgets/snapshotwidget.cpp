@@ -116,7 +116,7 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHO
         bool noOrigDataSize = (static_cast<ViewportType>(index) == VIEWPORT_SKELETON); // original dataset size does not make sense for skeleton vp
         QStandardItem & item = *static_cast<QStandardItemModel &>(*sizeCombo.model()).item(1);
         item.setFlags(noOrigDataSize ? item.flags() & ~(Qt::ItemIsSelectable|Qt::ItemIsEnabled) : Qt::ItemIsSelectable|Qt::ItemIsEnabled); // disable
-        item.setData(noOrigDataSize ? sizeCombo.palette().color(QPalette::Disabled, QPalette::Text) : QVariant() /* reset to default color */, Qt::TextColorRole); // grey out
+        item.setData(noOrigDataSize ? sizeCombo.palette().color(QPalette::Disabled, QPalette::Text) : QVariant() /* reset to default color */, Qt::ForegroundRole); // grey out
         updateOptionVisibility();
     });
 

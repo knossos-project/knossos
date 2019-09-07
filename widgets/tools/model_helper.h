@@ -75,7 +75,7 @@ auto blockSelection = [](const auto & model, const auto & data){
 auto threeWaySorting = [](auto & table, auto & sortIndex){// emulate ability for the user to disable sorting
     return [&table, &sortIndex](const int index){
         if (index == sortIndex && table.header()->sortIndicatorOrder() == Qt::SortOrder::AscendingOrder) {// asc (-1) → desc (==) → asc (==)
-            table.sortByColumn(sortIndex = -1);
+            table.sortByColumn(sortIndex = -1, Qt::SortOrder::AscendingOrder);
         } else {
             sortIndex = index;
         }

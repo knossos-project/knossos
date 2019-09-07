@@ -63,7 +63,7 @@ void ZoomSlider::paintEvent(QPaintEvent *ev) {
     painter.save();
     painter.translate(opt.rect.x(), opt.rect.y());
     painter.setFont(QFont(painter.font().family(), 8 * devicePixelRatio()));
-    painter.setPen(opt.palette.foreground().color());
+    painter.setPen(opt.palette.windowText().color());
     int v = opt.minimum;
     int drawnTicks = 0;
     while (v <= opt.maximum + 1 && drawnTicks < numTicks) {
@@ -75,7 +75,7 @@ void ZoomSlider::paintEvent(QPaintEvent *ev) {
         const int v_ = qMin(v, opt.maximum);
         pos = QStyle::sliderPositionFromValue(opt.minimum, opt.maximum, v_, available) + fudge;
         painter.drawLine(pos, thickness / 2, pos,  thickness);
-        painter.drawText(pos + interval/2 - QFontMetrics(painter.font()).width(label) / 2., thickness, label);
+        painter.drawText(pos + interval/2 - QFontMetrics(painter.font()).horizontalAdvance(label) / 2., thickness, label);
         // in the case where maximum is max int
         int nextInterval = v + interval;
         if (nextInterval < v) {

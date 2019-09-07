@@ -268,7 +268,7 @@ void ViewportBase::renderText(const Coordinate & pos, const QString & str, const
     painter.setFont(QFont(painter.font().family(), (fontScaling ? std::ceil(0.02*gl_viewport[2]) : defaultFontSize) * devicePixelRatio()));
     gluProject(pos.x, pos.y - 0.01*edgeLength, pos.z, &model[0], &projection[0], &gl_viewport[0], &x, &y, &z);
     painter.setPen(Qt::black);
-    painter.drawText(centered ? x - QFontMetrics(painter.font()).width(str)/2. : x, gl_viewport[3] - y, str);//inverse y coordinate, extract height from gl viewport
+    painter.drawText(centered ? x - QFontMetrics(painter.font()).horizontalAdvance(str)/2. : x, gl_viewport[3] - y, str);//inverse y coordinate, extract height from gl viewport
     painter.end();//would otherwise fiddle with the gl state in the dtor
     restore_gl_state();
 }

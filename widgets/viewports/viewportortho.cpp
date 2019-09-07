@@ -140,7 +140,8 @@ void ViewportOrtho::resetTexture(const std::size_t layerCount) {
                 texData[i-1] = 255;
                 texData[i] = 255;
             }
-            elem.setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, texData.data());
+            const auto & cdata = texData;
+            elem.setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, cdata.data());
             elem.release();
         }
         applyTextureFilter();

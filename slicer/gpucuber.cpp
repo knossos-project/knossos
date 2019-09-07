@@ -101,6 +101,7 @@ void gpu_lut_cube::upload(const std::vector<gpu_index> & data) {
     lut.allocateStorage();
 
     cube.setData(QOpenGLTexture::Red, QOpenGLTexture::UInt16, data.data());
+    const auto & colors = this->colors;
     lut.setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt32_RGBA8_Rev, colors.data());
 }
 
