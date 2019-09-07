@@ -122,7 +122,7 @@ ViewportBase::ViewportBase(QWidget *parent, ViewportType viewportType) :
     menuButton.setCursor(Qt::ArrowCursor);
     menuButton.setMinimumSize(35, 20);
     menuButton.setMaximumSize(menuButton.minimumSize());
-    menuButton.setMenu(new QMenu());
+    menuButton.setMenu(&menu);
     zoomInAction.setShortcuts(QKeySequence::ZoomIn);
     zoomOutAction.setShortcuts(QKeySequence::ZoomOut);
     addAction(&zoomInAction);

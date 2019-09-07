@@ -29,6 +29,7 @@
 
 #include <QAction>
 #include <QDialog>
+#include <QMenu>
 #include <QOpenGLDebugLogger>
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLFunctions_1_4>
@@ -136,6 +137,7 @@ protected:
     std::weak_ptr<QOpenGLFramebufferObject> snapshotFbo;
     QVBoxLayout vpLayout;
     QHBoxLayout vpHeadLayout;
+    QMenu menu;
     QToolButton menuButton;
 
     QAction *zoomEndSeparator;
