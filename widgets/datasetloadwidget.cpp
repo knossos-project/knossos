@@ -273,9 +273,11 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     }
     const auto existingEntries = tableWidget.findItems(path.url(), Qt::MatchFlag::MatchExactly);
     if (existingEntries.size() == 0) {
+        QSignalBlocker block{tableWidget};
         insertDatasetRow(path.url(), tableWidget.rowCount() - 1);
         tableWidget.selectRow(tableWidget.rowCount() - 2);
     } else {
+        QSignalBlocker block{tableWidget};
         tableWidget.selectRow(existingEntries.front()->row());
     }
 

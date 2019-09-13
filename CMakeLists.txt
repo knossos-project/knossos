@@ -176,7 +176,7 @@ endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     message(STATUS "using gold linker")
-    set(LINUXLINKER -fuse-ld=gold)
+    set(LINUXLINKER -fuse-ld=lld)
 endif()
 target_compile_definitions(${PROJECT_NAME} PRIVATE "-D_WIN32_WINNT=0x0600") # gapi MsvcCondVar InitializeConditionVariable
 set(GAPI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/google-api-cpp-client/build-${CMAKE_BUILD_TYPE}")
@@ -204,6 +204,7 @@ target_link_libraries(${PROJECT_NAME}
     $<$<PLATFORM_ID:Windows>:gflags_static>
     ${LINUXLINKER}
     $<$<PLATFORM_ID:Windows>:-Wl,--dynamicbase># use ASLR, required by the »Windows security features test« for »Windows Desktop App Certification«
+#    freeglut
     #-Wl,--allow-multiple-definition
 )
 
@@ -227,6 +228,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 
 target_compile_options(${PROJECT_NAME} PRIVATE "-pedantic-errors")
 target_compile_options(${PROJECT_NAME} PRIVATE "-Wall" "-Wextra")
+#target_compile_options(${PROJECT_NAME} PRIVATE "-gdwarf-aranges")
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(${PROJECT_NAME} PRIVATE "-fcolor-diagnostics")

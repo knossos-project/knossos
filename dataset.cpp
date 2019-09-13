@@ -208,7 +208,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         } else if (token == "_Password") {
             info.url.setPassword(value);
         } else if (token == "_ServerFormat") {
-            info.api = value == "knossos" ? API::Heidelbrain : value == "1" ? API::OpenConnectome : "brainmaps" ? API::GoogleBrainmaps : API::PyKnossos;
+            info.api = value == "knossos" ? API::Heidelbrain : value == "1" ? API::OpenConnectome : value == "brainmaps" ? API::GoogleBrainmaps : API::PyKnossos;
         } else if (token == "_BaseExt") {
             info.fileextension = value;
             info.type = typeMap.left.at(info.fileextension);
@@ -245,6 +245,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         if (&info != &infos.front()) {// disable all layers expect the first TODO multi layer
             info.allocationEnabled = info.loadingEnabled = false;
         }
+        qDebug() << static_cast<int>(info.api);
         if (info.api == API::GoogleBrainmaps) {
             const auto pair = getBrainmapsToken();
             if (!pair.first) {
@@ -271,7 +272,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
                 info.token = token;
             } else {
                 qDebug() << "download failed";
-                return {Dataset{}};
+//                return {Dataset{}};
                 throw std::runtime_error("couldn’t fetch brainmaps config");
             }
         }
