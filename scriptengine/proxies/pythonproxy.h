@@ -45,6 +45,7 @@ signals:
     void set_mesh_slicing_alpha_factor(float alpha);
 
     void set_tree_visibility(const bool show_in_3d, const bool only_selected_in_3d, const bool show_in_ortho, const bool only_selected_in_ortho);
+    void set_mesh_visibility(const bool show_in_3d, const bool show_in_ortho);
 
 public slots:
     ViewportType get_viewport_type(int i) {

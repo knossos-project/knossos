@@ -32,6 +32,7 @@ class MeshesTab : public QWidget {
 
 public:
     explicit MeshesTab(QWidget *parent = nullptr);
+    void setMeshVisibility(bool, bool);
     void loadSettings(const QSettings & settings);
     void saveSettings(QSettings & settings) const;
 };

@@ -50,17 +50,22 @@ MeshesTab::MeshesTab(QWidget *parent) : QWidget(parent) {
     mainLayout.addWidget(&warnDisabledPickingCheck);
     mainLayout.setAlignment(Qt::AlignTop);
     setLayout(&mainLayout);
-    QObject::connect(&meshInOrthoVPsCheck, &QCheckBox::clicked, [](const bool checked) { state->viewerState->meshDisplay.setFlag(TreeDisplay::ShowInOrthoVPs, checked); });
-    QObject::connect(&meshIn3DVPCheck, &QCheckBox::clicked, [](const bool checked) { state->viewerState->meshDisplay.setFlag(TreeDisplay::ShowIn3DVP, checked); });
+    QObject::connect(&meshInOrthoVPsCheck, &QCheckBox::toggled, [](const bool checked) { state->viewerState->meshDisplay.setFlag(TreeDisplay::ShowInOrthoVPs, checked); });
+    QObject::connect(&meshIn3DVPCheck, &QCheckBox::toggled, [](const bool checked) { state->viewerState->meshDisplay.setFlag(TreeDisplay::ShowIn3DVP, checked); });
     QObject::connect(state->viewer, &Viewer::mesh3dAlphaFactorChanged, &alphaSpin3d, &QDoubleSpinBox::setValue);
     QObject::connect(state->viewer, &Viewer::meshSlicingAlphaFactorChanged, &alphaSpinSlicing, &QDoubleSpinBox::setValue);
 }
 
+void MeshesTab::setMeshVisibility(bool showIn3DVP, bool showInOrthoVPs) {
+    meshInOrthoVPsCheck.setChecked(showInOrthoVPs);
+    meshIn3DVPCheck.setChecked(showIn3DVP);
+}
+
 void MeshesTab::loadSettings(const QSettings & settings) {
     meshInOrthoVPsCheck.setChecked(settings.value(SHOW_MESH_ORTHOVPS, true).toBool());
-    meshInOrthoVPsCheck.clicked(meshInOrthoVPsCheck.isChecked());
+    meshInOrthoVPsCheck.toggled(meshInOrthoVPsCheck.isChecked());
     meshIn3DVPCheck.setChecked(settings.value(SHOW_MESH_3DVP, true).toBool());
-    meshIn3DVPCheck.clicked(meshIn3DVPCheck.isChecked());
+    meshIn3DVPCheck.toggled(meshIn3DVPCheck.isChecked());
     warnDisabledPickingCheck.setChecked(settings.value(WARN_DISABLED_MESH_PICKING, true).toBool());
     alphaSpin3d.setValue(settings.value(MESH_ALPHA_3D, 1).toDouble());
     alphaSpinSlicing.setValue(settings.value(MESH_ALPHA_SLICING, 0.5).toDouble());

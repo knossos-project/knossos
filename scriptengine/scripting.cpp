@@ -33,6 +33,8 @@
 #include "viewer.h"
 #include "widgets/GuiConstants.h"
 #include "widgets/mainwindow.h"
+#include "widgets/preferences/meshestab.h"
+#include "widgets/preferences/treestab.h"
 
 #include <PythonQt/PythonQt.h>
 #ifdef QtAll
@@ -161,6 +163,7 @@ void Scripting::initialize() {
     QObject::connect(&pythonProxy, &PythonProxy::set_mesh_3d_alpha_factor, state->viewer, &Viewer::setMesh3dAlphaFactor);
     QObject::connect(&pythonProxy, &PythonProxy::set_mesh_slicing_alpha_factor, state->viewer, &Viewer::setMeshSlicingAlphaFactor);
     QObject::connect(&pythonProxy, &PythonProxy::set_tree_visibility, &state->viewer->window->widgetContainer.preferencesWidget.treesTab, &TreesTab::setTreeVisibility);
+    QObject::connect(&pythonProxy, &PythonProxy::set_mesh_visibility, &state->viewer->window->widgetContainer.preferencesWidget.meshesTab, &MeshesTab::setMeshVisibility);
     state->viewer->window->widgetContainer.pythonInterpreterWidget.startConsole();
 }
 
