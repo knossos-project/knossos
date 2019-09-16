@@ -537,12 +537,15 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             OcModifiedCacheQueue.resize(magCount);
             snappyCache.resize(magCount);
         }
-        if (layerId < datasets.size() && (datasets[layerId].allocationEnabled && (!changedDatasets[layerId].allocationEnabled || loaderCacheSize != cacheSize))) {
+        if (layerId < datasets.size()) {
+            if (datasets[layerId].allocationEnabled && changedDatasets[layerId].allocationEnabled && loaderCacheSize == cacheSize && datasets[layerId].type == changedDatasets[layerId].type) {
+                continue;// layer properties didn’t change
+            }
             unloadCurrentMagnification(layerId);
             slotChunk[layerId].clear();
             freeSlots[layerId].clear();
         }
-        if (!changedDatasets[layerId].allocationEnabled || (layerId < datasets.size() && datasets[layerId].allocationEnabled && loaderCacheSize == cacheSize)) {
+        if (!changedDatasets[layerId].allocationEnabled) {
             continue;
         }
         const auto overlayFactor = changedDatasets[layerId].isOverlay() ? OBJID_BYTES : 1;
