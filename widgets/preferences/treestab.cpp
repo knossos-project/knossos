@@ -44,11 +44,11 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
                                      "<b>Low:</b> Skeleton rendered as lines and points. Details decrease drastically when zoomed out. Very fast even for large skeletons. <br/>"));
 
     vp3dGroup.setCheckable(true);
-    vp3dButtonGroup.addButton(&vp3dAllTreesRadio, static_cast<int>(!TreeDisplay::OnlySelected));
-    vp3dButtonGroup.addButton(&vp3dSelectedTreesRadio, static_cast<int>(TreeDisplay::OnlySelected));
+    vp3dButtonGroup.addButton(&vp3dAllTreesRadio, false);
+    vp3dButtonGroup.addButton(&vp3dSelectedTreesRadio, TreeDisplay::OnlySelected);
     vpOrthoGroup.setCheckable(true);
-    vpOrthoButtonGroup.addButton(&vpOrthoAllTreesRadio, static_cast<int>(!TreeDisplay::OnlySelected));
-    vpOrthoButtonGroup.addButton(&vpOrthoSelectedTreesRadio, static_cast<int>(TreeDisplay::OnlySelected));
+    vpOrthoButtonGroup.addButton(&vpOrthoAllTreesRadio, false);
+    vpOrthoButtonGroup.addButton(&vpOrthoSelectedTreesRadio, TreeDisplay::OnlySelected);
     // trees
     renderingLayout.addRow(&highlightActiveTreeCheck);
     renderingLayout.addRow(&highlightIntersectionsCheck);
@@ -129,38 +129,32 @@ TreesTab::TreesTab(QWidget *parent) : QWidget(parent) {
     });
 
     // tree visibility
-    QObject::connect(&vp3dGroup, &QGroupBox::clicked, [](const bool checked) {
+    QObject::connect(&vp3dGroup, &QGroupBox::toggled, [](const bool checked) {
         state->viewerState->skeletonDisplayVP3D.setFlag(TreeDisplay::ShowIn3DVP, checked);
     });
-    QObject::connect(&vpOrthoGroup, &QGroupBox::clicked, [](const bool checked) {
+    QObject::connect(&vpOrthoGroup, &QGroupBox::toggled, [](const bool checked) {
         state->viewerState->skeletonDisplayVPOrtho.setFlag(TreeDisplay::ShowInOrthoVPs, checked);
     });
-    QObject::connect(&vp3dButtonGroup, &QButtonGroup::idClicked, [](const auto buttonID) {
-        state->viewerState->skeletonDisplayVP3D.setFlag(TreeDisplay::OnlySelected, static_cast<TreeDisplay>(buttonID) == TreeDisplay::OnlySelected);
+    QObject::connect(&vp3dButtonGroup, &QButtonGroup::idToggled, [](const auto buttonID, const bool clicked) {
+        if (buttonID == TreeDisplay::OnlySelected) {
+            state->viewerState->skeletonDisplayVP3D.setFlag(TreeDisplay::OnlySelected, clicked);
+        }
     });
-    QObject::connect(&vpOrthoButtonGroup, &QButtonGroup::idClicked, [](const auto buttonID) {
-        state->viewerState->skeletonDisplayVPOrtho.setFlag(TreeDisplay::OnlySelected, static_cast<TreeDisplay>(buttonID) == TreeDisplay::OnlySelected);
+    QObject::connect(&vpOrthoButtonGroup, &QButtonGroup::idToggled, [](const auto buttonID, const bool clicked) {
+        if (buttonID == TreeDisplay::OnlySelected) {
+            state->viewerState->skeletonDisplayVPOrtho.setFlag(TreeDisplay::OnlySelected, clicked);
+        }
     });
     createGlobalAction(state->mainWindow, Qt::CTRL + Qt::Key_T, [this](){// T for trees
-        if (vp3dAllTreesRadio.isChecked()) {
-            vp3dSelectedTreesRadio.setChecked(true);
-        } else {
-            vp3dAllTreesRadio.setChecked(true);
-        }
-        vp3dAllTreesRadio.clicked(vp3dAllTreesRadio.isChecked());
-        vp3dSelectedTreesRadio.clicked(vp3dSelectedTreesRadio.isChecked());
+        vp3dButtonGroup.button(!vp3dButtonGroup.checkedId())->setChecked(true);
     });
 }
 
 void TreesTab::setTreeVisibility(const bool showIn3d, const bool onlySelectedIn3d, const bool showInOrtho, const bool onlySelectedInOrtho) {
-    vp3dButtonGroup.button(onlySelectedIn3d? static_cast<int>(TreeDisplay::OnlySelected) : !TreeDisplay::OnlySelected)->setChecked(true);
-    vp3dButtonGroup.idClicked(vp3dButtonGroup.checkedId());
+    vp3dButtonGroup.button(TreeDisplay::OnlySelected)->setChecked(onlySelectedIn3d);
     vp3dGroup.setChecked(showIn3d);
-    vp3dGroup.clicked(showIn3d);
-    vpOrthoButtonGroup.button(onlySelectedInOrtho? static_cast<int>(TreeDisplay::OnlySelected) : !TreeDisplay::OnlySelected)->setChecked(true);
-    vpOrthoButtonGroup.idClicked(vpOrthoButtonGroup.checkedId());
+    vpOrthoButtonGroup.button(TreeDisplay::OnlySelected)->setChecked(onlySelectedInOrtho);
     vpOrthoGroup.setChecked(showInOrtho);
-    vpOrthoGroup.clicked(showInOrtho);
 }
 
 void TreesTab::loadTreeLUTButtonClicked(QString path) {
