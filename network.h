@@ -29,6 +29,18 @@
 
 QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply);
 
+template<typename T>
+struct WidgetDisabler {
+    T & w;
+    bool wasEnabled;
+    explicit WidgetDisabler(T & w) : w{w}, wasEnabled{w.isEnabled()} {
+        w.setEnabled(false);
+    }
+    ~WidgetDisabler() {
+        w.setEnabled(wasEnabled);
+    }
+};
+
 class Network : public QObject {
     Q_OBJECT
 

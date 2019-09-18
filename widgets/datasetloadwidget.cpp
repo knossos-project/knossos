@@ -162,6 +162,7 @@ void DatasetLoadWidget::datasetCellChanged(int row, int col) {
 }
 
 void DatasetLoadWidget::updateDatasetInfo() {
+    WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
     bool bad = tableWidget.selectedItems().empty();
     QUrl dataset;
     bad = bad || (dataset = tableWidget.selectedItems().front()->text()).isEmpty();
@@ -250,6 +251,7 @@ void DatasetLoadWidget::processButtonClicked() {
  * 3. by specifying a .conf directly.
  */
 bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUrl path, const bool silent) {
+    WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
     if (path.isEmpty() && datasetUrl.isEmpty()) {//no dataset available to load
         open();
         return false;

@@ -127,6 +127,7 @@ bool loginGuardMsg() {
 }
 
 void TaskManagementWidget::updateAndRefreshWidget() {
+    WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
     setCursor(Qt::BusyCursor);
     const auto res = Network::singleton().refresh(baseUrl + "/session/");
     setCursor(Qt::ArrowCursor);
@@ -194,6 +195,7 @@ void TaskManagementWidget::loginButtonClicked(QUrl host, const QString & usernam
         host = "https://" + taskLoginWidget.urlField.text();
     }
     baseUrl = host.toString() + api;// host changed, update url
+    WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
     setCursor(Qt::BusyCursor);
     const auto res = Network::singleton().login(baseUrl + "/login/", username, password);
     setCursor(Qt::ArrowCursor);
@@ -208,6 +210,7 @@ void TaskManagementWidget::loginButtonClicked(QUrl host, const QString & usernam
 }
 
 void TaskManagementWidget::logout() {
+    WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
     setCursor(Qt::BusyCursor);
     const auto res = Network::singleton().refresh(baseUrl + "/logout/");
     setCursor(Qt::ArrowCursor);
@@ -258,6 +261,7 @@ void TaskManagementWidget::loadLastSubmitButtonClicked() {
         }
     }
     Annotation::singleton().clearAnnotation();
+    WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
     setCursor(Qt::BusyCursor);
     const auto res = Network::singleton().getFile(baseUrl + "/current_file/");
 
@@ -268,6 +272,7 @@ void TaskManagementWidget::loadLastSubmitButtonClicked() {
 }
 
 void TaskManagementWidget::startNewTaskButtonClicked() {
+    WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
     setCursor(Qt::BusyCursor);
     const auto res = Network::singleton().getPost(baseUrl + "/new_task/");
 
@@ -322,10 +327,9 @@ void TaskManagementWidget::submitInvalid() {
 bool TaskManagementWidget::submit(const bool final, const bool valid) {
     state->viewer->window->save();//save file to submit
 
+    WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
     setCursor(Qt::BusyCursor);
-    setEnabled(false);// disable until upload has finished
     auto res = Network::singleton().submitHeidelbrain(baseUrl + "/submit/", Annotation::singleton().annotationFilename, submitCommentEdit.text(), final, valid);
-    setEnabled(true);
     setCursor(Qt::ArrowCursor);
 
     if (handleError(res, res.second)) {
