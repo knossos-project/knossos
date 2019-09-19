@@ -254,6 +254,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         }
     });
 
+    QObject::connect(&Segmentation::singleton(), &Segmentation::unmerged, &Segmentation::singleton(), &Segmentation::selectionChanged);
     QObject::connect(&Segmentation::singleton(), &Segmentation::selectionChanged, [](){
         for (auto & tree : Skeletonizer::singleton().skeletonState.trees) {
             Skeletonizer::singleton().setRender(tree, false);

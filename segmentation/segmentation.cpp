@@ -475,6 +475,7 @@ std::vector<std::reference_wrapper<Segmentation::Object>> Segmentation::todolist
 void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Object & other, const Coordinate & position) {
     decltype(object.subobjects) tmp;
     std::set_difference(std::begin(object.subobjects), std::end(object.subobjects), std::begin(other.subobjects), std::end(other.subobjects), std::back_inserter(tmp));
+    unselectObject(other);
     if (!tmp.empty()) {//only unmerge if subobjects remain
         auto otherId = other.id;
         if (object.immutable) {
@@ -729,7 +730,6 @@ void Segmentation::unmergeSelectedObjects(const Coordinate & clickPos) {
     } else while (selectedObjectIndices.size() > 1) {
         auto & objectToUnmerge = objects[selectedObjectIndices.back()];
         unmergeObject(objects[selectedObjectIndices.front()], objectToUnmerge, clickPos);
-        unselectObject(objectToUnmerge);
         objectToUnmerge.todo = true;
     }
     emit todosLeftChanged();
