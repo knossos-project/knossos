@@ -238,34 +238,33 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         }
     }
 
+    QString token;
     for (auto && info : infos) {
+        if (info.api == API::GoogleBrainmaps) {
+        }
         if (info.url.isEmpty()) {
             info.url = QUrl::fromLocalFile(QFileInfo(configUrl.toLocalFile()).absoluteDir().absolutePath());
         }
         if (&info != &infos.front()) {// disable all layers expect the first TODO multi layer
             info.allocationEnabled = info.loadingEnabled = false;
         }
-        qDebug() << static_cast<int>(info.api);
         if (info.api == API::GoogleBrainmaps) {
-            const auto pair = getBrainmapsToken();
-            if (!pair.first) {
-                qDebug() << "getBrainmapsToken failed";
-                throw std::runtime_error("couldn’t fetch brainmaps token");
+            if (token.isEmpty()) {
+                const auto pair = getBrainmapsToken();
+                if (!pair.first) {
+                    qDebug() << "getBrainmapsToken failed";
+                    throw std::runtime_error("couldn’t fetch brainmaps token");
+                }
+                token = pair.second;
             }
-            const auto token = pair.second;
 
-            auto googleRequest = [&token](auto path){
-                QNetworkRequest request(path);
-                request.setRawHeader("Authorization", (QString("Bearer ") + token).toUtf8());
-                return request;
-            };
+//            {
+//                auto * reply = Network::singleton().manager.get(googleRequest(QUrl("https://brainmaps.googleapis.com/v1/volumes")));
+//                const auto datasets = blockDownloadExtractData(*reply);
+//                qDebug() << datasets.second.data();
+//            }
 
-            auto * reply = Network::singleton().manager.get(googleRequest(QUrl("https://brainmaps.googleapis.com/v1/volumes")));
-            const auto datasets = blockDownloadExtractData(*reply);
-            qDebug() << datasets.second.data();
-
-            reply = Network::singleton().manager.get(googleRequest(info.url));
-            const auto config = blockDownloadExtractData(*reply);
+            const auto config = googleRequest(token, info.url);
 
             if (config.first) {
                 info = parseGoogleJson(info.url, config.second).front();
