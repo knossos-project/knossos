@@ -1699,7 +1699,7 @@ void Skeletonizer::pushBranchNode(nodeListElement & branchNode) {
 }
 
 void Skeletonizer::jumpToNode(const nodeListElement & node) {
-    state->viewer->userMove(node.position - state->viewerState->currentPosition, USERMOVE_NEUTRAL);
+    state->viewer->setPosition(node.position, USERMOVE_NEUTRAL);
     emit jumpedToNodeSignal(node);
 }
 
