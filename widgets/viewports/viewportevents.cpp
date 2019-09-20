@@ -324,7 +324,6 @@ void Viewport3D::handleMouseMotionRightHold(const QMouseEvent *event) {
     ViewportBase::handleMouseMotionRightHold(event);
 }
 
-
 void ViewportOrtho::handleMouseMotionRightHold(const QMouseEvent *event) {
     if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Brush)) {
         const bool notOrigin = event->pos() != mouseDown;//don’t do redundant work
@@ -351,7 +350,7 @@ void ViewportBase::handleMouseReleaseLeft(const QMouseEvent *event) {
     auto & skeleton = *state->skeletonState;
     if (mouseDown == event->pos()) { // mouse click
         skeleton.meshLastClickInformation = pickMesh(event->pos());
-        skeleton.meshLastClickCurrentlyVisited = false;
+        skeleton.meshLastVisited = false;
         if (skeleton.meshLastClickInformation) {
             Skeletonizer::singleton().setActiveTreeByID(skeleton.meshLastClickInformation.get().treeId);
         }
