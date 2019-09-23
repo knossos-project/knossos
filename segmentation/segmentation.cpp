@@ -268,6 +268,10 @@ bool Segmentation::subobjectExists(const uint64_t & subobjectId) const {
     return it != std::end(subobjects);
 }
 
+uint64_t Segmentation::oid(const uint64_t oidx) const {
+    return objects[oidx].id;
+}
+
 uint64_t Segmentation::subobjectIdOfFirstSelectedObject(const Coordinate & newLocation) {
     if (selectedObjectsCount() != 0) {
         auto & obj = objects[selectedObjectIndices.front()];

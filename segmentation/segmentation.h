@@ -44,8 +44,6 @@
 
 class Segmentation : public QObject {
 Q_OBJECT
-    template<typename T, typename U>
-    friend void marchingCubes(std::unordered_map<U, std::unordered_map<floatCoordinate, int>> & obj2points, std::unordered_map<U, std::vector<unsigned int>> & obj2faces, std::unordered_map<std::uint64_t, std::size_t> & obj2idCounter, const std::vector<T> & data, const std::unordered_map<T, U> & soid2oid, const std::array<double, 3> & origin, const std::array<double, 3> & dims, const std::array<double, 3> & spacing, const std::array<double, 6> & extent);
     friend void connectedComponent(const Coordinate & seed);
     friend void generateMeshesForSubobjectsOfSelectedObjects();
     friend void verticalSplittingPlane(const Coordinate & seed);
@@ -59,8 +57,6 @@ Q_OBJECT
 
     class Object;
     class SubObject {
-        template<typename T, typename U>
-        friend void marchingCubes(std::unordered_map<U, std::unordered_map<floatCoordinate, int>> & obj2points, std::unordered_map<U, std::vector<unsigned int>> & obj2faces, std::unordered_map<std::uint64_t, std::size_t> & obj2idCounter, const std::vector<T> & data, const std::unordered_map<T, U> & soid2oid, const std::array<double, 3> & origin, const std::array<double, 3> & dims, const std::array<double, 3> & spacing, const std::array<double, 6> & extent);
         friend void connectedComponent(const Coordinate & seed);
         friend void verticalSplittingPlane(const Coordinate & seed);
         friend class SegmentationObjectModel;
@@ -69,6 +65,9 @@ Q_OBJECT
         std::vector<uint64_t> objects;
         std::size_t selectedObjectsCount = 0;
     public:
+        const auto & oidxs() const {
+            return objects;
+        }
         const uint64_t id;
         explicit SubObject(const uint64_t & id) : id(id) {
             highestId = std::max(id, highestId);
@@ -203,6 +202,7 @@ public:
     bool hasObjects() const;
     bool hasSegData() const;
     bool subobjectExists(const uint64_t & subobjectId) const;
+    uint64_t oid(const uint64_t oidx) const;
     //data access
     void createAndSelectObject(const Coordinate & position);
     SubObject & subobjectFromId(const uint64_t & subobjectId, const Coordinate & location);

@@ -90,10 +90,10 @@ void marchingCubes(std::unordered_map<U, std::unordered_map<floatCoordinate, int
                     // for discrete marching cubes, we are looking for an
                     // exact match of a scalar at a vertex to a value
                     if (auto it = soid2oid.find(cubeVals[pi]); it != std::end(soid2oid)) {// subobject and object already existed so we can do a non-mutating lookup without synchronization
-                        for (auto & oindex : Segmentation::singleton().subobjectFromId(it->first, {}).objects) {
-                            obj2index[Segmentation::singleton().objects[oindex].id] |= CASE_MASK[pi];
+                        for (auto & oindex : Segmentation::singleton().subobjectFromId(it->first, {}).oidxs()) {
+                            obj2index[oindex] |= CASE_MASK[pi];
                         }
-                    } else if (soid2oid.empty() && cubeVals[pi] != Segmentation::singleton().backgroundId) {// mesh soids when no objects were selected
+                    } else if (soid2oid.empty() && cubeVals[pi] != Segmentation::singleton().getBackgroundId()) {// mesh soids when no objects were selected
                         obj2index[cubeVals[pi]] |= CASE_MASK[pi];
                     }
                 }
@@ -279,19 +279,19 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
         }
     };
     if (!objects.empty()) {
-        addMesh(objects, [&](auto & elem, auto normals, auto colors){
-            auto & nmcoords = obj2verts[elem];
+        addMesh(objects, [&](auto & oidx, auto normals, auto colors){
+            auto & nmcoords = obj2verts[oidx];
             const auto coord = floatCoordinate{nmcoords[0], nmcoords[1], nmcoords[2]} / Dataset::current().scales[0];
-            Segmentation::singleton().setObjectLocation(elem, coord);
-            Skeletonizer::singleton().addMeshToTree(elem, nmcoords, normals, obj2faces[elem], colors, GL_TRIANGLES);
+            Segmentation::singleton().setObjectLocation(oidx, coord);
+            Skeletonizer::singleton().addMeshToTree(Segmentation::singleton().oid(oidx), nmcoords, normals, obj2faces[oidx], colors, GL_TRIANGLES);
         });
     } else {
         QSignalBlocker blocker(Segmentation::singleton());
-        addMesh(obj2verts, [&](auto & elem, auto normals, auto colors){
-            auto & nmcoords = elem.second;
+        addMesh(obj2verts, [&](auto & oidverts, auto normals, auto colors){
+            auto & nmcoords = oidverts.second;
             const auto coord = floatCoordinate{nmcoords[0], nmcoords[1], nmcoords[2]} / Dataset::current().scales[0];
-            const auto oid = Segmentation::singleton().largestObjectContainingSubobjectId(elem.first, coord);
-            Skeletonizer::singleton().addMeshToTree(oid, nmcoords, normals, obj2faces[elem.first], colors, GL_TRIANGLES);
+            const auto oidx = Segmentation::singleton().largestObjectContainingSubobjectId(oidverts.first, coord);
+            Skeletonizer::singleton().addMeshToTree(Segmentation::singleton().oid(oidx), nmcoords, normals, obj2faces[oidverts.first], colors, GL_TRIANGLES);
         });
         blocker.unblock();
         Segmentation::singleton().resetData();
@@ -310,11 +310,10 @@ void generateMeshesForSubobjectsOfSelectedObjects() {
     std::unordered_map<std::uint64_t, std::uint64_t> soids;
     std::vector<std::uint64_t> oids;
     for (const auto objectIndex : Segmentation::singleton().selectedObjectIndices) {
-        const auto oid = Segmentation::singleton().objects[objectIndex].id;
         for (const auto & elem : Segmentation::singleton().objects[objectIndex].subobjects) {
-            soids.emplace(elem.get().id, oid);
+            soids.emplace(elem.get().id, objectIndex);
         }
-        oids.emplace_back(oid);
+        oids.emplace_back(objectIndex);
     }
     generateMeshForSubobjectID(soids, oids, cubes[Dataset::current().magIndex], progress);
 }
