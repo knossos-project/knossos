@@ -230,7 +230,7 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
     std::unordered_map<std::uint64_t, QVector<unsigned int>> obj2faces;
 
     value = 0;
-    for (const auto & elempoints : obj2totalpoints) {
+    for (auto & elempoints : obj2totalpoints) {
         if (progress.wasCanceled()) {
             break;
         }
@@ -246,10 +246,11 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
                 verts[offset + 3 * pair.second + 2] = pair.first.z;
             }
         }
+        elempoints.clear();// deallocate bit by bit
         progress.setValue(++value / obj2totalpoints.size() * 333);
     }
     value = 0;
-    for (const auto & elemfaces : obj2totalfaces) {
+    for (auto & elemfaces : obj2totalfaces) {
         if (progress.wasCanceled()) {
             break;
         }
@@ -263,6 +264,7 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
             }
             ++offseti;
         }
+        elemfaces.clear();// deallocate bit by bit
         progress.setValue(333 + ++value / obj2totalfaces.size() * 333);
     }
     value = 0;
