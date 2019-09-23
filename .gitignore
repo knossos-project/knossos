@@ -14,3 +14,5 @@ CustomLibraryLocations.cmake
 
 #aur ssh private key
 id_rsa
+service_account*.json
+google-api-cpp-client

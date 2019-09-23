@@ -85,7 +85,9 @@ endif()
 
 set(pythonqt Qt5Python27 CACHE STRING "PythonQt flavour to search for")
 find_package(Boost 1.50 REQUIRED) # 1.50 added hash_value of std::tuple for Coordinate hash specialization
-find_package(gflags COMPONENTS static) # because gflags config is shit for transitive deps
+if(WIN32)
+    find_package(gflags COMPONENTS static) # because gflags config is shit for transitive deps
+endif()
 find_package(glog REQUIRED)
 find_package(OpenGL REQUIRED COMPONENTS OpenGL) # GLU
 find_package(${pythonqt} REQUIRED)
