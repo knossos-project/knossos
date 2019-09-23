@@ -37,13 +37,17 @@
 #include <QByteArray>
 #include <QDateTime>
 #include <QDir>
+#include <QElapsedTimer>
+#include <QException>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QRegularExpression>
 #include <QStandardPaths>
+#include <QtConcurrentMap>
 #include <QTemporaryFile>
+
 
 #include <ctime>
 
@@ -170,11 +174,24 @@ void annotationFileSave(const QString & filename, const bool onlySelectedTrees, 
     time.start();
     QuaZip archive_write(filename);
     if (archive_write.open(QuaZip::mdCreate)) {
-        auto zipCreateFile = [](QuaZipFile & file_write, const QString & name, const int level = Z_BEST_SPEED){
+        struct zip_data {
+            std::size_t size;
+            uLong crc;
+            QByteArray compressed_data;
+            void deflate(const QByteArray & data) {
+                size = data.size();
+                crc = crc32(crc32(0L, Z_NULL, 0), reinterpret_cast<const Bytef *>(data.data()), data.size());
+                compressed_data = qCompress(data, Z_BEST_SPEED);
+                compressed_data.remove(0, 6);// remove 4 byte Qt header and 2 byte zlib header
+                compressed_data.remove(compressed_data.size() - 4, 4);// remove 4 byte zlib trailer
+            }
+        };
+        auto zipCreateFile = [](QuaZipFile & file_write, const QString & name, const int level = Z_BEST_SPEED, const uLong size = 0, const quint32 crc = 0){
             auto fileinfo = QuaZipNewInfo(name);
             //without permissions set, some archive utilities will not grant any on extract
             fileinfo.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ReadGroup | QFileDevice::ReadOther);
-            return file_write.open(QIODevice::WriteOnly, fileinfo, nullptr, 0, Z_DEFLATED, level);
+            fileinfo.uncompressedSize = size;
+            return file_write.open(QIODevice::WriteOnly, fileinfo, nullptr, crc, Z_DEFLATED, level, size != 0);
         };
         for (auto it = std::cbegin(Annotation::singleton().extraFiles); it != std::cend(Annotation::singleton().extraFiles); ++it) {
             QuaZipFile file_write(&archive_write);
@@ -206,17 +223,45 @@ void annotationFileSave(const QString & filename, const bool onlySelectedTrees, 
                 throw std::runtime_error((filename + ": saving segmentation job failed").toStdString());
             }
         }
+        QElapsedTimer time;
+        time.start();
+        std::vector<std::reference_wrapper<const treeListElement>> trees;
+        std::vector<decltype(Skeletonizer::singleton().getMesh(std::declval<treeListElement>()))> mesh_parts;
         for (const auto & tree : state->skeletonState->trees) {
             if ((!onlySelectedTrees || tree.selected) && tree.mesh != nullptr) {
-                QuaZipFile file_write(&archive_write);
-                const auto filename = QString::number(tree.treeID) + ".ply";
-                if (zipCreateFile(file_write, filename)) {
-                    Skeletonizer::singleton().saveMesh(file_write, tree);
-                } else {
-                    throw std::runtime_error((filename + ": saving mesh failed").toStdString());
-                }
+                trees.emplace_back(tree);
+                mesh_parts.emplace_back(Skeletonizer::singleton().getMesh(tree));
             }
         }
+        qDebug() << "retrieving meshes" << time.nsecsElapsed() / 1e9;
+        time.restart();
+        std::vector<std::size_t> ids(mesh_parts.size());
+        std::vector<zip_data> compressed_meshes(mesh_parts.size());
+        std::iota(std::begin(ids), std::end(ids), 0);
+        try {
+            QtConcurrent::blockingMap(ids, [&trees, &mesh_parts, &compressed_meshes](const auto id){
+                QBuffer buffer;
+                buffer.open(QIODevice::WriteOnly);
+                const auto & [vertex_components, colors, indices] = mesh_parts[id];
+                Skeletonizer::singleton().saveMesh(buffer, trees[id], vertex_components, colors, indices);
+                buffer.close();
+                compressed_meshes[id].deflate(buffer.data());
+            });
+        } catch (QException & e) {// any exception gets rethrown as Q(Unhandled)Exception but we only handle std::exception upwards
+            throw std::runtime_error("couldn’t generate ply");
+        }
+        qDebug() << "generating ply" << time.nsecsElapsed() / 1e9;
+        time.restart();
+        for (const auto & id : ids) {
+            QuaZipFile file_write(&archive_write);
+            const auto filename = QString::number(trees[id].get().treeID) + ".ply";
+            if (zipCreateFile(file_write, filename, Z_BEST_SPEED, compressed_meshes[id].size, compressed_meshes[id].crc)) {
+                file_write.write(compressed_meshes[id].compressed_data);
+            } else {
+                throw std::runtime_error((filename + ": saving mesh failed").toStdString());
+            }
+        }
+        qDebug() << "saving ply" << time.nsecsElapsed() / 1e9;
         if (!onlySelectedTrees) {
             QTime cubeTime;
             cubeTime.start();

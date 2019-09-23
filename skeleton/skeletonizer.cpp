@@ -2012,7 +2012,7 @@ void Skeletonizer::loadMesh(QIODevice & file, const boost::optional<decltype(tre
     }
 }
 
-void Skeletonizer::saveMesh(QIODevice & file, const treeListElement & tree) {
+std::tuple<QVector<GLfloat>, QVector<std::uint8_t>, QVector<GLuint>> Skeletonizer::getMesh(const treeListElement & tree) {
     QVector<GLfloat> vertex_components(tree.mesh->vertex_count * 3);
     QVector<std::uint8_t> colors(tree.mesh->vertex_count * 4);
     QVector<GLuint> indices(tree.mesh->index_count);
@@ -2025,15 +2025,23 @@ void Skeletonizer::saveMesh(QIODevice & file, const treeListElement & tree) {
     tree.mesh->index_buf.bind();
     tree.mesh->index_buf.read(0, indices.data(), indices.size() * sizeof(indices[0]));
     tree.mesh->index_buf.release();
+    return std::make_tuple(std::move(vertex_components), std::move(colors), std::move(indices));
+}
 
+void Skeletonizer::saveMesh(QIODevice & file, const treeListElement & tree) {
+    const auto [vertex_components, colors, indices] = getMesh(tree);
+    saveMesh(file, tree, vertex_components, colors, indices);
+}
+
+void Skeletonizer::saveMesh(QIODevice & file, const treeListElement & tree, QVector<GLfloat> vertex_components, QVector<std::uint8_t> colors, QVector<GLuint> indices) {
     tinyply::PlyFile ply;
     ply.add_properties_to_element("vertex", {"x", "y", "z"}, vertex_components);
     if (tree.mesh->useTreeColor == false) {
         ply.add_properties_to_element("vertex", {"red", "green", "blue", "alpha"}, colors);
     }
     ply.add_properties_to_element("face", {"vertex_indices"}, indices, 3, tinyply::PlyProperty::Type::UINT8);
-    if(ply.write(file, Annotation::singleton().savePlyAsBinary) == false) {
-        qDebug() << "mesh save failed for tree" << tree.treeID;
+    if (!ply.write(file, Annotation::singleton().savePlyAsBinary)) {
+        std::runtime_error("mesh save failed for tree " + std::to_string(tree.treeID));
     }
 }
 
