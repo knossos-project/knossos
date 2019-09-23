@@ -578,6 +578,11 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
 
     auto startDownload = [this, center](const std::size_t layerId, const Dataset dataset, const CoordOfCube cubeCoord, decltype(slotDownload)::value_type & downloads
             , decltype(slotDecompression)::value_type & decompressions, decltype(freeSlots)::value_type & freeSlots, decltype(state->cube2Pointer)::value_type::value_type & cubeHash){
+        const auto c = dataset.cube2global(cubeCoord);
+        const auto b = dataset.boundary;
+        if (c.x < 0 || c.y < 0 || c.z < 0 || c.x >= b.x || c.y >= b.y || c.z >= b.z) {
+            return;
+        }
         if (dataset.isOverlay()) {
             auto snappyIt = snappyCache[loaderMagnification].find(cubeCoord);
             if (snappyIt != std::end(snappyCache[loaderMagnification])) {
