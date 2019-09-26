@@ -56,6 +56,8 @@ enum AnnotationMode {
     Mode_MergeTracing = (1 << 12) | NodeEditing | LinkedNodes | SkeletonCycles,
 
     Mode_Selection = (1 << 13) | NodeSelection | ObjectSelection,
+
+    Brainmaps = (1 << 14) | Brush | ObjectSelection | ObjectMerge,
 };
 
 struct AAMTask {

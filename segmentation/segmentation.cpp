@@ -172,6 +172,8 @@ void Segmentation::removeObject(Object & object) {
         emit changedRow(object.index);//object now references the former end
         emit changedRowSelection(object.index);//object now references the former end
         emit changedRowSelection(objects.back().index);//object now references the former end
+    } else {
+        selectedObjectIndices.erase(objects.back().index);
     }
     emit beforeRemoveRow();
     //the last element is the one which gets removed

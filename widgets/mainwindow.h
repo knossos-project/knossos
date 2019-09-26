@@ -116,6 +116,7 @@ class MainWindow : public QMainWindow {
                                                  {AnnotationMode::Mode_Merge, tr("Segmentation Merge")},
                                                  {AnnotationMode::Mode_Paint, tr("Segmentation Paint")},
                                                  {AnnotationMode::Mode_Selection, tr("Review")},
+                                                 {AnnotationMode::Brainmaps, tr("Brainmaps")},
                                                };
     WorkModeModel workModeModel;
     QComboBox modeCombo;
