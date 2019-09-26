@@ -348,7 +348,7 @@ void ViewportOrtho::handleMouseMotionMiddleHold(const QMouseEvent *event) {
 
 void ViewportBase::handleMouseReleaseLeft(const QMouseEvent *event) {
     auto & skeleton = *state->skeletonState;
-    if (mouseDown == event->pos()) { // mouse click
+    if (mouseDown == event->pos() && viewportType == VIEWPORT_SKELETON) { // mouse click
         skeleton.meshLastClickInformation = pickMesh(event->pos());
         if (skeleton.meshLastClickInformation) {
             Skeletonizer::singleton().setActiveTreeByID(skeleton.meshLastClickInformation.get().treeId);
