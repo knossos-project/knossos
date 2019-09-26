@@ -255,31 +255,26 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     });
 
     static std::unordered_map<decltype(treeListElement::treeID), treeListElement*> toMerge;
-    auto createMergedTree = [](auto oid0, auto oid1){
-        if (Segmentation::singleton().selectedObjectIndices.size() == 1) {
-            const auto oidxpre = Segmentation::singleton().selectedObjectIndices.front();
-            const auto oidx = Segmentation::singleton().largestObjectContainingSubobject(Segmentation::singleton().objects[oidxpre].subobjects.front());
-            const auto size = Segmentation::singleton().objects[oidx].subobjects.size();
-            if (size > 1) {
-                const auto oid = Segmentation::singleton().objects[oidx].id;
-                if (!Skeletonizer::singleton().findTreeByTreeID(oid)) {
-                    auto & tree = Skeletonizer::singleton().addTree(oid);
-                    state->viewer->mainWindow.viewport3D->makeCurrent();
-                    auto [v, cc, i] = Skeletonizer::singleton().getMesh(*Skeletonizer::singleton().findTreeByTreeID(oid0));
-                    qDebug() << oid << oid0 << oid1 << v.size() << cc.size() << i.size();
-                    QVector<float> n;
-                    QVector<std::uint8_t> c;
-                    Skeletonizer::singleton().addMeshToTree(oid, v, n, i, c);
-                    if (auto tree2 = Skeletonizer::singleton().findTreeByTreeID(oid1)) {
-                        Skeletonizer::singleton().mergeMeshes(*tree.mesh, *tree2->mesh);
-                    } else {
-                        toMerge.emplace(oid1, &tree);
-                        qDebug() << "waiting for 2nd mesh";
-                    }
-                    qDebug() << "merged";
-                    return;
+    static auto createMergedTree = [](){
+        const auto oidxpre = Segmentation::singleton().selectedObjectIndices.front();
+        const auto oidx = Segmentation::singleton().largestObjectContainingSubobject(Segmentation::singleton().objects[oidxpre].subobjects.front());
+        const auto size = Segmentation::singleton().objects[oidx].subobjects.size();
+        if (size > 1) {
+            const auto oid = Segmentation::singleton().objects[oidx].id;
+            Skeletonizer::singleton().delTree(oid);
+            auto & tree = Skeletonizer::singleton().addTree(oid);
+            tree.mesh = std::make_unique<Mesh>(&tree, true, GL_TRIANGLES);
+            for (const auto & so : Segmentation::singleton().objects[oidx].subobjects) {
+                const auto oid2 = Segmentation::singleton().objects[Segmentation::singleton().smallestImmutableObjectContainingSubobject(so)].id;
+                state->viewer->mainWindow.viewport3D->makeCurrent();
+                if (auto tree2 = Skeletonizer::singleton().findTreeByTreeID(oid2)) {
+                    Skeletonizer::singleton().mergeMeshes(*tree.mesh, *tree2->mesh);
+                } else {
+                    toMerge.emplace(oid2, &tree);
+                    qDebug() << "waiting for 2nd mesh";
                 }
             }
+            qDebug() << "merged";
         }
     };
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, [](){
@@ -313,10 +308,11 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
                 treesToSelect.emplace_back(tree);
                 continue;
             } else if (Segmentation::singleton().objects[oidx].subobjects.size() > 1) {
+                createMergedTree();
                 continue;
             }
-        for (const auto & so : Segmentation::singleton().objects[oidx].subobjects) {
-            const auto soid = so.get().id;
+            assert(Segmentation::singleton().objects[oidx].subobjects.size() != 0);
+            const auto soid = Segmentation::singleton().objects[oidx].subobjects.front().get().id;
             const auto url = dataset.url.toString().replace("volumes", "objects") + QString("/meshes/%1:listfragments?objectId=%2").arg(mesh).arg(soid);
     //        const QString json(R"json({"metadata":{"geometry":{"scale":%1,"corner":"%2,%3,%4","size":"%5,%5,1"},"timeStamp":"%6","value":"%7","comment":"it’s always good to bring a towel","computerGenerated":false},"blob":{"patchBlobFormat":"PNG","data":"%8",}})json");
     //        const auto payload = json.arg(scale).arg(inmagCoord.x).arg(inmagCoord.y).arg(inmagCoord.z + offset).arg(dataset.cubeEdgeLength).arg(QDateTime::currentSecsSinceEpoch()).arg(so.first).arg(QString{buffer.data().toBase64()}).toUtf8();
@@ -418,8 +414,8 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         Skeletonizer::singleton().selectTrees(treesToSelect);
     });
     QObject::connect(&Segmentation::singleton(), &Segmentation::merged, createMergedTree);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::unmerged, [&createMergedTree](auto oid0, auto oid1){
-        Skeletonizer::singleton().delTree(oid0);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::unmerged, [](auto oid0, auto){
+//        Skeletonizer::singleton().delTree(oid0);
         if (Segmentation::singleton().selectedObjectIndices.size() == 1) {
             const auto oidx = Segmentation::singleton().selectedObjectIndices.front();
             const auto size = Segmentation::singleton().objects[oidx].subobjects.size();
@@ -429,7 +425,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
                 Segmentation::singleton().selectObjectFromSubObject(so, {});//HACK coord
             }
         }
-        createMergedTree(oid0, oid1);
+        createMergedTree();
     });
 }
 
