@@ -683,6 +683,8 @@ void Segmentation::mergeSelectedObjects() {
     while (selectedObjectIndices.size() > 1) {
         auto & firstObj = objects[selectedObjectIndices.front()];//front is the merge origin
         auto & secondObj = objects[selectedObjectIndices.back()];
+        const auto oid0 = firstObj.id;
+        const auto oid1 = secondObj.id;
         //objects are no longer selected when they got merged
         auto flat_deselect = [this](Object & object){
             object.selected = false;
@@ -722,7 +724,7 @@ void Segmentation::mergeSelectedObjects() {
             removeObject(secondObj);
         }
         emit todosLeftChanged();
-        emit merged(firstObj.id, secondObj.id);
+        emit merged(oid0, oid1);
     }
 }
 
