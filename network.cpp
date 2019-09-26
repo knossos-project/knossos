@@ -115,15 +115,24 @@ std::pair<int, int> Network::checkOnlineMags(const QUrl & url) {
     return {lowestAvailableMag, highestAvailableMag};
 }
 
-QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply) {
+QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply, const bool block) {
     QEventLoop pause;
-    QObject::connect(&reply, &QNetworkReply::finished, [&pause]() {
-        pause.exit();
-    });
+    if (block) {
+        QObject::connect(&reply, &QNetworkReply::finished, [&pause]() {
+            pause.exit();
+        });
+    };
     emit Network::singleton().startedNetworkRequest(reply);
     QObject::connect(&reply, &QNetworkReply::downloadProgress, &Network::singleton(), &Network::progressChanged);
     QObject::connect(&reply, &QNetworkReply::uploadProgress, &Network::singleton(), &Network::progressChanged);
+    QObject::connect(&reply, &QNetworkReply::finished, [&reply](){
+        emit Network::singleton().finishedNetworkRequest();
+        reply.deleteLater();
+    });
 
+    if (!block) {
+        return {false, {}};
+    }
     state->viewer->suspend([&pause](){
         return pause.exec();
     });
@@ -131,8 +140,6 @@ QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply) {
     if (reply.error() != QNetworkReply::NoError) {
         qDebug() << reply.attribute(QNetworkRequest::HttpStatusCodeAttribute) << static_cast<int>(reply.error()) << reply.error() << reply.errorString();
     }
-    emit Network::singleton().finishedNetworkRequest();
-    reply.deleteLater();
     return {reply.error() == QNetworkReply::NoError, reply.readAll()};
 }
 

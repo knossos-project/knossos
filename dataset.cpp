@@ -264,7 +264,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
 //                qDebug() << datasets.second.data();
 //            }
 
-            const auto config = googleRequest(token, info.url);
+            const auto config = googleRequest<>(token, info.url);
 
             if (config.first) {
                 info = parseGoogleJson(info.url, config.second).front();

@@ -27,7 +27,7 @@
 #include <QNetworkAccessManager>
 #include <QObject>
 
-QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply);
+QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply, const bool block = true);
 
 template<typename T>
 struct WidgetDisabler {
