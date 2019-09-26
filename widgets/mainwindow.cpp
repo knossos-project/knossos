@@ -254,12 +254,39 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         }
     });
 
+    static std::unordered_map<decltype(treeListElement::treeID), treeListElement*> toMerge;
+    auto createMergedTree = [](auto oid0, auto oid1){
+        if (Segmentation::singleton().selectedObjectIndices.size() == 1) {
+            const auto oidxpre = Segmentation::singleton().selectedObjectIndices.front();
+            const auto oidx = Segmentation::singleton().largestObjectContainingSubobject(Segmentation::singleton().objects[oidxpre].subobjects.front());
+            const auto size = Segmentation::singleton().objects[oidx].subobjects.size();
+            if (size > 1) {
+                const auto oid = Segmentation::singleton().objects[oidx].id;
+                if (!Skeletonizer::singleton().findTreeByTreeID(oid)) {
+                    auto & tree = Skeletonizer::singleton().addTree(oid);
+                    state->viewer->mainWindow.viewport3D->makeCurrent();
+                    auto [v, cc, i] = Skeletonizer::singleton().getMesh(*Skeletonizer::singleton().findTreeByTreeID(oid0));
+                    qDebug() << oid << oid0 << oid1 << v.size() << cc.size() << i.size();
+                    QVector<float> n;
+                    QVector<std::uint8_t> c;
+                    Skeletonizer::singleton().addMeshToTree(oid, v, n, i, c);
+                    if (auto tree2 = Skeletonizer::singleton().findTreeByTreeID(oid1)) {
+                        Skeletonizer::singleton().mergeMeshes(*tree.mesh, *tree2->mesh);
+                    } else {
+                        toMerge.emplace(oid1, &tree);
+                        qDebug() << "waiting for 2nd mesh";
+                    }
+                    qDebug() << "merged";
+                    return;
+                }
+            }
+        }
+    };
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, [](){
         if (Segmentation::singleton().objects.back().subobjects.size() == 1) {
             Segmentation::singleton().objects.back().immutable = true;
         }
     });
-    static std::unordered_map<decltype(treeListElement::treeID), treeListElement*> toMerge;
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRowSelection, [](){
 //        for (auto & tree : Skeletonizer::singleton().skeletonState.trees) {
 //            Skeletonizer::singleton().setRender(tree, false);
@@ -388,39 +415,8 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
                 }
             });
         }
-        }
-        for (const auto & elem : treesToSelect) {
-            qDebug() << elem;
-        }
         Skeletonizer::singleton().selectTrees(treesToSelect);
     });
-    auto createMergedTree = [](auto oid0, auto oid1){
-        if (Segmentation::singleton().selectedObjectIndices.size() == 1) {
-            const auto oidxpre = Segmentation::singleton().selectedObjectIndices.front();
-            const auto oidx = Segmentation::singleton().largestObjectContainingSubobject(Segmentation::singleton().objects[oidxpre].subobjects.front());
-            const auto size = Segmentation::singleton().objects[oidx].subobjects.size();
-            if (size > 1) {
-                const auto oid = Segmentation::singleton().objects[oidx].id;
-                if (!Skeletonizer::singleton().findTreeByTreeID(oid)) {
-                    auto & tree = Skeletonizer::singleton().addTree(oid);
-                    state->viewer->mainWindow.viewport3D->makeCurrent();
-                    auto [v, cc, i] = Skeletonizer::singleton().getMesh(*Skeletonizer::singleton().findTreeByTreeID(oid0));
-                    qDebug() << oid << oid0 << oid1 << v.size() << cc.size() << i.size();
-                    QVector<float> n;
-                    QVector<std::uint8_t> c;
-                    Skeletonizer::singleton().addMeshToTree(oid, v, n, i, c);
-                    if (auto tree2 = Skeletonizer::singleton().findTreeByTreeID(oid1)) {
-                        Skeletonizer::singleton().mergeMeshes(*tree.mesh, *tree2->mesh);
-                    } else {
-                        toMerge.emplace(oid1, &tree);
-                        qDebug() << "waiting for 2nd mesh";
-                    }
-                    qDebug() << "merged";
-                    return;
-                }
-            }
-        }
-    };
     QObject::connect(&Segmentation::singleton(), &Segmentation::merged, createMergedTree);
     QObject::connect(&Segmentation::singleton(), &Segmentation::unmerged, [&createMergedTree](auto oid0, auto oid1){
         Skeletonizer::singleton().delTree(oid0);
