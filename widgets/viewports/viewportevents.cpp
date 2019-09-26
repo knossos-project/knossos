@@ -350,10 +350,10 @@ void ViewportBase::handleMouseReleaseLeft(const QMouseEvent *event) {
     auto & skeleton = *state->skeletonState;
     if (mouseDown == event->pos()) { // mouse click
         skeleton.meshLastClickInformation = pickMesh(event->pos());
-        skeleton.meshLastVisited = false;
         if (skeleton.meshLastClickInformation) {
             Skeletonizer::singleton().setActiveTreeByID(skeleton.meshLastClickInformation.get().treeId);
         }
+        skeleton.jumpToSkeletonNext = !skeleton.meshLastClickInformation;
     }
 
     if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::NodeSelection)) {

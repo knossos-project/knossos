@@ -664,28 +664,25 @@ void MainWindow::createMenus() {
     auto viewMenu = menuBar()->addMenu("&Navigation");
 
     addApplicationShortcut(*viewMenu, QIcon(), tr("Jump to Active Node"), &Skeletonizer::singleton(), [this]() {
-        auto meshPriority = !state->skeletonState->meshLastVisited || !state->skeletonState->activeNode;
+        boost::optional<floatCoordinate> pos;
+        auto meshPriority = !state->skeletonState->jumpToSkeletonNext || !state->skeletonState->activeNode;
+        const auto * const activeTree = Skeletonizer::singleton().skeletonState.activeTree;
         if (meshPriority) {
-            boost::optional<floatCoordinate> pos;
-            if (state->skeletonState->meshLastClickInformation) {
+            if (state->skeletonState->meshLastClickInformation && activeTree && state->skeletonState->meshLastClickInformation.get().treeId == activeTree->treeID) {
                 pos = state->skeletonState->meshLastClickInformation.get().coord;
-            } else {
-                const auto * const tree = Skeletonizer::singleton().skeletonState.activeTree;
-                if (tree && tree->mesh) {
-                    pos = floatCoordinate{};
-                    tree->mesh->position_buf.bind();
-                    tree->mesh->position_buf.read(0, &pos.get(), 3 * sizeof(float));
-                    tree->mesh->position_buf.release();
-                    pos.get() /= Dataset::current().scales[0];
-                }
+            } else if (activeTree && activeTree->mesh && activeTree->mesh->position_buf.bind() && (activeTree->mesh->position_buf.size() > static_cast<int>(3 * sizeof(float)))) {
+                pos = floatCoordinate{};
+                activeTree->mesh->position_buf.read(0, &pos.get(), 3 * sizeof(float));
+                activeTree->mesh->position_buf.release();
+                pos.get() /= Dataset::current().scales[0];
             }
-            if (pos) {
-                state->viewer->setPosition(pos.get());
-            }
-            state->skeletonState->meshLastVisited = true;// even if there is no mesh to jump to, jump to skeleton next
-        } else if (state->skeletonState->activeNode) {
+        }
+        if (pos) {
+            state->viewer->setPosition(pos.get());
+            state->skeletonState->jumpToSkeletonNext = true;
+        } else if (state->skeletonState->activeNode && state->skeletonState->activeNode->correspondingTree == activeTree) {
             Skeletonizer::singleton().jumpToNode(*state->skeletonState->activeNode);
-            state->skeletonState->meshLastVisited = false;
+            state->skeletonState->jumpToSkeletonNext = false;
         }
         viewport3D->refocus();
     }, Qt::Key_S);

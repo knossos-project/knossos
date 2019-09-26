@@ -1102,6 +1102,7 @@ bool Skeletonizer::setActiveNode(nodeListElement *node) {
         setActiveTreeByID(node->correspondingTree->treeID);
     }
 
+    skeletonState.jumpToSkeletonNext = true;
     Annotation::singleton().unsavedChanges = true;
 
     return true;

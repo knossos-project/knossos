@@ -152,7 +152,7 @@ struct SkeletonState {
     bool branchpointUnresolved{false};
 
     boost::optional<BufferSelection> meshLastClickInformation;
-    bool meshLastVisited{false};
+    bool jumpToSkeletonNext{true};
 
     QString treeCommentFilter;
 
