@@ -1200,6 +1200,7 @@ void ViewportBase::renderMeshBufferIds(Mesh & buf) {
     }
 
     meshIdShader.disableAttributeArray(colorLocation);
+    meshIdShader.disableAttributeArray(normalLocation);
     meshIdShader.disableAttributeArray(vertexLocation);
 
     glDisableClientState(GL_COLOR_ARRAY);
