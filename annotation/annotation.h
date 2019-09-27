@@ -57,7 +57,7 @@ enum AnnotationMode {
 
     Mode_Selection = (1 << 13) | NodeSelection | ObjectSelection,
 
-    Brainmaps = (1 << 14) | Brush | ObjectSelection | ObjectMerge,
+    Mode_Brainmaps = (1 << 14) | Brush | ObjectSelection | ObjectMerge,
 };
 
 struct AAMTask {

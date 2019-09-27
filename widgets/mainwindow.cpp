@@ -167,6 +167,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
                  #endif
                      ) {
         networkProgressBar.setVisible(true);
+        ++networkRequestCounter;
     #ifndef Q_OS_UNIX // On Unix QNetworkReply::abort() crashes…
         networkProgressAbortButton.setVisible(true);
         QObject::connect(&networkProgressAbortButton, &QPushButton::clicked, &reply, &QNetworkReply::abort);
@@ -174,7 +175,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     });
     QObject::connect(&Network::singleton(), &Network::finishedNetworkRequest, [this]() {
         networkProgressBar.setValue(0);// prevent (visible) resets when a new max is set
-        networkProgressBar.setHidden(true);
+        networkProgressBar.setHidden(--networkRequestCounter == 0);
         networkProgressAbortButton.setHidden(true);
     });
     QObject::connect(&Network::singleton(), &Network::progressChanged, [this](int bytesFinished, int bytesTotal) {
@@ -271,11 +272,11 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
                     Skeletonizer::singleton().mergeMeshes(*tree.mesh, *tree2->mesh);
                 } else {
                     toMerge.emplace(oid2, &tree);
-                    qDebug() << "waiting for 2nd mesh";
+                    std::cout << '.';
                 }
             }
-            qDebug() << "merged";
         }
+        std::cout << std::endl;
     };
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, [](){
         if (Segmentation::singleton().objects.back().subobjects.size() == 1) {
@@ -283,14 +284,18 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         }
     });
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRowSelection, [](){
-//        for (auto & tree : Skeletonizer::singleton().skeletonState.trees) {
-//            Skeletonizer::singleton().setRender(tree, false);
-//        }
         if (Segmentation::singleton().selectedObjectIndices.size() == 1) {
             const auto oidx = Segmentation::singleton().selectedObjectIndices.front();
             const auto size = Segmentation::singleton().objects[oidx].subobjects.size();
+            auto & obj = Segmentation::singleton().objects[oidx];
             if (size == 1) {
-                Segmentation::singleton().objects[oidx].immutable = true;
+                obj.immutable = true;
+                auto & so = obj.subobjects.front().get();
+                if (oidx != Segmentation::singleton().smallestImmutableObjectContainingSubobject(so)) {// unmerge
+                    Skeletonizer::singleton().delTree(obj.id);
+                    Segmentation::singleton().deleteSelectedObjects();
+                    Segmentation::singleton().selectObjectFromSubObject(so, {});//HACK coord
+                }
             }
         }
         QElapsedTimer timer;
@@ -303,11 +308,9 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         for (const auto & oidx : Segmentation::singleton().selectedObjectIndices) {
             const auto oid = Segmentation::singleton().objects[oidx].id;
             if (auto tree = Skeletonizer::singleton().findTreeByTreeID(oid)) {
-//                Skeletonizer::singleton().setRender(*tree, true);
                 treesToSelect.emplace_back(tree);
                 continue;
             } else if (Segmentation::singleton().objects[oidx].subobjects.size() > 1) {
-                createMergedTree();
                 continue;
             }
             assert(Segmentation::singleton().objects[oidx].subobjects.size() != 0);
@@ -396,8 +399,8 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
                         Skeletonizer::singleton().addMeshToTree(oid, vertices, normals, indices, colors);
 
                         if (auto treeIt = toMerge.find(oid); treeIt != std::end(toMerge)) {
-                            createMergedTree();
                             toMerge.erase(treeIt);
+                            createMergedTree();
                         }
                         qDebug().noquote() << timer.restart() << "ms";
     //            }
@@ -408,18 +411,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         Skeletonizer::singleton().selectTrees(treesToSelect);
     });
     QObject::connect(&Segmentation::singleton(), &Segmentation::merged, createMergedTree);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::unmerged, [](auto, auto){
-        if (Segmentation::singleton().selectedObjectIndices.size() == 1) {
-            const auto oidx = Segmentation::singleton().selectedObjectIndices.front();
-            const auto size = Segmentation::singleton().objects[oidx].subobjects.size();
-            if (size == 1) {
-                auto & so = Segmentation::singleton().objects[oidx].subobjects.front().get();
-                Segmentation::singleton().deleteSelectedObjects();
-                Segmentation::singleton().selectObjectFromSubObject(so, {});//HACK coord
-            }
-        }
-        createMergedTree();
-    });
+    QObject::connect(&Segmentation::singleton(), &Segmentation::unmerged, createMergedTree);
 }
 
 void MainWindow::updateCursorLabel(const Coordinate & position, const ViewportType vpType) {
@@ -1289,6 +1281,10 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
 
     if (mode.testFlag(AnnotationMode::Mode_MergeTracing) && state->skeletonState->activeNode != nullptr) {// sync subobject and node selection
         Skeletonizer::singleton().selectObjectForNode(*state->skeletonState->activeNode);
+    }
+    if (mode.testFlag(AnnotationMode::Mode_Brainmaps)) {
+        widgetContainer.preferencesWidget.treesTab.setTreeVisibility(true, true, false, false);
+        Segmentation::singleton().setRenderOnlySelectedObjs(true);
     }
 
     cheatsheet.load(workMode);

@@ -116,7 +116,7 @@ class MainWindow : public QMainWindow {
                                                  {AnnotationMode::Mode_Merge, tr("Segmentation Merge")},
                                                  {AnnotationMode::Mode_Paint, tr("Segmentation Paint")},
                                                  {AnnotationMode::Mode_Selection, tr("Review")},
-                                                 {AnnotationMode::Brainmaps, tr("Brainmaps")},
+                                                 {AnnotationMode::Mode_Brainmaps, tr("Brainmaps")},
                                                };
     WorkModeModel workModeModel;
     QComboBox modeCombo;
@@ -159,6 +159,7 @@ class MainWindow : public QMainWindow {
 
     std::vector<QAction*> commentActions;
 
+    std::size_t networkRequestCounter{0};
     QProgressBar networkProgressBar;
     QPushButton networkProgressAbortButton{"Abort"};
 
