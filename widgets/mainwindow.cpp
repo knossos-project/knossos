@@ -397,13 +397,8 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
                         Skeletonizer::singleton().addMeshToTree(oid, vertices, normals, indices, colors);
 
                         if (auto treeIt = toMerge.find(oid); treeIt != std::end(toMerge)) {
-                            if (auto tree2 = Skeletonizer::singleton().findTreeByTreeID(oid)) {
-                                Skeletonizer::singleton().mergeMeshes(*treeIt->second->mesh, *tree2->mesh);
-                                Skeletonizer::singleton().selectTrees({treeIt->second});
-                                toMerge.erase(treeIt);
-                            } else {
-                                throw std::runtime_error("tree2 missing");
-                            }
+                            createMergedTree();
+                            toMerge.erase(treeIt);
                         }
                         qDebug().noquote() << timer.restart() << "ms";
     //            }
