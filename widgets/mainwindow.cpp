@@ -302,7 +302,6 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         std::vector<treeListElement*> treesToSelect;
         for (const auto & oidx : Segmentation::singleton().selectedObjectIndices) {
             const auto oid = Segmentation::singleton().objects[oidx].id;
-            qDebug() << "södkn" << oid;
             if (auto tree = Skeletonizer::singleton().findTreeByTreeID(oid)) {
 //                Skeletonizer::singleton().setRender(*tree, true);
                 treesToSelect.emplace_back(tree);
@@ -409,8 +408,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         Skeletonizer::singleton().selectTrees(treesToSelect);
     });
     QObject::connect(&Segmentation::singleton(), &Segmentation::merged, createMergedTree);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::unmerged, [](auto oid0, auto){
-//        Skeletonizer::singleton().delTree(oid0);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::unmerged, [](auto, auto){
         if (Segmentation::singleton().selectedObjectIndices.size() == 1) {
             const auto oidx = Segmentation::singleton().selectedObjectIndices.front();
             const auto size = Segmentation::singleton().objects[oidx].subobjects.size();
