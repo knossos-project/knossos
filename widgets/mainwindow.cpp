@@ -322,8 +322,8 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
 //            const auto pair = googleRequest<>(dataset.token, url);
             auto * reply = googleRequest<false>(dataset.token, url);
             QObject::connect(reply, &QNetworkReply::finished, [reply, timer, mesh, oid, soid, url, &dataset]() mutable {
-                qDebug() << "foo" << soid << (reply->error() == QNetworkReply::NoError) << timer.restart() << "ms";
                 const auto & fragids = QJsonDocument::fromJson(reply->readAll()).object()["fragmentKey"].toArray();
+                qDebug() << "foo" << soid << (reply->error() == QNetworkReply::NoError) << fragids.size() << timer.restart() << "ms";
                 if (!fragids.empty()) {
     //                for (auto fragid : fragids) {
                     QJsonObject request;
@@ -358,7 +358,11 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
                         QVector<float> vertices;
                         QVector<std::uint32_t> indices;
                         int index_offset{0};
-                        qDebug() << "frag" << (reply->error() == QNetworkReply::NoError) << reply->size()  << timer.restart() << "ms";
+                        if (reply->error() != QNetworkReply::NoError) {
+                            qDebug() << reply->error() << reply->errorString() << reply->readAll();
+                            return;
+                        }
+                        qDebug() << "frag" << reply->size()  << timer.restart() << "ms";
                         QDataStream ds(reply->readAll());
                         ds.setByteOrder(QDataStream::LittleEndian);
                         ds.setFloatingPointPrecision(QDataStream::FloatingPointPrecision::SinglePrecision);
