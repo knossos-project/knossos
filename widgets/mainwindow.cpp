@@ -358,11 +358,11 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
                         QVector<float> vertices;
                         QVector<std::uint32_t> indices;
                         int index_offset{0};
+                        qDebug() << "frag" << reply->size() << timer.restart() << "ms";
                         if (reply->error() != QNetworkReply::NoError) {
-                            qDebug() << reply->error() << reply->errorString() << reply->readAll();
+                            qDebug() << reply->error() << reply->errorString() << QString(reply->readAll()).toUtf8().constData();
                             return;
                         }
-                        qDebug() << "frag" << reply->size()  << timer.restart() << "ms";
                         QDataStream ds(reply->readAll());
                         ds.setByteOrder(QDataStream::LittleEndian);
                         ds.setFloatingPointPrecision(QDataStream::FloatingPointPrecision::SinglePrecision);
