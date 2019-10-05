@@ -268,6 +268,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
 
             if (config.first) {
                 info = parseGoogleJson(info.url, config.second).front();
+                qDebug() << QString(config.second).toUtf8().constData();
                 info.token = token;
             } else {
                 qDebug() << "download failed";

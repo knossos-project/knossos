@@ -301,7 +301,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         QElapsedTimer timer;
         timer.start();
         const auto & dataset = Dataset::datasets[Segmentation::singleton().layerId];
-//        const auto url = dataset.url.toString().replace("volumes", "objects") + "/meshes";
+        qDebug() << "meshes" << QString(googleRequest<true>(dataset.token, dataset.url.toString().replace("volumes", "objects") + "/meshes").second).toUtf8().constData();
         //{"name": "simp", "type": "TRIANGLES"},
         const auto mesh = "simp";
         std::vector<treeListElement*> treesToSelect;
