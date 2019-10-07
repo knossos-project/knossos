@@ -322,7 +322,12 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
 //            const auto pair = googleRequest<>(dataset.token, url);
             auto * reply = googleRequest<false>(dataset.token, url);
             QObject::connect(reply, &QNetworkReply::finished, [reply, timer, mesh, oid, soid, url, &dataset]() mutable {
-                const auto & fragids = QJsonDocument::fromJson(reply->readAll()).object()["fragmentKey"].toArray();
+                auto fragids = QJsonDocument::fromJson(reply->readAll()).object()["fragmentKey"].toArray().toVariantList();
+                qDebug() << fragids.size();
+                while (fragids.size() > 128) {
+                    fragids.removeLast();
+//                    qDebug() << fragids.size() << fragids;
+                }
                 qDebug() << "foo" << soid << (reply->error() == QNetworkReply::NoError) << fragids.size() << timer.restart() << "ms";
                 if (!fragids.empty()) {
     //                for (auto fragid : fragids) {
@@ -331,7 +336,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
                     QJsonObject frags;
                     frags["objectId"] = QString::number(soid);
     //                frags["fragmentKeys"] = fragid;
-                    frags["fragmentKeys"] = fragids;
+                    frags["fragmentKeys"] = QJsonArray::fromVariantList(fragids);
                     batches.append(frags);
                     request["volumeId"] = url.section('/', 5, 5);
                     request["meshName"] = mesh;
