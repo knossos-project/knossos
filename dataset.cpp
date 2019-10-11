@@ -183,7 +183,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
     QTextStream stream(&config);
     QString line;
     while (!(line = stream.readLine()).isNull()) {
-        const auto & tokenList = line.split(QRegularExpression(" = "));
+        const auto & tokenList = line.remove("\"").split(QRegularExpression(" = "));
         const auto & token = tokenList.front();
         if (token.startsWith("[Dataset")) {
             infos.emplace_back();
@@ -240,8 +240,6 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
 
     QString token;
     for (auto && info : infos) {
-        if (info.api == API::GoogleBrainmaps) {
-        }
         if (info.url.isEmpty()) {
             info.url = QUrl::fromLocalFile(QFileInfo(configUrl.toLocalFile()).absoluteDir().absolutePath());
         }
@@ -259,8 +257,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
             }
 
 //            {
-//                auto * reply = Network::singleton().manager.get(googleRequest(QUrl("https://brainmaps.googleapis.com/v1/volumes")));
-//                const auto datasets = blockDownloadExtractData(*reply);
+//                const auto datasets = googleRequest<>(token, QUrl("https://brainmaps.googleapis.com/v1/volumes"));
 //                qDebug() << datasets.second.data();
 //            }
 
