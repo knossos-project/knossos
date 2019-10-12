@@ -48,9 +48,28 @@
 #include <cstdlib>
 #include <unordered_set>
 
+#include "brainmaps.h"
+
 void merging(const QMouseEvent *event, ViewportOrtho & vp) {
     auto & seg = Segmentation::singleton();
     const auto brushCenter = getCoordinateFromOrthogonalClick(event->pos(), vp);
+    if (Annotation::singleton().annotationMode.testFlag(Mode_Brainmaps)) {
+        if (seg.selectedObjectsCount() != 1) {
+            throw std::runtime_error("not exactl 1 selected object");
+        }
+        const auto src_soid = readVoxel(seg.objects[seg.selectedObjectIndices.front()].location);
+        const auto dst_soid = readVoxel(brushCenter);
+        const auto & dataset = Dataset::datasets[Segmentation::singleton().layerId];
+        const auto change_id = "np_test";
+        const auto url = dataset.url.toString().replace("volumes", "changes") + QString("/%1/equivalences:set").arg(change_id);
+        const auto payload = QString{R"json({"edge": {"first": %1, "second": %2,},"allowEquivalencesToBackground": false})json"}.arg(src_soid).arg(dst_soid).toUtf8();
+        const auto pair = googleRequest<>(dataset.token, url, payload);
+        if (!pair.first) {
+            std::cout << "failed to push patch" << std::endl;
+        }
+        std::cout << pair.second.data();
+        qDebug() << "foo";
+    }
     const auto subobjectIds = readVoxels(brushCenter, seg.brush.value());
     for (const auto & subobjectPair : subobjectIds) {
         if (seg.selectedObjectsCount() == 1) {

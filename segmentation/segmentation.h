@@ -49,6 +49,7 @@ Q_OBJECT
     friend void connectedComponent(const Coordinate & seed);
     friend void generateMeshesForSubobjectsOfSelectedObjects();
     friend void verticalSplittingPlane(const Coordinate & seed);
+    friend void merging(const QMouseEvent *event, class ViewportOrtho & vp);
     friend auto & objectFromId(const quint64 objId);
     friend class SegmentationObjectModel;
     friend class TouchedObjectModel;
