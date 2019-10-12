@@ -1969,16 +1969,17 @@ void Skeletonizer::loadMesh(QIODevice & file, const boost::optional<decltype(tre
     QVector<std::uint8_t> colors;
     QVector<unsigned int> indices;
     QVector<float> normals;
-    int missingCoords = 0, missingColors = 0, missingIndices = 0;
+    int missingCoords = 0, missingNormals = 0,  missingColors = 0, missingIndices = 0;
     const auto vertexCount = ply.request_properties_from_element("vertex", {"x", "y", "z"}, vertices, missingCoords);
+    const auto normalCount = ply.request_properties_from_element("vertex", {"nx", "ny", "nz"}, normals, missingNormals);
     const auto colorCount = ply.request_properties_from_element("vertex", {"red", "green", "blue", "alpha"}, colors, missingColors);
     const auto faceCount = ply.request_properties_from_element("face", {"vertex_indices"}, indices, missingIndices, 3);
     QString warning = tr("");
     if (vertexCount == 0 || faceCount == 0) {
         qWarning() << "no vertices or faces in" << filename;
     }
-    if (missingCoords > 0 || (missingColors > 0 && missingColors != 4) || missingIndices > 0) {
-        qWarning() << (missingCoords > 0) << (missingColors > 0 && missingColors != 4) << (missingIndices > 0);
+    if (missingCoords > 0 || (normalCount > 0 && missingNormals > 0) || (missingColors > 0 && missingColors != 4) || missingIndices > 0) {
+        qWarning() << (missingCoords > 0) << (missingNormals > 0) << (missingColors > 0 && missingColors != 4) << (missingIndices > 0);
         warning = tr("Malformed ply file. KNOSSOS expects following header format (colors are optional):\n"
                      "ply\n"
                      "format [binary_little_endian|binary_big_endian|ascii] 1.0\n"
@@ -1998,7 +1999,8 @@ void Skeletonizer::loadMesh(QIODevice & file, const boost::optional<decltype(tre
             QElapsedTimer t;
             t.start();
             ply.read(file);
-            qDebug() << tr("Parsing .ply file took %1 ms. #vertices: %2, #colors: %3, #triangles: %4.").arg(t.elapsed()).arg(vertexCount).arg(colorCount).arg(faceCount);
+            qDebug() << tr("Parsing .ply file took %1 ms. #vertices: %2, normals %3, #colors: %4, #triangles: %5.")
+                        .arg(t.elapsed()).arg(vertexCount).arg(normalCount).arg(colorCount).arg(faceCount);
             addMeshToTree(treeID, vertices, normals, indices, colors, GL_TRIANGLES);
         } catch (const std::invalid_argument & e) {
             warning = e.what();
@@ -2069,12 +2071,8 @@ void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeI
             QVector3D normal{QVector3D::normal(e1, e2)};
 
             for(int j = 0; j < 3; ++j) {
-                normals[indices[i+j]*3] += normal.x() / vertex_face_count[indices[i+j]];
-            }
-            for(int j = 0; j < 3; ++j) {
+                normals[indices[i+j]*3]   += normal.x() / vertex_face_count[indices[i+j]];
                 normals[indices[i+j]*3+1] += normal.y() / vertex_face_count[indices[i+j]];
-            }
-            for(int j = 0; j < 3; ++j) {
                 normals[indices[i+j]*3+2] += normal.z() / vertex_face_count[indices[i+j]];
             }
         }
