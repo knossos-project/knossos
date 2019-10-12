@@ -181,7 +181,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     set(LINUXLINKER -fuse-ld=lld)
 endif()
 target_compile_definitions(${PROJECT_NAME} PRIVATE "-D_WIN32_WINNT=0x0600") # gapi MsvcCondVar InitializeConditionVariable
-set(GAPI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/google-api-cpp-client/build-${CMAKE_BUILD_TYPE}")
+set(GAPI_DIR "${CMAKE_CURRENT_BINARY_DIR}/../build-google-api-cpp-client-${CMAKE_BUILD_TYPE}")
 set(GAPI_LIB_DIR "${GAPI_DIR}/lib")
 target_include_directories(${PROJECT_NAME} PRIVATE "${GAPI_DIR}/include")
 target_link_libraries(${PROJECT_NAME}
