@@ -95,6 +95,7 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     movementAreaLayout.addLayout(&outVisibilityAdjustLayout);
     movementAreaLayout.setAlignment(Qt::AlignTop);
     movementAreaGroup.setLayout(&movementAreaLayout);
+    movementAreaGroup.setCheckable(true);
 
     movementSpeedSpinBox.setRange(1, 10000);
     movementSpeedSpinBox.setSuffix(" Slices/s");
@@ -134,6 +135,13 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
         state->viewerState->penmode = penModeCheckBox.isChecked();
     });
 
+    QObject::connect(&movementAreaGroup, &QGroupBox::toggled, [this](const bool checked) {
+        if (checked) {
+            Annotation::singleton().updateMovementArea(minSpins.get(), maxSpins.get());
+        } else {
+            Annotation::singleton().resetMovementArea();
+        }
+    });
     QObject::connect(&topLeftButton, &QPushButton::clicked, [this](){
         const auto min = getCoordinateFromOrthogonalClick({}, *state->mainWindow->viewportXY);
         const auto max = maxAuto.isChecked() ? min + sizeSpins.get() : maxSpins.get() - state->skeletonState->displayMatlabCoordinates;
@@ -152,11 +160,13 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
         Annotation::singleton().resetMovementArea();
     });
     QObject::connect(&Annotation::singleton(), &Annotation::movementAreaChanged, [this]() {
-        auto & session = Annotation::singleton();
-        minSpins.set(session.movementAreaMin + state->skeletonState->displayMatlabCoordinates);
-        maxSpins.set(session.movementAreaMax + state->skeletonState->displayMatlabCoordinates);
-        const auto size = session.movementAreaMax - session.movementAreaMin;
-        sizeSpins.set(size);
+        if (movementAreaGroup.isChecked()) {
+            auto & session = Annotation::singleton();
+            minSpins.set(session.movementAreaMin + state->skeletonState->displayMatlabCoordinates);
+            maxSpins.set(session.movementAreaMax + state->skeletonState->displayMatlabCoordinates);
+            const auto size = session.movementAreaMax - session.movementAreaMin;
+            sizeSpins.set(size);
+        }
     });
 
     QObject::connect(&outVisibilitySlider, &QSlider::valueChanged, [this](const int value) {
