@@ -192,9 +192,14 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&numberOfStepsSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](int value){ state->viewerState->autoTracingSteps = value; });
 }
 
-void NavigationTab::updateMovementArea() {
+std::tuple<Coordinate, Coordinate> NavigationTab::getMovementArea() const {
     const auto min = minAuto.isChecked() ? maxSpins.get() - state->skeletonState->displayMatlabCoordinates - sizeSpins.get() : minSpins.get() - state->skeletonState->displayMatlabCoordinates;
     const auto max = maxAuto.isChecked() ? minSpins.get() - state->skeletonState->displayMatlabCoordinates + sizeSpins.get() : maxSpins.get() - state->skeletonState->displayMatlabCoordinates;
+    return {min, max};
+}
+
+void NavigationTab::updateMovementArea() {
+    const auto & [min, max] = getMovementArea();
     Annotation::singleton().updateMovementArea(min, max);
 }
 
