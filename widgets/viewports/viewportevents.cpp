@@ -65,9 +65,9 @@ void merging(const QMouseEvent *event, ViewportOrtho & vp) {
         const auto payload = QString{R"json({"edge": {"first": %1, "second": %2,},"allowEquivalencesToBackground": false})json"}.arg(src_soid).arg(dst_soid).toUtf8();
         const auto pair = googleRequest<>(dataset.token, url, payload);
         if (!pair.first) {
-            std::cout << "failed to push patch" << std::endl;
+            qDebug() << "failed to push patch";
         }
-        std::cout << pair.second.data();
+        qDebug() << pair.second.data();
         qDebug() << "foo";
     }
     const auto subobjectIds = readVoxels(brushCenter, seg.brush.value());

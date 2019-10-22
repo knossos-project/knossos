@@ -653,8 +653,10 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 if (dataset.api == Dataset::API::GoogleBrainmaps) {
                     const auto inmagCoord = cubeCoord * dataset.cubeEdgeLength;
                     request.setRawHeader("Content-Type", "application/octet-stream");
-                    const QString json(R"json({"geometry":{"corner":"%1,%2,%3", "size":"%4,%4,%4", "scale":%5}, "subvolume_format":"%6", "image_format_options":{"image_format":"JPEG", "jpeg_quality":70}})json");
-                    payload = json.arg(inmagCoord.x).arg(inmagCoord.y).arg(inmagCoord.z).arg(dataset.cubeEdgeLength).arg(loaderMagnification).arg(dataset.type == Dataset::CubeType::SEGMENTATION_SZ ? "RAW_SNAPPY" : "SINGLE_IMAGE").toUtf8();
+                    const auto changeSpec = dataset.type == Dataset::CubeType::SEGMENTATION_SZ ? QString(R"json(, "changeSpec": {"changeStackId": "%7", "skipEquivalences": false})json").arg("np_test") : "";
+                    const auto format = dataset.type == Dataset::CubeType::SEGMENTATION_SZ ? "RAW_SNAPPY" : "SINGLE_IMAGE";
+                    const QString json(R"json({"geometry":{"corner":"%1,%2,%3", "size":"%4,%4,%4", "scale":%5}, "subvolume_format":"%6", "image_format_options":{"image_format":"JPEG", "jpeg_quality":70}%7})json");
+                    payload = json.arg(inmagCoord.x).arg(inmagCoord.y).arg(inmagCoord.z).arg(dataset.cubeEdgeLength).arg(loaderMagnification).arg(format).arg(changeSpec).toUtf8();
                 } else if (dataset.api == Dataset::API::WebKnossos) {
                     const auto globalCoord = dataset.cube2global(cubeCoord);
                     request.setRawHeader("Content-Type", "application/json");
