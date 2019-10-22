@@ -61,14 +61,13 @@ void merging(const QMouseEvent *event, ViewportOrtho & vp) {
         const auto dst_soid = readVoxel(brushCenter);
         const auto & dataset = Dataset::datasets[Segmentation::singleton().layerId];
         const auto change_id = "np_test";
-        const auto url = dataset.url.toString().replace("volumes", "changes") + QString("/%1/equivalences:set").arg(change_id);
-        const auto payload = QString{R"json({"edge": {"first": %1, "second": %2,},"allowEquivalencesToBackground": false})json"}.arg(src_soid).arg(dst_soid).toUtf8();
+        const auto url = dataset.url.toString().replace("volumes", "changes") + QString("/%1/equivalences:%2").arg(change_id).arg(event->modifiers().testFlag(Qt::ShiftModifier) ? "delete" : "set");
+        const auto payload = QString{R"json({"edge": {"first": %1, "second": %2,}%3})json"}.arg(src_soid).arg(dst_soid).arg(event->modifiers().testFlag(Qt::ShiftModifier) ? "" : R"json(,"allowEquivalencesToBackground": false)json").toUtf8();
         const auto pair = googleRequest<>(dataset.token, url, payload);
         if (!pair.first) {
             qDebug() << "failed to push patch";
         }
-        qDebug() << pair.second.data();
-        qDebug() << "foo";
+        qDebug() << "equivalences" << pair.second.data();
     }
     const auto subobjectIds = readVoxels(brushCenter, seg.brush.value());
     for (const auto & subobjectPair : subobjectIds) {
