@@ -51,7 +51,8 @@ void PythonInterpreterWidget::loadSettings() {
 
 void PythonInterpreterWidget::startConsole() {
 #if !defined(WIN32) || defined(NDEBUG)// PythonQt bug: QWidget: Must construct a QApplication before a QWidget
-    auto * console = new PythonQtScriptingConsole(this, PythonQt::self()->getMainModule());
+    static PythonQtScriptingConsole * console = nullptr;
+    console = console != nullptr ? console : new PythonQtScriptingConsole(this, PythonQt::self()->getMainModule());
     state->scripting->addObject("knossos_global_interpreter_console", console);
     mainLayout.addWidget(console);
 #endif
