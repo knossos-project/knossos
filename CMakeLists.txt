@@ -228,6 +228,8 @@ endif(APPLE)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 
+#set(CMAKE_CXX_FLAGS "-fsanitize=address")
+
 target_compile_options(${PROJECT_NAME} PRIVATE "-pedantic-errors")
 target_compile_options(${PROJECT_NAME} PRIVATE "-Wall" "-Wextra")
 #target_compile_options(${PROJECT_NAME} PRIVATE "-gdwarf-aranges")
@@ -240,8 +242,8 @@ endif()
 
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UPPER_CASE)
 if(CMAKE_BUILD_TYPE_UPPER_CASE MATCHES "DEBUG")
-    target_compile_definitions(${PROJECT_NAME} PRIVATE "_GLIBCXX_DEBUG")
-    target_compile_definitions(${PROJECT_NAME} PRIVATE "_GLIBCXX_DEBUG_PEDANTIC")
+#    target_compile_definitions(${PROJECT_NAME} PRIVATE "_GLIBCXX_DEBUG")
+#    target_compile_definitions(${PROJECT_NAME} PRIVATE "_GLIBCXX_DEBUG_PEDANTIC")
 endif()
 
 include(cotire OPTIONAL)#https://github.com/sakra/cotire/releases/latest

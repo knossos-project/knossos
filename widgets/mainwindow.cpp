@@ -325,7 +325,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
                 const auto data = reply->readAll();
                 const auto fragidsv = QJsonDocument::fromJson(data).object()["fragmentKey"].toArray().toVariantList();
                 const auto soidsv = QJsonDocument::fromJson(data).object()["supervoxelId"].toArray().toVariantList();
-                qDebug() << "foo" << soid << reply->error() << reply->errorString() << fragidsv.size() << soidsv.size() << timer.restart() << "ms";
+                qDebug() << "foo" << soid << reply->error() << reply->errorString() << fragidsv.size() << soidsv.size() << timer.elapsed() << "ms";
                 QHash<QString, QString> fragids;
                 for (std::size_t i{0}; i < fragidsv.size(); ++i) {
                     if (fragids.contains(fragidsv[i].toString())) {
@@ -335,24 +335,32 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
                     }
                     fragids.insert(fragidsv[i].toString(), soidsv[i].toString());
                 }
-                qDebug() << fragids.size();
-                while (fragids.size() > 256) {
-                    fragids.remove(fragids.keys().front());
-                }
-                if (!fragids.empty()) {
-    //                for (auto fragid : fragids) {
+                qDebug() << "frag count" << fragids.size();
+//                while (fragids.size() > 256) {
+//                    fragids.remove(fragids.keys().front());
+//                }
+                struct mesh_data_t {
+                    QVector<float> vertices;
+                    QVector<std::uint32_t> indices;
+                    int index_offset{0};
+                    std::unordered_set<QNetworkReply*> replies;
+                };
+                static std::unordered_map<std::uint64_t, mesh_data_t> mesh_data;
+                if (!fragids.empty()) for (auto fragid : fragids.keys()) {
                     QJsonObject request;
                     QJsonArray batches;
                     QJsonObject frags;
                     frags["objectId"] = QString::number(soid);
-    //                frags["fragmentKeys"] = fragid;
-                    frags["fragmentKeys"] = QJsonArray::fromStringList(fragids.keys());
+//                    frags["fragmentKeys"] = fragid;
+                    frags["fragmentKeys"] = QJsonArray{fragid};
+//                    frags["fragmentKeys"] = QJsonArray{fragids.keys().front()};
+//                    frags["fragmentKeys"] = QJsonArray::fromStringList(fragids.keys());
                     batches.append(frags);
                     request["volumeId"] = url.section('/', 5, 5);
                     request["meshName"] = mesh;
                     request["batches"] = batches;
 
-                    qDebug() << '\t' << request;
+                    qDebug() << '\t' << request << timer.elapsed() << "ms";
     /*
                     const auto url = dataset.url.toString().replace("volumes", "objects") + QString("/meshes/%1/fragment:get?objectId=%2&fragmentKey=%3").arg(mesh).arg(soid).arg(fragid.toString());
                     const auto pair = googleRequest(dataset.token, url);
@@ -369,11 +377,12 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
                     /*/
                     const QUrl url{"https://brainmaps.googleapis.com/v1/objects/meshes:batch"};
                     auto * reply = googleRequest<false>(dataset.token, url, QJsonDocument{request}.toJson());
+                    mesh_data[oid].replies.emplace(reply);
                     QObject::connect(reply, &QNetworkReply::finished, [reply, timer, oid]() mutable {
-                        QVector<float> vertices;
-                        QVector<std::uint32_t> indices;
-                        int index_offset{0};
-                        qDebug() << "frag" << reply->size() << timer.restart() << "ms";
+                        auto & vertices = mesh_data[oid].vertices;
+                        auto & indices = mesh_data[oid].indices;
+                        auto & index_offset = mesh_data[oid].index_offset;
+                        qDebug() << "frag" << reply->size() << timer.elapsed() << "ms";
                         if (reply->error() != QNetworkReply::NoError) {
                             qDebug() << reply->error() << reply->errorString() << QString(reply->readAll()).toUtf8().constData();
                             return;
@@ -411,18 +420,20 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
                             }
                             index_offset = vertices.size() / 3;
                         }
-                        qDebug() << timer.restart() << "ms";
                         //*/
-                        QVector<float> normals;
-                        QVector<std::uint8_t> colors;
-                        Skeletonizer::singleton().addMeshToTree(oid, vertices, normals, indices, colors);
+                        mesh_data[oid].replies.erase(reply);
+                        qDebug() << timer.elapsed() << "ms" << "mesh_data[oid].replies" << mesh_data[oid].replies.size();
+                        if (mesh_data[oid].replies.empty()) {
+                            QVector<float> normals;
+                            QVector<std::uint8_t> colors;
+                            Skeletonizer::singleton().addMeshToTree(oid, vertices, normals, indices, colors);
 
-                        if (auto treeIt = toMerge.find(oid); treeIt != std::end(toMerge)) {
-                            toMerge.erase(treeIt);
-                            createMergedTree();
+                            if (auto treeIt = toMerge.find(oid); treeIt != std::end(toMerge)) {
+                                toMerge.erase(treeIt);
+                                createMergedTree();
+                            }
+                            qDebug().noquote() << timer.restart() << "ms";
                         }
-                        qDebug().noquote() << timer.restart() << "ms";
-    //            }
                     });
                 }
             });
