@@ -288,7 +288,7 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
                 const auto offsetx = Dataset::current().scaleFactor.componentMul(Coordinate(vp.viewportType == VIEWPORT_XY || vp.viewportType == VIEWPORT_XZ, vp.viewportType == VIEWPORT_ZY, 0) * xxy);
                 const auto offsety = Dataset::current().scaleFactor.componentMul(Coordinate(0, vp.viewportType == VIEWPORT_XY, vp.viewportType == VIEWPORT_XZ || vp.viewportType == VIEWPORT_ZY) * yzz);
                 if (Annotation::singleton().outsideMovementArea(cubePosInAbsPx + offsetx + offsety)) {
-                    const double d = state->viewerState->outsideMovementAreaFactor / 100.0;
+                    const double d = state->viewerState->outsideMovementAreaFactor / 100.0 + (1 - state->viewerState->outsideMovementAreaFactor / 100.0) * state->viewerState->showOnlyRawData;
                     r *= d; g *= d; b *= d;
                 }
             }
@@ -486,10 +486,12 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
         const auto offset = vp.n.componentMul(Dataset::current().scaleFactor) * multiSlicei;
         const auto cpos = state->viewerState->currentPosition;
         const auto offsetCube = Dataset::datasets[layerId].global2cube(cpos + offset) - Dataset::datasets[layerId].global2cube(cpos);
+        const auto & [min, max] = state->viewerState->showOnlyRawData ? std::pair(Coordinate(0, 0, 0), Dataset::current().boundary)
+                                                                      : std::pair(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax);
         const CoordInCube currentPosition_inside_dc = (cpos + offset)
-                .capped(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax)
+                .capped(min, max)
                 .insideCube(cubeEdgeLen, Dataset::current().scaleFactor);
-        if (Annotation::singleton().outsideMovementArea(state->viewerState->currentPosition + offset)) {
+        if (Annotation::singleton().outsideMovementArea(state->viewerState->currentPosition + offset) && !state->viewerState->showOnlyRawData) {
             continue;
         }
 
@@ -957,10 +959,12 @@ void Viewer::applyTextureFilterSetting(const QOpenGLTexture::Filter texFiltering
 }
 
 void Viewer::updateCurrentPosition() {
-    auto & session = Annotation::singleton();
-    if (session.outsideMovementArea(state->viewerState->currentPosition)) {
+    auto & annotation = Annotation::singleton();
+    if (annotation.outsideMovementArea(state->viewerState->currentPosition)) {
         const Coordinate currPos = state->viewerState->currentPosition;
-        const Coordinate newPos = state->viewerState->currentPosition.capped(session.movementAreaMin, session.movementAreaMax);
+                const auto & [min, max] = state->viewerState->showOnlyRawData ? std::pair(Coordinate(0, 0, 0), Dataset::current().boundary)
+                                                                              : std::pair(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax);
+        const Coordinate newPos = state->viewerState->currentPosition.capped(min, max);
         userMove(newPos - currPos, USERMOVE_NEUTRAL);
     }
 }
@@ -1007,11 +1011,13 @@ void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, 
 
     const Coordinate movement = step;
     auto newPos = viewerState.currentPosition + movement;
-    if (Annotation::singleton().outsideMovementArea(newPos)) {
+    if (Annotation::singleton().outsideMovementArea(newPos) && !state->viewerState->showOnlyRawData) {
         const auto inc{state->skeletonState->displayMatlabCoordinates};
         qDebug() << tr("Position (%1, %2, %3) out of bounds").arg(newPos.x + inc).arg(newPos.y + inc).arg(newPos.z + inc);
     }
-    viewerState.currentPosition = newPos.capped(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax);
+    const auto & [min, max] = state->viewerState->showOnlyRawData ? std::pair(Coordinate(0, 0, 0), Dataset::current().boundary)
+                                                                  : std::pair(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax);
+    viewerState.currentPosition = newPos.capped(min, max);
     recalcTextureOffsets();
 
     const auto newPosition_dc = viewerState.currentPosition.cube(Dataset::current().cubeEdgeLength, Dataset::current().scaleFactor);

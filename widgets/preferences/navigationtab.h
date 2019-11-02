@@ -97,7 +97,6 @@ class NavigationTab : public QWidget {
     void updateMovementArea();
 public:
     explicit NavigationTab(QWidget *parent = nullptr);
-    std::tuple<Coordinate, Coordinate> getMovementArea() const;
     void loadSettings(const QSettings &settings);
     void saveSettings(QSettings &settings);
 };

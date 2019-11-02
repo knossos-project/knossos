@@ -276,13 +276,12 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     }
 
     xml.writeStartElement("MovementArea");
-    const auto & [min, max] = state->viewer->window->widgetContainer.preferencesWidget.navigationTab.getMovementArea();
-    xml.writeAttribute("min.x", QString::number(min.x));
-    xml.writeAttribute("min.y", QString::number(min.y));
-    xml.writeAttribute("min.z", QString::number(min.z));
-    xml.writeAttribute("max.x", QString::number(max.x));
-    xml.writeAttribute("max.y", QString::number(max.y));
-    xml.writeAttribute("max.z", QString::number(max.z));
+    xml.writeAttribute("min.x", QString::number(Annotation::singleton().movementAreaMin.x));
+    xml.writeAttribute("min.y", QString::number(Annotation::singleton().movementAreaMin.y));
+    xml.writeAttribute("min.z", QString::number(Annotation::singleton().movementAreaMin.z));
+    xml.writeAttribute("max.x", QString::number(Annotation::singleton().movementAreaMax.x));
+    xml.writeAttribute("max.y", QString::number(Annotation::singleton().movementAreaMax.y));
+    xml.writeAttribute("max.z", QString::number(Annotation::singleton().movementAreaMax.z));
     xml.writeEndElement();
 
     xml.writeStartElement("scale");
