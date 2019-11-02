@@ -299,6 +299,18 @@ void ViewportBase::resizeGL(int width, int height) {
     state->viewer->recalcTextureOffsets();
 }
 
+void ViewportBase::focusOutEvent(QFocusEvent * event) {
+    if (QApplication::focusWidget() != state->viewer->window->viewportXY.get()
+        && QApplication::focusWidget() != state->viewer->window->viewportXZ.get()
+        && QApplication::focusWidget() != state->viewer->window->viewportZY.get()
+        && QApplication::focusWidget() != state->viewer->window->viewport3D.get()) {
+        // simulate space key release, lest the event get lost in another widget.
+        QKeyEvent keyEvent(QEvent::KeyRelease, Qt::Key_Space, Qt::NoModifier);
+        keyReleaseEvent(&keyEvent);
+    }
+    QWidget::focusOutEvent(event);
+}
+
 void ViewportBase::enterEvent(QEvent * event) {
     hasCursor = true;
     QOpenGLWidget::enterEvent(event);

@@ -672,7 +672,7 @@ void Viewport3D::handleKeyRelease(const QKeyEvent *event) {
 
 void Viewport3D::focusOutEvent(QFocusEvent * event) {
     resetWiggle();
-    QWidget::focusOutEvent(event);
+    ViewportBase::focusOutEvent(event);
 }
 
 Coordinate getCoordinateFromOrthogonalClick(const QPointF pos, ViewportOrtho & vp) {

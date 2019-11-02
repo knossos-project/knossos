@@ -194,6 +194,7 @@ protected:
     virtual void resizeEvent(QResizeEvent *event) override;
 
     // event-handling
+    virtual void focusOutEvent(QFocusEvent * event) override;
     virtual void enterEvent(QEvent * event) override;
     virtual void leaveEvent(QEvent * event) override;
     virtual void mouseMoveEvent(QMouseEvent *event) override;
