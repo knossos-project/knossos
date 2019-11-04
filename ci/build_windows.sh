@@ -13,12 +13,15 @@ PROJECTPATH=$(cygpath ${APPVEYOR_BUILD_FOLDER})
 
 mkdir knossos-build
 cd knossos-build
-DEBUG_FLAGS='' && [[ "${WITH_DEBUG_SYMBOLS}" = true ]] && DEBUG_FLAGS=-DCMAKE_CXX_FLAGS="-g -fno-omit-frame-pointer"
+DEBUG_FLAGS='' && ${WITH_DEBUG_SYMBOLS} && DEBUG_FLAGS=-DCMAKE_CXX_FLAGS="-g -fno-omit-frame-pointer"
 time cmake -G Ninja -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=RELEASE "${DEBUG_FLAGS}" ${PROJECTPATH}
 
 # Build
 time ninja
 
 # Deploy
-cp knossos.exe ${PROJECTPATH}/win.KNOSSOS.nightly.exe
-cp knossos.exe ${PROJECTPATH}/win.${APPVEYOR_REPO_BRANCH}-KNOSSOS.nightly.exe
+BRANCH_PREFIX=""
+if $WITH_DEBUG_SYMBOLS; then
+	BRANCH_PREFIX=${APPVEYOR_REPO_BRANCH}-
+fi
+cp knossos.exe $PROJECTPATH/win.${BRANCH_PREFIX}KNOSSOS.nightly.exe
