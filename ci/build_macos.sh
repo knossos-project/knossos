@@ -40,8 +40,5 @@ cp /usr/local/Cellar/quazip/${QUAZIP_VERSION}/lib/libquazip.1.0.0.dylib KNOSSOS.
 install_name_tool KNOSSOS.app/Contents/Frameworks/libquazip.1.dylib -change /usr/local/opt/qt/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore
 
 # Deployment
-BRANCH_PREFIX=""
-if [[ $TRAVIS_BRANCH != "master" ]]; then
-	BRANCH_PREFIX=${TRAVIS_BRANCH}-
-fi
-time zip -r ${TRAVIS_BUILD_DIR}/macos.${BRANCH_PREFIX}KNOSSOS.nightly.app.zip KNOSSOS.app
+time zip -r ${TRAVIS_BUILD_DIR}/macos.KNOSSOS.nightly.app.zip KNOSSOS.app
+time zip -r ${TRAVIS_BUILD_DIR}/macos.${TRAVIS_BRANCH}-KNOSSOS.nightly.app.zip KNOSSOS.app

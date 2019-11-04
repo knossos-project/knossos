@@ -49,8 +49,8 @@ deploy:
       secure: "DHBayH59cTgSeuzw0umwjc52r5p1sR3EV1vOG77cK1NIb7fi2UVmx69V2mIzfGYp0t1uFDsVvDGtFYRQxKozCteBu2oinmbiSjbeWnyldQqTFnF4QONF+eWGiHNdOdHY7Tj37+eV5BlgfsXZ5MfLN3tXZ2y++D+yfoUItsbvC3I="
     file_glob: true
     file:
-      - "*.AppImage"
-      - "macos.*.zip"
+      - "linux.KNOSSOS.nightly.AppImage"
+      - "macos.KNOSSOS.nightly.app.zip"
     skip_cleanup: true
     overwrite: true
     on:
@@ -62,8 +62,8 @@ deploy:
       secure: "DHBayH59cTgSeuzw0umwjc52r5p1sR3EV1vOG77cK1NIb7fi2UVmx69V2mIzfGYp0t1uFDsVvDGtFYRQxKozCteBu2oinmbiSjbeWnyldQqTFnF4QONF+eWGiHNdOdHY7Tj37+eV5BlgfsXZ5MfLN3tXZ2y++D+yfoUItsbvC3I="
     file_glob: true
     file:
-      - "*.AppImage"
-      - "macos.*.zip"
+      - "linux.*-KNOSSOS.nightly.AppImage"
+      - "macos.*-KNOSSOS.nightly.app.zip"
     skip_cleanup: true
     overwrite: true
     on:
