@@ -262,7 +262,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
 //            }
 
             {
-                const auto datasets = googleRequest<>(token, QUrl("https://brainmaps.googleapis.com/v1/changes/611024335609:j0126:j0126_13_v4b_base_20180226/change_stacks"));
+                const auto datasets = googleRequest<>(token, QUrl(info.url.toString().replace("volumes", "changes") + "/change_stacks"));
                 qDebug() << datasets.second.data();
             }
 
