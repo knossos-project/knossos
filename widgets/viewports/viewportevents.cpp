@@ -53,22 +53,6 @@
 void merging(const QMouseEvent *event, ViewportOrtho & vp) {
     auto & seg = Segmentation::singleton();
     const auto brushCenter = getCoordinateFromOrthogonalClick(event->pos(), vp);
-    if (Annotation::singleton().annotationMode.testFlag(Mode_Brainmaps)) {
-        if (seg.selectedObjectsCount() != 1) {
-            throw std::runtime_error("not exactly 1 selected object");
-        }
-        const auto src_soid = readVoxel(seg.objects[seg.selectedObjectIndices.front()].location);
-        const auto dst_soid = readVoxel(brushCenter);
-        const auto & dataset = Dataset::datasets[Segmentation::singleton().layerId];
-        const auto change_id = "np_test";
-        const auto url = dataset.url.toString().replace("volumes", "changes") + QString("/%1/equivalences:%2").arg(change_id).arg(event->modifiers().testFlag(Qt::ShiftModifier) ? "delete" : "set");
-        const auto payload = QString{R"json({"edge": {"first": %1, "second": %2,}%3})json"}.arg(src_soid).arg(dst_soid).arg(event->modifiers().testFlag(Qt::ShiftModifier) ? "" : R"json(,"allowEquivalencesToBackground": false)json").toUtf8();
-        const auto pair = googleRequest<>(dataset.token, url, payload);
-        if (!pair.first) {
-            qDebug() << "failed to push patch";
-        }
-        qDebug() << "equivalences" << pair.second.data();
-    }
     const auto subobjectIds = readVoxels(brushCenter, seg.brush.value());
     for (const auto & subobjectPair : subobjectIds) {
         if (seg.selectedObjectsCount() == 1) {
@@ -189,6 +173,26 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
     const auto & annotationMode = Annotation::singleton().annotationMode;
     if (annotationMode.testFlag(AnnotationMode::Brush)) {
         Segmentation::singleton().brush.setInverse(event->modifiers().testFlag(Qt::ShiftModifier));
+
+        auto & seg = Segmentation::singleton();
+        const auto brushCenter = getCoordinateFromOrthogonalClick(event->pos(), *this);
+        if (Annotation::singleton().annotationMode.testFlag(Mode_Brainmaps)) {
+            if (seg.selectedObjectsCount() != 1) {
+                throw std::runtime_error("not exactly 1 selected object");
+            }
+            const auto src_soid = readVoxel(seg.objects[seg.selectedObjectIndices.front()].location);
+            const auto dst_soid = readVoxel(brushCenter);
+            const auto & dataset = Dataset::datasets[Segmentation::singleton().layerId];
+            const auto change_id = "np_test";
+            const auto url = dataset.url.toString().replace("volumes", "changes") + QString("/%1/equivalences:%2").arg(change_id).arg(event->modifiers().testFlag(Qt::ShiftModifier) ? "delete" : "set");
+            const auto payload = QString{R"json({"edge": {"first": %1, "second": %2,}%3})json"}.arg(src_soid).arg(dst_soid).arg(event->modifiers().testFlag(Qt::ShiftModifier) ? "" : R"json(,"allowEquivalencesToBackground": false)json").toUtf8();
+            const auto pair = googleRequest<>(dataset.token, url, payload);
+            if (!pair.first) {
+                qDebug() << "failed to push patch";
+            }
+            qDebug() << "equivalences" << pair.second.data();
+        }
+
         segmentation_brush_work(event, *this);
         return;
     }
