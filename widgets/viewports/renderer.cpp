@@ -1216,8 +1216,9 @@ void ViewportBase::renderMesh() {
     for (const auto & tree : state->skeletonState->trees) {
         const bool validMesh = tree.mesh != nullptr && tree.mesh->vertex_count > 0;
         const auto displayFlags = (viewportType == VIEWPORT_SKELETON) ? state->viewerState->skeletonDisplayVP3D : state->viewerState->skeletonDisplayVPOrtho;
+        const bool showFilter = ((viewportType == VIEWPORT_SKELETON) && displayFlags.testFlag(TreeDisplay::ShowIn3DVP)) || displayFlags.testFlag(TreeDisplay::ShowInOrthoVPs);
         const bool selectionFilter = !displayFlags.testFlag(TreeDisplay::OnlySelected) || tree.selected;
-        if (tree.render && selectionFilter && validMesh) {
+        if (tree.render && showFilter && selectionFilter && validMesh) {
             const auto hasTranslucentFirstVertexColor = [](Mesh & mesh){
                 mesh.color_buf.bind();
                 if (mesh.color_buf.size() < 4) {
