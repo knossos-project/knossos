@@ -55,7 +55,7 @@ void merging(const QMouseEvent *event, ViewportOrtho & vp) {
     const auto brushCenter = getCoordinateFromOrthogonalClick(event->pos(), vp);
     if (Annotation::singleton().annotationMode.testFlag(Mode_Brainmaps)) {
         if (seg.selectedObjectsCount() != 1) {
-            throw std::runtime_error("not exactl 1 selected object");
+            throw std::runtime_error("not exactly 1 selected object");
         }
         const auto src_soid = readVoxel(seg.objects[seg.selectedObjectIndices.front()].location);
         const auto dst_soid = readVoxel(brushCenter);

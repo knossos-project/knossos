@@ -315,7 +315,8 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
             }
             assert(Segmentation::singleton().objects[oidx].subobjects.size() != 0);
             const auto soid = Segmentation::singleton().objects[oidx].subobjects.front().get().id;
-            const auto url = dataset.url.toString().replace("volumes", "objects") + QString("/meshes/%1:listfragments?objectId=%2&header.changeStackId=%3&returnSupervoxelIds=true").arg(mesh).arg(soid).arg("base_cbsplits_noglia");
+//            const auto url = dataset.url.toString().replace("volumes", "objects") + QString("/meshes/%1:listfragments?objectId=%2&header.changeStackId=%3&returnSupervoxelIds=true").arg(mesh).arg(soid).arg("base_cbsplits_noglia");
+            const auto url = dataset.url.toString().replace("volumes", "objects") + QString("/meshes/%1:listfragments?objectId=%2&header.changeStackId=%3&returnSupervoxelIds=true").arg(mesh).arg(soid).arg("np_test");
     //        const QString json(R"json({"metadata":{"geometry":{"scale":%1,"corner":"%2,%3,%4","size":"%5,%5,1"},"timeStamp":"%6","value":"%7","comment":"it’s always good to bring a towel","computerGenerated":false},"blob":{"patchBlobFormat":"PNG","data":"%8",}})json");
     //        const auto payload = json.arg(scale).arg(inmagCoord.x).arg(inmagCoord.y).arg(inmagCoord.z + offset).arg(dataset.cubeEdgeLength).arg(QDateTime::currentSecsSinceEpoch()).arg(so.first).arg(QString{buffer.data().toBase64()}).toUtf8();
 
@@ -326,14 +327,10 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
                 const auto fragidsv = QJsonDocument::fromJson(data).object()["fragmentKey"].toArray().toVariantList();
                 const auto soidsv = QJsonDocument::fromJson(data).object()["supervoxelId"].toArray().toVariantList();
                 qDebug() << "foo" << soid << reply->error() << reply->errorString() << fragidsv.size() << soidsv.size() << timer.elapsed() << "ms";
-                QHash<QString, QString> fragids;
+                QSet<QString> fragids;
                 for (std::size_t i{0}; i < fragidsv.size(); ++i) {
-                    if (fragids.contains(fragidsv[i].toString())) {
-                        if (fragids[fragidsv[i].toString()] == soidsv[i].toString()) {
-                            qWarning() << fragidsv[i].toString() << fragids[fragidsv[i].toString()] << soidsv[i].toString();
-                        }
-                    }
-                    fragids.insert(fragidsv[i].toString(), soidsv[i].toString());
+//                    qWarning() << fragidsv[i].toString() /*<< fragids[fragidsv[i].toString()]*/ << soidsv[i].toString();
+                    fragids.insert(fragidsv[i].toString());
                 }
                 qDebug() << "frag count" << fragids.size();
 //                while (fragids.size() > 256) {
@@ -346,7 +343,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
                     std::unordered_set<QNetworkReply*> replies;
                 };
                 static std::unordered_map<std::uint64_t, mesh_data_t> mesh_data;
-                if (!fragids.empty()) for (auto fragid : fragids.keys()) {
+                if (!fragids.empty()) for (auto fragid : fragids) {
                     QJsonObject request;
                     QJsonArray batches;
                     QJsonObject frags;
@@ -432,6 +429,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
                                 toMerge.erase(treeIt);
                                 createMergedTree();
                             }
+                            mesh_data.erase(oid);
                             qDebug().noquote() << timer.restart() << "ms";
                         }
                     });
