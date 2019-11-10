@@ -316,7 +316,8 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
             assert(Segmentation::singleton().objects[oidx].subobjects.size() != 0);
             const auto soid = Segmentation::singleton().objects[oidx].subobjects.front().get().id;
 //            const auto url = dataset.url.toString().replace("volumes", "objects") + QString("/meshes/%1:listfragments?objectId=%2&header.changeStackId=%3&returnSupervoxelIds=true").arg(mesh).arg(soid).arg("base_cbsplits_noglia");
-            const auto url = dataset.url.toString().replace("volumes", "objects") + QString("/meshes/%1:listfragments?objectId=%2&header.changeStackId=%3&returnSupervoxelIds=true").arg(mesh).arg(soid).arg("np_test");
+//            const auto url = dataset.url.toString().replace("volumes", "objects") + QString("/meshes/%1:listfragments?objectId=%2&header.changeStackId=%3&returnSupervoxelIds=true").arg(mesh).arg(soid).arg("np_test");
+            const auto url = dataset.url.toString().replace("volumes", "objects") + QString("/meshes/%1:listfragments?objectId=%2&returnSupervoxelIds=true").arg(mesh).arg(soid);
     //        const QString json(R"json({"metadata":{"geometry":{"scale":%1,"corner":"%2,%3,%4","size":"%5,%5,1"},"timeStamp":"%6","value":"%7","comment":"it’s always good to bring a towel","computerGenerated":false},"blob":{"patchBlobFormat":"PNG","data":"%8",}})json");
     //        const auto payload = json.arg(scale).arg(inmagCoord.x).arg(inmagCoord.y).arg(inmagCoord.z + offset).arg(dataset.cubeEdgeLength).arg(QDateTime::currentSecsSinceEpoch()).arg(so.first).arg(QString{buffer.data().toBase64()}).toUtf8();
 
