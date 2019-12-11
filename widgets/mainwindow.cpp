@@ -168,6 +168,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         networkProgressBar.setValue(bytesFinished);
     });
     statusBar()->addWidget(&networkProgressBar);
+    networkProgressBar.setMaximumWidth(networkProgressBar.sizeHint().width());
     statusBar()->addWidget(&networkProgressAbortButton);
     statusBar()->addWidget(&cursorPositionLabel);
 
