@@ -30,16 +30,22 @@ void marchingCubes(std::unordered_map<U, std::unordered_map<floatCoordinate, int
     const auto rowSize = dims[0];
     const auto sliceSize = rowSize * dims[1];
 
-    for (std::size_t z = 0; z < (dims[2] - 1); ++z) {
+    const auto min = Annotation::singleton().movementAreaMin / Dataset::current().scaleFactor;
+    const auto max = Annotation::singleton().movementAreaMax / Dataset::current().scaleFactor;
+    auto origin2 = Coordinate(origin[0], origin[1], origin[2]) / Dataset::current().scale;
+    const auto extent2 = max - origin2;
+    origin2 = min - origin2;
+
+    for (int z = std::max(origin2.z, 0); z < std::min(extent2.z, static_cast<int>(dims[2] - 1)); ++z) {
         const auto zOffset = z * sliceSize;
         std::array<std::array<double, 3>, 8> pts;
         pts[0][2] = origin[2] + (z + extent[4]) * spacing[2];
         const auto znext = pts[0][2] + spacing[2];
-        for (std::size_t y = 0; y < (dims[1] - 1); ++y) {
+        for (int y = std::max(origin2.y, 0); y < std::min(extent2.y, static_cast<int>(dims[1] - 1)); ++y) {
             const auto yOffset = y * rowSize;
             pts[0][1] = origin[1] + (y + extent[2]) * spacing[1];
             const auto ynext = pts[0][1] + spacing[1];
-            for (std::size_t x = 0; x < (dims[0] - 1); ++x) {
+            for (int x = std::max(origin2.x, 0); x < std::min(extent2.x, static_cast<int>(dims[0] - 1)); ++x) {
                 // get scalar values
                 const auto idx = x + yOffset + zOffset;
                 std::array<T, 8> cubeVals;
