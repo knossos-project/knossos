@@ -15,6 +15,7 @@
 #include <QProgressDialog>
 #include <QObject>
 #include <QtConcurrentMap>
+#include <QtConcurrentRun>
 
 #include <snappy.h>
 
@@ -223,7 +224,14 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
     QObject::connect(&watcher, &decltype(watcher)::progressValueChanged, &progress, &QProgressDialog::setValue);
     QObject::connect(&watcher, &decltype(watcher)::finished, [&pause](){ pause.exit();} );
     QObject::connect(&progress, &QProgressDialog::canceled, &watcher, &decltype(watcher)::cancel);
-    watcher.setFuture(QtConcurrent::map(threadids, processCube));
+    QThreadPool pool;
+    pool.setMaxThreadCount(1);
+    watcher.setFuture(QtConcurrent::run(&pool, [&](){
+        for (const auto id : threadids) {
+            processCube(id);
+        }
+    }));
+//    watcher.setFuture(QtConcurrent::map(threadids, processCube));
     pause.exec();
 
     progress.setLabelText(progress.labelText() + QObject::tr("\nFinalizing …"));
