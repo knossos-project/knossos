@@ -128,9 +128,8 @@ bool loginGuardMsg() {
 
 void TaskManagementWidget::updateAndRefreshWidget() {
     WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
-    setCursor(Qt::BusyCursor);
+    LoadingCursor loadingcursor;
     const auto res = Network::singleton().refresh(baseUrl + "/session/");
-    setCursor(Qt::ArrowCursor);
 
     const auto jmap = QJsonDocument::fromJson(res.second.toUtf8()).object();
     if (res.first && !jmap.isEmpty()) {
@@ -196,9 +195,8 @@ void TaskManagementWidget::loginButtonClicked(QUrl host, const QString & usernam
     }
     baseUrl = host.toString() + api;// host changed, update url
     WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
-    setCursor(Qt::BusyCursor);
+    LoadingCursor loadingcursor;
     const auto res = Network::singleton().login(baseUrl + "/login/", username, password);
-    setCursor(Qt::ArrowCursor);
 
     if (res.first) {
         taskLoginWidget.host = host;//login was successful → save host
@@ -211,9 +209,8 @@ void TaskManagementWidget::loginButtonClicked(QUrl host, const QString & usernam
 
 void TaskManagementWidget::logout() {
     WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
-    setCursor(Qt::BusyCursor);
+    LoadingCursor loadingcursor;
     const auto res = Network::singleton().refresh(baseUrl + "/logout/");
-    setCursor(Qt::ArrowCursor);
 
     if (handleError(res)) {
         hide();
@@ -262,25 +259,23 @@ void TaskManagementWidget::loadLastSubmitButtonClicked() {
     }
     Annotation::singleton().clearAnnotation();
     WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
-    setCursor(Qt::BusyCursor);
+    LoadingCursor loadingcursor;
     const auto res = Network::singleton().getFile(baseUrl + "/current_file/");
 
     if (handleError({res.first, res.second.second})) {
         saveAndLoadFile(res.second.first, res.second.second);
     }
-    setCursor(Qt::ArrowCursor);
 }
 
 void TaskManagementWidget::startNewTaskButtonClicked() {
     WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
-    setCursor(Qt::BusyCursor);
+    LoadingCursor loadingcursor;
     const auto res = Network::singleton().getPost(baseUrl + "/new_task/");
 
     if (handleError({res.first, res.second.second})) {
         updateAndRefreshWidget();//task infos changed
         saveAndLoadFile(res.second.first, res.second.second);
     }
-    setCursor(Qt::ArrowCursor);
 }
 
 void TaskManagementWidget::submitFinal() {
@@ -328,9 +323,8 @@ bool TaskManagementWidget::submit(const bool final, const bool valid) {
     state->viewer->window->save();//save file to submit
 
     WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
-    setCursor(Qt::BusyCursor);
+    LoadingCursor loadingcursor;
     auto res = Network::singleton().submitHeidelbrain(baseUrl + "/submit/", Annotation::singleton().annotationFilename, submitCommentEdit.text(), final, valid);
-    setCursor(Qt::ArrowCursor);
 
     if (handleError(res, res.second)) {
         submitCommentEdit.clear();//clean comment if submit was successful

@@ -72,7 +72,7 @@ SnapshotViewer::SnapshotViewer(const QImage & image, const QString & info, const
         if (path.isEmpty() == false) {
             QFileInfo info(path);
             this->saveDir = info.absolutePath() + "/";
-            setCursor(Qt::BusyCursor);
+            LoadingCursor loadingcursor;
             if (!imageLabel.pixmap.save(path)) {
                 QMessageBox errorMsg{QApplication::activeWindow()};
                 errorMsg.setIcon(QMessageBox::Critical);
@@ -82,7 +82,6 @@ SnapshotViewer::SnapshotViewer(const QImage & image, const QString & info, const
                 close();
             }
         }
-        setCursor(Qt::ArrowCursor);
     });
 }
 
