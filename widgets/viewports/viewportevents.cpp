@@ -113,11 +113,7 @@ void ViewportOrtho::handleMouseHover(const QMouseEvent *event) {
     auto coord = getCoordinateFromOrthogonalClick(event->pos(), *this);
     emit cursorPositionChanged(coord, viewportType);
     auto subObjectId = readVoxel(coord);
-    Segmentation::singleton().hoverSubObject(subObjectId);
     EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseHover, state->signalRelay, coord, subObjectId, viewportType, event);
-    if (Segmentation::singleton().enabled && Segmentation::singleton().hoverVersion) {
-        Segmentation::singleton().mouseFocusedObjectId = Segmentation::singleton().tryLargestObjectContainingSubobject(subObjectId);
-    }
     ViewportBase::handleMouseHover(event);
 }
 

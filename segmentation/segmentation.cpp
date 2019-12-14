@@ -332,6 +332,7 @@ void Segmentation::hoverSubObject(const uint64_t subobject_id) {
         if (iter != std::end(Segmentation::singleton().subobjects)) {
             overlappingObjIndices = iter->second.objects;
         }
+        mouseFocusedObjectId = Segmentation::singleton().tryLargestObjectContainingSubobject(subobject_id);
         emit hoveredSubObjectChanged(hovered_subobject_id = subobject_id, overlappingObjIndices);
     }
 }

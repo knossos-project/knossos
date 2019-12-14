@@ -31,6 +31,7 @@
 #include "mainwindow.h"
 #include "network.h"
 #include "scriptengine/scripting.h"
+#include "segmentation/cubeloader.h"
 #include "skeleton/node.h"
 #include "skeleton/skeleton_dfs.h"
 #include "skeleton/skeletonizer.h"
@@ -293,6 +294,9 @@ void MainWindow::createViewports() {
     resetTextureProperties();
     forEachVPDo([this](ViewportBase & vp) {
         QObject::connect(&vp, &ViewportBase::cursorPositionChanged, this, &MainWindow::updateCursorLabel);
+        QObject::connect(&vp, &ViewportBase::cursorPositionChanged, this, [](const Coordinate & coord){
+            Segmentation::singleton().hoverSubObject(readVoxel(coord));
+        });
         QObject::connect(&vp, &ViewportBase::pasteCoordinateSignal, [this]() { currentPosSpins.pasteButton.click(); });
         QObject::connect(&vp, &ViewportBase::updateZoomWidget, &widgetContainer.zoomWidget, &ZoomWidget::update);
         QObject::connect(&vp, &ViewportBase::snapshotTriggered, &widgetContainer.snapshotWidget, &SnapshotWidget::openForVP);
