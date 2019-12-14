@@ -178,6 +178,7 @@ struct ViewerState {
     int showIntersections{false};
     bool showScalebar{false};
     bool enableArbVP{false};
+    bool showVpPlanes{true};
     bool showXYplane{true};
     bool showXZplane{true};
     bool showZYplane{true};

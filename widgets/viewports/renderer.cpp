@@ -1462,17 +1462,19 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glEnable(GL_TEXTURE_2D);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glColor4f(1., 1., 1., 1.);
-        if (state->viewerState->showXYplane && state->viewer->window->viewportXY->isVisible()) {
-            renderArbitrarySlicePane(*state->viewer->window->viewportXY, options);
-        }
-        if (state->viewerState->showXZplane && state->viewer->window->viewportXZ->isVisible()) {
-            renderArbitrarySlicePane(*state->viewer->window->viewportXZ, options);
-        }
-        if (state->viewerState->showZYplane && state->viewer->window->viewportZY->isVisible()) {
-            renderArbitrarySlicePane(*state->viewer->window->viewportZY, options);
-        }
-        if (state->viewerState->showArbplane && state->viewer->window->viewportArb->isVisible()) {
-            renderArbitrarySlicePane(*state->viewer->window->viewportArb, options);
+        if (state->viewerState->showVpPlanes) {
+            if (state->viewerState->showXYplane && state->viewer->window->viewportXY->isVisible()) {
+                renderArbitrarySlicePane(*state->viewer->window->viewportXY, options);
+            }
+            if (state->viewerState->showXZplane && state->viewer->window->viewportXZ->isVisible()) {
+                renderArbitrarySlicePane(*state->viewer->window->viewportXZ, options);
+            }
+            if (state->viewerState->showZYplane && state->viewer->window->viewportZY->isVisible()) {
+                renderArbitrarySlicePane(*state->viewer->window->viewportZY, options);
+            }
+            if (state->viewerState->showArbplane && state->viewer->window->viewportArb->isVisible()) {
+                renderArbitrarySlicePane(*state->viewer->window->viewportArb, options);
+            }
         }
         // colored slice boundaries
         if (options.vp3dSliceBoundaries) {

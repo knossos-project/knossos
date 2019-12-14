@@ -44,6 +44,7 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
     planesLayout.addWidget(&showXZPlaneCheckBox);
     planesLayout.addWidget(&showZYPlaneCheckBox);
     planesLayout.addWidget(&showArbPlaneCheckBox);
+    planesBox.setCheckable(true);
     planesBox.setLayout(&planesLayout);
     boundaryLayout.addWidget(&boundariesPixelRadioBtn);
     boundaryLayout.addWidget(&boundariesPhysicalRadioBtn);
@@ -80,6 +81,7 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
     });
 
     // 3D viewport
+    QObject::connect(&planesBox, &QGroupBox::clicked, [](bool checked) { state->viewerState->showVpPlanes = checked; });
     QObject::connect(&showXYPlaneCheckBox, &QCheckBox::clicked, [](bool checked) { state->viewerState->showXYplane = checked; });
     QObject::connect(&showXZPlaneCheckBox, &QCheckBox::clicked, [](bool checked) { state->viewerState->showXZplane = checked; });
     QObject::connect(&showZYPlaneCheckBox, &QCheckBox::clicked, [](bool checked) { state->viewerState->showZYplane = checked; });
@@ -99,6 +101,7 @@ void ViewportTab::saveSettings(QSettings & settings) const {
     settings.setValue(SHOW_VP_DECORATION, showVPDecorationCheckBox.isChecked());
     settings.setValue(DRAW_INTERSECTIONS_CROSSHAIRS, drawIntersectionsCrossHairCheckBox.isChecked());
     settings.setValue(ADD_ARB_VP, addArbVPCheckBox.isChecked());
+    settings.setValue(SHOW_VP_PLANES, planesBox.isChecked());
     settings.setValue(SHOW_XY_PLANE, showXYPlaneCheckBox.isChecked());
     settings.setValue(SHOW_XZ_PLANE, showXZPlaneCheckBox.isChecked());
     settings.setValue(SHOW_ZY_PLANE, showZYPlaneCheckBox.isChecked());
@@ -116,6 +119,8 @@ void ViewportTab::loadSettings(const QSettings & settings) {
     drawIntersectionsCrossHairCheckBox.clicked(drawIntersectionsCrossHairCheckBox.isChecked());
     addArbVPCheckBox.setChecked(settings.value(ADD_ARB_VP, false).toBool());
     addArbVPCheckBox.clicked(addArbVPCheckBox.isChecked());
+    planesBox.setChecked(settings.value(SHOW_VP_PLANES, true).toBool());
+    planesBox.clicked(planesBox.isChecked());
     showXYPlaneCheckBox.setChecked(settings.value(SHOW_XY_PLANE, true).toBool());
     showXYPlaneCheckBox.clicked(showXYPlaneCheckBox.isChecked());
     showXZPlaneCheckBox.setChecked(settings.value(SHOW_XZ_PLANE, true).toBool());

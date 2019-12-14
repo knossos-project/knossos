@@ -116,6 +116,7 @@ const QString RENDER_VOLUME = "render_volume";
 const QString ROTATION_CENTER = "rotation_center2";// rotation_center was used with different values in 4.1.2 ini
 const QString SHOW_ARB_PLANE = "show_arb_plane";
 const QString SHOW_PHYSICAL_BOUNDARIES = "show_physical_boundaries";
+const QString SHOW_VP_PLANES = "show_vp_planes";
 const QString SHOW_SCALEBAR = "show_scalebar";
 const QString SHOW_VP_DECORATION = "show_vp_decoration";
 const QString SHOW_XY_PLANE = "show_xy_plane";
