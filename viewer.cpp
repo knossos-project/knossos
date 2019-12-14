@@ -971,8 +971,8 @@ void Viewer::updateCurrentPosition() {
 
 void Viewer::setPosition(const floatCoordinate & pos, UserMoveType userMoveType, const Coordinate & viewportNormal) {
     const auto deltaPos = pos - state->viewerState->currentPosition;
-    Viewer::userMoveClear();// we have an exact position to move to → clear all residuals
     userMove(deltaPos, userMoveType, viewportNormal);
+    userMoveRound(userMoveType, viewportNormal);
 }
 
 void Viewer::setPositionWithRecentering(const Coordinate &pos) {
