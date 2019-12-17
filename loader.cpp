@@ -494,7 +494,9 @@ void Loader::Worker::cleanup(const Coordinate center) {
 void Loader::Controller::startLoading(const Coordinate & center, const UserMoveType userMoveType, const floatCoordinate & direction) {
     worker->isFinished = false;
     workerThread.start();
-    emit loadSignal(++loadingNr, center, userMoveType, direction, Dataset::datasets, Segmentation::singleton().layerId, state->M);
+    if (!Dataset::datasets.empty()) {
+        emit loadSignal(++loadingNr, center, userMoveType, direction, Dataset::datasets, Segmentation::singleton().layerId, state->M);
+    }
 }
 
 void Loader::Worker::broadcastProgress(bool startup) {
