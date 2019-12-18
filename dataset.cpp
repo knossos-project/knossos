@@ -235,6 +235,9 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
     }
 
     for (auto && info : infos) {
+        if (info.scales.empty()) {
+            return {};
+        }
         if (info.url.isEmpty()) {
             info.url = QUrl::fromLocalFile(QFileInfo(configUrl.toLocalFile()).absoluteDir().absolutePath());
         }

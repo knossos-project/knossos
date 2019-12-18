@@ -168,12 +168,16 @@ void DatasetLoadWidget::updateDatasetInfo() {
     bad = bad || (dataset = tableWidget.selectedItems().front()->text()).isEmpty();
     decltype(Network::singleton().refresh(std::declval<QUrl>())) download;
     bad = bad || !(download = Network::singleton().refresh(dataset)).first;
+    infoLabel.setText("");
     if (bad) {
-        infoLabel.setText("");
         return;
     }
 
-    const auto datasetinfo = Dataset::parse(dataset, download.second).front();
+    const auto datasetinfos = Dataset::parse(dataset, download.second);
+    if (datasetinfos.empty()) {
+        return;
+    }
+    const auto datasetinfo = datasetinfos.front();
 
     //make sure supercubeedge is small again
     auto supercubeedge = (fovSpin.value() + cubeEdgeSpin.value()) / datasetinfo.cubeEdgeLength;
@@ -327,6 +331,18 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     }
 
     auto layers = Dataset::parse(path, data);
+    if (layers.empty()) {
+        if (!silent) {
+            QMessageBox warning{QApplication::activeWindow()};
+            warning.setIcon(QMessageBox::Warning);
+            warning.setText(tr("Unable to load Dataset."));
+            warning.setInformativeText(tr("Failed to parse config file from %1").arg(path.toString()));
+            warning.exec();
+            open();
+        }
+        qDebug() << "failed parsing config at" << path;
+        return false;
+    }
     if (Dataset::isHeidelbrain(path)) {
         try {
             layers.front().checkMagnifications();
