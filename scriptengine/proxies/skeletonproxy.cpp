@@ -369,12 +369,20 @@ bool SkeletonProxy::set_branch_node(quint64 node_id) {
     return true;
 }
 
-QList<nodeListElement *> *SkeletonProxy::selected_nodes() {
-    return new QList<nodeListElement *>(QVector<nodeListElement *>::fromStdVector(state->skeletonState->selectedNodes).toList());
+QList<nodeListElement *> SkeletonProxy::selected_nodes() {
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
+    return {std::begin(state->skeletonState->selectedNodes), std::end(state->skeletonState->selectedNodes)};
+#else
+    return QVector<nodeListElement *>::fromStdVector(state->skeletonState->selectedNodes).toList();
+#endif
 }
 
 void SkeletonProxy::select_nodes(QList<nodeListElement *> nodes) {
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
+    Skeletonizer::singleton().selectNodes({std::begin(nodes), std::end(nodes)});
+#else
     Skeletonizer::singleton().selectNodes(nodes.toSet());
+#endif
 }
 
 QString SkeletonProxy::help() {

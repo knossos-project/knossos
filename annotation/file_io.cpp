@@ -170,7 +170,7 @@ void annotationFileLoad(const QString & filename, bool mergeSkeleton, const QStr
 }
 
 void annotationFileSave(const QString & filename, const bool onlySelectedTrees, const bool saveTime, const bool saveDatasetPath) {
-    QTime time;
+    QElapsedTimer time;
     time.start();
     QuaZip archive_write(filename);
     if (archive_write.open(QuaZip::mdCreate)) {
@@ -263,7 +263,7 @@ void annotationFileSave(const QString & filename, const bool onlySelectedTrees, 
         }
         qDebug() << "saving ply" << time.nsecsElapsed() / 1e9;
         if (!onlySelectedTrees) {
-            QTime cubeTime;
+            QElapsedTimer cubeTime;
             cubeTime.start();
             const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
             for (std::size_t i = 0; i < cubes.size(); ++i) {
