@@ -48,8 +48,8 @@ bool insideCurrentSupercube(const Coordinate & coord, const Coordinate & center,
 bool currentlyVisible(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const Coordinate & cubeSize) {
     const bool valid = insideCurrentSupercube(coord, center, cubesPerDimension, cubeSize);
     const int xmin = std::max(0, std::min(Dataset::current().boundary.x, center.x - center.x % cubeSize.x));
-    const int ymin = std::max(0, std::min(Dataset::current().boundary.x, center.y - center.y % cubeSize.y));
-    const int zmin = std::max(0, std::min(Dataset::current().boundary.x, center.z - center.z % cubeSize.z));
+    const int ymin = std::max(0, std::min(Dataset::current().boundary.y, center.y - center.y % cubeSize.y));
+    const int zmin = std::max(0, std::min(Dataset::current().boundary.z, center.z - center.z % cubeSize.z));
     const bool xvalid = valid & inRange(coord.x, xmin, xmin + cubeSize.x);
     const bool yvalid = valid & inRange(coord.y, ymin, ymin + cubeSize.y);
     const bool zvalid = valid & inRange(coord.z, zmin, zmin + cubeSize.z);
