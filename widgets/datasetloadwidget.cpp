@@ -535,9 +535,8 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         }
     }
 
-    qDebug() << "loading dataset" << datasetUrl;
-
     datasetUrl = {path};//remember config url
+    qDebug() << "loading dataset" << datasetUrl;
     Loader::Controller::singleton().suspendLoader();//we change variables the loader uses
     const bool changedBoundaryOrScale = layers.front().boundary != Dataset::current().boundary || layers.front().scale != Dataset::current().scale;
 
