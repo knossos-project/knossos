@@ -170,6 +170,7 @@ if(PythonQt_QtAll)
         string(REGEX REPLACE [;]*DSServicePlugin[;]* ";" qtmultimedia_static_plugins_new "${qtmultimedia_static_plugins}")
         set_target_properties(Qt5::Multimedia PROPERTIES STATIC_PLUGINS "${qtmultimedia_static_plugins_new}")
     endif()
+    set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY QT_NO_PLUGINS Qt5::DSServicePlugin)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
