@@ -19,7 +19,7 @@
     For further information, visit https://knossos.app
     or contact knossosteam@gmail.com
 ]]
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.15)
 project(knossos)
 
 if(NOT CMAKE_BUILD_TYPE)#prevent accidental debug builds
@@ -172,7 +172,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 endif()
 
 target_link_libraries(${PROJECT_NAME}
-    Boost::boost
+    Boost::headers
     OpenGL::GLU
     Qt5::Concurrent
     Qt5::Core
