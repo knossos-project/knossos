@@ -127,7 +127,6 @@ add_custom_command(OUTPUT ${cheatsheet_dir}
 add_custom_target(cheatsheet_dir_target DEPENDS ${cheatsheet_dir}) # output is used as input several times
 
 file(GLOB cheatsheet_pages resources/cheatsheet/*.html.in)
-add_custom_target(cheatsheet_html)
 foreach(page ${cheatsheet_pages})
     get_filename_component(page_name ${page} NAME_WE) #name without path or extension
     add_custom_command(OUTPUT ${cheatsheet_dir}/${page_name}.html
@@ -135,8 +134,7 @@ foreach(page ${cheatsheet_pages})
         COMMENT "Preprocessing ${page}"
         DEPENDS ${page} cheatsheet_dir_target
     )
-    add_custom_target(cheatsheet${page_name} DEPENDS ${cheatsheet_dir}/${page_name}.html) # extra add_custom_command prevents infinite loop when running cmake --build
-    add_dependencies(cheatsheet_html cheatsheet${page_name})
+    list(APPEND genpages ${cheatsheet_dir}/${page_name}.html)
 endforeach()
 
 add_custom_command(OUTPUT ${cheatsheet_dir}/cheatsheet.qrc
@@ -145,12 +143,11 @@ add_custom_command(OUTPUT ${cheatsheet_dir}/cheatsheet.qrc
     COMMAND ${CMAKE_COMMAND} -E rename ../cheatsheet.qrc ${cheatsheet_dir}/cheatsheet.qrc
     WORKING_DIRECTORY ${cheatsheet_dir}
     COMMENT "Creating cheatsheet.qrc"
-    DEPENDS cheatsheet_html
+    DEPENDS ${genpages}
 )
 
 add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE ${SRC_LIST} buildinfo.h)
 set_source_files_properties(${cheatsheet_dir}/cheatsheet.qrc PROPERTIES
-    GENERATED ON
     AUTORCC_OPTIONS "--root;/cheatsheet"
 )
 set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY AUTOGEN_TARGET_DEPENDS ${cheatsheet_dir}/cheatsheet.qrc)
