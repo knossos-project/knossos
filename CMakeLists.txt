@@ -64,8 +64,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_AUTOMOC ${AUTOGEN})
 set(CMAKE_AUTORCC ${AUTOGEN})#resource files
 set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTOSTATICPLUGINS ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+if(NOT BUILD_SHARED_LIBS) # try to force search for static libraries if BUILD_SHARED_LIBS was disabled
+    list(PREPEND CMAKE_FIND_LIBRARY_SUFFIXES .a .lib) # prefer static (*.a) over import (*.dll.a) libraries
+endif()
 
 find_package(Qt5 5.10 REQUIRED COMPONENTS Concurrent Core Gui Network Widgets) # QJsonValue::operator[]
 
@@ -78,9 +81,6 @@ endif()
 option(BUILD_SHARED_LIBS "disable to find static versions of all libraries" ON)
 if(NOT BUILD_SHARED_LIBS AND NOT ${QtCoreLibraryType} MATCHES STATIC_LIBRARY)
     message(FATAL_ERROR "BUILD_SHARED_LIBS has been set to FALSE, but the Qt version found is not static")
-endif()
-if(NOT BUILD_SHARED_LIBS) # try to force search for static libraries from here on if BUILD_SHARED_LIBS was disabled
-    set(CMAKE_FIND_LIBRARY_SUFFIXES .a .lib ${CMAKE_FIND_LIBRARY_SUFFIXES}) # prefer static (*.a) over import (*.dll.a) libraries
 endif()
 
 set(pythonqt Qt5Python27 CACHE STRING "PythonQt flavour to search for")
@@ -162,11 +162,6 @@ if(PythonQt_QtAll)
     target_compile_definitions(${PROJECT_NAME} PRIVATE "QtAll")
     target_link_libraries(${PROJECT_NAME} ${pythonqt}_QtAll)
     # remove the DSServicePlugin as it will depend on multimedia libraries (i.e. evc.dll) only available in non-N editions of Windows
-    get_target_property(qtmultimedia_static_plugins Qt5::Multimedia STATIC_PLUGINS)
-    if(qtmultimedia_static_plugins)
-        string(REGEX REPLACE [;]*DSServicePlugin[;]* ";" qtmultimedia_static_plugins_new "${qtmultimedia_static_plugins}")
-        set_target_properties(Qt5::Multimedia PROPERTIES STATIC_PLUGINS "${qtmultimedia_static_plugins_new}")
-    endif()
     set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY QT_NO_PLUGINS Qt5::DSServicePlugin)
 endif()
 
