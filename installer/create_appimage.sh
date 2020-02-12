@@ -16,7 +16,7 @@ cd deploy
 ../deploy-tools/linuxdeployqt knossos -bundle-non-qt-libs
 
 mkdir -p glibc
-tar -xf $(find /var/cache/pacman/pkg -iname $(expac "%n-%v-x86_64.pkg.tar.xz" glibc)) -C glibc
+tar -xf $(find /var/cache/pacman/pkg -iname $(expac "%n-%v-x86_64.pkg.tar.zst" glibc)) -C glibc
 
 patchelf --set-interpreter glibc/usr/lib/ld-*.so knossos
 patchelf --add-needed libpthread.so.0 knossos
