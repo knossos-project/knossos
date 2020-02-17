@@ -93,6 +93,8 @@ void Loader::Controller::unloadCurrentMagnification() {
     // and loader is suspended when updateDatasetMag tries to load a new dataset
     if (workerThread.isRunning()) {
         emit unloadCurrentMagnificationSignal();
+    } else {
+        worker->unloadCurrentMagnification();
     }
 }
 
