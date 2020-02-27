@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef SEGMENTATIONPROXY_H
-#define SEGMENTATIONPROXY_H
+#pragma once
 
 #include "coordinate.h"
 
@@ -59,5 +58,3 @@ public slots:
     void jump_to_object(const quint64 objId);
     QList<int> object_location(const quint64 objId);
 };
-
-#endif // SEGMENTATIONPROXY_H

@@ -1,5 +1,4 @@
-#ifndef COORDINATESPINS_H
-#define COORDINATESPINS_H
+#pragma once
 
 #include "coordinate.h"
 
@@ -34,5 +33,3 @@ public:
 signals:
     void coordinatesChanged();
 };
-
-#endif // COORDINATESPINS_H

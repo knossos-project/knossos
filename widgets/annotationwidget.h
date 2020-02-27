@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef ANNOTATIONWIDGET_H
-#define ANNOTATIONWIDGET_H
+#pragma once
 
 #include "tools/segmentationview.h"
 #include "tools/skeletonview.h"
@@ -44,5 +43,3 @@ public:
     void saveSettings();
     void loadSettings();
 };
-
-#endif // ANNOTATIONWIDGET_H

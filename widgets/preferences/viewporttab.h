@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef VIEWPORTTAB_H
-#define VIEWPORTTAB_H
+#pragma once
 
 #include <QButtonGroup>
 #include <QCheckBox>
@@ -73,5 +72,3 @@ class ViewportTab : public QWidget {
 public:
     explicit ViewportTab(QWidget *parent = nullptr);
 };
-
-#endif // VIEWPORTTAB_H

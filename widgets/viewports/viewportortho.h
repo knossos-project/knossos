@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef VIEWPORTORTHO_H
-#define VIEWPORTORTHO_H
+#pragma once
 
 #include "coordinate.h"
 #include "mesh/mesh.h"
@@ -100,5 +99,3 @@ public slots:
     virtual void zoomIn() override { zoom(zoomStep()); }
     virtual void zoomOut() override { zoom(1.f/zoomStep()); }
 };
-
-#endif // VIEWPORTORTHO_H

@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef TASKMANAGEMENTWIDGET_H
-#define TASKMANAGEMENTWIDGET_H
+#pragma once
 
 #include "taskloginwidget.h"
 #include "widgets/DialogVisibilityNotify.h"
@@ -91,5 +90,3 @@ public slots:
 private:
     bool handleError(const QPair<bool, QString> & res, const QString & successText = "");
 };
-
-#endif//TASKMANAGEMENTWIDGET_H

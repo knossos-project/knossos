@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef TREELISTDECORATOR_H
-#define TREELISTDECORATOR_H
+#pragma once
 
 #include <QColor>
 #include <QList>
@@ -44,5 +43,3 @@ public slots:
     QString comment(treeListElement *self);
     static QString static_Tree_help();
 };
-
-#endif // TREELISTDECORATOR_H

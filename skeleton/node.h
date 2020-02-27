@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef NODE_H
-#define NODE_H
+#pragma once
 
 #include "property_query.h"
 #include "widgets/viewports/viewportbase.h"
@@ -76,4 +75,3 @@ public:
     //reference to the segment inside the target node
     std::list<segmentListElement>::iterator sisterSegment;
 };
-#endif//NODE_H

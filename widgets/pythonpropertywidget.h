@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef PYTHONPROPERTYWIDGET_H
-#define PYTHONPROPERTYWIDGET_H
+#pragma once
 
 #include "widgets/DialogVisibilityNotify.h"
 
@@ -56,5 +55,3 @@ public slots:
     void workingDirectoryButtonClicked();
     void appendCustomPathButtonClicked();
 };
-
-#endif // PYTHONPROPERTYWIDGET_H

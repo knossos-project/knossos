@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 #include "annotation/annotation.h"
 #include "cheatsheet.h"
@@ -297,5 +296,3 @@ auto createGlobalAction = [](auto parent, auto key, auto todo){
     QObject::connect(&action, &QAction::triggered, todo);
     parent->addAction(&action);
 };
-
-#endif // MAINWINDOW_H

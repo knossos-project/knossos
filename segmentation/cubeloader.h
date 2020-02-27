@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef CUBELOADER_H
-#define CUBELOADER_H
+#pragma once
 
 #include "coordinate.h"
 
@@ -43,5 +42,3 @@ void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush
 void coordCubesMarkChanged(const CubeCoordSet & cubeChangeSet);
 CubeCoordSet processRegionByStridedBuf(const Coordinate & globalFirst, const Coordinate &  globalLast, char * data, const Coordinate & strides, bool isWrite, bool markChanged);
 void listFill(const Coordinate & centerPos, const brush_t & brush, const uint64_t fillsoid, const std::unordered_set<Coordinate> & voxels);
-
-#endif//CUBELOADER_H

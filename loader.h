@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef LOADER_H
-#define LOADER_H
+#pragma once
 
 #include "coordinate.h"
 #include "dataset.h"
@@ -163,5 +162,3 @@ signals:
     void snappyCacheSupplySnappySignal(const CoordOfCube, const quint64 cubeMagnification, const std::string cube);
 };
 }//namespace Loader
-
-#endif//LOADER_H

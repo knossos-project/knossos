@@ -1,5 +1,4 @@
-#ifndef RENDEROPTIONS_H
-#define RENDEROPTIONS_H
+#pragma once
 
 struct RenderOptions {
     enum class SelectionPass { NoSelection, NodeID0_24Bits, NodeID24_48Bits, NodeID48_64Bits };
@@ -27,5 +26,3 @@ struct RenderOptions {
     bool vp3dSliceIntersections{true};
     SelectionPass selectionPass{SelectionPass::NoSelection};
 };
-
-#endif // RENDEROPTIONS_H

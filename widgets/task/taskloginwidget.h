@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef TASKLOGINWIDGET_H
-#define TASKLOGINWIDGET_H
+#pragma once
 
 #include <QDialog>
 #include <QDialogButtonBox>
@@ -51,5 +50,3 @@ public:
     void saveSettings();
     void setResponse(const QString & message);
 };
-
-#endif // TASKLOGINWIDGET_H

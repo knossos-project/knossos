@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef COMMENTSETTING_H
-#define COMMENTSETTING_H
+#pragma once
 
 #include <QColor>
 
@@ -48,5 +47,3 @@ public:
     static QColor getColor(const QString & comment);
     static float getRadius(const QString & comment);
 };
-
-#endif // COMMENTSETTING_H

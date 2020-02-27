@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef NETWORK_H
-#define NETWORK_H
+#pragma once
 
 #include <QNetworkCookieJar>
 #include <QNetworkAccessManager>
@@ -74,5 +73,3 @@ signals:
     void progressChanged(const qint64 value, const qint64 maxValue);
     void finishedNetworkRequest();
 };
-
-#endif // NETWORK_H

@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef DATASETLOADWIDGET_H
-#define DATASETLOADWIDGET_H
+#pragma once
 
 #include "coordinate.h"
 #include "widgets/DialogVisibilityNotify.h"
@@ -114,5 +113,3 @@ public slots:
     void adaptMemoryConsumption();
     void processButtonClicked();
 };
-
-#endif // DATASETLOADWIDGET_H

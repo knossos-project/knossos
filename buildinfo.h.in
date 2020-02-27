@@ -1,7 +1,4 @@
-#ifndef BUILDINFO_H
-#define BUILDINFO_H
+#pragma once
 
 #define KREVISION "@KREVISION@"
 #define KREVISIONDATE "@KREVISIONDATE@"
-
-#endif//BUILDINFO_H

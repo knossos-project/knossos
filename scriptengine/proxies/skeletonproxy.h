@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef SKELETONPROXY_H
-#define SKELETONPROXY_H
+#pragma once
 
 #include "skeleton/node.h"
 #include "skeleton/tree.h"
@@ -96,5 +95,3 @@ public slots:
 
     static QString help();
 };
-
-#endif // SKELETONPROXY_H

@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef PREFERENCESWIDGET_H
-#define PREFERENCESWIDGET_H
+#pragma once
 
 #include "preferences/savetab.h"
 #include "preferences/datasetsegmentationtab.h"
@@ -52,5 +51,3 @@ public:
     void loadSettings();
     void saveSettings();
 };
-
-#endif // PREFERENCESWIDGET_H

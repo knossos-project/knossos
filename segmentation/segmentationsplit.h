@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef SEGMENTATIONSPLIT_H
-#define SEGMENTATIONSPLIT_H
+#pragma once
 
 #include "coordinate.h"
 
@@ -104,5 +103,3 @@ signals:
 void subobjectBucketFill(const Coordinate & seed, const uint64_t fillsoid, const brush_t & brush, const Coordinate & areaMin, const Coordinate & areaMax);
 void connectedComponent(const Coordinate & seed);
 void verticalSplittingPlane(const Coordinate & seed);
-
-#endif//SEGMENTATIONSPLIT_H

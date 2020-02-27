@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef COORDINATE_H
-#define COORDINATE_H
+#pragma once
 
 #include <QDebug>
 #include <QList>
@@ -261,5 +260,3 @@ struct hash<CoordOfGPUCube> {
     }
 };
 }
-
-#endif

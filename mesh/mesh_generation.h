@@ -1,6 +1,3 @@
-#ifndef MESH_GENERATION_H
-#define MESH_GENERATION_H
+#pragma once
 
 void generateMeshesForSubobjectsOfSelectedObjects();
-
-#endif//MESH_GENERATION_H

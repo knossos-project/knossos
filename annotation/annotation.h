@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef ANNOTATION_H
-#define ANNOTATION_H
+#pragma once
 
 #include "coordinate.h"
 
@@ -124,5 +123,3 @@ signals:
     void clearedAnnotation();
     void movementAreaChanged();
 };
-
-#endif//ANNOTATION_H

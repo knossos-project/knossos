@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef DATASETANDSEGMENTATIONTAB_H
-#define DATASETANDSEGMENTATIONTAB_H
+#pragma once
 
 #include <QCheckBox>
 #include <QGridLayout>
@@ -79,5 +78,3 @@ signals:
     void volumeRenderToggled();
 public slots:
 };
-
-#endif // DATASETANDSEGMENTATIONTAB_H

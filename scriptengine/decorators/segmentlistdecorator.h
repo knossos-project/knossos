@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef SEGMENTLISTDECORATOR_H
-#define SEGMENTLISTDECORATOR_H
+#pragma once
 
 #include <QObject>
 
@@ -42,5 +41,3 @@ public slots:
     quint64 target_id(segmentListElement *self);
     QString static_Segment_help();
 };
-
-#endif // SEGMENTLISTDECORATOR_H

@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef MODEL_HELPER
-#define MODEL_HELPER
+#pragma once
 
 #include <QItemSelection>
 
@@ -81,5 +80,3 @@ auto threeWaySorting = [](auto & table, auto & sortIndex){// emulate ability for
         }
     };
 };
-
-#endif//MODEL_HELPER

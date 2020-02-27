@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef NODELISTDECORATOR_H
-#define NODELISTDECORATOR_H
+#pragma once
 
 #include "coordinate.h"
 #include "skeleton/node.h"
@@ -53,5 +52,3 @@ public slots:
     bool selected(nodeListElement *self);
     QString static_Node_help();
 };
-
-#endif // NODELISTDECORATOR_H

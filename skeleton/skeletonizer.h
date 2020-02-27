@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef SKELETONIZER_H
-#define SKELETONIZER_H
+#pragma once
 
 #include "annotation/annotation.h"
 #include "skeleton/skeleton_dfs.h"
@@ -345,5 +344,3 @@ signals:
     void treeSelectionChangedSignal();
     void resetData();
 };
-
-#endif // SKELETONIZER_H

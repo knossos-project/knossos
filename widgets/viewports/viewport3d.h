@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef VIEWPORT3D_H
-#define VIEWPORT3D_H
+#pragma once
 
 #include "viewportbase.h"
 
@@ -73,5 +72,3 @@ public slots:
     virtual void zoomIn() override { zoom(zoomStep()); }
     virtual void zoomOut() override { zoom(1.f/zoomStep()); }
 };
-
-#endif // VIEWPORT3D_H

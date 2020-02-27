@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef SCRIPTING_H
-#define SCRIPTING_H
+#pragma once
 
 #include "proxies/pythonproxy.h"
 #include "proxies/segmentationproxy.h"
@@ -154,5 +153,3 @@ public slots:
     void setPluginDir(const QString &pluginDir);
     QString getDefaultPluginDir();
 };
-
-#endif // SCRIPTING_H

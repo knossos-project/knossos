@@ -4,8 +4,7 @@
 // Authored in 2015 by Dimitri Diakopoulos (http://www.dimitridiakopoulos.com)
 // https://github.com/ddiakopoulos/tinyply
 
-#ifndef tinyply_h
-#define tinyply_h
+#pragma once
 
 #include <QDataStream>
 #include <QTextStream>
@@ -339,5 +338,3 @@ namespace tinyply {
     };
 
 } // namesapce tinyply
-
-#endif // tinyply_h

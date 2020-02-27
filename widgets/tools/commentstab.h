@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef COMMENTSTAB_H
-#define COMMENTSTAB_H
+#pragma once
 
 #include "commentsetting.h"
 
@@ -69,5 +68,3 @@ signals:
 
 public slots:
 };
-
-#endif // COMMENTSTAB_H

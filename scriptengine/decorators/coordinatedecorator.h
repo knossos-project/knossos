@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef COORDINATEDECORATOR_H
-#define COORDINATEDECORATOR_H
+#pragma once
 
 #include "coordinate.h"
 
@@ -47,5 +46,3 @@ public slots:
 
 
 };
-
-#endif // COORDINATEDECORATOR_H

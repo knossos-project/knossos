@@ -1,5 +1,4 @@
-#ifndef LAYERDIALOG_H
-#define LAYERDIALOG_H
+#pragma once
 
 #include "dataset.h"
 #include "widgets/datasetloadwidget.h"
@@ -84,5 +83,3 @@ public:
 private:
     void updateLayerProperties();
 };
-
-#endif // LAYERDIALOG_H

@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef GUICONSTANTS_H
-#define GUICONSTANTS_H
+#pragma once
 
 #include <vector>
 #include <QString>
@@ -188,5 +187,3 @@ const QString WITH_OVERLAY = "with_overlay";
 const QString WITH_SCALE = "with_scale";
 const QString WITH_SKELETON = "with_skeleton";
 const QString WITH_VP_PLANES = "with_vp_planes";
-
-#endif // GUICONSTANTS_H

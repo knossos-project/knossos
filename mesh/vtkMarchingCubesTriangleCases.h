@@ -12,8 +12,7 @@
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
-#ifndef vtkMarchingCubesTriangleCases_h
-#define vtkMarchingCubesTriangleCases_h
+#pragma once
 //
 // marching cubes case table for generating isosurfaces
 //
@@ -27,5 +26,4 @@ struct /*VTKCOMMONDATAMODEL_EXPORT*/ vtkMarchingCubesTriangleCases
   static vtkMarchingCubesTriangleCases* GetCases();
 };
 #include "vtkMarchingCubesTriangleCases.cxx" // avoid linking an object file
-#endif
 // VTK-HeaderTest-Exclude: vtkMarchingCubesTriangleCases.h

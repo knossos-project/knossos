@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef FloatCoordinateDECORATOR_H
-#define FloatCoordinateDECORATOR_H
+#pragma once
 
 #include "coordinate.h"
 
@@ -50,5 +49,3 @@ public slots:
 
 
 };
-
-#endif // FloatCoordinateDECORATOR_H

@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef VIEWER_H
-#define VIEWER_H
+#pragma once
 
 #include "remote.h"
 #include "slicer/gpucuber.h"
@@ -298,5 +297,3 @@ public slots:
     void setMesh3dAlphaFactor(const float alpha);
     void setMeshSlicingAlphaFactor(const float alpha);
 };
-
-#endif // VIEWER_H

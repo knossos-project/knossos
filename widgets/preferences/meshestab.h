@@ -1,5 +1,4 @@
-#ifndef MESHESTAB_H
-#define MESHESTAB_H
+#pragma once
 
 #include <QCheckBox>
 #include <QGroupBox>
@@ -36,5 +35,3 @@ public:
     void loadSettings(const QSettings & settings);
     void saveSettings(QSettings & settings) const;
 };
-
-#endif // MESHESTAB_H

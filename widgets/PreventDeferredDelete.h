@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef PREVENT_DEFERRED_DELETE_H
-#define PREVENT_DEFERRED_DELETE_H
+#pragma once
 
 #include <QEvent>
 
@@ -38,5 +37,3 @@ class PreventDeferredDelete : public T {
         }
     }
 };
-
-#endif//PREVENT_DEFERRED_DELETE_H

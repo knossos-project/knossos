@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef AUTOSAVETAB_H
-#define AUTOSAVETAB_H
+#pragma once
 
 #include <QButtonGroup>
 #include <QCheckBox>
@@ -65,5 +64,3 @@ public:
     void loadSettings(const QSettings &settings);
     void saveSettings(QSettings &settings);
 };
-
-#endif//AUTOSAVETAB_H

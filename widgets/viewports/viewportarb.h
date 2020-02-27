@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef VIEWPORTARB_H
-#define VIEWPORTARB_H
+#pragma once
 
 #include "viewportortho.h"
 
@@ -39,5 +38,3 @@ public:
 
     virtual float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const override;
 };
-
-#endif // VIEWPORTARB_H

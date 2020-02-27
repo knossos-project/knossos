@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef ACTION_HELPER
-#define ACTION_HELPER
+#pragma once
 
 #include <QAction>
 #include <QClipboard>
@@ -62,5 +61,3 @@ static void addDisabledSeparator(QMenu & contextMenu) {
     contextMenu.addSeparator();
     contextMenu.actions().back()->setEnabled(false);// disable separator for ctx menu to not vanish on click
 }
-
-#endif//ACTION_HELPER

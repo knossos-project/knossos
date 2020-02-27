@@ -1,5 +1,4 @@
-#ifndef CHEATSHEET_H
-#define CHEATSHEET_H
+#pragma once
 
 #include "annotation/annotation.h"
 
@@ -16,5 +15,3 @@ public:
 signals:
     void anchorClicked(const QUrl & link);
 };
-
-#endif // CHEATSHEET_H

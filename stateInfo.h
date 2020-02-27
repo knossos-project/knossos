@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef STATE_INFO_H
-#define STATE_INFO_H
+#pragma once
 
 #include "coordinate.h"
 
@@ -105,5 +104,3 @@ public:
     class SignalRelay * signalRelay;
     struct SkeletonState * skeletonState;
 };
-
-#endif//STATE_INFO_H

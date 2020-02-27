@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef PROFILER_H
-#define PROFILER_H
+#pragma once
 
 #include <deque>
 #include <chrono>
@@ -38,5 +37,3 @@ private:
 	std::deque<double> time_log; // in s
 	std::size_t max_log_len = 60;
 };
-
-#endif//PROFILER_H

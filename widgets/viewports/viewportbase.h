@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef VIEWPORTBASE_H
-#define VIEWPORTBASE_H
+#pragma once
 
 #include "coordinate.h"
 #include "hash_list.h"
@@ -290,5 +289,3 @@ public slots:
     virtual void zoomIn() = 0;
     virtual void zoomOut() = 0;
 };
-
-#endif // VIEWPORTBASE_H

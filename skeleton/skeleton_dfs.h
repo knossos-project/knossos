@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef SKELETON_DFS_H
-#define SKELETON_DFS_H
+#pragma once
 
 #include "skeleton/node.h"
 
@@ -55,5 +54,3 @@ struct TreeTraverser {
     nodeListElement & operator*();
     void next();
 };
-
-#endif//SKELETON_DFS_H

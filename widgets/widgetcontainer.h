@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef WIDGETCONTAINER_H
-#define WIDGETCONTAINER_H
+#pragma once
 
 #include "aboutdialog.h"
 #include "annotationwidget.h"
@@ -83,5 +82,3 @@ struct WidgetContainer {
         zoomWidget.hide();
     }
 };
-
-#endif // WIDGETCONTAINER_H

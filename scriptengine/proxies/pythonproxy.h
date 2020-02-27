@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef PYTHONPROXY_H
-#define PYTHONPROXY_H
+#pragma once
 
 #include "skeleton/node.h"
 #include "viewer.h"
@@ -87,5 +86,3 @@ public slots:
     bool load_style_sheet(const QString &path);
     void set_magnification_lock(const bool locked);
 };
-
-#endif // PYTHONPROXY_H

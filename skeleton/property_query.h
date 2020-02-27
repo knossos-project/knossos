@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef PROPERTY_QUERY_H
-#define PROPERTY_QUERY_H
+#pragma once
 
 #include <QString>
 #include <QVariantHash>
@@ -32,5 +31,3 @@ public:
     QString getComment() const;
     void setComment(const QString & comment);
 };
-
-#endif//PROPERTY_QUERY_H

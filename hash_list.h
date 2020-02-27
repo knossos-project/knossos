@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef HASH_LIST_H
-#define HASH_LIST_H
+#pragma once
 
 #include <functional>
 #include <iterator>
@@ -166,5 +165,3 @@ public:
         return *this;
     }
 };
-
-#endif//HASH_LIST_H

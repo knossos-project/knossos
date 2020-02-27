@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef SEGMENTATION_H
-#define SEGMENTATION_H
+#pragma once
 
 #include "coordinate.h"
 #include "hash_list.h"
@@ -272,5 +271,3 @@ public slots:
     void restoreDefaultColorForSelectedObjects();
     void toggleVolumeRender(const bool render);
 };
-
-#endif // SEGMENTATION_H

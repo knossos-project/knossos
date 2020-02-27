@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef TREE_H
-#define TREE_H
+#pragma once
 
 #include "mesh/mesh.h"
 #include "node.h"
@@ -58,5 +57,3 @@ public:
     QList<nodeListElement *> *getNodes();
     QList<segmentListElement *> *getSegments();
 };
-
-#endif// TREE_H

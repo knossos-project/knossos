@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef SKELETONVIEW_H
-#define SKELETONVIEW_H
+#pragma once
 
 #include "widgets/Spoiler.h"
 #include "widgets/UserOrientableSplitter.h"
@@ -183,5 +182,3 @@ public:
     void jumpToNextTree(const bool forward) const;
     void reverseSynapseDirection();
 };
-
-#endif//SKELETONVIEW_H

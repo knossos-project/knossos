@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef SNAPSHOTWIDGET_H
-#define SNAPSHOTWIDGET_H
+#pragma once
 
 #include "viewports/viewportbase.h"
 #include "widgets/DialogVisibilityNotify.h"
@@ -88,5 +87,3 @@ signals:
     void snapshotDatasetSizeRequest(SnapshotOptions & options);
     void snapshotRequest(const SnapshotOptions & options);
 };
-
-#endif // SNAPSHOTWIDGET_H

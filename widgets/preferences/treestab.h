@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef TREESTAB_H
-#define TREESTAB_H
+#pragma once
 
 #include <QButtonGroup>
 #include <QCheckBox>
@@ -105,5 +104,3 @@ signals:
 public slots:
     void setTreeVisibility(const bool showIn3d, const bool onlySelectedIn3d, const bool showInOrtho, const bool onlySelectedInOrtho);
 };
-
-#endif // TREESTAB_H

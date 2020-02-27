@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef GPUCUBER_H
-#define GPUCUBER_H
+#pragma once
 
 #include "coordinate.h"
 
@@ -94,5 +93,3 @@ public:
     void cubeSubArray(const boost::const_multi_array_ref<elem_type, 3> cube, const int gpucubeedge, const CoordOfGPUCube gpuCoord, const Coordinate offset);
     void cubeSubArray(const void * data, const int cpucubeedge, const int gpucubeedge, const CoordOfGPUCube gpuCoord, const Coordinate offset);
 };
-
-#endif//GPUCUBER_H

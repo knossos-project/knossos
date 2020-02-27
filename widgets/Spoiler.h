@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef SPOILER_H
-#define SPOILER_H
+#pragma once
 
 #include <QFrame>
 #include <QGridLayout>
@@ -47,5 +46,3 @@ signals:
 
 public slots:
 };
-
-#endif // SPOILER_H

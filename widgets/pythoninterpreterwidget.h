@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef PYTHONINTERPRETERWIDGET_H
-#define PYTHONINTERPRETERWIDGET_H
+#pragma once
 
 #include "widgets/DialogVisibilityNotify.h"
 
@@ -37,5 +36,3 @@ public:
     void saveSettings();
     void startConsole();
 };
-
-#endif // PYTHONINTERPRETERWIDGET_H

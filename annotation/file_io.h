@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef FILE_IO_H
-#define FILE_IO_H
+#pragma once
 
 #include <QString>
 
@@ -35,5 +34,3 @@ void annotationFileSave(const QString & filename, const bool onlySelectedTrees =
 void nmlExport(const QString & filename);
 QString updatedFileName(QString fileName);
 std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> loadLookupTable(const QString & path);
-
-#endif//FILE_IO_H

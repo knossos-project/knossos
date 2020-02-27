@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef HIGHLIGHTER_H
-#define HIGHLIGHTER_H
+#pragma once
 
 #include <QObject>
 #include <QSyntaxHighlighter>
@@ -47,5 +46,3 @@ public slots:
 
 
 };
-
-#endif // HIGHLIGHTER_H

@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef REMOTE_H
-#define REMOTE_H
+#pragma once
 
 #include "coordinate.h"
 
@@ -48,5 +47,3 @@ public:
     Remote();
     void process(const Coordinate & pos, bool rotate = false);
 };
-
-#endif // REMOTE_H

@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef GUI_WRAPPER_H
-#define GUI_WRAPPER_H
+#pragma once
 
 #include "skeleton/node.h"
 #include "skeleton/tree.h"
@@ -29,5 +28,3 @@
 nodeListElement * checkedPopBranchNode();
 void checkedToggleNodeLink(nodeListElement & lhs, nodeListElement & rhs);
 void loadLutError(const QString & path);
-
-#endif//GUI_WRAPPER_H

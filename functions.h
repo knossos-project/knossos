@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef FUNCTIONS_H
-#define FUNCTIONS_H
+#pragma once
 
 #include "coordinate.h"
 
@@ -47,5 +46,3 @@ float degToRad(float deg);
 bool intersectLineAndPlane(const floatCoordinate planeNormal, const floatCoordinate planeUpVec,
                            const floatCoordinate lineUpVec, const floatCoordinate lineDirectionVec,
                            floatCoordinate & intersectionPoint);
-
-#endif // FUNCTIONS_H

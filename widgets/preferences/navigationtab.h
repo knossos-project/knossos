@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef NAVIGATIONTAB_H
-#define NAVIGATIONTAB_H
+#pragma once
 
 #include "widgets/coordinatespins.h"
 
@@ -100,5 +99,3 @@ public:
     void loadSettings(const QSettings &settings);
     void saveSettings(QSettings &settings);
 };
-
-#endif//NAVIGATIONWIDGET_H

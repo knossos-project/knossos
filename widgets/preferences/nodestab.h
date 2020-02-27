@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef NODESTAB_H
-#define NODESTAB_H
+#pragma once
 
 #include <QAbstractListModel>
 #include <QCheckBox>
@@ -83,5 +82,3 @@ public:
     explicit NodesTab(QWidget *parent = nullptr);
     void updateProperties(const QSet<QString> & properties, const QSet<QString> & textProperties);
 };
-
-#endif // NODESTAB_H

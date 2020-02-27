@@ -19,8 +19,7 @@
  *  For further information, visit https://knossos.app
  *  or contact knossosteam@gmail.com
  */
-#ifndef DIALOG_VISIBILITY_NOTIFY_H
-#define DIALOG_VISIBILITY_NOTIFY_H
+#pragma once
 
 #include "GuiConstants.h"
 
@@ -47,5 +46,3 @@ protected:
         emit visibilityChanged(false);
     }
 };
-
-#endif//DIALOG_VISIBILITY_NOTIFY_H

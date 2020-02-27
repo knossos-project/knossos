@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef DATASET_H
-#define DATASET_H
+#pragma once
 
 #include "coordinate.h"
 
@@ -113,5 +112,3 @@ struct Dataset {
         }
     }
 };
-
-#endif//DATASET_H

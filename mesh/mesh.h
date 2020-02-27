@@ -1,5 +1,4 @@
-#ifndef MESH_H
-#define MESH_H
+#pragma once
 
 #include "coordinate.h"
 
@@ -33,5 +32,3 @@ public:
     boost::optional<std::size_t> pickingIdOffset;
     QOpenGLBuffer picking_color_buf{QOpenGLBuffer::VertexBuffer};
 };
-
-#endif// MESH_H

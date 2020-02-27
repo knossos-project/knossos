@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef SEGMENTATIONVIEW_H
-#define SEGMENTATIONVIEW_H
+#pragma once
 
 #include "segmentation/segmentation.h"
 #include "widgets/PreventDeferredDelete.h"
@@ -149,5 +148,3 @@ public:
 public slots:
     void filter();
 };
-
-#endif//SEGMENTATIONVIEW_H

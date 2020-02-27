@@ -20,8 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
-#ifndef ZOOMWIDGET_H
-#define ZOOMWIDGET_H
+#pragma once
 
 #include "widgets/DialogVisibilityNotify.h"
 
@@ -81,5 +80,3 @@ public slots:
     void loadSettings();
     void saveSettings();
 };
-
-#endif // ZOOMWIDGET_H
