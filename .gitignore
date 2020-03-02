@@ -9,6 +9,8 @@ resources/doc/doc.qch
 CMakeLists.txt.user
 knossos.pro.user
 
+.vscode
+
 #system depended settings
 CustomLibraryLocations.cmake
 
