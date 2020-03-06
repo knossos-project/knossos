@@ -268,7 +268,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
             info.url = QUrl::fromLocalFile(QFileInfo(configUrl.toLocalFile()).absoluteDir().absolutePath());
         }
         if (&info != &infos.front()) {// disable all layers expect the first TODO multi layer
-            info.allocationEnabled = info.loadingEnabled = false;
+            info.allocationEnabled = info.loadingEnabled = true;
         }
     }
     return infos;

@@ -544,6 +544,12 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
 
     state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M, Dataset::datasets.size());// resets textures
 
+    if (state->viewerState->layerRenderSettings.size() > 3) {
+        state->viewerState->layerRenderSettings[0].color = Qt::red;
+        state->viewerState->layerRenderSettings[1].color = Qt::green;
+        state->viewerState->layerRenderSettings[2].color = Qt::blue;
+    }
+
     updateDatasetInfo(Dataset::datasets);
     applyGeometrySettings();
 
