@@ -206,8 +206,8 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>711</width>
-              <height>184</height>
+              <width>754</width>
+              <height>158</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -224,9 +224,7 @@ margin-top: 8px;
 &lt;li&gt;Fabian Svara
 &lt;li&gt;My-Tien Nguyen
 &lt;li&gt;Norbert Pfeiler
-&lt;li&gt;Michael Pronkin
 &lt;li&gt;Sebastian Spaar
-&lt;li&gt;Alexander Stepanov
 &lt;/ul&gt;</string>
                </property>
                <property name="textInteractionFlags">
@@ -254,7 +252,7 @@ margin-top: 8px;
          <item>
           <widget class="QLabel" name="additionalContributorsLabel">
            <property name="text">
-            <string>Andreas Knecht, Claus Ripp, Konrad Kühne, Matthias Wegner, Oren Shatz, Patrick Müller</string>
+            <string>Andreas Knecht, Konrad Kühne, Patrick Müller, Michael Pronkin, Claus Ripp, Oren Shatz, Alexander Stepanov, Matthias Wegner</string>
            </property>
            <property name="wordWrap">
             <bool>true</bool>
@@ -293,7 +291,7 @@ margin-top: 8px;
          <item>
           <widget class="QLabel" name="mpimrLinkLabel">
            <property name="text">
-            <string>&lt;a href=&quot;https://www.mpimf-heidelberg.mpg.de/en&quot;&gt;https://www.mpimf-heidelberg.mpg.de&lt;/a&gt;</string>
+            <string>&lt;a href=&quot;https://www.mr.mpg.de/en&quot;&gt;https://www.mr.mpg.de/en&lt;/a&gt;</string>
            </property>
            <property name="openExternalLinks">
             <bool>true</bool>
@@ -306,7 +304,7 @@ margin-top: 8px;
          <item>
           <widget class="QLabel" name="mpionLinkLabel">
            <property name="text">
-            <string>&lt;a href=&quot;https://www.neuro.mpg.de/home&quot;&gt;https://www.neuro.mpg.de&lt;/a&gt;</string>
+            <string>&lt;a href=&quot;https://www.neuro.mpg.de/en&quot;&gt;https://www.neuro.mpg.de/en&lt;/a&gt;</string>
            </property>
            <property name="openExternalLinks">
             <bool>true</bool>
@@ -333,8 +331,8 @@ margin-top: 8px;
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>711</width>
-              <height>396</height>
+              <width>737</width>
+              <height>378</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -678,8 +676,8 @@ POSSIBILITY OF SUCH DAMAGES.
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>726</width>
-              <height>342</height>
+              <width>754</width>
+              <height>285</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -693,10 +691,10 @@ margin-top: 8px;
 &lt;/style&gt;
 &lt;ul&gt;
 &lt;li&gt;Qt5, LGPLv3: &lt;a href=&quot;https://www.qt.io/&quot;&gt;https://www.qt.io&lt;/a&gt;
-&lt;li&gt;QuaZIP, LGPLv2: &lt;a href=&quot;http://quazip.sourceforge.net/&quot;&gt;http://quazip.sourceforge.net&lt;/a&gt;
-&lt;li&gt;Boost, Boost Software License: &lt;a href=&quot;http://www.boost.org/&quot;&gt;http://www.boost.org&lt;/a&gt;
-&lt;li&gt;PythonQt, LGPLv2.1: &lt;a href=&quot;http://pythonqt.sourceforge.net/&quot;&gt;http://pythonqt.sourceforge.net&lt;/a&gt;
-&lt;li&gt;Snappy, MIT: &lt;a href=&quot;https://google.github.io/snappy/&quot;&gt;https://google.github.io/snappy&lt;/a&gt;
+&lt;li&gt;QuaZIP, LGPLv2.1: &lt;a href=&quot;https://github.com/stachenov/quazip&quot;&gt;https://github.com/stachenov/quazip&lt;/a&gt;
+&lt;li&gt;Boost, Boost Software License: &lt;a href=&quot;https://www.boost.org/&quot;&gt;https://www.boost.org&lt;/a&gt;
+&lt;li&gt;PythonQt, LGPLv2.1: &lt;a href=&quot;https://github.com/mevislab/pythonqt&quot;&gt;https://github.com/mevislab/pythonqt&lt;/a&gt;
+&lt;li&gt;Snappy, New BSD: &lt;a href=&quot;https://github.com/google/snappy&quot;&gt;https://github.com/google/snappy&lt;/a&gt;
 &lt;/ul&gt;</string>
                </property>
                <property name="openExternalLinks">
