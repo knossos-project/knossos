@@ -246,29 +246,29 @@ QPair<bool, QString> Network::rejectTask(const QUrl & url) {
 }
 
 void Network::submitSegmentationJob(const QString & path) {
-   QHttpPart part;
-   part.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/zip"));
-   // Django requires enctype="multipart/form-data" for receiving file uploads
-   part.setHeader(QNetworkRequest::ContentDispositionHeader,
+    QHttpPart part;
+    part.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/zip"));
+    // Django requires enctype="multipart/form-data" for receiving file uploads
+    part.setHeader(QNetworkRequest::ContentDispositionHeader,
                   QVariant("enctype=\"multipart/form-data\"; name=\"submit\"; filename=\"" + QFileInfo(path).fileName() + "\""));
-   auto uploadfile = new QFile(path);
-   uploadfile->open(QIODevice::ReadOnly);
-   part.setBodyDevice(uploadfile);
+    auto uploadfile = new QFile(path);
+    uploadfile->open(QIODevice::ReadOnly);
+    part.setBodyDevice(uploadfile);
 
-   auto multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
-   multiPart->append(part);
-   uploadfile->setParent(multiPart);
-   auto & job = Segmentation::singleton().job;
-   QNetworkRequest request(QUrl(job.submitPath));
-   auto reply = manager.post(request, multiPart);
-   multiPart->setParent(reply);
-   QObject::connect(reply, &QNetworkReply::finished, [reply]() {
-       QString content = (reply->error() == QNetworkReply::NoError) ? reply->readAll() : reply->errorString();
-       QMessageBox verificationBox{QApplication::activeWindow()};
-       verificationBox.setIcon(QMessageBox::Information);
-       verificationBox.setText(QObject::tr("Your verification"));
-       verificationBox.setInformativeText(content);
-       verificationBox.exec();
-       reply->deleteLater();
-   });
+    auto multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+    multiPart->append(part);
+    uploadfile->setParent(multiPart);
+    auto & job = Segmentation::singleton().job;
+    QNetworkRequest request(QUrl(job.submitPath));
+    auto reply = manager.post(request, multiPart);
+    multiPart->setParent(reply);
+    QObject::connect(reply, &QNetworkReply::finished, [reply]() {
+        QString content = (reply->error() == QNetworkReply::NoError) ? reply->readAll() : reply->errorString();
+        QMessageBox verificationBox{QApplication::activeWindow()};
+        verificationBox.setIcon(QMessageBox::Information);
+        verificationBox.setText(QObject::tr("Your verification"));
+        verificationBox.setInformativeText(content);
+        verificationBox.exec();
+        reply->deleteLater();
+    });
 }
