@@ -158,7 +158,7 @@ private:
     virtual void resizeGL(int width, int height) override;
     bool sphereInFrustum(floatCoordinate pos, float radius);
 
-    void renderMeshBuffer(Mesh & buf);
+    void renderMeshBuffer(Mesh & buf, const bool picking = false);
 
 protected:
     QOpenGLShaderProgram meshShader;
@@ -166,7 +166,6 @@ protected:
     QOpenGLShaderProgram meshIdShader;
     boost::optional<BufferSelection> pickMesh(const QPoint pos);
     void pickMeshIdAtPosition();
-    virtual void renderMeshBufferIds(Mesh & buf);
 
     virtual void zoom(const float zoomStep) = 0;
     virtual float zoomStep() const = 0;

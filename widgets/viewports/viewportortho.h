@@ -70,7 +70,6 @@ protected:
     virtual void initializeGL() override;
     virtual void paintGL() override;
 
-    virtual void renderMeshBufferIds(Mesh &buf) override;
 public:
     explicit ViewportOrtho(QWidget *parent, ViewportType viewportType);
     virtual ~ViewportOrtho() override;

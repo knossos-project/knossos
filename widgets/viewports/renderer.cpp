@@ -835,8 +835,26 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glPopMatrix();
         glColor4f(1, 1, 1, 1);
     }
+    auto setStateAndRenderMesh = [this](auto func){
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, -(0.5), -(-state->skeletonState->volBoundary()));
+        glMatrixMode(GL_MODELVIEW);
+
+        glEnable(GL_DEPTH_TEST);
+        glDisable(GL_BLEND);
+        func();
+        glEnable(GL_BLEND);
+        glDisable(GL_DEPTH_TEST);
+
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+
+    };
     if (options.meshPicking) {
-        pickMeshIdAtPosition();
+        setStateAndRenderMesh([this](){ pickMeshIdAtPosition(); });
     } else if (state->viewerState->meshDisplay.testFlag(TreeDisplay::ShowInOrthoVPs) && options.drawMesh) {
         QOpenGLFramebufferObjectFormat format;
         format.setSamples(0);//state->viewerState->sampleBuffers
@@ -847,21 +865,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         fbo.bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?!?!?!?
 
-        glMatrixMode(GL_PROJECTION);
-        glPushMatrix();
-        glLoadIdentity();
-        glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, -(0.5), -(-state->skeletonState->volBoundary()));
-        glMatrixMode(GL_MODELVIEW);
-
-        glEnable(GL_DEPTH_TEST);
-        glDisable(GL_BLEND);
-        renderMesh();
-        glEnable(GL_BLEND);
-        glDisable(GL_DEPTH_TEST);
-
-        glMatrixMode(GL_PROJECTION);
-        glPopMatrix();
-        glMatrixMode(GL_MODELVIEW);
+        setStateAndRenderMesh([this](){ renderMesh(); });
         if (auto snapshotFboPtr = snapshotFbo.lock()) {
             snapshotFboPtr->bind();
         } else {
@@ -1053,7 +1057,10 @@ void Viewport3D::renderViewport(const RenderOptions &options) {
     }
 }
 
-void ViewportBase::renderMeshBuffer(Mesh & buf) {
+void ViewportBase::renderMeshBuffer(Mesh & buf, const bool picking) {
+    if (picking) {
+        glDisable(GL_BLEND);
+    }
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glTranslatef(0.5, 0.5, 0.5);
@@ -1064,20 +1071,23 @@ void ViewportBase::renderMeshBuffer(Mesh & buf) {
     GLfloat projection_mat[4][4];
     glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
 
-    auto & meshShader = buf.useTreeColor ? meshTreeColorShader : this->meshShader;
+    auto & meshShader = picking ? meshIdShader
+                        : buf.useTreeColor ? meshTreeColorShader
+                        : this->meshShader;
 
     meshShader.bind();
     meshShader.setUniformValue("modelview_matrix", modelview_mat);
     meshShader.setUniformValue("projection_matrix", projection_mat);
     floatCoordinate normal = {0, 0, 0};
     const bool isMeshSlicing = viewportType != VIEWPORT_SKELETON;
-    const float alphaFactor = isMeshSlicing ? state->viewerState->meshAlphaFactorSlicing : state->viewerState->meshAlphaFactor3d;
     if (isMeshSlicing) {
         normal = state->mainWindow->viewportOrtho(viewportType)->n;
     }
     meshShader.setUniformValue("vp_normal", normal.x, normal.y, normal.z);
-    meshShader.setUniformValue("alpha_factor", alphaFactor);
-
+    const float alphaFactor = isMeshSlicing ? state->viewerState->meshAlphaFactorSlicing : state->viewerState->meshAlphaFactor3d;
+    if (!picking) {
+        meshShader.setUniformValue("alpha_factor", alphaFactor);
+    }
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
@@ -1093,21 +1103,22 @@ void ViewportBase::renderMeshBuffer(Mesh & buf) {
     meshShader.enableAttributeArray(normalLocation);
     meshShader.setAttributeBuffer(normalLocation, GL_FLOAT, 0, 3);
     buf.normal_buf.release();
-
+    const bool disableColorLocation = picking || !buf.useTreeColor;
     int colorLocation = meshShader.attributeLocation("color");
-    if (buf.useTreeColor == false) {
-        buf.color_buf.bind();
+    if (disableColorLocation) {
+        buf.picking_color_buf.bind();
         meshShader.enableAttributeArray(colorLocation);
         meshShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
-        buf.color_buf.release();
+        buf.picking_color_buf.release();
     }
-    QColor color = buf.correspondingTree->color;
-    if (state->viewerState->highlightActiveTree && buf.correspondingTree == state->skeletonState->activeTree) {
-        color = Qt::red;
+    if (!picking) {
+        QColor color = buf.correspondingTree->color;
+        if (state->viewerState->highlightActiveTree && buf.correspondingTree == state->skeletonState->activeTree) {
+            color = Qt::red;
+        }
+        color.setAlpha(color.alpha() * alphaFactor);
+        meshShader.setUniformValue("tree_color", color);
     }
-    color.setAlpha(color.alpha() * alphaFactor);
-    meshShader.setUniformValue("tree_color", color);
-
     if(buf.index_count != 0) {
         buf.index_buf.bind();
         glDrawElements(buf.render_mode, buf.index_count, GL_UNSIGNED_INT, 0);
@@ -1115,7 +1126,7 @@ void ViewportBase::renderMeshBuffer(Mesh & buf) {
     } else {
         glDrawArrays(buf.render_mode, 0, buf.vertex_count);
     }
-    if (!buf.useTreeColor) {
+    if (disableColorLocation) {
         meshShader.disableAttributeArray(colorLocation);
     }
     meshShader.disableAttributeArray(normalLocation);
@@ -1127,87 +1138,6 @@ void ViewportBase::renderMeshBuffer(Mesh & buf) {
 
     meshShader.release();
     glPopMatrix();
-}
-void Viewport3D::renderMeshBufferIds(Mesh &buf) {
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glTranslatef(0.5, 0.5, 0.5);
-    ViewportBase::renderMeshBufferIds(buf);
-    glPopMatrix();
-}
-
-void ViewportOrtho::renderMeshBufferIds(Mesh &buf) {
-    glDisable(GL_BLEND);
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, -(0.5), -(-state->skeletonState->volBoundary()));
-    glMatrixMode(GL_MODELVIEW);
-    glEnable(GL_DEPTH_TEST);
-    ViewportBase::renderMeshBufferIds(buf);
-    glDisable(GL_DEPTH_TEST);
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glEnable(GL_BLEND);
-}
-
-void ViewportBase::renderMeshBufferIds(Mesh & buf) {
-    glDisable(GL_BLEND);
-    // get modelview and projection matrices
-    GLfloat modelview_mat[4][4];
-    glGetFloatv(GL_MODELVIEW_MATRIX, &modelview_mat[0][0]);
-    GLfloat projection_mat[4][4];
-    glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
-
-    meshIdShader.bind();
-    meshIdShader.setUniformValue("modelview_matrix", modelview_mat);
-    meshIdShader.setUniformValue("projection_matrix", projection_mat);
-    floatCoordinate normal = {0, 0, 0};
-    if (viewportType != VIEWPORT_SKELETON) {
-        normal = state->mainWindow->viewportOrtho(viewportType)->n;
-    }
-    meshIdShader.setUniformValue("vp_normal", normal.x, normal.y, normal.z);
-
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_COLOR_ARRAY);
-
-    buf.position_buf.bind();
-    int vertexLocation = meshIdShader.attributeLocation("vertex");
-    meshIdShader.enableAttributeArray(vertexLocation);
-    meshIdShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
-    buf.position_buf.release();
-
-    buf.normal_buf.bind();
-    int normalLocation = meshIdShader.attributeLocation("normal");
-    meshIdShader.enableAttributeArray(normalLocation);
-    meshIdShader.setAttributeBuffer(normalLocation, GL_FLOAT, 0, 3);
-    buf.normal_buf.release();
-
-    buf.picking_color_buf.bind();
-    int colorLocation = meshIdShader.attributeLocation("color");
-    meshIdShader.enableAttributeArray(colorLocation);
-    meshIdShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
-    buf.picking_color_buf.release();
-
-    if(buf.index_count != 0) {
-        buf.index_buf.bind();
-        glDrawElements(buf.render_mode, buf.index_count, GL_UNSIGNED_INT, 0);
-        buf.index_buf.release();
-    } else {
-        glDrawArrays(buf.render_mode, 0, buf.vertex_count);
-    }
-
-    meshIdShader.disableAttributeArray(colorLocation);
-    meshIdShader.disableAttributeArray(normalLocation);
-    meshIdShader.disableAttributeArray(vertexLocation);
-
-    glDisableClientState(GL_COLOR_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisableClientState(GL_VERTEX_ARRAY);
-
-    meshIdShader.release();
     glEnable(GL_BLEND);
 }
 
@@ -1334,7 +1264,7 @@ void ViewportBase::pickMeshIdAtPosition() {
         }
         tree.mesh->picking_color_buf.release();
         if (tree.render) {
-            renderMeshBufferIds(*tree.mesh);
+            renderMeshBuffer(*tree.mesh, true);
         }
     }
 }

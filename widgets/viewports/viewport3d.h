@@ -53,9 +53,6 @@ class Viewport3D : public ViewportBase {
     virtual void handleKeyRelease(const QKeyEvent *event) override;
     virtual void focusOutEvent(QFocusEvent *event) override;
 
-protected:
-    virtual void renderMeshBufferIds(Mesh &buf) override;
-
 public:
     double zoomFactor{1.0};
     QMatrix4x4 rotation;
