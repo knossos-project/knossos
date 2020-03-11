@@ -103,17 +103,22 @@ bool Dataset::isWebKnossos(const QUrl & url) {
 }
 
 Dataset::list_t Dataset::parse(const QUrl & url, const QString & data) {
+    Dataset::list_t infos;
     if (Dataset::isWebKnossos(url)) {
-        return Dataset::parseWebKnossosJson(url, data);
+        infos = Dataset::parseWebKnossosJson(url, data);
     } else if (Dataset::isGoogleBrainmaps(url)) {
-        return Dataset::parseGoogleJson(url, data);
+        infos = Dataset::parseGoogleJson(url, data);
     } else if (Dataset::isNeuroDataStore(url)) {
-        return Dataset::parseNeuroDataStoreJson(url, data);
+        infos = Dataset::parseNeuroDataStoreJson(url, data);
     } else if (Dataset::isPyKnossos(url)) {
-        return Dataset::parsePyKnossosConf(url, data);
+        infos = Dataset::parsePyKnossosConf(url, data);
     } else {
-        return Dataset::fromLegacyConf(url, data);
+        infos = Dataset::fromLegacyConf(url, data);
     }
+    if (infos.empty()) {
+        throw std::runtime_error("Missing [Dataset] header in config.");
+    }
+    return infos;
 }
 
 Dataset::list_t Dataset::parseGoogleJson(const QUrl & infoUrl, const QString & json_raw) {
@@ -245,7 +250,6 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
             info.allocationEnabled = info.loadingEnabled = false;
         }
     }
-
     return infos;
 }
 

@@ -172,47 +172,44 @@ void DatasetLoadWidget::updateDatasetInfo() {
     if (bad) {
         return;
     }
+    try {
+        const auto datasetinfo = Dataset::parse(dataset, download.second).front();
+        //make sure supercubeedge is small again
+        auto supercubeedge = (fovSpin.value() + cubeEdgeSpin.value()) / datasetinfo.cubeEdgeLength;
+        supercubeedge = std::max(3, supercubeedge - !(supercubeedge % 2));
+        fovSpin.setCubeEdge(datasetinfo.cubeEdgeLength);
+        fovSpin.setValue((supercubeedge - 1) * datasetinfo.cubeEdgeLength);
+        cubeEdgeSpin.setValue(datasetinfo.cubeEdgeLength);
+        adaptMemoryConsumption();
 
-    const auto datasetinfos = Dataset::parse(dataset, download.second);
-    if (datasetinfos.empty()) {
-        return;
-    }
-    const auto datasetinfo = datasetinfos.front();
+        QString infotext = tr("<b>%1 Dataset</b><br />%2");
+        if (!datasetinfo.url.isLocalFile()) {
+            infotext = infotext.arg("Remote").arg("URL: <a href=\"%1\">%1</a><br />").arg(datasetinfo.url.toString());
+        } else {
+            infotext = infotext.arg("Local").arg("");
+        }
+        infotext += QString("Name: %1<br/>Boundary (x y z): %2 %3 %4<br />Compression: %5<br/>cubeEdgeLength: %6<br/>Magnification: %7<br/>Scale (x y z): %8 %9 %10<br/>Description: %11")
+            .arg(datasetinfo.experimentname)
+            .arg(datasetinfo.boundary.x).arg(datasetinfo.boundary.y).arg(datasetinfo.boundary.z)
+            .arg(datasetinfo.compressionString())
+            .arg(datasetinfo.cubeEdgeLength)
+            .arg(datasetinfo.magnification)
+            .arg(datasetinfo.scale.x)
+            .arg(datasetinfo.scale.y)
+            .arg(datasetinfo.scale.z)
+            .arg(datasetinfo.description);
 
-    //make sure supercubeedge is small again
-    auto supercubeedge = (fovSpin.value() + cubeEdgeSpin.value()) / datasetinfo.cubeEdgeLength;
-    supercubeedge = std::max(3, supercubeedge - !(supercubeedge % 2));
-    fovSpin.setCubeEdge(datasetinfo.cubeEdgeLength);
-    fovSpin.setValue((supercubeedge - 1) * datasetinfo.cubeEdgeLength);
-    cubeEdgeSpin.setValue(datasetinfo.cubeEdgeLength);
-    adaptMemoryConsumption();
+        infoLabel.setText(infotext);
 
-    QString infotext = tr("<b>%1 Dataset</b><br />%2");
-    if (!datasetinfo.url.isLocalFile()) {
-        infotext = infotext.arg("Remote").arg("URL: <a href=\"%1\">%1</a><br />").arg(datasetinfo.url.toString());
-    } else {
-        infotext = infotext.arg("Local").arg("");
-    }
-    infotext += QString("Name: %1<br/>Boundary (x y z): %2 %3 %4<br />Compression: %5<br/>cubeEdgeLength: %6<br/>Magnification: %7<br/>Scale (x y z): %8 %9 %10<br/>Description: %11")
-        .arg(datasetinfo.experimentname)
-        .arg(datasetinfo.boundary.x).arg(datasetinfo.boundary.y).arg(datasetinfo.boundary.z)
-        .arg(datasetinfo.compressionString())
-        .arg(datasetinfo.cubeEdgeLength)
-        .arg(datasetinfo.magnification)
-        .arg(datasetinfo.scale.x)
-        .arg(datasetinfo.scale.y)
-        .arg(datasetinfo.scale.z)
-        .arg(datasetinfo.description);
-
-    infoLabel.setText(infotext);
-
-    if (datasetSettingsLayout.indexOf(&cubeEdgeSpin) != -1) {
-        datasetSettingsLayout.takeRow(&cubeEdgeSpin);
-    }
-    cubeEdgeSpin.setParent(nullptr);
-    cubeEdgeLabel.setParent(nullptr);
-    if (!(datasetinfo.api == Dataset::API::Heidelbrain || datasetinfo.api == Dataset::API::PyKnossos)) {
-        datasetSettingsLayout.insertRow(0, &cubeEdgeSpin, &cubeEdgeLabel);
+        if (datasetSettingsLayout.indexOf(&cubeEdgeSpin) != -1) {
+            datasetSettingsLayout.takeRow(&cubeEdgeSpin);
+        }
+        cubeEdgeSpin.setParent(nullptr);
+        cubeEdgeLabel.setParent(nullptr);
+        if (!(datasetinfo.api == Dataset::API::Heidelbrain || datasetinfo.api == Dataset::API::PyKnossos)) {
+            datasetSettingsLayout.insertRow(0, &cubeEdgeSpin, &cubeEdgeLabel);
+        }
+    } catch (std::exception &) {
     }
 }
 
@@ -330,17 +327,22 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         }
     }
 
-    auto layers = Dataset::parse(path, data);
-    if (layers.empty()) {
-        if (!silent) {
-            QMessageBox warning{QApplication::activeWindow()};
-            warning.setIcon(QMessageBox::Warning);
-            warning.setText(tr("Unable to load Dataset."));
-            warning.setInformativeText(tr("Failed to parse config file from %1").arg(path.toString()));
-            warning.exec();
-            open();
+    auto layers = [&path, &data, &silent]() {
+        try {
+            return Dataset::parse(path, data);
+        } catch(std::exception & e) {
+            if (!silent) {
+                QMessageBox warning{QApplication::activeWindow()};
+                warning.setIcon(QMessageBox::Warning);
+                warning.setText(tr("Failed to load dataset"));
+                warning.setInformativeText(tr("%1\n\n%2").arg(path.toString()).arg(e.what()));
+                warning.exec();
+            }
+            qDebug() << "Failed to load dataset" << path << e.what();
+            return Dataset::list_t{};
         }
-        qDebug() << "failed parsing config at" << path;
+    }();
+    if (layers.empty()) {
         return false;
     }
     if (Dataset::isHeidelbrain(path)) {
