@@ -1141,14 +1141,18 @@ void ViewportBase::renderMeshBuffer(Mesh & buf, const bool picking) {
     glEnable(GL_BLEND);
 }
 
+static bool shouldRenderMesh(const treeListElement & tree, const ViewportType viewportType) {
+    const bool validMesh = tree.mesh && tree.mesh->vertex_count > 0;
+    const auto displayFlags = (viewportType == VIEWPORT_SKELETON) ? state->viewerState->skeletonDisplayVP3D : state->viewerState->skeletonDisplayVPOrtho;
+    const bool showFilter = ((viewportType == VIEWPORT_SKELETON) && displayFlags.testFlag(TreeDisplay::ShowIn3DVP)) || displayFlags.testFlag(TreeDisplay::ShowInOrthoVPs);
+    const bool selectionFilter = !displayFlags.testFlag(TreeDisplay::OnlySelected) || tree.selected;
+    return tree.render && showFilter && selectionFilter && validMesh;
+}
+
 void ViewportBase::renderMesh() {
     std::vector<std::reference_wrapper<Mesh>> translucentMeshes;
     for (const auto & tree : state->skeletonState->trees) {
-        const bool validMesh = tree.mesh != nullptr && tree.mesh->vertex_count > 0;
-        const auto displayFlags = (viewportType == VIEWPORT_SKELETON) ? state->viewerState->skeletonDisplayVP3D : state->viewerState->skeletonDisplayVPOrtho;
-        const bool showFilter = ((viewportType == VIEWPORT_SKELETON) && displayFlags.testFlag(TreeDisplay::ShowIn3DVP)) || displayFlags.testFlag(TreeDisplay::ShowInOrthoVPs);
-        const bool selectionFilter = !displayFlags.testFlag(TreeDisplay::OnlySelected) || tree.selected;
-        if (tree.render && showFilter && selectionFilter && validMesh) {
+        if (shouldRenderMesh(tree, viewportType)) {
             const auto hasTranslucentFirstVertexColor = [](Mesh & mesh){
                 mesh.color_buf.bind();
                 if (mesh.color_buf.size() < 4) {
@@ -1206,14 +1210,14 @@ boost::optional<BufferSelection> ViewportBase::pickMesh(const QPoint pos) {
     const auto triangleID = meshColorToId(image.pixelColor(pos));
     boost::optional<treeListElement&> treeIt;
     for (auto & tree : state->skeletonState->trees) {// find tree with appropriate triangle range
-        if (tree.mesh && tree.mesh->pickingIdOffset && tree.mesh->pickingIdOffset.get() + tree.mesh->vertex_count > triangleID) {
+        if (tree.mesh && tree.mesh->pickingIdOffset + tree.mesh->vertex_count > triangleID) {
             treeIt = tree;
             break;
         }
     }
     floatCoordinate coord;
     if (treeIt) {
-        const auto index = triangleID - treeIt->mesh->pickingIdOffset.get();
+        const auto index = triangleID - treeIt->mesh->pickingIdOffset;
 
         std::array<GLfloat, 3> vertex_components;
         treeIt->mesh->position_buf.bind();
@@ -1239,19 +1243,13 @@ void ViewportBase::pickMeshIdAtPosition() {
     // create id map
     std::uint32_t id_counter = 1;
     for (auto & tree : state->skeletonState->trees) {
-        const bool pickableMesh = tree.mesh != nullptr && tree.mesh->render_mode == GL_TRIANGLES;
-        const auto displayFlags = (viewportType == VIEWPORT_SKELETON) ? state->viewerState->skeletonDisplayVP3D : state->viewerState->skeletonDisplayVPOrtho;
-        const bool selectionFilter = displayFlags.testFlag(TreeDisplay::OnlySelected) && !tree.selected;
-        if (selectionFilter || !pickableMesh) {
-            if (tree.mesh) {
-                tree.mesh->pickingIdOffset = boost::none;// clear previous runs
-            }
+        if (!tree.mesh || tree.mesh->render_mode != GL_TRIANGLES) {// can’t pick GL_POINTS
             continue;
         }
         tree.mesh->picking_color_buf.bind();
         const auto pickingBufferFilled = tree.mesh->picking_color_buf.size() == static_cast<int>(tree.mesh->vertex_count * 4 * sizeof(GLubyte)); // > 0 not sufficient, e.g. after a merge we have fewer colors than vertices
-        const auto pickingMeshValid = tree.mesh->pickingIdOffset && id_counter == tree.mesh->pickingIdOffset.get() && pickingBufferFilled;
-        if (pickingMeshValid || !tree.render) {// increment
+        const auto pickingMeshValid = id_counter == tree.mesh->pickingIdOffset && pickingBufferFilled;
+        if (pickingMeshValid) {// increment
             id_counter += tree.mesh->vertex_count;
         } else {// create picking color buf and increment
             tree.mesh->pickingIdOffset = id_counter;
@@ -1263,7 +1261,7 @@ void ViewportBase::pickMeshIdAtPosition() {
             tree.mesh->picking_color_buf.allocate(picking_colors.data(), picking_colors.size() * sizeof(picking_colors[0]));
         }
         tree.mesh->picking_color_buf.release();
-        if (tree.render) {
+        if (shouldRenderMesh(tree, viewportType)) {
             renderMeshBuffer(*tree.mesh, true);
         }
     }

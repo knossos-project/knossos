@@ -29,6 +29,6 @@ public:
     QOpenGLBuffer index_buf{QOpenGLBuffer::IndexBuffer};
     GLenum render_mode{GL_POINTS};
 
-    boost::optional<std::size_t> pickingIdOffset;
+    std::size_t pickingIdOffset;
     QOpenGLBuffer picking_color_buf{QOpenGLBuffer::VertexBuffer};
 };
