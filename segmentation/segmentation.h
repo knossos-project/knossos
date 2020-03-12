@@ -143,8 +143,6 @@ Q_OBJECT
     void changeComment(Object & obj, const QString & comment);
     void newSubObject(Object & obj, uint64_t subObjID);
 
-    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> subobjectColor(const uint64_t subObjectID) const;
-
     void unmergeObject(Object & object, Object & other, const Coordinate & position);
 
     Object & objectFromSubobject(Segmentation::SubObject & subobject, const Coordinate & position);
@@ -184,10 +182,12 @@ public:
     void setRenderOnlySelectedObjs(const bool onlySelected);
     decltype(backgroundId) getBackgroundId() const;
     void setBackgroundId(decltype(backgroundId));
-    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorObjectFromIndex(const uint64_t objectIndex) const;
-    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorOfSelectedObject() const;
-    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorOfSelectedObject(const SubObject & subobject) const;
-    std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> colorObjectFromSubobjectId(const uint64_t subObjectID) const;
+    using color_t = std::tuple<std::uint8_t, std::uint8_t, std::uint8_t, std::uint8_t>;
+    color_t subobjectColor(const uint64_t subObjectID) const;
+    color_t colorObjectFromIndex(const uint64_t objectIndex) const;
+    color_t colorOfSelectedObject() const;
+    color_t colorOfSelectedObject(const SubObject & subobject) const;
+    color_t colorObjectFromSubobjectId(const uint64_t subObjectID) const;
     //volume rendering
     bool volume_render_toggle = false;
     std::atomic_bool volume_update_required{false};

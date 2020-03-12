@@ -171,7 +171,7 @@ void Viewport3D::updateVolumeTexture() {
     int M = state->M;
     int M_radius = (M - 1) / 2;
     GLubyte* colcube = new GLubyte[4*texLen*texLen*texLen];
-    std::tuple<uint64_t, std::tuple<uint8_t, uint8_t, uint8_t, uint8_t>> lastIdColor;
+    std::tuple<uint64_t, Segmentation::color_t> lastIdColor;
 
     state->protectCube2Pointer.lock();
 

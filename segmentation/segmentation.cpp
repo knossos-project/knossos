@@ -109,7 +109,7 @@ void Segmentation::clear() {
     mergelistClear();
 }
 
-std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::subobjectColor(const uint64_t subObjectID) const {
+Segmentation::color_t Segmentation::subobjectColor(const uint64_t subObjectID) const {
     const auto colorIndex = subObjectID % overlayColorMap.size();
     return std::tuple_cat(overlayColorMap[colorIndex], std::make_tuple(alpha));
 }
@@ -219,7 +219,7 @@ void Segmentation::setBackgroundId(decltype(backgroundId) newBackgroundId) {
     emit backgroundIdChanged(backgroundId = newBackgroundId);
 }
 
-std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromIndex(const uint64_t objectIndex) const {
+Segmentation::color_t Segmentation::colorObjectFromIndex(const uint64_t objectIndex) const {
     if (objects[objectIndex].color) {
         return std::tuple_cat(objects[objectIndex].color.get(), std::make_tuple(alpha));
     } else {
@@ -229,14 +229,14 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromInde
     }
 }
 
-std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObject() const {
+Segmentation::color_t Segmentation::colorOfSelectedObject() const {
     if (selectedObjectsCount() != 0) {
         return colorObjectFromIndex(selectedObjectIndices.front());
     }
     return {};
 }
 
-std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObject(const SubObject & subobject) const {
+Segmentation::color_t Segmentation::colorOfSelectedObject(const SubObject & subobject) const {
     if (subobject.selectedObjectsCount > 1) {
         return std::make_tuple(std::uint8_t{255}, std::uint8_t{0}, std::uint8_t{0}, alpha);//mark overlapping objects in red
     }
@@ -246,7 +246,7 @@ std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorOfSelectedObje
     return colorObjectFromIndex(objectIndex);
 }
 
-std::tuple<uint8_t, uint8_t, uint8_t, uint8_t> Segmentation::colorObjectFromSubobjectId(const uint64_t subObjectID) const {
+Segmentation::color_t Segmentation::colorObjectFromSubobjectId(const uint64_t subObjectID) const {
     if (subObjectID == backgroundId) {
         return {};
     }
