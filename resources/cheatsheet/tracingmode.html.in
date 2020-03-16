@@ -20,19 +20,15 @@
 	<p>
 	<table>
 		<thead>
-			<tr><th>Mouse Shortcut</th><th>Action</th></tr>
+			<tr><th align="left">Mouse Shortcut</th><th align="left">Action</th></tr>
 		</thead>
 		<tr><td><span class="sh"><img src=":/resources/cheatsheet/leftclick.png" alt="Left click"/> on node</span></td><td>Select node</td></tr>
 		<tr><td><span class="sh">Shift + <img src=":/resources/cheatsheet/leftclick.png" alt="Left click"/> drag</span></td><td>Draw selection square</td></tr>
 		<tr><td><span class="sh"><img src=":/resources/cheatsheet/rightclick.png" alt="Right click"/></span></td><td>Place node</td></tr>
 		<tr><td><span class="sh"><img src=":/resources/cheatsheet/middleclick.png" alt="Middle click"/> drag on node</span></td><td>Move node</td></tr>
 		<tr><td><span class="sh">Shift + <img src=":/resources/cheatsheet/middleclick.png" alt="Middle click"/> scroll</span></td><td>Change active node’s size</td></tr>
-	</table>
-	</p>
-	<p>
-	<table>
 		<thead>
-			<tr><th>Keyboard Shortcut</th><th>Action</th></tr>
+			<tr><th align="left">Keyboard Shortcut</th><th align="left">Action</th></tr>
 		</thead>
 		<tr><td><span class="sh">Del</span></td><td>Delete selected nodes</td></tr>
 		<tr><td><span class="sh">S</span></td><td>Jump to active node</td></tr>
@@ -42,9 +38,9 @@
 		<tr><td><span class="sh">P</span></td><td>Move to previous node in table</td></tr>
 		<tr><td><span class="sh">Hold space</span></td><td>Reveal raw data temporarily</td></tr>
 		<tr><td><span class="sh">(Shift +) X</span></td><td>Traverse tree (backward/)forward</td></tr>
-        <tr><td><span class="sh">Ctrl + +</span></td><td>Zoom in</td></tr>
-        <tr><td><span class="sh">Ctrl + -</span></td><td>Zoom out</td></tr>
-        <tr><td><span class="sh">Ctrl + 0</span></td><td>Zoom reset</td></tr>
+		<tr><td><span class="sh">Ctrl + +</span></td><td>Zoom in</td></tr>
+		<tr><td><span class="sh">Ctrl + -</span></td><td>Zoom out</td></tr>
+		<tr><td><span class="sh">Ctrl + 0</span></td><td>Zoom reset</td></tr>
 	</table>
 	</p>
 </body>

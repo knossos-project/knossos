@@ -20,7 +20,7 @@
 	<table>
 		<thead>
 			<tr>
-				<th>Shortcut</th><th>Action</th>
+				<th align="left">Shortcut</th><th align="left">Action</th>
 			</tr>
 		</thead>
 		<tr><td><span class="sh"><img src=":/resources/cheatsheet/middleclick.png" alt="Middle click"/> click</span></td><td>Bucket fill</td></tr>
@@ -31,9 +31,9 @@
 		<tr><td><span class="sh">+</span></td><td>Overlay: increase opacity</td></tr>
 		<tr><td><span class="sh">Hold space</span></td><td>Reveal raw data temporarily</td></tr>
 		<tr><td><span class="sh"><img src=":/resources/cheatsheet/leftclick.png" alt="Left click"/></span></td><td>Select object</td></tr>
-        <tr><td><span class="sh">Ctrl + +</span></td><td>Zoom in</td></tr>
-    	<tr><td><span class="sh">Ctrl + -</span></td><td>Zoom out</td></tr>
-        <tr><td><span class="sh">Ctrl + 0</span></td><td>Zoom reset</td></tr>
+		<tr><td><span class="sh">Ctrl + +</span></td><td>Zoom in</td></tr>
+		<tr><td><span class="sh">Ctrl + -</span></td><td>Zoom out</td></tr>
+		<tr><td><span class="sh">Ctrl + 0</span></td><td>Zoom reset</td></tr>
 	</table>
 	</p>
 </body>
