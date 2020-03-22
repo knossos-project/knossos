@@ -88,7 +88,19 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     setLayout(&mainLayout);
 
     QObject::connect(&tableWidget, &QTableWidget::cellChanged, this, &DatasetLoadWidget::datasetCellChanged);
-    QObject::connect(&tableWidget, &QTableWidget::itemSelectionChanged, this, &DatasetLoadWidget::updateDatasetInfo);
+    QObject::connect(&tableWidget, &QTableWidget::itemSelectionChanged, [this]() {
+        WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
+        bool bad = tableWidget.selectedItems().empty();
+        QUrl dataset;
+        bad = bad || (dataset = tableWidget.selectedItems().front()->text()).isEmpty();
+        decltype(Network::singleton().refresh(std::declval<QUrl>())) download;
+        bad = bad || !(download = Network::singleton().refresh(dataset)).first;
+        if (bad) {
+            infoLabel.setText("");
+        } else {
+            updateDatasetInfo(dataset, download.second);
+        }
+    });
     QObject::connect(&cubeEdgeSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](int cubeedge){
         fovSpin.setCubeEdge(cubeedge);
         adaptMemoryConsumption();
@@ -152,65 +164,61 @@ void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row)
 void DatasetLoadWidget::datasetCellChanged(int row, int col) {
     if (col == 0 && row == tableWidget.rowCount() - 1 && tableWidget.item(row, 0)->text() != "") {
         QSignalBlocker blocker{tableWidget};// changing an item would land here again
-        const auto dataset = tableWidget.item(row, 0)->text();
+        auto dataset = tableWidget.item(row, 0)->text();
         tableWidget.item(row, 0)->setText("");//clear edit row
         insertDatasetRow(dataset, tableWidget.rowCount() - 1);//insert before edit row
         processButton.setFocus();// move focus away from the … button – needed to select a different row
         tableWidget.selectRow(row);//select new item
+
+        WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
+        decltype(Network::singleton().refresh(std::declval<QUrl>())) download = Network::singleton().refresh(dataset);
+        if (download.first) {
+            updateDatasetInfo(dataset, download.second);
+        } else {
+            infoLabel.setText("");
+        }
     }
-    updateDatasetInfo();
 }
 
-void DatasetLoadWidget::updateDatasetInfo() {
-    WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
-    bool bad = tableWidget.selectedItems().empty();
-    QUrl dataset;
-    bad = bad || (dataset = tableWidget.selectedItems().front()->text()).isEmpty();
-    decltype(Network::singleton().refresh(std::declval<QUrl>())) download;
-    bad = bad || !(download = Network::singleton().refresh(dataset)).first;
+void DatasetLoadWidget::updateDatasetInfo(const QUrl & url, const QString & info) try {
+    const auto datasetinfo = Dataset::parse(url, info).front();
+    //make sure supercubeedge is small again
+    auto supercubeedge = (fovSpin.value() + cubeEdgeSpin.value()) / datasetinfo.cubeEdgeLength;
+    supercubeedge = std::max(3, supercubeedge - !(supercubeedge % 2));
+    fovSpin.setCubeEdge(datasetinfo.cubeEdgeLength);
+    fovSpin.setValue((supercubeedge - 1) * datasetinfo.cubeEdgeLength);
+    cubeEdgeSpin.setValue(datasetinfo.cubeEdgeLength);
+    adaptMemoryConsumption();
+
+    QString infotext = tr("<b>%1 Dataset</b><br />%2");
+    if (!datasetinfo.url.isLocalFile()) {
+        infotext = infotext.arg("Remote").arg("URL: <a href=\"%1\">%1</a><br />").arg(datasetinfo.url.toString());
+    } else {
+        infotext = infotext.arg("Local").arg("");
+    }
+    infotext += QString("Name: %1<br/>Boundary (x y z): %2 %3 %4<br />Compression: %5<br/>cubeEdgeLength: %6<br/>Magnification: %7<br/>Scale (x y z): %8 %9 %10<br/>Description: %11")
+        .arg(datasetinfo.experimentname)
+        .arg(datasetinfo.boundary.x).arg(datasetinfo.boundary.y).arg(datasetinfo.boundary.z)
+        .arg(datasetinfo.compressionString())
+        .arg(datasetinfo.cubeEdgeLength)
+        .arg(datasetinfo.magnification)
+        .arg(datasetinfo.scale.x)
+        .arg(datasetinfo.scale.y)
+        .arg(datasetinfo.scale.z)
+        .arg(datasetinfo.description);
+
+    infoLabel.setText(infotext);
+
+    if (datasetSettingsLayout.indexOf(&cubeEdgeSpin) != -1) {
+        datasetSettingsLayout.takeRow(&cubeEdgeSpin);
+    }
+    cubeEdgeSpin.setParent(nullptr);
+    cubeEdgeLabel.setParent(nullptr);
+    if (!(datasetinfo.api == Dataset::API::Heidelbrain || datasetinfo.api == Dataset::API::PyKnossos)) {
+        datasetSettingsLayout.insertRow(0, &cubeEdgeSpin, &cubeEdgeLabel);
+    }
+} catch (std::exception &) {
     infoLabel.setText("");
-    if (bad) {
-        return;
-    }
-    try {
-        const auto datasetinfo = Dataset::parse(dataset, download.second).front();
-        //make sure supercubeedge is small again
-        auto supercubeedge = (fovSpin.value() + cubeEdgeSpin.value()) / datasetinfo.cubeEdgeLength;
-        supercubeedge = std::max(3, supercubeedge - !(supercubeedge % 2));
-        fovSpin.setCubeEdge(datasetinfo.cubeEdgeLength);
-        fovSpin.setValue((supercubeedge - 1) * datasetinfo.cubeEdgeLength);
-        cubeEdgeSpin.setValue(datasetinfo.cubeEdgeLength);
-        adaptMemoryConsumption();
-
-        QString infotext = tr("<b>%1 Dataset</b><br />%2");
-        if (!datasetinfo.url.isLocalFile()) {
-            infotext = infotext.arg("Remote").arg("URL: <a href=\"%1\">%1</a><br />").arg(datasetinfo.url.toString());
-        } else {
-            infotext = infotext.arg("Local").arg("");
-        }
-        infotext += QString("Name: %1<br/>Boundary (x y z): %2 %3 %4<br />Compression: %5<br/>cubeEdgeLength: %6<br/>Magnification: %7<br/>Scale (x y z): %8 %9 %10<br/>Description: %11")
-            .arg(datasetinfo.experimentname)
-            .arg(datasetinfo.boundary.x).arg(datasetinfo.boundary.y).arg(datasetinfo.boundary.z)
-            .arg(datasetinfo.compressionString())
-            .arg(datasetinfo.cubeEdgeLength)
-            .arg(datasetinfo.magnification)
-            .arg(datasetinfo.scale.x)
-            .arg(datasetinfo.scale.y)
-            .arg(datasetinfo.scale.z)
-            .arg(datasetinfo.description);
-
-        infoLabel.setText(infotext);
-
-        if (datasetSettingsLayout.indexOf(&cubeEdgeSpin) != -1) {
-            datasetSettingsLayout.takeRow(&cubeEdgeSpin);
-        }
-        cubeEdgeSpin.setParent(nullptr);
-        cubeEdgeLabel.setParent(nullptr);
-        if (!(datasetinfo.api == Dataset::API::Heidelbrain || datasetinfo.api == Dataset::API::PyKnossos)) {
-            datasetSettingsLayout.insertRow(0, &cubeEdgeSpin, &cubeEdgeLabel);
-        }
-    } catch (std::exception &) {
-    }
 }
 
 QStringList DatasetLoadWidget::getRecentPathItems() {
@@ -415,6 +423,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
 
     state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M, Dataset::datasets.size());// resets textures
 
+    updateDatasetInfo(path, download.second);
     applyGeometrySettings();
 
     if (changedBoundaryOrScale || !keepAnnotation) {
@@ -512,7 +521,6 @@ void DatasetLoadWidget::loadSettings() {
         appendRowSelectIfLU("");
         tableWidget.cellWidget(tableWidget.rowCount() - 1, 2)->setEnabled(false);//don’t delete empty row
     }// QSignalBlocker
-    updateDatasetInfo();
     auto & cubeEdgeLen = Dataset::current().cubeEdgeLength;
     cubeEdgeLen = settings.value(DATASET_CUBE_EDGE, 128).toInt();
     state->M = settings.value(DATASET_SUPERCUBE_EDGE, 3).toInt();

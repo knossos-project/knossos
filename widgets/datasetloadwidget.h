@@ -96,7 +96,7 @@ class DatasetLoadWidget : public DialogVisibilityNotify {
     void datasetCellChanged(int row, int col);
     QStringList getRecentPathItems();
     void insertDatasetRow(const QString & dataset, const int pos);
-    void updateDatasetInfo();
+    void updateDatasetInfo(const QUrl &url, const QString &info);
 public:
     QUrl datasetUrl;//meh
 
