@@ -83,6 +83,7 @@ struct GLBuffers {
             colors.emplace_back(std::forward<U>(color));
         }
     } lineVertBuffer, pointVertBuffer;
+    QOpenGLBuffer radius_buffer{QOpenGLBuffer::VertexBuffer};
     std::vector<std::array<std::uint8_t, 4>> colorPickingBuffer24, colorPickingBuffer48, colorPickingBuffer64;
 };
 
