@@ -2155,6 +2155,12 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     sphereShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
     glBuffers.pointVertBuffer.vertex_buffer.release();
 
+    glBuffers.pointVertBuffer.color_buffer.bind();
+    const int colorLocation = sphereShader.attributeLocation("color");
+    sphereShader.enableAttributeArray(colorLocation);
+    sphereShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
+    glBuffers.pointVertBuffer.color_buffer.release();
+
     glBuffers.radius_buffer.bind();
     const int radiusLocation = sphereShader.attributeLocation("radius");
     sphereShader.enableAttributeArray(radiusLocation);
@@ -2194,6 +2200,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.pointVertBuffer.vertices.size()));
 
     sphereShader.disableAttributeArray(vertexLocation);
+    sphereShader.disableAttributeArray(colorLocation);
     sphereShader.disableAttributeArray(radiusLocation);
 
     sphereShader.release();
