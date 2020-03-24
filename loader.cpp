@@ -334,6 +334,8 @@ void Loader::Worker::snappyCacheMergeSnappy(const CoordOfCube cubeCoord, const q
     for (std::size_t i{0}; i != tmpcube.size(); ++i) {
         if (tmpcube[i] == 0) {
             tmpcube[i] = tmpcube2[i];
+        } else if (tmpcube2[i] == 0) {
+            tmpcube[i] += tmpcube2[i];
         }
     }
     snappyCacheBackupRaw(cubeCoord, tmpcube.data());
