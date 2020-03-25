@@ -26,7 +26,7 @@ find_library(SNAPPY_LIB snappy)
 find_path(SNAPPY_INCLUDE snappy.h)
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(SNAPPY
+find_package_handle_standard_args(Snappy
     REQUIRED_VARS SNAPPY_LIB SNAPPY_INCLUDE
 )
 
