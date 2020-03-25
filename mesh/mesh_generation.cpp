@@ -280,13 +280,18 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
     };
     if (!objects.empty()) {
         addMesh(objects, [&](auto & elem, auto normals, auto colors){
-            Skeletonizer::singleton().addMeshToTree(elem, obj2verts[elem], normals, obj2faces[elem], colors, GL_TRIANGLES);
+            auto & nmcoords = obj2verts[elem];
+            const auto coord = floatCoordinate{nmcoords[0], nmcoords[1], nmcoords[2]} / Dataset::current().scales[0];
+            Segmentation::singleton().setObjectLocation(elem, coord);
+            Skeletonizer::singleton().addMeshToTree(elem, nmcoords, normals, obj2faces[elem], colors, GL_TRIANGLES);
         });
     } else {
         QSignalBlocker blocker(Segmentation::singleton());
         addMesh(obj2verts, [&](auto & elem, auto normals, auto colors){
-            const auto oid = Segmentation::singleton().largestObjectContainingSubobjectId(elem.first, floatCoordinate{elem.second[0], elem.second[1], elem.second[2]});
-            Skeletonizer::singleton().addMeshToTree(oid, elem.second, normals, obj2faces[elem.first], colors, GL_TRIANGLES);
+            auto & nmcoords = elem.second;
+            const auto coord = floatCoordinate{nmcoords[0], nmcoords[1], nmcoords[2]} / Dataset::current().scales[0];
+            const auto oid = Segmentation::singleton().largestObjectContainingSubobjectId(elem.first, coord);
+            Skeletonizer::singleton().addMeshToTree(oid, nmcoords, normals, obj2faces[elem.first], colors, GL_TRIANGLES);
         });
         blocker.unblock();
         Segmentation::singleton().resetData();
