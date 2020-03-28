@@ -314,8 +314,8 @@ void ViewportOrtho::handleMouseMotionLeftHold(const QMouseEvent *event) {
 
 void Viewport3D::handleMouseMotionRightHold(const QMouseEvent *event) {
     if (event->modifiers() == Qt::NoModifier && state->skeletonState->rotationcounter == 0) {
-        state->skeletonState->rotdx += xrel(event->x());
-        state->skeletonState->rotdy += yrel(event->y());
+        state->skeletonState->rotdx += 90.0 * xrel(event->x()) / width();
+        state->skeletonState->rotdy += 90.0 * yrel(event->y()) / height();
     }
     ViewportBase::handleMouseMotionRightHold(event);
 }
