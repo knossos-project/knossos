@@ -994,7 +994,7 @@ try {
     Annotation::singleton().annotationFilename = filename;
     updateRecentFile(filename);
     updateTitlebar();
-} catch (std::runtime_error & error) {
+} catch (std::exception & error) {
     if (silent) {
         throw;
     } else {
