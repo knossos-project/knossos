@@ -137,6 +137,7 @@ foreach(page ${cheatsheet_pages})
     list(APPEND genpages ${cheatsheet_dir}/${page_name}.html)
 endforeach()
 
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove -f ${cheatsheet_dir}/cheatsheet.qrc) # missing pages (e.g. on branch switch) break build
 add_custom_command(OUTPUT ${cheatsheet_dir}/cheatsheet.qrc
     COMMAND ${CMAKE_COMMAND} -E remove -f cheatsheet.qrc # remove old .qrc, otherwise it will be added to new .qrc
     COMMAND Qt5::rcc --project -o ../cheatsheet.qrc # need to create in different folder otherwise .qrc will contain itself. Yep…
