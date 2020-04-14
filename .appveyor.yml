@@ -1,6 +1,6 @@
 version: 5.1-{branch}+{build}
 
-image: Visual Studio 2015
+image: Visual Studio 2019
 
 environment:
   MSYSTEM: MINGW64
@@ -13,7 +13,7 @@ for:
   environment:
     matrix:
       - WITH_DEBUG_SYMBOLS: false
-      - WITH_DEBUG_SYMBOLS: true    
+      - WITH_DEBUG_SYMBOLS: true
 -
   environment:
     WITH_DEBUG_SYMBOLS: true
@@ -22,7 +22,7 @@ artifacts:
   - path: '*nightly.exe'
 
 build_script:
-  - C:\msys64\usr\bin\pacman -Syuu --noconfirm
+  - C:\msys64\usr\bin\bash -lc "pacman -Syuu --noconfirm"
   - C:\msys64\usr\bin\bash -lc "$(cygpath ${APPVEYOR_BUILD_FOLDER})/ci/build_windows.sh"
 
 deploy:
