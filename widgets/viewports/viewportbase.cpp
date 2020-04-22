@@ -454,11 +454,6 @@ void ViewportBase::takeSnapshotVpSize(SnapshotOptions o) {
     takeSnapshot(o);
 }
 
-void ViewportBase::takeSnapshotDatasetSize(SnapshotOptions o) {
-    o.size = width() / screenPxXPerDataPx;
-    takeSnapshot(o);
-}
-
 void ViewportBase::takeSnapshot(const SnapshotOptions & o) {
     if (isHidden()) {
         QMessageBox prompt{QApplication::activeWindow()};

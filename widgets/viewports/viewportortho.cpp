@@ -176,3 +176,8 @@ float ViewportOrtho::displayedEdgeLenghtXForZoomFactor(const float zoomFactor) c
 void ViewportOrtho::zoom(const float step) {
     state->viewer->zoom(step);
 }
+
+void ViewportOrtho::takeSnapshotDatasetSize(SnapshotOptions o) {
+    o.size = width() / screenPxXPerDataPx / Dataset::current().scaleFactor.componentMul(v1).length();
+    takeSnapshot(o);
+}

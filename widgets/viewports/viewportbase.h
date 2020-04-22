@@ -282,7 +282,6 @@ signals:
     void snapshotFinished(const QImage & image);
 public slots:
     void takeSnapshotVpSize(SnapshotOptions o);
-    void takeSnapshotDatasetSize(SnapshotOptions o);
     void takeSnapshot(const SnapshotOptions & o);
 
     virtual void zoomIn() = 0;

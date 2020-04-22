@@ -95,6 +95,7 @@ public:
     virtual float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const;
 
 public slots:
+    void takeSnapshotDatasetSize(SnapshotOptions o);
     virtual void zoomIn() override { zoom(zoomStep()); }
     virtual void zoomOut() override { zoom(1.f/zoomStep()); }
 };

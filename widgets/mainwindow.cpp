@@ -124,7 +124,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     });
     QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::updateDatasetCompression,  this, &MainWindow::updateCompressionRatioDisplay);
     QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::snapshotVpSizeRequest, [this](SnapshotOptions & o) { viewport(o.vp)->takeSnapshotVpSize(o); });
-    QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::snapshotDatasetSizeRequest, [this](SnapshotOptions & o) { viewport(o.vp)->takeSnapshotDatasetSize(o); });
+    QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::snapshotDatasetSizeRequest, [this](SnapshotOptions & o) { dynamic_cast<ViewportOrtho &>(*viewport(o.vp)).takeSnapshotDatasetSize(o); });
     QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::snapshotRequest, [this](const SnapshotOptions & o) { viewport(o.vp)->takeSnapshot(o); });
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &MainWindow::notifyUnsavedChanges);
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &MainWindow::notifyUnsavedChanges);
