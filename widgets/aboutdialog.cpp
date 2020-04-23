@@ -3,6 +3,8 @@
 
 #include "buildinfo.h"
 
+#include <boost/config.hpp>
+
 AboutDialog::AboutDialog(QWidget * parent) : QDialog(parent), ui(new Ui::AboutDialog) {
     setWindowFlag(Qt::WindowContextHelpButtonHint, false);
 
@@ -12,12 +14,7 @@ AboutDialog::AboutDialog(QWidget * parent) : QDialog(parent), ui(new Ui::AboutDi
     ui->revisionDateLabelValue->setText(KREVISIONDATE);
     ui->qtVersionLabelValue->setText(tr("using %1 (built with %2)").arg(qVersion()).arg(QT_VERSION_STR));
 
-#ifdef __VERSION__
-    ui->compilerLabelValue->setText(tr("GCC %1").arg(__VERSION__));
-#endif
-#ifdef _MSC_FULL_VER
-    ui->compilerLabelValue->setText(tr("VC++ cl v%1").arg(_MSC_FULL_VER));
-#endif
+    ui->compilerLabelValue->setText(QString{"%1\n%2"}.arg(BOOST_COMPILER).arg(BOOST_STDLIB));
 }
 
 AboutDialog::~AboutDialog() {
