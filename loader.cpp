@@ -422,7 +422,7 @@ std::pair<bool, void*> decompressCube(void * currentSlot, QIODevice & reply, con
             success = true;
         }
     } else if (dataset.type == Dataset::CubeType::RAW_JPG || dataset.type == Dataset::CubeType::RAW_J2K || dataset.type == Dataset::CubeType::RAW_JP2_6 || dataset.type == Dataset::CubeType::RAW_PNG) {
-        const auto image = QImage::fromData(data).convertToFormat(QImage::Format_Indexed8);
+        const auto image = QImage::fromData(data).convertToFormat(QImage::Format_Grayscale8);
         const qint64 expectedSize = state->cubeBytes;
         if (image.sizeInBytes() == expectedSize) {
             std::copy(image.bits(), image.bits() + image.sizeInBytes(), reinterpret_cast<std::uint8_t *>(currentSlot));
