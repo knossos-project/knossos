@@ -1106,10 +1106,11 @@ void ViewportBase::renderMeshBuffer(Mesh & buf, const bool picking) {
     const bool disableColorLocation = picking || !buf.useTreeColor;
     int colorLocation = meshShader.attributeLocation("color");
     if (disableColorLocation) {
-        buf.picking_color_buf.bind();
+        auto & correct_color_buf = picking ? buf.picking_color_buf : buf.color_buf;
+        correct_color_buf.bind();
         meshShader.enableAttributeArray(colorLocation);
         meshShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
-        buf.picking_color_buf.release();
+        correct_color_buf.release();
     }
     if (!picking) {
         QColor color = buf.correspondingTree->color;
