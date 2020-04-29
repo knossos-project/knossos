@@ -1368,7 +1368,7 @@ void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
             qDebug() << url;//in case its no working
             if (url.isLocalFile()) {
                 const auto fileName(url.toLocalFile());
-                for (const auto extension : validExtensions) {
+                for (const auto & extension : validExtensions) {
                     if (fileName.endsWith(extension)) {
                         event->accept();
                     }
