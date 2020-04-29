@@ -12,7 +12,7 @@ MeshesTab::MeshesTab(QWidget *parent) : QWidget(parent) {
     visibilityGroupLayout.addWidget(&meshIn3DVPCheck);
     visibilityGroup.setLayout(&visibilityGroupLayout);
 
-    static auto opacityControls = [this/* required for GCC8*/](auto & label, auto & slider, auto & spin, auto & layout, auto setter){
+    static auto opacityControls = [](auto & label, auto & slider, auto & spin, auto & layout, auto setter){
         slider.setRange(0, 100);
         slider.setOrientation(Qt::Horizontal);
         spin.setRange(0, 1);
