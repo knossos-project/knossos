@@ -118,9 +118,10 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
 
         widgetContainer.annotationWidget.setSegmentationVisibility(Segmentation::singleton().enabled);
 
-        const Coordinate c = Dataset::current().boundary.componentMul(Dataset::current().scale);
-        widgetContainer.annotationWidget.segmentationTab.updateBrushEditRange(1, std::max({c.x, c.y, c.z}));
-        Segmentation::singleton().brush.setRadius(Dataset::current().scales[0].x * 10);
+        const auto scale = Dataset::current().scales[0];
+        const auto boundary = Dataset::current().scales[0].componentMul(Dataset::current().boundary);
+        widgetContainer.annotationWidget.segmentationTab.updateBrushEditRange(0.5 * std::min({scale.x, scale.y, scale.z}), std::max({boundary.x, boundary.y, boundary.z}));
+        Segmentation::singleton().brush.setRadius(scale.x * 10);
     });
     QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::updateDatasetCompression,  this, &MainWindow::updateCompressionRatioDisplay);
     QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::snapshotVpSizeRequest, [this](SnapshotOptions & o) { viewport(o.vp)->takeSnapshotVpSize(o); });

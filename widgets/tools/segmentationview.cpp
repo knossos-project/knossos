@@ -309,7 +309,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     layout.addLayout(&bottomHLayout);
     setLayout(&layout);
 
-    QObject::connect(&brushRadiusEdit, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](int value){
+    QObject::connect(&brushRadiusEdit, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](auto value){
         Segmentation::singleton().brush.setRadius(value);
     });
     QObject::connect(&modeGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [](int id){
@@ -318,7 +318,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     QObject::connect(&Segmentation::singleton().brush, &brush_subject::modeChanged, [this](brush_t::mode_t value){
         modeGroup.button(static_cast<int>(value))->setChecked(true);
     });
-    QObject::connect(&Segmentation::singleton().brush, &brush_subject::radiusChanged, [this](int value){
+    QObject::connect(&Segmentation::singleton().brush, &brush_subject::radiusChanged, [this](auto value){
         brushRadiusEdit.setValue(value);
     });
 
@@ -524,7 +524,7 @@ void commitSelection(const QItemSelection & selected, const QItemSelection & des
     commitSelection(selected, deselected, [](const int & i){return i;});
 }
 
-void SegmentationView::updateBrushEditRange(const int minSize, const int maxSize) {
+void SegmentationView::updateBrushEditRange(const double minSize, const double maxSize) {
     brushRadiusEdit.setRange(minSize, maxSize);
 }
 

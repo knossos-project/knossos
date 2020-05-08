@@ -40,7 +40,8 @@ public:
         angular, round
     };
 
-    int radius = 100;
+    double radius = 100;
+    using radius_t = decltype(radius);
     bool inverse = false;
     mode_t mode = mode_t::two_dim;
     view_t view = view_t::xy;
@@ -70,11 +71,8 @@ public:
     mode_t getMode() const {
         return mode;
     }
-    void setRadius(const int newRadius) {
-        radius = std::max(newRadius, 1);
-        emit radiusChanged(radius);
-    }
-    int getRadius() const {
+    void setRadius(const radius_t newRadius);
+    auto getRadius() const {
         return radius;
     }
     void setView(const view_t newView, const floatCoordinate & newV1, const floatCoordinate & newV2, const floatCoordinate & newN) {
@@ -96,7 +94,7 @@ public:
 signals:
     void inverseChanged(const bool);
     void modeChanged(const mode_t);
-    void radiusChanged(const int);
+    void radiusChanged(const radius_t);
     void shapeChanged(const shape_t);
 };
 

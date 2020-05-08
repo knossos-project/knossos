@@ -24,11 +24,19 @@
 
 #include "coordinate.h"
 #include "cubeloader.h"
+#include "dataset.h"
 #include "loader.h"
 #include "segmentation.h"
 
 #include <unordered_set>
 #include <vector>
+
+void brush_subject::setRadius(const radius_t newRadius) {
+    const auto scale = Dataset::current().scales[0];
+    const auto boundary = Dataset::current().scales[0].componentMul(Dataset::current().boundary);
+    radius = std::max(0.5 * std::min({scale.x, scale.y, scale.z}), std::min(1.0 * std::max({boundary.x, boundary.y, boundary.z}), newRadius));
+    emit radiusChanged(radius);
+}
 
 void subobjectBucketFill(const Coordinate & seed, const uint64_t fillsoid, const brush_t & brush, const Coordinate & areaMin, const Coordinate & areaMax) {
     std::vector<Coordinate> work = {seed};
