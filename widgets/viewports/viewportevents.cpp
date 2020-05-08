@@ -464,7 +464,7 @@ void ViewportBase::handleWheelEvent(const QWheelEvent *event) {
     } else if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Brush) && event->modifiers() == Qt::SHIFT) {
         auto curRadius = seg.brush.getRadius();
         // brush radius delta factor (float), as a function of current radius
-        seg.brush.setRadius(curRadius + (event->delta() / 120) * std::pow(curRadius + 1, 0.5));
+        seg.brush.setRadius(curRadius + 0.1 * curRadius * (event->delta() / 120));
     }
 }
 
