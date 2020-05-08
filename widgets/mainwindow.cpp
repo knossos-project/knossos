@@ -653,9 +653,9 @@ void MainWindow::createMenus() {
     increaseOpacityAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Increase Overlay Opacity"), this, [&]() { changeOverlayOpacity(10); emit overlayOpacityChanged(); }, Qt::Key_Plus);
     decreaseOpacityAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Decrease Overlay Opacity"), this, [&]() { changeOverlayOpacity(-10); emit overlayOpacityChanged(); }, Qt::Key_Minus);
     enlargeBrushAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Increase Brush Size (Shift + Scroll)"), &Segmentation::singleton(),
-                                                 []() { Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() + 1); }, Qt::SHIFT + Qt::Key_Plus);
+        []() { Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() + 0.5 * Dataset::current().scales[0].x); }, Qt::SHIFT + Qt::Key_Plus);
     shrinkBrushAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Decrease Brush Size (Shift + Scroll)"), &Segmentation::singleton(),
-                                                []() { Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() - 1); }, Qt::SHIFT + Qt::Key_Minus);
+        []() { Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() - 0.5 * Dataset::current().scales[0].x); }, Qt::SHIFT + Qt::Key_Minus);
 
     actionMenu.addSeparator();
     clearMergelistAction = actionMenu.addAction(QIcon(":/resources/icons/menubar/trash.png"), "Clear Merge List", &Segmentation::singleton(), SLOT(clear()));
