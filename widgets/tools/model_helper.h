@@ -67,11 +67,11 @@ template<typename M, typename D>
 auto deltaBlockSelection(const M & model, const D dataFromIndex){
     return deltaBlockSelection(model, dataFromIndex, [](int){return false;});
 }
-auto blockSelection = [](const auto & model, const auto & data){
+inline auto blockSelection = [](const auto & model, const auto & data){
     return deltaBlockSelection(model, [&data](auto index){return data[index];}, [](int){return false;});
 };
 
-auto threeWaySorting = [](auto & table, auto & sortIndex){// emulate ability for the user to disable sorting
+inline auto threeWaySorting = [](auto & table, auto & sortIndex){// emulate ability for the user to disable sorting
     return [&table, &sortIndex](const int index){
         if (index == sortIndex && table.header()->sortIndicatorOrder() == Qt::SortOrder::AscendingOrder) {// asc (-1) → desc (==) → asc (==)
             table.sortByColumn(sortIndex = -1, Qt::SortOrder::AscendingOrder);

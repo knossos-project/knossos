@@ -289,7 +289,7 @@ public slots:
     void updateCompressionRatioDisplay();
 };
 
-auto createGlobalAction = [](auto parent, auto key, auto todo){
+inline auto createGlobalAction = [](auto parent, auto key, auto todo){
     auto & action = *new QAction(parent);
     action.setShortcut(key);
     action.setShortcutContext(Qt::ApplicationShortcut);
