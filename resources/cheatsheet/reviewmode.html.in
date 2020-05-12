@@ -1,5 +1,3 @@
-#include "htmlmacros.h"
-
 <html>
 <head>
 	<meta content="text/html; charset=utf-8"/>
@@ -9,9 +7,9 @@
 <body>
 	<h1>Review</h1>
 
-	<p><a href=ANNOTATION_SKEL>Skeleton table view</a> | <a href=PREF_NODE>Node preferences</a> | <a href=PREF_TREE>Tree preferences</a></p>
-	<p><a href=ANNOTATION_SEG>Segmentation table view</a> | <a href=PREF_SEG>Visibility preferences</a></p>
-	<p><a href=NAVIGATION>Navigation preferences</a></p>
+	<p><a href=#annotation_skel>Skeleton table view</a> | <a href=#pref_node>Node preferences</a> | <a href=#pref_tree>Tree preferences</a></p>
+	<p><a href=#annotation_seg>Segmentation table view</a> | <a href=#pref_seg>Visibility preferences</a></p>
+	<p><a href=#navi>Navigation preferences</a></p>
 
 	<p>
 	Review mode is intended for easy browsing of your segmentation and skeletonization without accidentally changing them.

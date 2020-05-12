@@ -1,5 +1,3 @@
-#include "htmlmacros.h"
-
 <html>
 <head>
 	<meta content="text/html; charset=utf-8"/>
@@ -9,13 +7,13 @@
 <body>
 	<h1>Segmentation Merge</h1>
 
-	<p><a href=ANNOTATION_SEG>Segmentation table view</a> | <a href=PREF_SEG>Visibility preferences</a></p>
-	<p><a href=NAVIGATION>Navigation preferences</a></p>
+	<p><a href=#annotation_seg>Segmentation table view</a> | <a href=#pref_seg>Visibility preferences</a></p>
+	<p><a href=#navi>Navigation preferences</a></p>
 
 	<p>
 	Merging is a segmentation method suitable for working on a machine-generated over-segmentation, i.e. the task consists of merging incorrectly splitted objects back together.
 	</p>
-	
+
 	<p>
 	<table>
 		<thead>
