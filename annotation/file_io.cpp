@@ -31,7 +31,7 @@
 #include "stateInfo.h"
 #include "viewer.h"
 
-#include <quazip5/quazipfile.h>
+#include <quazipfile.h>
 
 #include <QBuffer>
 #include <QByteArray>

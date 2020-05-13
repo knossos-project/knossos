@@ -22,28 +22,30 @@
 
 # provides an imported target for the quazip library
 
-find_package(ZLIB REQUIRED)
+find_package(QuaZip 0.9 CONFIG)
 
-find_library(QUAZIP_LIBRARY NAMES quazip quazip5 PATH_SUFFIXES "QuaZip")
-find_path(QUAZIP_INCLUDE_DIR quazip.h PATH_SUFFIXES quazip quazip5)
+if(NOT TARGET QuaZip::QuaZip)
+    find_package(ZLIB REQUIRED)
 
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(QuaZip
-    REQUIRED_VARS QUAZIP_LIBRARY QUAZIP_INCLUDE_DIR
-)
+    find_library(QUAZIP_LIBRARY NAMES quazip quazip5 PATH_SUFFIXES "QuaZip")
+    find_path(QUAZIP_INCLUDE_DIR quazip.h PATH_SUFFIXES quazip quazip5)
 
-if(QUAZIP_FOUND)
-    add_library(QuaZip::QuaZip UNKNOWN IMPORTED)
-    set_target_properties(QuaZip::QuaZip PROPERTIES
-        IMPORTED_LOCATION ${QUAZIP_LIBRARY}
-        # workaround conflicting crypt.h header
-        # use #include <quazip5/*>
-#        INTERFACE_INCLUDE_DIRECTORIES ${QUAZIP_INCLUDE_DIR}
-        INTERFACE_LINK_LIBRARIES ZLIB::ZLIB
+    include(FindPackageHandleStandardArgs)
+    find_package_handle_standard_args(QuaZip
+        DEFAULT_MSG QUAZIP_LIBRARY QUAZIP_INCLUDE_DIR
     )
-    if(NOT ${QUAZIP_LIBRARY} MATCHES ".so" AND NOT ${QUAZIP_LIBRARY} MATCHES ".dll")
-    set_target_properties(QuaZip::QuaZip PROPERTIES
-        INTERFACE_COMPILE_DEFINITIONS "QUAZIP_STATIC"
-    )
-    endif()
-endif(QUAZIP_FOUND)
+
+    if(QUAZIP_FOUND)
+        add_library(QuaZip::QuaZip UNKNOWN IMPORTED)
+        set_target_properties(QuaZip::QuaZip PROPERTIES
+            IMPORTED_LOCATION ${QUAZIP_LIBRARY}
+            INTERFACE_INCLUDE_DIRECTORIES ${QUAZIP_INCLUDE_DIR}
+            INTERFACE_LINK_LIBRARIES ZLIB::ZLIB
+        )
+        if(NOT ${QUAZIP_LIBRARY} MATCHES ".so" AND NOT ${QUAZIP_LIBRARY} MATCHES ".dll")
+            set_target_properties(QuaZip::QuaZip PROPERTIES
+                INTERFACE_COMPILE_DEFINITIONS "QUAZIP_STATIC"
+            )
+        endif()
+    endif(QUAZIP_FOUND)
+endif()
