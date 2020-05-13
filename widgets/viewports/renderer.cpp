@@ -719,13 +719,13 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
                   , center.x, center.y, center.z
                   , v2.x, v2.y, v2.z);// negative up vectors, because origin is at the top
     };
-    auto slice = [&](auto & texture, std::size_t layerId, floatCoordinate offset = {}){
+    auto slice = [&](auto & texture, std::size_t layerId){
         if (!options.nodePicking) {
             state->viewer->vpGenerateTexture(*this, layerId);
             glEnable(GL_TEXTURE_2D);
             texture.texHandle[layerId].bind();
             glPushMatrix();
-            glTranslatef(isoCurPos.x + offset.x, isoCurPos.y + offset.y, isoCurPos.z + offset.z);
+            glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
             glBegin(GL_QUADS);
                 glNormal3i(n.x, n.y, n.z);
                 glTexCoord2f(texture.texLUx, texture.texLUy);
