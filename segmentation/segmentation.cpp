@@ -37,10 +37,6 @@
 #include <sstream>
 #include <utility>
 
-uint64_t Segmentation::SubObject::highestId = 0;
-uint64_t Segmentation::Object::highestId = 0;
-uint64_t Segmentation::Object::highestIndex = -1;
-
 Segmentation::Object::Object(std::vector<std::reference_wrapper<SubObject>> initialVolumes, const Coordinate & location, const uint64_t id, const bool & todo, const bool & immutable)
     : id(id), todo(todo), immutable(immutable), location(location) {
     highestId = std::max(id, highestId);

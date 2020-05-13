@@ -37,8 +37,8 @@ class Remote {
     bool rotate{false};
     QTimer timer;
     QElapsedTimer elapsed;
-    static const qint64 ms;
-    static const float goodEnough;
+    static constexpr qint64 ms{10};
+    static constexpr float goodEnough{0.01f};
 
     std::deque<floatCoordinate> getLastNodes();
     void remoteWalk();

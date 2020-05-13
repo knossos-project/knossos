@@ -36,6 +36,7 @@
 #include <atomic>
 #include <boost/optional.hpp>
 #include <functional>
+#include <limits>
 #include <random>
 #include <tuple>
 #include <unordered_map>
@@ -64,7 +65,7 @@ Q_OBJECT
         friend void verticalSplittingPlane(const Coordinate & seed);
         friend class SegmentationObjectModel;
         friend class Segmentation;
-        static uint64_t highestId;
+        static inline uint64_t highestId{0};
         std::vector<uint64_t> objects;
         std::size_t selectedObjectsCount = 0;
     public:
@@ -95,8 +96,8 @@ Q_OBJECT
         friend class SegmentationProxy;
         friend class Segmentation;
 
-        static uint64_t highestId;
-        static uint64_t highestIndex;
+        static inline std::uint64_t highestId{0};
+        static inline std::uint64_t highestIndex{std::numeric_limits<std::uint64_t>::max()};
     public:
         //see http://coliru.stacked-crooked.com/a/aba85777991b4425
         std::vector<std::reference_wrapper<SubObject>> subobjects;

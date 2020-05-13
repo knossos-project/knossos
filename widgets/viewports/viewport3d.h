@@ -63,7 +63,7 @@ public:
     virtual void showHideButtons(bool isShow) override;
     void refocus(const boost::optional<Coordinate> position = boost::none);
     void updateVolumeTexture();
-    static bool showBoundariesInUm;
+    static inline bool showBoundariesInUm{false};
 
 public slots:
     virtual void zoomIn() override { zoom(zoomStep()); }

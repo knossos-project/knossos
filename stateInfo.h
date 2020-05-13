@@ -33,7 +33,7 @@
 #include <vector>
 
 class stateInfo;
-extern stateInfo * state;
+inline stateInfo * state{nullptr};
 
 #define NUM_MAG_DATASETS 65536
 

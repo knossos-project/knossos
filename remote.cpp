@@ -34,9 +34,6 @@
 #include <algorithm>
 #include <cmath>
 
-const qint64 Remote::ms{10};
-const float Remote::goodEnough{0.01f};
-
 Remote::Remote() {
     timer.setTimerType(Qt::PreciseTimer);
     QObject::connect(&timer, &QTimer::timeout, [this](){remoteWalk();});

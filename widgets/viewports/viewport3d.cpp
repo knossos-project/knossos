@@ -28,8 +28,6 @@
 #include "stateInfo.h"
 #include "viewer.h"
 
-bool Viewport3D::showBoundariesInUm = false;
-
 Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBase(parent, viewportType) {
     wiggleButton.setCheckable(true);
     wiggleButton.setToolTip("Wiggle stereoscopy (Hold W)");

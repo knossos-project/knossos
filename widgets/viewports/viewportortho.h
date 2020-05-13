@@ -76,7 +76,7 @@ public:
     void resetTexture(const std::size_t layerCount);
     void applyTextureFilter();
     void setTextureFilter(std::size_t layerId, const QOpenGLTexture::Filter textureFilter);
-    static bool showNodeComments;
+    static inline bool showNodeComments{false};
 
     void sendCursorPosition();
     Coordinate getMouseCoordinate();

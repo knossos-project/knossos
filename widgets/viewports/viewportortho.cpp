@@ -26,8 +26,6 @@
 #include "stateInfo.h"
 #include "viewer.h"
 
-bool ViewportOrtho::showNodeComments = false;
-
 ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType) : ViewportBase(parent, viewportType) {
     // v2 is negative because it goes from top to bottom on screen
     // n is positive if we want to look towards 0 and negative to look towards infinity

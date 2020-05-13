@@ -256,7 +256,7 @@ public:
     // holds wether vp was made fullscreen from docked state. Determines if vp is docked or floated when leaving fullscreen mode.
     bool isFullOrigDocked;
     void setDock(bool isDock);
-    static bool oglDebug;
+    static inline bool oglDebug{false};
 
     explicit ViewportBase(QWidget *parent, ViewportType viewportType);
     virtual ~ViewportBase() override;
