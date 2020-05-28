@@ -489,6 +489,7 @@ void Loader::Worker::cleanup(const Coordinate center) {
                     OcModifiedCacheQueue[loaderMagnification].erase(cubeCoord);
                 }
             }
+            state->viewer->reslice_notify_all(layerId, cubeCoord);
         });
     }
 }
