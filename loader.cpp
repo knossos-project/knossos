@@ -101,7 +101,7 @@ void Loader::Controller::unloadCurrentMagnification() {
 void Loader::Controller::markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification) {
     emit markOcCubeAsModifiedSignal(cubeCoord, magnification);
     state->viewer->window->notifyUnsavedChanges();
-    state->viewer->reslice_notify_all(Segmentation::singleton().layerId, Dataset::current().cube2global(cubeCoord));
+    state->viewer->reslice_notify_all(Segmentation::singleton().layerId, cubeCoord);
 }
 
 decltype(Loader::Worker::snappyCache) Loader::Controller::getAllModifiedCubes() {
@@ -283,7 +283,7 @@ void Loader::Worker::unloadCurrentMagnification(const std::size_t layerId) {
             }
         }
         freeSlots[layerId].emplace_back(remSlotPtr);
-        state->viewer->reslice_notify_all(layerId, datasets[layerId].cube2global(cubeCoord));
+        state->viewer->reslice_notify_all(layerId, cubeCoord);
     }
     state->cube2Pointer[layerId][loaderMagnification].clear();
 }
@@ -467,7 +467,7 @@ std::pair<bool, void*> decompressCube(void * currentSlot, QIODevice & reply, con
         state->protectCube2Pointer.lock();
         cubeHash[cubeCoord] = currentSlot;
         state->protectCube2Pointer.unlock();
-        state->viewer->reslice_notify_all(layerId, dataset.cube2global(cubeCoord));
+        state->viewer->reslice_notify_all(layerId, cubeCoord);
     }
 
     return {success, currentSlot};
@@ -614,7 +614,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                         cubeHash[cubeCoord] = currentSlot;
                         state->protectCube2Pointer.unlock();
 
-                        state->viewer->reslice_notify_all(layerId, dataset.cube2global(cubeCoord));
+                        state->viewer->reslice_notify_all(layerId, cubeCoord);
                     } else {
                         freeSlots.emplace_back(currentSlot);
                         qCritical() << layerId << cubeCoord << "snappy extract failed" << snappyIt->second.size();
@@ -640,7 +640,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     state->protectCube2Pointer.lock();
                     cubeHash[cubeCoord] = currentSlot;
                     state->protectCube2Pointer.unlock();
-                    state->viewer->reslice_notify_all(layerId, dataset.cube2global(cubeCoord));
+                    state->viewer->reslice_notify_all(layerId, cubeCoord);
                 } else {
                     qCritical() << layerId << cubeCoord << "no slots for snappy extract" << cubeHash.size() << freeSlots.size();
                 }
@@ -716,7 +716,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                         state->protectCube2Pointer.lock();
                         cubeHash[cubeCoord] = currentSlot;
                         state->protectCube2Pointer.unlock();
-                        state->viewer->reslice_notify_all(layerId, dataset.cube2global(cubeCoord));
+                        state->viewer->reslice_notify_all(layerId, cubeCoord);
                     } else {
                         if (reply->error() != QNetworkReply::OperationCanceledError) {
                             qCritical() << layerId << cubeCoord << static_cast<int>(dataset.type) << reply->request().url() << reply->errorString() << reply->readAll();

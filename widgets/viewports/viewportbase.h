@@ -62,6 +62,7 @@ struct GLTexture2D : public QOpenGLTexture {
 struct viewportTexture {
     //Handles for OpenGl
     std::vector<GLTexture2D> texHandle;
+    std::vector<std::vector<std::uint8_t>> texData;
     //The absPx coordinate of the upper left corner of the texture actually stored in *texture
     floatCoordinate leftUpperPxInAbsPx;
     GLsizei size;

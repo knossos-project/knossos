@@ -144,7 +144,7 @@ void PythonProxy::set_work_mode(const int mode) {
 }
 
 void PythonProxy::oc_reslice_notify_all(QList<int> coord) {
-    state->viewer->reslice_notify_all(Segmentation::singleton().layerId, coord);
+    state->viewer->reslice_notify_all(Segmentation::singleton().layerId, Dataset::datasets[Segmentation::singleton().layerId].global2cube(coord));
 }
 
 int PythonProxy::loader_loading_nr() {

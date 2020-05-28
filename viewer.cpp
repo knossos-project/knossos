@@ -479,7 +479,6 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
     const int multiSliceiMax = viewerState.layerRenderSettings[layerId].combineSlicesEnabled
             * viewerState.layerRenderSettings[layerId].combineSlices
             * ((vp.viewportType == VIEWPORT_XY) || !viewerState.layerRenderSettings[layerId].combineSlicesXyOnly);
-    static std::vector<std::uint8_t> texData;// reallocation for every run would be a waste
     bool first{true};
     for (int multiSlicei{-multiSliceiMax}; multiSlicei <= multiSliceiMax; ++multiSlicei) {
         const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
@@ -517,14 +516,10 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
 
         // We iterate over the texture with x and y being in a temporary coordinate
         // system local to this texture.
-        if (!vp.resliceNecessary[layerId]) {
+        if (!vp.resliceNecessary[layerId] && vp.resliceNecessaryCubes[layerId].empty()) {
             return;
         }
-        if (multiSlicei == multiSliceiMax) {
-            vp.resliceNecessary[layerId] = false;
-        }
         const CoordOfCube upperLeftDc = Dataset::datasets[layerId].global2cube(vp.texture.leftUpperPxInAbsPx) + offsetCube;
-        texData.resize(4 * std::pow(state->viewerState->texEdgeLength, 2));
         QFutureSynchronizer<void> sync;
         for(int x_dc = 0; x_dc < state->M; ++x_dc) {
             for(int y_dc = 0; y_dc < state->M; ++y_dc) {
@@ -552,6 +547,9 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
                 default:
                     qDebug("No such slice type (%d) in vpGenerateTexture.", vp.viewportType);
                 }
+                if (!vp.resliceNecessary[layerId] && vp.resliceNecessaryCubes[layerId].find(currentDc) == std::end(vp.resliceNecessaryCubes[layerId])) {
+                    continue;
+                }
                 state->protectCube2Pointer.lock();
                 void * const cube = cubeQuery(state->cube2Pointer, layerId, Dataset::current().magIndex, currentDc);
                 state->protectCube2Pointer.unlock();
@@ -561,28 +559,32 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
                 // This is used to index into the texture. overlayData[index] is the first
                 // byte of the datacube slice at position (x_dc, y_dc) in the texture.
                 const int index = 4 * (y_dc * state->viewerState->texEdgeLength * cubeEdgeLen + x_dc * cubeEdgeLen);
-                sync.addFuture(QtConcurrent::run([=, &vp](){
+                sync.addFuture(QtConcurrent::run([this, &vp, cube, first, slicePositionWithinCube, slicePosInAbsPx, index, layerId, y_px, cubeEdgeLen, x_px]() mutable {
                     if (cube != nullptr) {
                         if (Dataset::datasets[layerId].isOverlay()) {
-                            ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, slicePosInAbsPx, texData.data() + index, vp, layerId);
+                            ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.texture.texData[layerId].data() + index, vp, layerId);
                         } else {
                             const auto combine = boost::make_optional(!first, viewerState.layerRenderSettings[layerId].combineSlicesType);
-                            dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, slicePosInAbsPx, texData.data() + index, vp, layerId, combine);
+                            dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.texture.texData[layerId].data() + index, vp, layerId, combine);
                         }
                     } else {
                         for (int y = y_px; y < y_px + cubeEdgeLen; ++y) {
-                            const auto start = std::next(std::begin(texData), 4 * (y * viewerState.texEdgeLength + x_px));
+                            const auto start = std::next(std::begin(vp.texture.texData[layerId]), 4 * (y * viewerState.texEdgeLength + x_px));
                             std::fill(start, std::next(start, 4 * cubeEdgeLen), 0);
                         }
                     }
                 }));
             }
         }
+        if (multiSlicei == multiSliceiMax) {
+            vp.resliceNecessary[layerId] = false;
+        }
         sync.waitForFinished();
         first = false;
     }
+    vp.resliceNecessaryCubes[layerId].clear();
     vp.texture.texHandle[layerId].bind();
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, state->viewerState->texEdgeLength, state->viewerState->texEdgeLength, GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, state->viewerState->texEdgeLength, state->viewerState->texEdgeLength, GL_RGBA, GL_UNSIGNED_BYTE, vp.texture.texData[layerId].data());
     vp.texture.texHandle[layerId].release();
     glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -1100,18 +1102,22 @@ void Viewer::reslice_notify() {
 }
 
 void Viewer::reslice_notify(const std::size_t layerId) {
-    reslice_notify_all(layerId, viewerState.currentPosition);
+    reslice_notify_all(layerId);
 }
 
-void Viewer::reslice_notify_all(const std::size_t layerId, const Coordinate globalCoord) {
+void Viewer::reslice_notify_all(const std::size_t layerId, boost::optional<CoordOfCube> cubeCoord) {
     if (layerId >= window->viewportArb->resliceNecessary.size()) {
         return;// loader may notify for layers that don’t exist anymore
     }
-    if (currentlyVisibleWrapWrap(state->viewerState->currentPosition, globalCoord)) {
-        window->forEachOrthoVPDo([layerId](ViewportOrtho & vpOrtho) {
+    window->forEachOrthoVPDo([this, layerId, cubeCoord](ViewportOrtho & vpOrtho) {
+        if (!cubeCoord) {
             vpOrtho.resliceNecessary[layerId] = true;
-        });
-    }
+        } else {
+            QTimer::singleShot(0, this, [layerId, cubeCoord, &vpOrtho](){
+                vpOrtho.resliceNecessaryCubes[layerId].emplace(*cubeCoord);
+            });
+        }
+    });
     window->viewportArb->resliceNecessary[layerId] = true;//arb visibility is not tested
     if (layerId == Segmentation::singleton().layerId) {
         // if anything has changed, update the volume texture data

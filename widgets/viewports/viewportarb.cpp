@@ -63,9 +63,9 @@ void ViewportArb::updateOverlayTexture() {
     const int width = (state->M - 1) * Dataset::current().cubeEdgeLength / std::sqrt(2);
     const int height = width;
     const auto begin = leftUpperPxInAbsPx_float;
-    static std::vector<std::uint8_t> texData;// reallocation for every run would be a waste
+    auto & texData = texture.texData[Segmentation::singleton().layerId];
     texData.resize(4 * width * height, 0);
-    boost::multi_array_ref<uint8_t, 3> viewportView(reinterpret_cast<uint8_t *>(texData.data()), boost::extents[width][height][4]);
+    boost::multi_array_ref<uint8_t, 3> viewportView(texData.data(), boost::extents[width][height][4]);
     // cache
     auto subobjectIdCache = Segmentation::singleton().getBackgroundId();
     auto colorCache = Segmentation::singleton().colorObjectFromSubobjectId(subobjectIdCache);

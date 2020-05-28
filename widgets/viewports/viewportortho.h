@@ -28,6 +28,7 @@
 #include "viewportbase.h"
 
 #include <atomic>
+#include <unordered_set>
 
 class ViewportOrtho : public ViewportBase {
     Q_OBJECT
@@ -85,6 +86,7 @@ public:
     floatCoordinate v2;// vector in y direction
     floatCoordinate  n;// faces away from the vp plane towards the camera
     std::vector<std::atomic_bool> resliceNecessary{decltype(resliceNecessary)(2)};// FIXME legacy;
+    std::vector<std::unordered_set<CoordOfCube>> resliceNecessaryCubes;
     double displayedIsoPx;
     double screenPxXPerMag1Px;
     double screenPxYPerMag1Px;

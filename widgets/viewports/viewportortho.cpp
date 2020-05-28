@@ -117,6 +117,7 @@ void ViewportOrtho::mousePressEvent(QMouseEvent *event) {
 
 void ViewportOrtho::resetTexture(const std::size_t layerCount) {
     resliceNecessary = decltype(resliceNecessary)(layerCount);
+    resliceNecessaryCubes = decltype(resliceNecessaryCubes)(layerCount);
     for (auto && elem : resliceNecessary) {
         elem = true;// can’t use vector init ctor for atomics
     }
@@ -125,13 +126,16 @@ void ViewportOrtho::resetTexture(const std::size_t layerCount) {
     makeCurrent();
     if (context() != nullptr && (changedLayerCount || changedTextureSize)) {
         texture.texHandle = decltype(texture.texHandle)(layerCount);
-        for (auto & elem : texture.texHandle) {
+        texture.texData = decltype(texture.texData)(layerCount);
+        for (std::size_t i{0}; i < layerCount; ++i) {
+            auto & elem = texture.texHandle[i];
+            auto & texData = texture.texData[i];
             elem.destroy();
             elem.setSize(texture.size, texture.size);
             elem.setFormat(QOpenGLTexture::RGBA8_UNorm);
             elem.setWrapMode(QOpenGLTexture::ClampToEdge);
             elem.allocateStorage();
-            std::vector<std::uint8_t> texData(4 * std::pow(texture.size, 2));
+            texData.resize(4 * std::pow(texture.size, 2));
             for (std::size_t i = 3; i < texData.size(); i += 4) {
                 texData[i-3] = 0;
                 texData[i-2] = 0;
