@@ -270,10 +270,10 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
             || Annotation::singleton().outsideMovementArea(cubeMaxGlobalCoord);
     // we traverse ZY column first because of better locailty of reference
     const std::size_t voxelIncrement = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen : 1;
-    const std::size_t sliceIncrement = vp.viewportType == VIEWPORT_XY ? cubeEdgeLen : state->cubeSliceArea;
+    const std::size_t sliceIncrement = vp.viewportType == VIEWPORT_XY ? cubeEdgeLen : cubeEdgeLen * cubeEdgeLen;
     const std::size_t lineIncrement = vp.viewportType == VIEWPORT_ZY ? 0 : sliceIncrement - cubeEdgeLen;
-    const std::size_t texNext = vp.viewportType == VIEWPORT_ZY ? state->viewerState->texEdgeLength * 4 : 4;// RGBA per pixel
-    const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? 4 - 4 * cubeEdgeLen * state->viewerState->texEdgeLength : (state->viewerState->texEdgeLength - cubeEdgeLen) * 4;
+    const std::size_t texNext = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen * 4 : 4;// RGBA per pixel
+    const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? 4 - 4 * cubeEdgeLen * cubeEdgeLen : 0;
 
     const bool isDatasetAdjustment = state->viewerState->datasetColortableOn || state->viewerState->layerRenderSettings[layerId].bias > 0.0 || state->viewerState->layerRenderSettings[layerId].rangeDelta < 1.0;
     for (int yzz = 0; yzz < cubeEdgeLen; ++yzz) {
@@ -385,10 +385,10 @@ void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx,
             || Annotation::singleton().outsideMovementArea(cubeMaxGlobalCoord);
     // we traverse ZY column first because of better locailty of reference
     const std::size_t voxelIncrement = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen : 1;
-    const std::size_t sliceIncrement = vp.viewportType == VIEWPORT_XY ? cubeEdgeLen : state->cubeSliceArea;
+    const std::size_t sliceIncrement = vp.viewportType == VIEWPORT_XY ? cubeEdgeLen : cubeEdgeLen * cubeEdgeLen;
     const std::size_t lineIncrement = vp.viewportType == VIEWPORT_ZY ? 0 : sliceIncrement - cubeEdgeLen;
-    const std::size_t texNext = vp.viewportType == VIEWPORT_ZY ? state->viewerState->texEdgeLength * 4 : 4;// RGBA per pixel
-    const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? 4 - 4 * cubeEdgeLen * state->viewerState->texEdgeLength : (state->viewerState->texEdgeLength - cubeEdgeLen) * 4;
+    const std::size_t texNext = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen * 4 : 4;// RGBA per pixel
+    const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? 4 - 4 * cubeEdgeLen * cubeEdgeLen : 0;
 
     const auto & seg = Segmentation::singleton();
     //cache
@@ -480,6 +480,20 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
             * viewerState.layerRenderSettings[layerId].combineSlices
             * ((vp.viewportType == VIEWPORT_XY) || !viewerState.layerRenderSettings[layerId].combineSlicesXyOnly);
     bool first{true};
+    const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
+    auto for_each_resliced_cube_do = [this, layerId, cubeEdgeLen, &vp](const CoordOfCube upperLeftDc, auto func){
+        for (int x_dc = 0; x_dc < state->M; ++x_dc) {
+            for (int y_dc = 0; y_dc < state->M; ++y_dc) {
+                const auto v1dc = vp.v1 * x_dc, v2dc = vp.v2 * -y_dc;// v2 is negative
+                CoordOfCube currentDc{upperLeftDc + CoordOfCube(v1dc.x, v1dc.y, v1dc.z) + CoordOfCube(v2dc.x, v2dc.y, v2dc.z)};
+                if (!vp.resliceNecessary[layerId] && vp.resliceNecessaryCubes[layerId].find(currentDc) == std::end(vp.resliceNecessaryCubes[layerId])) {
+                    continue;
+                }
+                const int index = 4 * (y_dc * viewerState.texEdgeLength * cubeEdgeLen + x_dc * cubeEdgeLen * cubeEdgeLen);
+                func(x_dc, y_dc, currentDc, index);
+            }
+        }
+    };
     for (int multiSlicei{-multiSliceiMax}; multiSlicei <= multiSliceiMax; ++multiSlicei) {
         const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
         const auto offset = vp.n.componentMul(Dataset::current().scaleFactor) * multiSlicei;
@@ -494,26 +508,6 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
             continue;
         }
 
-        int slicePositionWithinCube;
-        Coordinate offsetCubeGlobal;
-        switch(vp.viewportType) {
-        case VIEWPORT_XY:
-            slicePositionWithinCube = state->cubeSliceArea * currentPosition_inside_dc.z;
-            offsetCubeGlobal = Coordinate{0, 0, currentPosition_inside_dc.z};
-            break;
-        case VIEWPORT_XZ:
-            slicePositionWithinCube = cubeEdgeLen * currentPosition_inside_dc.y;
-            offsetCubeGlobal = Coordinate{0, currentPosition_inside_dc.y, 0};
-            break;
-        case VIEWPORT_ZY:
-            slicePositionWithinCube = currentPosition_inside_dc.x;
-            offsetCubeGlobal = Coordinate{currentPosition_inside_dc.x, 0, 0};
-            break;
-        default:
-            qDebug("No such slice view: %d.", vp.viewportType);
-            return;
-        }
-
         // We iterate over the texture with x and y being in a temporary coordinate
         // system local to this texture.
         if (!vp.resliceNecessary[layerId] && vp.resliceNecessaryCubes[layerId].empty()) {
@@ -521,72 +515,43 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
         }
         const CoordOfCube upperLeftDc = Dataset::datasets[layerId].global2cube(vp.texture.leftUpperPxInAbsPx) + offsetCube;
         QFutureSynchronizer<void> sync;
-        for(int x_dc = 0; x_dc < state->M; ++x_dc) {
-            for(int y_dc = 0; y_dc < state->M; ++y_dc) {
-                const int x_px = x_dc * cubeEdgeLen;
-                const int y_px = y_dc * cubeEdgeLen;
+        for_each_resliced_cube_do(upperLeftDc, [this, cubeEdgeLen, layerId, &vp, &sync, currentPosition_inside_dc, first](auto, auto, auto currentDc, auto index){
+            int slicePositionWithinCube = vp.n.componentMul(currentPosition_inside_dc.componentMul(Coordinate{1, cubeEdgeLen, state->cubeSliceArea})).length();
+            Coordinate offsetCubeGlobal = vp.n.componentMul(vp.n.componentMul(currentPosition_inside_dc));// ensure n is positive by multiplying with itself
 
-                CoordOfCube currentDc;
+            state->protectCube2Pointer.lock();
+            void * const cube = cubeQuery(state->cube2Pointer, layerId, Dataset::current().magIndex, currentDc);
+            state->protectCube2Pointer.unlock();
 
-                switch(vp.viewportType) {
-                // With an x/y-coordinate system in a viewport, we get the following
-                // mapping from viewport (slice) coordinates to global (dc)
-                // coordinates:
-                // XY-slice: x local is x global, y local is y global
-                // XZ-slice: x local is x global, y local is z global
-                // ZY-slice: x local is z global, y local is y global.
-                case VIEWPORT_XY:
-                    currentDc = {upperLeftDc.x + x_dc, upperLeftDc.y + y_dc, upperLeftDc.z};
-                    break;
-                case VIEWPORT_XZ:
-                    currentDc = {upperLeftDc.x + x_dc, upperLeftDc.y, upperLeftDc.z + y_dc};
-                    break;
-                case VIEWPORT_ZY:
-                    currentDc = {upperLeftDc.x, upperLeftDc.y + y_dc, upperLeftDc.z + x_dc};
-                    break;
-                default:
-                    qDebug("No such slice type (%d) in vpGenerateTexture.", vp.viewportType);
-                }
-                if (!vp.resliceNecessary[layerId] && vp.resliceNecessaryCubes[layerId].find(currentDc) == std::end(vp.resliceNecessaryCubes[layerId])) {
-                    continue;
-                }
-                state->protectCube2Pointer.lock();
-                void * const cube = cubeQuery(state->cube2Pointer, layerId, Dataset::current().magIndex, currentDc);
-                state->protectCube2Pointer.unlock();
-
-                // Take care of the data textures.
-                Coordinate slicePosInAbsPx = Dataset::datasets[layerId].cube2global(currentDc) + Dataset::datasets[layerId].scaleFactor.componentMul(offsetCubeGlobal);
-                // This is used to index into the texture. overlayData[index] is the first
-                // byte of the datacube slice at position (x_dc, y_dc) in the texture.
-                const int index = 4 * (y_dc * state->viewerState->texEdgeLength * cubeEdgeLen + x_dc * cubeEdgeLen);
-                sync.addFuture(QtConcurrent::run([this, &vp, cube, first, slicePositionWithinCube, slicePosInAbsPx, index, layerId, y_px, cubeEdgeLen, x_px]() mutable {
-                    if (cube != nullptr) {
-                        if (Dataset::datasets[layerId].isOverlay()) {
-                            ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.texture.texData[layerId].data() + index, vp, layerId);
-                        } else {
-                            const auto combine = boost::make_optional(!first, viewerState.layerRenderSettings[layerId].combineSlicesType);
-                            dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.texture.texData[layerId].data() + index, vp, layerId, combine);
-                        }
+            // Take care of the data textures.
+            Coordinate slicePosInAbsPx = Dataset::datasets[layerId].cube2global(currentDc) + Dataset::datasets[layerId].scaleFactor.componentMul(offsetCubeGlobal);
+            // This is used to index into the texture. overlayData[index] is the first
+            // byte of the datacube slice at position (x_dc, y_dc) in the texture.
+            sync.addFuture(QtConcurrent::run([this, &vp, cube, first, slicePositionWithinCube, slicePosInAbsPx, index, layerId, cubeEdgeLen]()  {
+                if (cube != nullptr) {
+                    if (Dataset::datasets[layerId].isOverlay()) {
+                        ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.texture.texData[layerId].data() + index, vp, layerId);
                     } else {
-                        for (int y = y_px; y < y_px + cubeEdgeLen; ++y) {
-                            const auto start = std::next(std::begin(vp.texture.texData[layerId]), 4 * (y * viewerState.texEdgeLength + x_px));
-                            std::fill(start, std::next(start, 4 * cubeEdgeLen), 0);
-                        }
+                        const auto combine = boost::make_optional(!first, viewerState.layerRenderSettings[layerId].combineSlicesType);
+                        dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.texture.texData[layerId].data() + index, vp, layerId, combine);
                     }
-                }));
-            }
-        }
-        if (multiSlicei == multiSliceiMax) {
-            vp.resliceNecessary[layerId] = false;
-        }
+                } else {
+                    std::fill(vp.texture.texData[layerId].data() + index, vp.texture.texData[layerId].data() + index + 4 * cubeEdgeLen * cubeEdgeLen, 0);
+                }
+            }));
+        });
         sync.waitForFinished();
         first = false;
     }
-    vp.resliceNecessaryCubes[layerId].clear();
     vp.texture.texHandle[layerId].bind();
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, state->viewerState->texEdgeLength, state->viewerState->texEdgeLength, GL_RGBA, GL_UNSIGNED_BYTE, vp.texture.texData[layerId].data());
+    const CoordOfCube upperLeftDc = Dataset::datasets[layerId].global2cube(vp.texture.leftUpperPxInAbsPx);
+    for_each_resliced_cube_do(upperLeftDc, [cubeEdgeLen, layerId, &vp](auto x_dc, auto y_dc, auto, auto index){
+        glTexSubImage2D(GL_TEXTURE_2D, 0, x_dc * cubeEdgeLen, y_dc * cubeEdgeLen, cubeEdgeLen, cubeEdgeLen, GL_RGBA, GL_UNSIGNED_BYTE, vp.texture.texData[layerId].data() + index);
+    });
     vp.texture.texHandle[layerId].release();
     glBindTexture(GL_TEXTURE_2D, 0);
+    vp.resliceNecessary[layerId] = false;
+    vp.resliceNecessaryCubes[layerId].clear();
 }
 
 void Viewer::arbCubes(ViewportArb & vp) {
