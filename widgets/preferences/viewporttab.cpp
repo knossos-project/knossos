@@ -89,7 +89,7 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&boundaryGroup, static_cast<void(QButtonGroup::*)(QAbstractButton *, bool)>(&QButtonGroup::buttonToggled), [this](const QAbstractButton *, bool) {
         Viewport3D::showBoundariesInUm = boundariesPhysicalRadioBtn.isChecked();
     });
-    QObject::connect(&rotationCenterGroup, static_cast<void(QButtonGroup::*)(int, bool)>(&QButtonGroup::buttonToggled), [](const int id, const bool checked) {
+    QObject::connect(&rotationCenterGroup, &QButtonGroup::idToggled, [](const int id, const bool checked) {
         if (checked) {
             state->viewerState->rotationCenter = static_cast<RotationCenter>(id);
         }

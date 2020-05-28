@@ -493,7 +493,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         nodeRecreate();
     });
     QObject::connect(&nodeFilterModeCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [](const int) { nodeRecreate(); });
-    QObject::connect(&nodeFilterButtonGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [this](const int id) {
+    QObject::connect(&nodeFilterButtonGroup, &QButtonGroup::idClicked, [this](const int id) {
         const auto flag = QFlags<NodeModel::FilterMode>(id);
         nodeModel.mode = nodeFilterButtonGroup.button(id)->isChecked() ? nodeModel.mode | flag : nodeModel.mode & ~flag;
         nodeRecreate();

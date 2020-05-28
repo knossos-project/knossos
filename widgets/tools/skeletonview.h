@@ -59,7 +59,7 @@ class TreeModel : public AbstractSkeletonModel<TreeModel> {
     Q_OBJECT
     friend class AbstractSkeletonModel<TreeModel>;
     const std::vector<QString> header = {"ID", ""/*color*/, "Show", "#", "Comment", "Properties"};
-    const std::vector<Qt::ItemFlags> flagModifier = {Qt::ItemIsDropEnabled, 0, Qt::ItemIsUserCheckable, 0, Qt::ItemIsEditable, 0};
+    const std::vector<Qt::ItemFlags> flagModifier = {Qt::ItemIsDropEnabled, {}, Qt::ItemIsUserCheckable, {}, Qt::ItemIsEditable, {}};
 public:
     std::vector<std::reference_wrapper<class treeListElement>> cache;
     enum SynapseDisplayModes {
@@ -79,7 +79,7 @@ signals:
 class NodeModel : public AbstractSkeletonModel<NodeModel> {
     friend class AbstractSkeletonModel<NodeModel>;
     const std::vector<QString> header = {"ID", "x", "y", "z", "Radius", "Comment", "Properties"};
-    const std::vector<Qt::ItemFlags> flagModifier = {Qt::ItemIsDragEnabled, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable, 0};
+    const std::vector<Qt::ItemFlags> flagModifier = {Qt::ItemIsDragEnabled, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable, Qt::ItemIsEditable, {}};
 public:
     std::vector<std::reference_wrapper<class nodeListElement>> cache;
     enum FilterMode {

@@ -452,7 +452,7 @@ void ViewportBase::handleWheelEvent(const QWheelEvent *event) {
     }
     setFocus();//get keyboard focus for this widget for viewport specific shortcuts
 
-    const int directionSign = event->delta() > 0 ? -1 : 1;
+    const int directionSign = event->angleDelta().y() > 0 ? -1 : 1;
     auto& seg = Segmentation::singleton();
 
     if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)
@@ -464,7 +464,7 @@ void ViewportBase::handleWheelEvent(const QWheelEvent *event) {
     } else if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Brush) && event->modifiers() == Qt::SHIFT) {
         auto curRadius = seg.brush.getRadius();
         // brush radius delta factor (float), as a function of current radius
-        seg.brush.setRadius(curRadius + 0.1 * curRadius * (event->delta() / 120));
+        seg.brush.setRadius(curRadius + 0.1 * curRadius * (event->angleDelta().y() / 120));
     }
 }
 
@@ -479,7 +479,7 @@ void ViewportBase::applyZoom(const QWheelEvent *event, float direction) {
         scrollAmount = scrollAngle.y() / 15.0f;
     } else { // fallback legacy mode zoom
         if(event->phase() == Qt::NoScrollPhase) { // macOS fix
-            if (event->delta() > 0) {
+            if (event->angleDelta().y() > 0) {
                 zoomIn();
             } else {
                 zoomOut();
@@ -497,9 +497,9 @@ void Viewport3D::handleWheelEvent(const QWheelEvent *event) {
     if (event->modifiers() == Qt::NoModifier) {
         if(Segmentation::singleton().volume_render_toggle) {
             auto& seg = Segmentation::singleton();
-            seg.volume_mouse_zoom *= (event->delta() > 0) ? 1.1f : 0.9f;
+            seg.volume_mouse_zoom *= (event->angleDelta().y() > 0) ? 1.1f : 0.9f;
         } else {
-            const QPointF mouseRel{(event->x() - 0.5 * width()), (event->y() - 0.5 * height())};
+            const QPointF mouseRel{event->position() - 0.5 * QPointF(width(), height())};
             const auto oldZoom = zoomFactor;
             applyZoom(event);
             const auto oldFactor = state->skeletonState->volBoundary() / oldZoom;
@@ -515,7 +515,7 @@ void ViewportOrtho::handleWheelEvent(const QWheelEvent *event) {
     if (event->modifiers() == Qt::CTRL) { // Orthogonal VP or outside VP
         applyZoom(event, -1.0f);
     } else if (event->modifiers() == Qt::NoModifier) {
-        const float directionSign = event->delta() > 0 ? -1 : 1;
+        const float directionSign = event->angleDelta().y() > 0 ? -1 : 1;
         const auto multiplier = directionSign * state->viewerState->dropFrames;
         state->viewer->userMove(Dataset::current().scaleFactor.componentMul(n) * multiplier, USERMOVE_DRILL, n);
     }

@@ -90,7 +90,7 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent) {
         }
         state->viewer->window->updateTitlebar();
     });
-    QObject::connect(&plySaveButtonGroup, static_cast<void(QButtonGroup::*)(int id)>(&QButtonGroup::buttonClicked), [](auto id) {
+    QObject::connect(&plySaveButtonGroup, &QButtonGroup::idClicked, [](auto id) {
         Annotation::singleton().savePlyAsBinary = static_cast<bool>(id);
     });
     QObject::connect(&customSaveButton, &QPushButton::clicked, [this](const bool) {
@@ -110,7 +110,7 @@ void SaveTab::loadSettings(const QSettings & settings) {
 
     const auto buttonId = static_cast<int>(settings.value(PLY_SAVE_AS_BIN, true).toBool());
     plySaveButtonGroup.button(buttonId)->setChecked(true);
-    plySaveButtonGroup.buttonClicked(buttonId);
+    plySaveButtonGroup.idClicked(buttonId);
 }
 
 void SaveTab::saveSettings(QSettings & settings) {

@@ -70,7 +70,7 @@ if(NOT BUILD_SHARED_LIBS) # try to force search for static libraries if BUILD_SH
     list(PREPEND CMAKE_FIND_LIBRARY_SUFFIXES .a .lib) # prefer static (*.a) over import (*.dll.a) libraries
 endif()
 
-find_package(Qt5 5.10 REQUIRED COMPONENTS Concurrent Core Gui Network Widgets) # QJsonValue::operator[]
+find_package(Qt5 5.15 REQUIRED COMPONENTS Concurrent Core Gui Network Widgets) # QJsonValue::operator[]
 
 get_target_property(QtCoreLibraryType Qt5::Core TYPE)
 if(BUILD_SHARED_LIBS AND ${QtCoreLibraryType} MATCHES STATIC_LIBRARY)

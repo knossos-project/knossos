@@ -111,7 +111,7 @@ SnapshotWidget::SnapshotWidget(QWidget *parent) : DialogVisibilityNotify(SNAPSHO
     viewportChoiceLayout->addWidget(&vp3dRadio);
     viewportChoiceLayout->setAlignment(Qt::AlignTop); // ensures constant spacing between radio buttons
 
-    QObject::connect(&vpGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [this](const int index) {
+    QObject::connect(&vpGroup, &QButtonGroup::idClicked, [this](const int index) {
         bool noOrigDataSize = (static_cast<ViewportType>(index) == VIEWPORT_SKELETON); // original dataset size does not make sense for skeleton vp
         QStandardItem & item = *static_cast<QStandardItemModel &>(*sizeCombo.model()).item(1);
         item.setFlags(noOrigDataSize ? item.flags() & ~(Qt::ItemIsSelectable|Qt::ItemIsEnabled) : Qt::ItemIsSelectable|Qt::ItemIsEnabled); // disable
@@ -254,7 +254,7 @@ void SnapshotWidget::loadSettings() {
     saveDir = settings.value(SAVE_DIR, QDir::homePath() + "/").toString();
     const auto vp = settings.value(VIEWPORT, VIEWPORT_XY).toInt();
     vpGroup.button(vp)->setChecked(true);
-    vpGroup.buttonClicked(vp);
+    vpGroup.idClicked(vp);
     withAxesCheck.setChecked(settings.value(WITH_AXES, true).toBool());
     withBoxCheck.setChecked(settings.value(WITH_BOX, false).toBool());
     withMeshesCheck.setChecked(settings.value(WITH_MESHES, true).toBool());

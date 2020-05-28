@@ -312,7 +312,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     QObject::connect(&brushRadiusEdit, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](auto value){
         Segmentation::singleton().brush.setRadius(value);
     });
-    QObject::connect(&modeGroup, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [](int id){
+    QObject::connect(&modeGroup, &QButtonGroup::idClicked, [](int id){
         Segmentation::singleton().brush.setMode(static_cast<brush_t::mode_t>(id));
     });
     QObject::connect(&Segmentation::singleton().brush, &brush_subject::modeChanged, [this](brush_t::mode_t value){

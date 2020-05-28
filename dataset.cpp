@@ -233,7 +233,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         } else if (token == "_CubeSize") {
             info.cubeEdgeLength = value.split(",").at(0).toInt();
         } else if (token == "_Description") {
-            info.description = value.split('"', QString::SkipEmptyParts)[0];
+            info.description = value.split('"', Qt::SkipEmptyParts)[0];
         } else if (!token.isEmpty() && token != "_NumberofCubes" && token != "_Origin") {
             qDebug() << "Skipping unknown parameter" << token;
         }

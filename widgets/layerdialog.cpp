@@ -152,7 +152,7 @@ Qt::ItemFlags LayerItemModel::flags(const QModelIndex &index) const {
         }
         return flags;
     }
-    return nullptr;
+    return {};
 }
 
 LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(PREFERENCES_WIDGET, parent), colorDialog(this) {

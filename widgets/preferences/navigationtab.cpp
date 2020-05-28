@@ -175,7 +175,7 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&jumpFramesSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](int value){ state->viewerState->dropFrames = value; });
     QObject::connect(&walkFramesSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [](int value){ state->viewerState->walkFrames = value; });
 
-    QObject::connect(&recenteringButtonGroup, static_cast<void(QButtonGroup::*)(int id)>(&QButtonGroup::buttonClicked), [this](auto id) {
+    QObject::connect(&recenteringButtonGroup, &QButtonGroup::idClicked, [this](auto id) {
         state->viewerState->autoTracingMode = static_cast<Recentering>(id);
         numberOfStepsSpinBox.setEnabled(id == static_cast<int>(Recentering::AheadOfNode));
     });
@@ -201,7 +201,7 @@ void NavigationTab::loadSettings(const QSettings & settings) {
     walkFramesSpinBox.setValue(settings.value(WALK_FRAMES, 10).toInt());
     const auto buttonId = settings.value(RECENTERING, static_cast<int>(Recentering::OnNode)).toInt();
     recenteringButtonGroup.button(buttonId)->setChecked(true);
-    recenteringButtonGroup.buttonClicked(buttonId);
+    recenteringButtonGroup.idClicked(buttonId);
     numberOfStepsSpinBox.setValue(settings.value(NUMBER_OF_STEPS, 10).toInt());
 }
 
