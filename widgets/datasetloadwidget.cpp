@@ -40,26 +40,89 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
+#include <QPainter>
 #include <QProcess>
 #include <QPushButton>
 #include <QSettings>
 #include <QSignalBlocker>
 #include <QVBoxLayout>
 
+#include <functional>
 #include <stdexcept>
+
+QVariant DatasetModel::data(const QModelIndex & index, int role) const {
+    if (index.isValid() && (role == Qt::DisplayRole || role == Qt::EditRole)) {
+        return datasets[index.row()];
+    }
+    return {};
+}
+
+bool DatasetModel::setData(const QModelIndex & index, const QVariant & value, int role) {
+    if (index.isValid()) {
+        datasets[index.row()] = value.toString();
+        emit dataChanged(index, index, {role});
+        return true;
+    }
+    return false;
+}
+
+Qt::ItemFlags DatasetModel::flags(const QModelIndex & index) const {
+    return QAbstractItemModel::flags(index) | Qt::ItemIsEditable | Qt::ItemIsEnabled;
+}
+
+int DatasetModel::rowCount(const QModelIndex &) const {
+    return datasets.size();
+}
+
+void DatasetModel::add(const QString & datasetPath) {
+    beginInsertRows({}, datasets.size(), datasets.size());
+    datasets.emplace_back(datasetPath);
+    endInsertRows();
+}
+
+void DatasetModel::clear() {
+    beginResetModel();
+    datasets.clear();
+    endResetModel();
+}
+
+ButtonDelegate::ButtonDelegate(ButtonListView * parent) : QStyledItemDelegate(parent) {
+    if (view = parent; view != nullptr) {
+        templateButton = new QPushButton(view);
+        templateButton->setText("…");
+        templateButton->hide();
+        QObject::connect(view, &QListView::entered, [this](const QModelIndex & index) {
+            currentEditedCellIndex = index;
+        });
+        QObject::connect(view, &ButtonListView::mouseLeft, [this]() {
+            templateButton->hide();
+        });
+        QObject::connect(templateButton, &QPushButton::clicked, [this]() {
+            emit buttonClicked(currentEditedCellIndex);
+        });
+    }
+}
+
+void ButtonDelegate::paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const {
+    QStyledItemDelegate::paint(painter, option, index); // paint text
+    if (option.state & QStyle::State_MouseOver) {
+        templateButton->setGeometry(QRect(view->visualRect(index).right()-option.rect.height(), option.rect.top(),
+                                    option.rect.height(), option.rect.height())); // quadratic button
+        templateButton->show();
+    }
+}
 
 DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(DATASET_WIDGET, parent) {
     setModal(true);
     setWindowTitle("Load Dataset");
 
-    tableWidget.setColumnCount(3);
-    tableWidget.verticalHeader()->setVisible(false);
-    tableWidget.horizontalHeader()->setVisible(false);
+    tableWidget.setModel(&datasetModel);
+    tableWidget.setUniformItemSizes(true);
+    tableWidget.setTextElideMode(Qt::ElideMiddle);
     tableWidget.setSelectionBehavior(QAbstractItemView::SelectRows);
     tableWidget.setSelectionMode(QAbstractItemView::SingleSelection);
-    tableWidget.horizontalHeader()->resizeSection(1, 25);
-    tableWidget.horizontalHeader()->resizeSection(2, 20);
-    tableWidget.horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    tableWidget.setItemDelegate(&addButtonDelegate);
+    tableWidget.setMouseTracking(true);
     infoLabel.setOpenExternalLinks(true);
     infoLabel.setTextInteractionFlags(Qt::TextBrowserInteraction);
     infoLabel.setWordWrap(true);//allows shrinking below minimum width
@@ -86,13 +149,12 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     mainLayout.addLayout(&buttonHLayout);
 
     setLayout(&mainLayout);
-
-    QObject::connect(&tableWidget, &QTableWidget::cellChanged, this, &DatasetLoadWidget::datasetCellChanged);
-    QObject::connect(&tableWidget, &QTableWidget::itemSelectionChanged, [this]() {
+    QObject::connect(&datasetModel, &DatasetModel::dataChanged, this, &DatasetLoadWidget::datasetCellChanged);
+    QObject::connect(tableWidget.selectionModel(), &QItemSelectionModel::selectionChanged, [this]() {
         WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
-        bool bad = tableWidget.selectedItems().empty();
+        bool bad = tableWidget.selectionModel()->selectedIndexes().isEmpty();
         QUrl dataset;
-        bad = bad || (dataset = tableWidget.selectedItems().front()->text()).isEmpty();
+        bad = bad || (dataset = tableWidget.selectionModel()->selectedIndexes().front().data().toString()).isEmpty();
         decltype(Network::singleton().refresh(std::declval<QUrl>())) download;
         bad = bad || !(download = Network::singleton().refresh(dataset)).first;
         if (bad) {
@@ -100,6 +162,15 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
         } else {
             updateDatasetInfo(dataset, download.second);
         }
+    });
+    QObject::connect(&addButtonDelegate, &ButtonDelegate::buttonClicked, [this](const QModelIndex & index) {
+        const auto selectedFile = state->viewer->suspend([this]{
+            return QFileDialog::getOpenFileUrl(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf").toString();
+        });
+        if (!selectedFile.isEmpty()) {
+            datasetModel.setData(index, selectedFile);
+        }
+        tableWidget.selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
     });
     QObject::connect(&cubeEdgeSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](int cubeedge){
         fovSpin.setCubeEdge(cubeedge);
@@ -121,56 +192,12 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     resize(600, 600);//random default size, will be overriden by settings if present
 }
 
-void DatasetLoadWidget::insertDatasetRow(const QString & dataset, const int row) {
-    tableWidget.insertRow(row);
-
-    auto rowFromCell = [this](int column, QPushButton * const button){
-        for(int row = 0; row < tableWidget.rowCount(); ++row) {
-            if (button == tableWidget.cellWidget(row, column)) {
-                return row;
-            }
-        }
-        return -1;
-    };
-
-    QPushButton *addDatasetButton = new QPushButton("…");
-    addDatasetButton->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
-    addDatasetButton->setToolTip(tr("Select a dataset from file…"));
-    QObject::connect(addDatasetButton, &QPushButton::clicked, [this, rowFromCell, addDatasetButton](){
-        const auto selectedFile = state->viewer->suspend([this]{
-            return QFileDialog::getOpenFileUrl(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf").toString();
-        });
-        if (!selectedFile.isEmpty()) {
-            tableWidget.item(rowFromCell(1, addDatasetButton), 0)->setText(selectedFile);
-        }
-    });
-
-    QPushButton *removeDatasetButton = new QPushButton("×");
-    removeDatasetButton->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
-    removeDatasetButton->setToolTip(tr("Remove this dataset from the list"));
-    QObject::connect(removeDatasetButton, &QPushButton::clicked, [this, rowFromCell, removeDatasetButton](){
-        const int row = rowFromCell(2, removeDatasetButton);
-        tableWidget.removeRow(row);
-        if (row == tableWidget.rowCount() - 1) {
-            tableWidget.selectRow(row - 1);// select last item
-        }
-    });
-
-    tableWidget.setItem(row, 0, new QTableWidgetItem(dataset));
-    tableWidget.setCellWidget(row, 1, addDatasetButton);
-    tableWidget.setCellWidget(row, 2, removeDatasetButton);
-}
-
-void DatasetLoadWidget::datasetCellChanged(int row, int col) {
-    if (col == 0 && row == tableWidget.rowCount() - 1 && tableWidget.item(row, 0)->text() != "") {
-        QSignalBlocker blocker{tableWidget};// changing an item would land here again
-        auto dataset = tableWidget.item(row, 0)->text();
-        tableWidget.item(row, 0)->setText("");//clear edit row
-        insertDatasetRow(dataset, tableWidget.rowCount() - 1);//insert before edit row
-        processButton.setFocus();// move focus away from the … button – needed to select a different row
-        tableWidget.selectRow(row);//select new item
-
+void DatasetLoadWidget::datasetCellChanged(const QModelIndex & topLeft, const QModelIndex &, const QVector <int> &) {
+    auto index = topLeft;
+    if (index.column() == 0 && index.row() == datasetModel.rowCount() - 1 && !index.data().toString().isEmpty()) {
+        datasetModel.add("");
         WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
+        auto dataset = index.data().toString();
         decltype(Network::singleton().refresh(std::declval<QUrl>())) download = Network::singleton().refresh(dataset);
         if (download.first) {
             updateDatasetInfo(dataset, download.second);
@@ -224,10 +251,9 @@ void DatasetLoadWidget::updateDatasetInfo(const QUrl & url, const QString & info
 
 QStringList DatasetLoadWidget::getRecentPathItems() {
     QStringList recentPaths;
-
-    for(int row = 0; row < tableWidget.rowCount() - 1; ++row) {
-        if(tableWidget.item(row, 0)->text() != "") {
-            recentPaths.append(tableWidget.item(row, 0)->text());
+    for(int row = 0; row < datasetModel.rowCount() - 1; ++row) {
+        if(const QString text = datasetModel.index(row, 0).data().toString(); !text.isEmpty()) {
+            recentPaths.append(text);
         }
     }
 
@@ -244,7 +270,7 @@ void DatasetLoadWidget::adaptMemoryConsumption() {
 }
 
 void DatasetLoadWidget::processButtonClicked() {
-    const auto dataset = tableWidget.item(tableWidget.currentRow(), 0)->text();
+    const auto dataset = tableWidget.currentIndex().data().toString();
     if (dataset.isEmpty()) {
         QMessageBox box{QApplication::activeWindow()};
         box.setIcon(QMessageBox::Information);
@@ -282,13 +308,13 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         qDebug() << "no config at" << path;
         return false;
     }
-    const auto existingEntries = tableWidget.findItems(path.url(), Qt::MatchFlag::MatchExactly);
-    if (existingEntries.size() == 0) {
-        insertDatasetRow(path.url(), tableWidget.rowCount() - 1);
-        tableWidget.selectRow(tableWidget.rowCount() - 2);
-    } else {
-        tableWidget.selectRow(existingEntries.front()->row());
+
+    const auto iter = std::find(std::begin(datasetModel.datasets), std::end(datasetModel.datasets), path.url());
+    const auto row = iter - std::begin(datasetModel.datasets);
+    if (iter == std::end(datasetModel.datasets)) {
+        datasetModel.add(path.url());
     }
+    tableWidget.selectionModel()->select(datasetModel.index(row, 0), QItemSelectionModel::ClearAndSelect);
 
     bool keepAnnotation = silent;
     if (!silent && !Annotation::singleton().isEmpty()) {
@@ -484,11 +510,11 @@ void DatasetLoadWidget::loadSettings() {
 
     restoreGeometry(settings.value(GEOMETRY).toByteArray());
     datasetUrl = transitionedDataset(settings.value(DATASET_LAST_USED, "").toString());
-    tableWidget.setRowCount(0); // prevent dataset duplication on loading custom settings
+    datasetModel.clear(); // prevent dataset duplication on loading custom settings
     auto appendRowSelectIfLU = [this](const QString & dataset){
-        insertDatasetRow(dataset, tableWidget.rowCount());
+        datasetModel.add(dataset);
         if (dataset == datasetUrl.toString()) {
-            tableWidget.selectRow(tableWidget.rowCount() - 1);
+            tableWidget.selectionModel()->select(datasetModel.index(datasetModel.rowCount() - 1, 0), QItemSelectionModel::ClearAndSelect);
         }
     };
 
@@ -505,13 +531,12 @@ void DatasetLoadWidget::loadSettings() {
         const auto datasetsDir = QDir(":/resources/datasets");
         for (const auto & dataset : datasetsDir.entryInfoList()) {
             const auto url = QUrl::fromLocalFile(dataset.absoluteFilePath()).toString();
-            if (tableWidget.findItems(url, Qt::MatchExactly).empty()) {
+            if (const auto iter = std::find(std::begin(datasetModel.datasets), std::end(datasetModel.datasets), url); iter == std::end(datasetModel.datasets)) {
                 appendRowSelectIfLU(url);
             }
         }
         // add Empty row at the end
         appendRowSelectIfLU("");
-        tableWidget.cellWidget(tableWidget.rowCount() - 1, 2)->setEnabled(false);//don’t delete empty row
     }// QSignalBlocker
     auto & cubeEdgeLen = Dataset::current().cubeEdgeLength;
     cubeEdgeLen = settings.value(DATASET_CUBE_EDGE, 128).toInt();

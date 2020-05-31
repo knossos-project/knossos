@@ -28,18 +28,61 @@
 #include "widgets/UserOrientableSplitter.h"
 #include "widgets/viewports/viewportbase.h"
 
+#include <QAbstractListModel>
 #include <QCheckBox>
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QLabel>
-#include <QListWidget>
+#include <QListView>
 #include <QTextDocument>
 #include <QSpinBox>
 #include <QString>
 #include <QStringList>
+#include <QStyledItemDelegate>
 #include <QTableWidget>
 #include <QVBoxLayout>
+
+class DatasetModel : public QAbstractListModel {
+Q_OBJECT
+public:
+    std::vector<QString> datasets;
+    virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
+    virtual bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
+    virtual QVariant headerData(int, Qt::Orientation, int = Qt::DisplayRole) const override { return {}; };
+    virtual int columnCount(const QModelIndex & = QModelIndex()) const override { return 1; };
+    virtual Qt::ItemFlags flags(const QModelIndex & index) const override;
+    virtual int rowCount(const QModelIndex & = QModelIndex{}) const override;
+    void add(const QString & datasetPath);
+    void clear();
+};
+
+class ButtonListView : public QListView {
+     Q_OBJECT
+protected:
+    virtual void leaveEvent(QEvent * e) override {
+        QListView::leaveEvent(e);
+        emit mouseLeft();
+    }
+signals:
+    void mouseLeft();
+};
+
+class ButtonDelegate : public QStyledItemDelegate {
+friend class DatasetLoadWidget;
+Q_OBJECT
+    ButtonListView * view;
+    QPushButton * templateButton;
+    bool isOneCellInEditMode{false};
+    QPersistentModelIndex currentEditedCellIndex;
+    bool hovered{false};
+public:
+    explicit ButtonDelegate(ButtonListView * parent = 0);
+    void paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const override;
+signals:
+    void buttonClicked(const QModelIndex & index);
+};
+
 
 class FOVSpinBox : public QSpinBox {
 private:
@@ -79,7 +122,9 @@ class DatasetLoadWidget : public DialogVisibilityNotify {
 
     QVBoxLayout mainLayout;
     UserOrientableSplitter splitter;
-    QTableWidget tableWidget;
+    DatasetModel datasetModel;
+    ButtonListView tableWidget;
+    ButtonDelegate addButtonDelegate{&tableWidget};
     QLabel infoLabel;
     QGroupBox datasetSettingsGroup;
     QFormLayout datasetSettingsLayout;
@@ -94,9 +139,8 @@ class DatasetLoadWidget : public DialogVisibilityNotify {
     QPushButton cancelButton{"Close"};
 
     void applyGeometrySettings();
-    void datasetCellChanged(int row, int col);
+    void datasetCellChanged(const QModelIndex &topLeft, const QModelIndex &, const QVector<int> &);
     QStringList getRecentPathItems();
-    void insertDatasetRow(const QString & dataset, const int pos);
     Dataset::list_t infos;
     void updateDatasetInfo(const QUrl &url, const QString &info);
 public:
