@@ -22,21 +22,28 @@
 
 #pragma once
 
+#include <QApplication>
 #include <QNetworkCookieJar>
 #include <QNetworkAccessManager>
 #include <QObject>
+#include <QWidget>
 
 QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply);
 
 template<typename T>
 struct WidgetDisabler {
     T & w;
+    QWidget * focusWidget;
     bool wasEnabled;
     explicit WidgetDisabler(T & w) : w{w}, wasEnabled{w.isEnabled()} {
+        focusWidget = QApplication::focusWidget();
         w.setEnabled(false);
     }
     ~WidgetDisabler() {
         w.setEnabled(wasEnabled);
+        if (focusWidget != nullptr) {
+            focusWidget->setFocus();
+        }
     }
 };
 
