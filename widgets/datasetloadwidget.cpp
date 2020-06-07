@@ -80,35 +80,72 @@ void DatasetModel::add(const QString & datasetPath) {
     endInsertRows();
 }
 
+bool DatasetModel::removeRows(int row, int count, const QModelIndex & parent) {
+    beginRemoveRows(parent, row, row + count - 1);
+    datasets.erase(datasets.begin() + row, datasets.begin() + row + count);
+    endRemoveRows();
+    return true;
+}
+
 void DatasetModel::clear() {
     beginResetModel();
     datasets.clear();
     endResetModel();
 }
 
-ButtonDelegate::ButtonDelegate(ButtonListView * parent) : QStyledItemDelegate(parent) {
-    if (view = parent; view != nullptr) {
-        templateButton = new QPushButton(view);
-        templateButton->setText("…");
-        templateButton->hide();
-        QObject::connect(view, &QListView::entered, [this](const QModelIndex & index) {
-            currentEditedCellIndex = index;
+ButtonListView::ButtonListView(QWidget * parent) : QListView(parent) {
+    fileDialogButton.setParent(this);
+    deleteButton.setParent(this);
+    fileDialogButton.hide();
+    deleteButton.hide();
+    QObject::connect(this, &QListView::entered, [this](const QModelIndex & index) {
+        currentEditedCellIndex = index;
+    });
+    QObject::connect(this, &ButtonListView::mouseLeft, [this]() {
+        fileDialogButton.hide();
+        deleteButton.hide();
+    });
+    QObject::connect(&fileDialogButton, &QPushButton::clicked, [this]() {
+        const auto selectedFile = ::state->viewer->suspend([this] {
+            return QFileDialog::getOpenFileUrl(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf").toString();
         });
-        QObject::connect(view, &ButtonListView::mouseLeft, [this]() {
-            templateButton->hide();
-        });
-        QObject::connect(templateButton, &QPushButton::clicked, [this]() {
-            emit buttonClicked(currentEditedCellIndex);
-        });
+        if (!selectedFile.isEmpty()) {
+            model()->setData(currentEditedCellIndex, selectedFile);
+        }
+        selectionModel()->select(currentEditedCellIndex, QItemSelectionModel::ClearAndSelect);
+    });
+    QObject::connect(&deleteButton, &QPushButton::clicked, [this]() {
+        model()->removeRows(currentEditedCellIndex.row(), 1);
+    });
+}
+
+void ButtonListView::DragEnterEvent(QDragEnterEvent * e) {
+    if (e->mimeData()->urls().size() == 1) {
+        e->accept();
+    }
+}
+
+void ButtonListView::dropEvent(QDropEvent * e) {
+    qDebug() << e->mimeData()->urls();
+    const auto droppedDataset = e->mimeData()->urls().first();
+    auto index = indexAt(mapFromGlobal(e->pos()));
+    if (index.isValid()) {
+        model()->setData(index, droppedDataset);
+        selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
     }
 }
 
 void ButtonDelegate::paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const {
     QStyledItemDelegate::paint(painter, option, index); // paint text
     if (option.state & QStyle::State_MouseOver) {
-        templateButton->setGeometry(QRect(view->visualRect(index).right()-option.rect.height(), option.rect.top(),
-                                    option.rect.height(), option.rect.height())); // quadratic button
-        templateButton->show();
+        auto * buttonView = qobject_cast<ButtonListView *>(parent());
+        auto xOffset = buttonView->visualRect(index).right()-option.rect.height();
+        for (auto * button : {&buttonView->fileDialogButton, &buttonView->deleteButton}) {
+            button->setGeometry(QRect(xOffset, option.rect.top(),
+                                      option.rect.height(), option.rect.height())); // quadratic button
+            button->setVisible(index.row() < buttonView->model()->rowCount() - 1 || button == &buttonView->fileDialogButton); // no delete button for empty last row
+            xOffset -= option.rect.height();
+        }
     }
 }
 
@@ -162,15 +199,6 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
         } else {
             updateDatasetInfo(dataset, download.second);
         }
-    });
-    QObject::connect(&addButtonDelegate, &ButtonDelegate::buttonClicked, [this](const QModelIndex & index) {
-        const auto selectedFile = state->viewer->suspend([this]{
-            return QFileDialog::getOpenFileUrl(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf").toString();
-        });
-        if (!selectedFile.isEmpty()) {
-            datasetModel.setData(index, selectedFile);
-        }
-        tableWidget.selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
     });
     QObject::connect(&cubeEdgeSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](int cubeedge){
         fovSpin.setCubeEdge(cubeedge);

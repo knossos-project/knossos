@@ -54,33 +54,33 @@ public:
     virtual Qt::ItemFlags flags(const QModelIndex & index) const override;
     virtual int rowCount(const QModelIndex & = QModelIndex{}) const override;
     void add(const QString & datasetPath);
+    bool removeRows(int row, int count, const QModelIndex & parent = QModelIndex()) override;
+    bool dropMimeData(const QMimeData * data, Qt::DropAction action, int row, int column, const QModelIndex &) override;
     void clear();
 };
 
 class ButtonListView : public QListView {
-     Q_OBJECT
+friend class ButtonDelegate;
+    Q_OBJECT
+    QPersistentModelIndex currentEditedCellIndex;
+    QPushButton fileDialogButton{"…"};
+    QPushButton deleteButton{"×"};
 protected:
     virtual void leaveEvent(QEvent * e) override {
         QListView::leaveEvent(e);
         emit mouseLeft();
     }
+public:
+    explicit ButtonListView(QWidget * parent = 0);
 signals:
     void mouseLeft();
 };
 
 class ButtonDelegate : public QStyledItemDelegate {
-friend class DatasetLoadWidget;
 Q_OBJECT
-    ButtonListView * view;
-    QPushButton * templateButton;
-    bool isOneCellInEditMode{false};
-    QPersistentModelIndex currentEditedCellIndex;
-    bool hovered{false};
 public:
-    explicit ButtonDelegate(ButtonListView * parent = 0);
+    explicit ButtonDelegate(ButtonListView * parent = 0) : QStyledItemDelegate(parent) {};
     void paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const override;
-signals:
-    void buttonClicked(const QModelIndex & index);
 };
 
 
