@@ -55,7 +55,6 @@ public:
     virtual int rowCount(const QModelIndex & = QModelIndex{}) const override;
     void add(const QString & datasetPath);
     bool removeRows(int row, int count, const QModelIndex & parent = QModelIndex()) override;
-    bool dropMimeData(const QMimeData * data, Qt::DropAction action, int row, int column, const QModelIndex &) override;
     void clear();
 };
 
@@ -66,12 +65,16 @@ friend class ButtonDelegate;
     QPushButton fileDialogButton{"…"};
     QPushButton deleteButton{"×"};
 protected:
+    virtual void dragEnterEvent(QDragEnterEvent * e) override;
+    virtual void dragMoveEvent(QDragMoveEvent * e) override;
+    virtual void dropEvent(QDropEvent * e) override;
     virtual void leaveEvent(QEvent * e) override {
         QListView::leaveEvent(e);
         emit mouseLeft();
     }
 public:
     explicit ButtonListView(QWidget * parent = 0);
+    void addDatasetUrls(const QList<QUrl> & urls);
 signals:
     void mouseLeft();
 };
@@ -143,6 +146,9 @@ class DatasetLoadWidget : public DialogVisibilityNotify {
     QStringList getRecentPathItems();
     Dataset::list_t infos;
     void updateDatasetInfo(const QUrl &url, const QString &info);
+protected:
+    virtual void dragEnterEvent(QDragEnterEvent * e) override;
+    virtual void dropEvent(QDropEvent * e) override;
 public:
     QUrl datasetUrl;//meh
 

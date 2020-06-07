@@ -40,6 +40,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
+#include <QMimeData>
 #include <QPainter>
 #include <QProcess>
 #include <QPushButton>
@@ -67,7 +68,7 @@ bool DatasetModel::setData(const QModelIndex & index, const QVariant & value, in
 }
 
 Qt::ItemFlags DatasetModel::flags(const QModelIndex & index) const {
-    return QAbstractItemModel::flags(index) | Qt::ItemIsEditable | Qt::ItemIsEnabled;
+    return QAbstractItemModel::flags(index) | Qt::ItemIsEditable | Qt::ItemIsDropEnabled | Qt::ItemIsEnabled;
 }
 
 int DatasetModel::rowCount(const QModelIndex &) const {
@@ -119,19 +120,29 @@ ButtonListView::ButtonListView(QWidget * parent) : QListView(parent) {
     });
 }
 
-void ButtonListView::DragEnterEvent(QDragEnterEvent * e) {
-    if (e->mimeData()->urls().size() == 1) {
+void ButtonListView::addDatasetUrls(const QList<QUrl> & urls) {
+    for (auto && url : urls) {
+        model()->setData(model()->index(model()->rowCount() - 1, 0), url.url());
+    }
+}
+
+void ButtonListView::dragEnterEvent(QDragEnterEvent * e) {
+    if (e->mimeData()->urls().size() > 0) {
         e->accept();
     }
 }
 
+void ButtonListView::dragMoveEvent(QDragMoveEvent * e) {
+    e->accept();
+}
 void ButtonListView::dropEvent(QDropEvent * e) {
-    qDebug() << e->mimeData()->urls();
-    const auto droppedDataset = e->mimeData()->urls().first();
-    auto index = indexAt(mapFromGlobal(e->pos()));
-    if (index.isValid()) {
+    auto index = indexAt(e->pos());
+    if (e->mimeData()->urls().size() == 1 && index.isValid()) {
+        const auto droppedDataset = e->mimeData()->urls().first();
         model()->setData(index, droppedDataset);
         selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
+    } else if(e->mimeData()->urls().size() > 0) {
+        addDatasetUrls(e->mimeData()->urls());
     }
 }
 
@@ -152,6 +163,7 @@ void ButtonDelegate::paint(QPainter * painter, const QStyleOptionViewItem & opti
 DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(DATASET_WIDGET, parent) {
     setModal(true);
     setWindowTitle("Load Dataset");
+    setAcceptDrops(true);
 
     tableWidget.setModel(&datasetModel);
     tableWidget.setUniformItemSizes(true);
@@ -160,6 +172,9 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     tableWidget.setSelectionMode(QAbstractItemView::SingleSelection);
     tableWidget.setItemDelegate(&addButtonDelegate);
     tableWidget.setMouseTracking(true);
+    tableWidget.setDragEnabled(true);
+    tableWidget.setAcceptDrops(true);
+    tableWidget.setDropIndicatorShown(true);
     infoLabel.setOpenExternalLinks(true);
     infoLabel.setTextInteractionFlags(Qt::TextBrowserInteraction);
     infoLabel.setWordWrap(true);//allows shrinking below minimum width
@@ -218,6 +233,16 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
         loadDataset(boost::none, url);
     });
     resize(600, 600);//random default size, will be overriden by settings if present
+}
+
+void DatasetLoadWidget::dragEnterEvent(QDragEnterEvent * e) {
+    if (e->mimeData()->urls().size() > 0) {
+        e->accept();
+    }
+}
+
+void DatasetLoadWidget::dropEvent(QDropEvent * e) {
+    tableWidget.addDatasetUrls(e->mimeData()->urls());
 }
 
 void DatasetLoadWidget::datasetCellChanged(const QModelIndex & topLeft, const QModelIndex &, const QVector <int> &) {
