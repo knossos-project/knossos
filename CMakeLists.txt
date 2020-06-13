@@ -20,7 +20,7 @@
     or contact knossosteam@gmail.com
 ]]
 cmake_minimum_required(VERSION 3.15)
-project(knossos)
+project(knossos CXX)
 
 if(NOT CMAKE_BUILD_TYPE)#prevent accidental debug builds
     set(CMAKE_BUILD_TYPE "RELEASE")
