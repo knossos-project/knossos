@@ -159,22 +159,17 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     setWindowTitle("Layers");
 
     int row = 0, col;
-    opacitySlider.setTracking(true);
-    opacitySlider.setMaximum(100);
+    opacitySlider.setMaximum(255);
     optionsLayout.addWidget(&opacitySliderLabel, row, col=0);
     optionsLayout.addWidget(&opacitySlider, row, ++col);
     optionsLayout.addWidget(&linearFilteringCheckBox, row, ++col);
-
-    rangeDeltaSlider.setTracking(true);
-    rangeDeltaSlider.setMaximum(100);
-    optionsLayout.addWidget(&rangeDeltaSliderLabel, ++row, col=0);
-    optionsLayout.addWidget(&rangeDeltaSlider, row, ++col);
-
-    biasSlider.setTracking(true);
-    biasSlider.setMaximum(100);
-    combineSlicesType.addItems({"min", "max"});
+    biasSlider.setMaximum(255);
     optionsLayout.addWidget(&biasSliderLabel, ++row, col=0);
     optionsLayout.addWidget(&biasSlider, row, ++col);
+    rangeDeltaSlider.setMaximum(255);
+    optionsLayout.addWidget(&rangeDeltaSliderLabel, ++row, col=0);
+    optionsLayout.addWidget(&rangeDeltaSlider, row, ++col);
+    combineSlicesType.addItems({"min", "max"});
     optionsLayout.addWidget(&combineSlicesCheck, ++row, col=0);
     optionsLayout.addWidget(&combineSlicesType, row, ++col);
     optionsLayout.addWidget(&combineSlicesSpin, row, ++col);
