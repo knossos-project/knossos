@@ -1590,8 +1590,8 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         if (options.drawBoundaryAxes) {
             if (Viewport3D::showBoundariesInUm) {
                 renderAxis(floatCoordinate(scaledBoundary.x, 0, 0), QString("x: %1 µm").arg(scaledBoundary.x * 1e-3));
-                renderAxis(floatCoordinate(0, scaledBoundary.y, 0), QString("y: %1 µm").arg(scaledBoundary.x * 1e-3));
-                renderAxis(floatCoordinate(0, 0, scaledBoundary.z), QString("z: %1 µm").arg(scaledBoundary.x * 1e-3));
+                renderAxis(floatCoordinate(0, scaledBoundary.y, 0), QString("y: %1 µm").arg(scaledBoundary.y * 1e-3));
+                renderAxis(floatCoordinate(0, 0, scaledBoundary.z), QString("z: %1 µm").arg(scaledBoundary.z * 1e-3));
             } else {
                 renderAxis(floatCoordinate(scaledBoundary.x, 0, 0), QString("x: %1 px").arg(Dataset::current().boundary.x + state->skeletonState->displayMatlabCoordinates));
                 renderAxis(floatCoordinate(0, scaledBoundary.y, 0), QString("y: %1 px").arg(Dataset::current().boundary.y + state->skeletonState->displayMatlabCoordinates));
