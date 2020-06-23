@@ -96,3 +96,15 @@ void Skeletonizer::movedHybridNode(nodeListElement & node, const quint64 newSubo
         }
     });
 }
+
+void selectMeshesForObjects() {
+    if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Selection)) {
+        QSet<treeListElement*> trees;
+        for (const auto oidx : Segmentation::singleton().selectedObjectIndices) {
+            if (auto * tree = Skeletonizer::singleton().findTreeByTreeID(Segmentation::singleton().oid(oidx)); tree && tree->mesh) {
+                trees.insert(tree);
+            }
+        }
+        Skeletonizer::singleton().select(trees);
+    }
+}

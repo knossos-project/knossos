@@ -48,6 +48,7 @@ Q_OBJECT
     friend void generateMeshesForSubobjectsOfSelectedObjects();
     friend void verticalSplittingPlane(const Coordinate & seed);
     friend auto & objectFromId(const quint64 objId);
+    friend void selectMeshesForObjects();
     friend class SegmentationObjectModel;
     friend class TouchedObjectModel;
     friend class CategoryDelegate;

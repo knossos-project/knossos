@@ -242,6 +242,8 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
             prefWidget.tabs.setCurrentIndex(6); prefWidget.show(); prefWidget.raise();
         }
     });
+
+    QObject::connect(&Segmentation::singleton(), &Segmentation::changedRowSelection, &selectMeshesForObjects);
 }
 
 void MainWindow::updateCursorLabel(const Coordinate & position, const ViewportType vpType) {

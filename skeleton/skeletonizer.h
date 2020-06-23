@@ -344,3 +344,5 @@ signals:
     void treeSelectionChangedSignal();
     void resetData();
 };
+
+void selectMeshesForObjects();
