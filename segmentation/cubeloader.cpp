@@ -162,8 +162,6 @@ CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  g
                 func(cubeRef[z][y][x], adjustedGlobalCoord);
             }
             cubeCoords.emplace(cubeCoord);
-        } else {
-            qCritical() << x << y << z << "cube missing for (partial) writeVoxels";
         }
     }
     return cubeCoords;
