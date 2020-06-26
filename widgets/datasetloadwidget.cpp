@@ -94,7 +94,8 @@ void DatasetModel::clear() {
     endResetModel();
 }
 
-ButtonListView::ButtonListView(QWidget * parent) : QListView(parent) {
+ButtonListView::ButtonListView(QSortFilterProxyModel & proxy, QWidget * parent) : QListView(parent), proxy(&proxy) {
+    setModel(&proxy);
     fileDialogButton.setParent(this);
     deleteButton.setParent(this);
     fileDialogButton.hide();
@@ -154,7 +155,7 @@ void ButtonDelegate::paint(QPainter * painter, const QStyleOptionViewItem & opti
         for (auto * button : {&buttonView->fileDialogButton, &buttonView->deleteButton}) {
             button->setGeometry(QRect(xOffset, option.rect.top(),
                                       option.rect.height(), option.rect.height())); // quadratic button
-            button->setVisible(index.row() < buttonView->model()->rowCount() - 1 || button == &buttonView->fileDialogButton); // no delete button for empty last row
+            button->setVisible(buttonView->proxy->mapToSource(index).row() <  buttonView->proxy->sourceModel()->rowCount() - 1 || button == &buttonView->fileDialogButton); // no delete button for empty last row
             xOffset -= option.rect.height();
         }
     }
@@ -165,7 +166,9 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     setWindowTitle("Load Dataset");
     setAcceptDrops(true);
 
-    tableWidget.setModel(&datasetModel);
+    searchField.setPlaceholderText("Filter datasets…");
+    sortAndFilterProxy.setFilterCaseSensitivity(Qt::CaseInsensitive);
+    sortAndFilterProxy.setSourceModel(&datasetModel);
     tableWidget.setUniformItemSizes(true);
     tableWidget.setTextElideMode(Qt::ElideMiddle);
     tableWidget.setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -196,11 +199,15 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
 
     buttonHLayout.addWidget(&processButton);
     buttonHLayout.addWidget(&cancelButton);
+    mainLayout.addWidget(&searchField);
     mainLayout.addWidget(&splitter);
     mainLayout.addWidget(&datasetSettingsGroup);
     mainLayout.addLayout(&buttonHLayout);
 
     setLayout(&mainLayout);
+    QObject::connect(&searchField, &QLineEdit::textChanged, [this](const QString & text) {
+        sortAndFilterProxy.setFilterFixedString(text);
+    });
     QObject::connect(&datasetModel, &DatasetModel::dataChanged, this, &DatasetLoadWidget::datasetCellChanged);
     QObject::connect(tableWidget.selectionModel(), &QItemSelectionModel::selectionChanged, [this]() {
         WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running

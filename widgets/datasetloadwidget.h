@@ -34,13 +34,15 @@
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QLineEdit>
 #include <QListView>
-#include <QTextDocument>
+#include <QSortFilterProxyModel>
 #include <QSpinBox>
 #include <QString>
 #include <QStringList>
 #include <QStyledItemDelegate>
 #include <QTableWidget>
+#include <QTextDocument>
 #include <QVBoxLayout>
 
 class DatasetModel : public QAbstractListModel {
@@ -61,6 +63,7 @@ public:
 class ButtonListView : public QListView {
 friend class ButtonDelegate;
     Q_OBJECT
+    QSortFilterProxyModel * proxy;
     QPersistentModelIndex currentEditedCellIndex;
     QPushButton fileDialogButton{"…"};
     QPushButton deleteButton{"×"};
@@ -73,7 +76,7 @@ protected:
         emit mouseLeft();
     }
 public:
-    explicit ButtonListView(QWidget * parent = 0);
+    explicit ButtonListView(QSortFilterProxyModel & proxy, QWidget * parent = 0);
     void addDatasetUrls(const QList<QUrl> & urls);
 signals:
     void mouseLeft();
@@ -124,9 +127,11 @@ class DatasetLoadWidget : public DialogVisibilityNotify {
     Q_OBJECT
 
     QVBoxLayout mainLayout;
+    QLineEdit searchField;
     UserOrientableSplitter splitter;
     DatasetModel datasetModel;
-    ButtonListView tableWidget;
+    QSortFilterProxyModel sortAndFilterProxy;
+    ButtonListView tableWidget{sortAndFilterProxy};
     ButtonDelegate addButtonDelegate{&tableWidget};
     QLabel infoLabel;
     QGroupBox datasetSettingsGroup;
