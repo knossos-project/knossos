@@ -178,6 +178,10 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     tableWidget.setDragEnabled(true);
     tableWidget.setAcceptDrops(true);
     tableWidget.setDropIndicatorShown(true);
+    // add border line, requires restoring style for item:selected
+    const auto & palette = tableWidget.palette();
+    tableWidget.setStyleSheet(QString("QListView::item { border-bottom: 1px solid %1; } QListView::item:selected { background-color: %2; color: %3; }")
+                              .arg(palette.midlight().color().name(), palette.highlight().color().name(), palette.highlightedText().color().name()));
     infoLabel.setOpenExternalLinks(true);
     infoLabel.setTextInteractionFlags(Qt::TextBrowserInteraction);
     infoLabel.setWordWrap(true);//allows shrinking below minimum width
