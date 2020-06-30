@@ -61,6 +61,11 @@ QVariant DatasetModel::data(const QModelIndex & index, int role) const {
 bool DatasetModel::setData(const QModelIndex & index, const QVariant & value, int role) {
     if (index.isValid()) {
         datasets[index.row()] = value.toString();
+        if (index.row() == rowCount() - 1) {
+            beginInsertRows({}, datasets.size(), datasets.size());
+            datasets.emplace_back("");
+            endInsertRows();
+        }
         emit dataChanged(index, index, {role});
         return true;
     }
@@ -76,8 +81,14 @@ int DatasetModel::rowCount(const QModelIndex &) const {
 }
 
 void DatasetModel::add(const QString & datasetPath) {
-    beginInsertRows({}, datasets.size(), datasets.size());
-    datasets.emplace_back(datasetPath);
+    if (datasets.empty()) {
+        beginInsertRows({}, datasets.size(), datasets.size() + 1);
+        datasets.emplace_back(datasetPath);
+    } else {
+        beginInsertRows({}, datasets.size(), datasets.size());
+        datasets.back() = datasetPath;
+    }
+    datasets.emplace_back("");
     endInsertRows();
 }
 
@@ -94,7 +105,9 @@ void DatasetModel::clear() {
     endResetModel();
 }
 
-ButtonListView::ButtonListView(QSortFilterProxyModel & proxy, QWidget * parent) : QListView(parent), proxy(&proxy) {
+ButtonListView::ButtonListView(DatasetModel & datasetModel, QSortFilterProxyModel & proxy, QWidget * parent) : QListView(parent), datasetModel(&datasetModel), proxy(&proxy) {
+    proxy.setSourceModel(&datasetModel);
+    proxy.setFilterCaseSensitivity(Qt::CaseInsensitive);
     setModel(&proxy);
     fileDialogButton.setParent(this);
     deleteButton.setParent(this);
@@ -123,7 +136,7 @@ ButtonListView::ButtonListView(QSortFilterProxyModel & proxy, QWidget * parent) 
 
 void ButtonListView::addDatasetUrls(const QList<QUrl> & urls) {
     for (auto && url : urls) {
-        model()->setData(model()->index(model()->rowCount() - 1, 0), url.url());
+        datasetModel->add(url.url());
     }
 }
 
@@ -167,8 +180,6 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     setAcceptDrops(true);
 
     searchField.setPlaceholderText("Filter datasets…");
-    sortAndFilterProxy.setFilterCaseSensitivity(Qt::CaseInsensitive);
-    sortAndFilterProxy.setSourceModel(&datasetModel);
     tableWidget.setUniformItemSizes(true);
     tableWidget.setTextElideMode(Qt::ElideMiddle);
     tableWidget.setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -258,8 +269,7 @@ void DatasetLoadWidget::dropEvent(QDropEvent * e) {
 
 void DatasetLoadWidget::datasetCellChanged(const QModelIndex & topLeft, const QModelIndex &, const QVector <int> &) {
     auto index = topLeft;
-    if (index.column() == 0 && index.row() == datasetModel.rowCount() - 1 && !index.data().toString().isEmpty()) {
-        datasetModel.add("");
+    if (!index.data().toString().isEmpty()) {
         WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
         auto dataset = index.data().toString();
         decltype(Network::singleton().refresh(std::declval<QUrl>())) download = Network::singleton().refresh(dataset);
@@ -374,8 +384,9 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     }
 
     const auto iter = std::find(std::begin(datasetModel.datasets), std::end(datasetModel.datasets), path.url());
-    const auto row = iter - std::begin(datasetModel.datasets);
+    auto row = iter - std::begin(datasetModel.datasets);
     if (iter == std::end(datasetModel.datasets)) {
+        row = datasetModel.rowCount() - 1;
         datasetModel.add(path.url());
     }
     tableWidget.selectionModel()->select(datasetModel.index(row, 0), QItemSelectionModel::ClearAndSelect);
@@ -578,7 +589,7 @@ void DatasetLoadWidget::loadSettings() {
     auto appendRowSelectIfLU = [this](const QString & dataset){
         datasetModel.add(dataset);
         if (dataset == datasetUrl.toString()) {
-            tableWidget.selectionModel()->select(datasetModel.index(datasetModel.rowCount() - 1, 0), QItemSelectionModel::ClearAndSelect);
+            tableWidget.selectionModel()->select(datasetModel.index(datasetModel.rowCount() - 2, 0), QItemSelectionModel::ClearAndSelect);
         }
     };
 
@@ -599,8 +610,6 @@ void DatasetLoadWidget::loadSettings() {
                 appendRowSelectIfLU(url);
             }
         }
-        // add Empty row at the end
-        appendRowSelectIfLU("");
     }// QSignalBlocker
     auto & cubeEdgeLen = Dataset::current().cubeEdgeLength;
     cubeEdgeLen = settings.value(DATASET_CUBE_EDGE, 128).toInt();

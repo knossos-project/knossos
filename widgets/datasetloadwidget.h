@@ -63,6 +63,7 @@ public:
 class ButtonListView : public QListView {
 friend class ButtonDelegate;
     Q_OBJECT
+    DatasetModel * datasetModel;
     QSortFilterProxyModel * proxy;
     QPersistentModelIndex currentEditedCellIndex;
     QPushButton fileDialogButton{"…"};
@@ -76,7 +77,7 @@ protected:
         emit mouseLeft();
     }
 public:
-    explicit ButtonListView(QSortFilterProxyModel & proxy, QWidget * parent = 0);
+    explicit ButtonListView(DatasetModel & datasetModel, QSortFilterProxyModel & proxy, QWidget * parent = 0);
     void addDatasetUrls(const QList<QUrl> & urls);
 signals:
     void mouseLeft();
@@ -131,7 +132,7 @@ class DatasetLoadWidget : public DialogVisibilityNotify {
     UserOrientableSplitter splitter;
     DatasetModel datasetModel;
     QSortFilterProxyModel sortAndFilterProxy;
-    ButtonListView tableWidget{sortAndFilterProxy};
+    ButtonListView tableWidget{datasetModel, sortAndFilterProxy};
     ButtonDelegate addButtonDelegate{&tableWidget};
     QLabel infoLabel;
     QGroupBox datasetSettingsGroup;
