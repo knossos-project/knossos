@@ -33,9 +33,9 @@
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
+#include <QHeaderView>
 #include <QLabel>
 #include <QLineEdit>
-#include <QListView>
 #include <QSortFilterProxyModel>
 #include <QSpinBox>
 #include <QString>
@@ -43,6 +43,7 @@
 #include <QStyledItemDelegate>
 #include <QTableWidget>
 #include <QTextDocument>
+#include <QTreeView>
 #include <QVBoxLayout>
 
 class DatasetModel : public QAbstractListModel {
@@ -51,7 +52,7 @@ public:
     std::vector<QString> datasets;
     virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
     virtual bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
-    virtual QVariant headerData(int, Qt::Orientation, int = Qt::DisplayRole) const override { return {}; };
+    virtual QVariant headerData(int, Qt::Orientation, int) const override { return QVariant(); };
     virtual int columnCount(const QModelIndex & = QModelIndex()) const override { return 1; };
     virtual Qt::ItemFlags flags(const QModelIndex & index) const override;
     virtual int rowCount(const QModelIndex & = QModelIndex{}) const override;
@@ -60,7 +61,23 @@ public:
     void clear();
 };
 
-class ButtonListView : public QListView {
+class ButtonHeaderView : public QHeaderView {
+friend class ButtonListView;
+    Q_OBJECT
+protected:
+    virtual void enterEvent(QEvent *) override {
+        emit mouseEntered();
+    };
+public:
+    explicit ButtonHeaderView(Qt::Orientation orientation, QWidget * parent = nullptr) : QHeaderView(orientation, parent) {
+        setMouseTracking(true);
+        setStretchLastSection(true);
+    };
+signals:
+    void mouseEntered();
+};
+
+class ButtonListView : public QTreeView {
 friend class ButtonDelegate;
     Q_OBJECT
     DatasetModel * datasetModel;
@@ -68,12 +85,14 @@ friend class ButtonDelegate;
     QPersistentModelIndex currentEditedCellIndex;
     QPushButton fileDialogButton{"…"};
     QPushButton deleteButton{"×"};
+    ButtonHeaderView listHeader{Qt::Horizontal};
+    int sortIndex;
 protected:
     virtual void dragEnterEvent(QDragEnterEvent * e) override;
     virtual void dragMoveEvent(QDragMoveEvent * e) override;
     virtual void dropEvent(QDropEvent * e) override;
     virtual void leaveEvent(QEvent * e) override {
-        QListView::leaveEvent(e);
+        QTreeView::leaveEvent(e);
         emit mouseLeft();
     }
 public:

@@ -32,11 +32,11 @@
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
 #include "viewer.h"
+#include "widgets/tools/model_helper.h"
 
 #include <QApplication>
 #include <QComboBox>
 #include <QFileDialog>
-#include <QHeaderView>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
@@ -105,7 +105,8 @@ void DatasetModel::clear() {
     endResetModel();
 }
 
-ButtonListView::ButtonListView(DatasetModel & datasetModel, QSortFilterProxyModel & proxy, QWidget * parent) : QListView(parent), datasetModel(&datasetModel), proxy(&proxy) {
+ButtonListView::ButtonListView(DatasetModel & datasetModel, QSortFilterProxyModel & proxy, QWidget * parent) : QTreeView(parent), datasetModel(&datasetModel), proxy(&proxy) {
+    setHeader(&listHeader);
     proxy.setSourceModel(&datasetModel);
     proxy.setFilterCaseSensitivity(Qt::CaseInsensitive);
     setModel(&proxy);
@@ -113,13 +114,16 @@ ButtonListView::ButtonListView(DatasetModel & datasetModel, QSortFilterProxyMode
     deleteButton.setParent(this);
     fileDialogButton.hide();
     deleteButton.hide();
-    QObject::connect(this, &QListView::entered, [this](const QModelIndex & index) {
+    QObject::connect(this, &QTreeView::entered, [this](const QModelIndex & index) {
         currentEditedCellIndex = index;
     });
     QObject::connect(this, &ButtonListView::mouseLeft, [this]() {
         fileDialogButton.hide();
         deleteButton.hide();
     });
+    QObject::connect(&listHeader, &ButtonHeaderView::mouseEntered, this, &ButtonListView::mouseLeft);
+    QObject::connect(&listHeader, &ButtonHeaderView::sortIndicatorChanged, threeWaySorting(*this, sortIndex));
+
     QObject::connect(&fileDialogButton, &QPushButton::clicked, [this]() {
         const auto selectedFile = ::state->viewer->suspend([this] {
             return QFileDialog::getOpenFileUrl(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf").toString();
@@ -164,11 +168,12 @@ void ButtonDelegate::paint(QPainter * painter, const QStyleOptionViewItem & opti
     QStyledItemDelegate::paint(painter, option, index); // paint text
     if (option.state & QStyle::State_MouseOver) {
         auto * buttonView = qobject_cast<ButtonListView *>(parent());
-        auto xOffset = buttonView->visualRect(index).right()-option.rect.height();
+        auto xOffset = buttonView->visualRect(index).right() - option.rect.height();
         for (auto * button : {&buttonView->fileDialogButton, &buttonView->deleteButton}) {
-            button->setGeometry(QRect(xOffset, option.rect.top(),
+            button->setGeometry(QRect(xOffset, option.rect.top() + buttonView->header()->height(),
                                       option.rect.height(), option.rect.height())); // quadratic button
-            button->setVisible(buttonView->proxy->mapToSource(index).row() <  buttonView->proxy->sourceModel()->rowCount() - 1 || button == &buttonView->fileDialogButton); // no delete button for empty last row
+            auto row = buttonView->proxy->mapToSource(index).row();
+            button->setVisible(row <  buttonView->datasetModel->rowCount() - 1 || button == &buttonView->fileDialogButton); // no delete button for empty last row
             xOffset -= option.rect.height();
         }
     }
@@ -180,7 +185,7 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     setAcceptDrops(true);
 
     searchField.setPlaceholderText("Filter datasets…");
-    tableWidget.setUniformItemSizes(true);
+    tableWidget.setUniformRowHeights(true);
     tableWidget.setTextElideMode(Qt::ElideMiddle);
     tableWidget.setSelectionBehavior(QAbstractItemView::SelectRows);
     tableWidget.setSelectionMode(QAbstractItemView::SingleSelection);
@@ -189,9 +194,11 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     tableWidget.setDragEnabled(true);
     tableWidget.setAcceptDrops(true);
     tableWidget.setDropIndicatorShown(true);
+    tableWidget.setRootIsDecorated(false);
+    tableWidget.setSortingEnabled(true);
     // add border line, requires restoring style for item:selected
     const auto & palette = tableWidget.palette();
-    tableWidget.setStyleSheet(QString("QListView::item { border-bottom: 1px solid %1; } QListView::item:selected { background-color: %2; color: %3; }")
+    tableWidget.setStyleSheet(QString("QTreeView::item { border-bottom: 1px solid %1; } QTreeView::item:selected { background-color: %2; color: %3; }")
                               .arg(palette.midlight().color().name(), palette.highlight().color().name(), palette.highlightedText().color().name()));
     infoLabel.setOpenExternalLinks(true);
     infoLabel.setTextInteractionFlags(Qt::TextBrowserInteraction);
