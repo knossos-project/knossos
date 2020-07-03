@@ -37,6 +37,9 @@ matrix:
             - quazip
             - snappy
           update: true
+  exclude:
+    - if: branch != master
+      env: TRAVIS_TAG=nightly
 
 script:
   - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then docker pull knossostool/knossos; fi
