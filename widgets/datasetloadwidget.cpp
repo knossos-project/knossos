@@ -558,6 +558,10 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
             break;// only enable the first overlay layer by default
         }
     }
+    for (std::size_t i = 0; i < std::min(layers.size(), Dataset::datasets.size()); ++i) {
+        layers[i].allocationEnabled = Dataset::datasets[i].allocationEnabled;
+        layers[i].loadingEnabled = Dataset::datasets[i].loadingEnabled;
+    }
     Dataset::datasets = layers;
 
     state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M, Dataset::datasets.size());// resets textures
