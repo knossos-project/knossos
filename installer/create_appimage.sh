@@ -23,11 +23,12 @@ patchelf --add-needed libpthread.so.0 knossos
 patchelf --add-needed libQt5XcbQpa.so.5 knossos
 patchelf --add-needed libdl.so.2 knossos
 
-cp -Lv /usr/lib/libz.so.1 lib/
-cp -Lv /usr/lib/libgpg-error.so.0 lib/
-cp -Lv /usr/lib/libxcb.so.1 lib/
-cp -Lv /usr/lib/libharfbuzz.so.0 lib/
-cp -Lv /usr/lib/libfreetype.so.6 lib/
+cp -av /usr/lib/libstdc++.so.* lib/
+cp -av /usr/lib/libz.so.* lib/
+cp -av /usr/lib/libgpg-error.so.* lib/
+cp -av /usr/lib/libxcb.so.* lib/
+cp -av /usr/lib/libharfbuzz.so.* lib/
+cp -av /usr/lib/libfreetype.so.* lib/
 
 rm -v AppRun
 cp -v ../../knossos/installer/AppRun .
