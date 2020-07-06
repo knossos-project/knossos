@@ -189,7 +189,9 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         if (token.startsWith("[Dataset")) {
             infos.emplace_back();
             infos.back().api = API::PyKnossos;
-            infos.back().cubeEdgeLength = 128;
+            continue;
+        }
+        if (infos.empty()) {// support empty lines in the beginning
             continue;
         }
         const auto & value = tokenList.back();
