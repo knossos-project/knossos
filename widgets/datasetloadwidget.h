@@ -61,6 +61,11 @@ public:
     void clear();
 };
 
+class SortFilterProxy : public QSortFilterProxyModel {
+protected:
+    virtual bool lessThan(const QModelIndex & source_left, const QModelIndex & source_right) const override;
+};
+
 class ButtonHeaderView : public QHeaderView {
 friend class ButtonListView;
     Q_OBJECT
@@ -81,7 +86,7 @@ class ButtonListView : public QTreeView {
 friend class ButtonDelegate;
     Q_OBJECT
     DatasetModel * datasetModel;
-    QSortFilterProxyModel * proxy;
+    SortFilterProxy * proxy;
     QPersistentModelIndex currentEditedCellIndex;
     QPushButton fileDialogButton{"…"};
     QPushButton deleteButton{"×"};
@@ -96,7 +101,7 @@ protected:
         emit mouseLeft();
     }
 public:
-    explicit ButtonListView(DatasetModel & datasetModel, QSortFilterProxyModel & proxy, QWidget * parent = 0);
+    explicit ButtonListView(DatasetModel & datasetModel, SortFilterProxy &proxy, QWidget * parent = 0);
     void addDatasetUrls(const QList<QUrl> & urls);
 signals:
     void mouseLeft();
@@ -150,7 +155,7 @@ class DatasetLoadWidget : public DialogVisibilityNotify {
     QLineEdit searchField;
     UserOrientableSplitter splitter;
     DatasetModel datasetModel;
-    QSortFilterProxyModel sortAndFilterProxy;
+    SortFilterProxy sortAndFilterProxy;
     ButtonListView tableWidget{datasetModel, sortAndFilterProxy};
     ButtonDelegate addButtonDelegate{&tableWidget};
     QLabel infoLabel;

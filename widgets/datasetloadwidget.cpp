@@ -105,7 +105,17 @@ void DatasetModel::clear() {
     endResetModel();
 }
 
-ButtonListView::ButtonListView(DatasetModel & datasetModel, QSortFilterProxyModel & proxy, QWidget * parent) : QTreeView(parent), datasetModel(&datasetModel), proxy(&proxy) {
+bool SortFilterProxy::lessThan(const QModelIndex & source_left, const QModelIndex & source_right) const {
+    if (source_left.row() == sourceModel()->rowCount() - 1) {
+        return sortOrder() != Qt::AscendingOrder;
+    } else if (source_right.row() == sourceModel()->rowCount() - 1) {
+        return sortOrder() == Qt::AscendingOrder;
+    } else {
+        return source_left.data().toString() < source_right.data().toString();
+    }
+}
+
+ButtonListView::ButtonListView(DatasetModel & datasetModel, SortFilterProxy & proxy, QWidget * parent) : QTreeView(parent), datasetModel(&datasetModel), proxy(&proxy) {
     setHeader(&listHeader);
     proxy.setSourceModel(&datasetModel);
     proxy.setFilterCaseSensitivity(Qt::CaseInsensitive);
