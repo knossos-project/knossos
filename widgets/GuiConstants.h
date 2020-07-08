@@ -28,6 +28,7 @@
 // Constants for Widget-identification
 const QString ANNOTATION_WIDGET = "tools_widget";
 const QString COMMENTS_TAB = "comments_tab";
+const QString DATASET_BROWSER = "dataset_browser";
 const QString DATASET_WIDGET = "dataset_widget";
 const QString HEIDELBRAIN_INTEGRATION = "heidelbrain_integration";
 const QString LAYER_DIALOG_WIDGET = "layer_dialog_widget";

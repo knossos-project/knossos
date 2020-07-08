@@ -740,6 +740,7 @@ void MainWindow::createMenus() {
     preferenceMenu->addAction(QIcon(":/resources/icons/menubar/preferences.png"), "Preferences", &widgetContainer.preferencesWidget, &PreferencesWidget::show);
 
     auto windowMenu = menuBar()->addMenu("&Windows");
+    windowMenu->addAction(QIcon{}, tr("Dataset Browser"), &widgetContainer.datasetBrowser, &DatasetBrowser::show);
     windowMenu->addAction(QIcon(":/resources/icons/menubar/tasks-management.png"), tr("Task Management"), &widgetContainer.taskManagementWidget, &TaskManagementWidget::updateAndRefreshWidget);
     windowMenu->addAction(QIcon(":/resources/icons/layers.png"), tr("Layers"), &widgetContainer.layerDialogWidget, &LayerDialogWidget::show);
     windowMenu->addAction(QIcon(":/resources/icons/menubar/annotation.png"), tr("Annotation"), &widgetContainer.annotationWidget, &AnnotationWidget::show);
@@ -1242,6 +1243,7 @@ void MainWindow::saveSettings() {
     settings.endGroup();
 
     widgetContainer.annotationWidget.saveSettings();
+    widgetContainer.datasetBrowser.saveSettings();
     widgetContainer.datasetLoadWidget.saveSettings();
     widgetContainer.layerDialogWidget.saveSettings();
     widgetContainer.preferencesWidget.saveSettings();
@@ -1281,14 +1283,15 @@ void MainWindow::loadSettings() {
     settings.endGroup();
 
     widgetContainer.annotationWidget.loadSettings();
+    widgetContainer.datasetBrowser.loadSettings();
+    widgetContainer.datasetLoadWidget.loadSettings();
     widgetContainer.layerDialogWidget.loadSettings();
     widgetContainer.preferencesWidget.loadSettings();
-    widgetContainer.datasetLoadWidget.loadSettings();
-    widgetContainer.zoomWidget.loadSettings();
     widgetContainer.pythonInterpreterWidget.loadSettings();
     widgetContainer.pythonPropertyWidget.loadSettings();
     refreshScriptingMenu();
     widgetContainer.snapshotWidget.loadSettings();
+    widgetContainer.zoomWidget.loadSettings();
 
     show();
     activateWindow();// prevent mainwin in background in gnome when other widgets are also visible

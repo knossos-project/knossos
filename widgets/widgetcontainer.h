@@ -24,6 +24,7 @@
 
 #include "aboutdialog.h"
 #include "annotationwidget.h"
+#include "datasetbrowser.h"
 #include "datasetloadwidget.h"
 #include "GuiConstants.h"
 #include "preferenceswidget.h"
@@ -39,7 +40,7 @@
 
 struct WidgetContainer {
     WidgetContainer(QWidget * parent)
-        : aboutDialog(parent), annotationWidget(parent), datasetLoadWidget(parent), layerDialogWidget(parent)
+        : aboutDialog(parent), annotationWidget(parent), datasetBrowser(parent), datasetLoadWidget(parent), layerDialogWidget(parent)
         , preferencesWidget(parent), pythonInterpreterWidget(parent), pythonPropertyWidget(parent)
         , snapshotWidget(parent), taskManagementWidget(parent), zoomWidget(parent, &datasetLoadWidget)
     {
@@ -49,6 +50,7 @@ struct WidgetContainer {
 
     AboutDialog aboutDialog;
     AnnotationWidget annotationWidget;
+    DatasetBrowser datasetBrowser;
     DatasetLoadWidget datasetLoadWidget;
     LayerDialogWidget layerDialogWidget;
     PreferencesWidget preferencesWidget;
@@ -61,6 +63,7 @@ struct WidgetContainer {
     void applyVisibility() {
         QSettings settings;
         annotationWidget.setVisible(settings.value(ANNOTATION_WIDGET + '/' + VISIBLE, false).toBool());
+        datasetBrowser.setVisible(settings.value(DATASET_BROWSER + '/' + VISIBLE, false).toBool());
         layerDialogWidget.setVisible(settings.value(LAYER_DIALOG_WIDGET + '/' + VISIBLE, false).toBool());
         preferencesWidget.setVisible(settings.value(PREFERENCES_WIDGET + '/' + VISIBLE, false).toBool());
         pythonInterpreterWidget.setVisible(settings.value(PYTHON_TERMINAL_WIDGET + '/' + VISIBLE, false).toBool());
@@ -70,7 +73,7 @@ struct WidgetContainer {
     }
 
     void hideAll() {
-        for (QWidget * widget : QVector<QWidget*>{&aboutDialog, &annotationWidget, &layerDialogWidget, &preferencesWidget, &pythonPropertyWidget, &pythonInterpreterWidget, &snapshotWidget, &taskManagementWidget, &zoomWidget}) {
+        for (QWidget * widget : QVector<QWidget*>{&aboutDialog, &annotationWidget, &datasetBrowser, &layerDialogWidget, &preferencesWidget, &pythonPropertyWidget, &pythonInterpreterWidget, &snapshotWidget, &taskManagementWidget, &zoomWidget}) {
             widget->hide();
         }
     }
