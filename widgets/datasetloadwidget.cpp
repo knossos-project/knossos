@@ -120,6 +120,8 @@ ButtonListView::ButtonListView(DatasetModel & datasetModel, SortFilterProxy & pr
     proxy.setSourceModel(&datasetModel);
     proxy.setFilterCaseSensitivity(Qt::CaseInsensitive);
     setModel(&proxy);
+    setSortingEnabled(true);
+    sortByColumn(sortIndex = -1, Qt::SortOrder::AscendingOrder);
     fileDialogButton.setParent(this);
     deleteButton.setParent(this);
     fileDialogButton.hide();
