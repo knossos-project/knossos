@@ -4,8 +4,8 @@ set -euxo pipefail
 mkdir -p deploy-tools
 cd deploy-tools
 
-curl -C - -o linuxdeployqt -L https://github.com/probonopd/linuxdeployqt/releases/download/5/linuxdeployqt-5-x86_64.AppImage
-curl -C - -o appimagetool -L https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+curl --fail -C - -o linuxdeployqt -L https://github.com/probonopd/linuxdeployqt/releases/download/5/linuxdeployqt-5-x86_64.AppImage
+curl --fail -C - -o appimagetool -L https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
 chmod +x linuxdeployqt appimagetool
 cd ..
 
