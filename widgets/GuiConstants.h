@@ -57,7 +57,6 @@ const QString SAVING_INTERVAL = "saving_interval";
 
 // DataSet Switch
 const QString DATASET_CUBE_EDGE = "cube_edge";
-const QString DATASET_GEOMETRY = "dataset_geometry";
 const QString DATASET_LAST_USED = "dataset_last_used";
 const QString DATASET_MRU = "dataset_mru";
 const QString DATASET_OVERLAY = "overlay";
