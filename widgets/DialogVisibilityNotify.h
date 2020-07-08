@@ -45,4 +45,13 @@ protected:
         QDialog::hideEvent(event);
         emit visibilityChanged(false);
     }
+public:
+    virtual void loadSettings() {
+        QSettings settings;
+        settings.beginGroup(settingsPrefix);
+        restoreGeometry(settings.value(GEOMETRY).toByteArray());
+    }
+    virtual void saveSettings() {
+        QSettings{}.setValue(settingsPrefix + '/' + VISIBLE, isVisible());
+    }
 };
