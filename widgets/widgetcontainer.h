@@ -70,15 +70,8 @@ struct WidgetContainer {
     }
 
     void hideAll() {
-        aboutDialog.hide();
-        annotationWidget.hide();
-        datasetLoadWidget.hide();
-        layerDialogWidget.hide();
-        preferencesWidget.hide();
-        pythonPropertyWidget.hide();
-        pythonInterpreterWidget.hide();
-        snapshotWidget.hide();
-        taskManagementWidget.hide();
-        zoomWidget.hide();
+        for (QWidget * widget : QVector<QWidget*>{&aboutDialog, &annotationWidget, &layerDialogWidget, &preferencesWidget, &pythonPropertyWidget, &pythonInterpreterWidget, &snapshotWidget, &taskManagementWidget, &zoomWidget}) {
+            widget->hide();
+        }
     }
 };
