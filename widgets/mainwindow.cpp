@@ -330,8 +330,8 @@ void MainWindow::createToolbars() {
     basicToolbar.setFloatable(false);
     basicToolbar.setIconSize(QSize(24, 24));
 
-    basicToolbar.addAction(QIcon(":/resources/icons/open-annotation.png"), "Open Annotation", this, SLOT(openSlot()));
-    basicToolbar.addAction(QIcon(":/resources/icons/save-annotation.png"), "Save Annotation", this, SLOT(saveSlot()));
+    basicToolbar.addAction(QIcon(":/resources/icons/open-annotation.png"), "Open Annotation", this, &MainWindow::openSlot);
+    basicToolbar.addAction(QIcon(":/resources/icons/save-annotation.png"), "Save Annotation", this, &MainWindow::saveSlot);
     basicToolbar.addSeparator();
     workModeModel.recreate(workModes);
     modeCombo.setModel(&workModeModel);
@@ -573,7 +573,7 @@ void MainWindow::updateRecentFile(const QString & fileName) {
 
 void MainWindow::createMenus() {
     menuBar()->addMenu(&fileMenu);
-    fileMenu.addAction(QIcon(":/resources/icons/menubar/choose-dataset.png"), tr("Choose Dataset …"), &widgetContainer.datasetLoadWidget, SLOT(show()));
+    fileMenu.addAction(QIcon(":/resources/icons/menubar/choose-dataset.png"), tr("Choose Dataset …"), &widgetContainer.datasetLoadWidget, &DatasetLoadWidget::show);
     fileMenu.addSeparator();
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/menubar/create-annotation.png"), tr("Create New Annotation"), this, &MainWindow::newAnnotationSlot, QKeySequence::New);
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/menubar/open-annotation.png"), tr("Open Annotation …"), this, &MainWindow::openSlot, QKeySequence::Open);
@@ -590,7 +590,7 @@ void MainWindow::createMenus() {
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/menubar/save-annotation.png"), tr("Save Annotation"), this, &MainWindow::saveSlot, QKeySequence::Save);
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/menubar/save-annotation-as.png"), tr("Save Annotation as …"), this, &MainWindow::saveAsSlotWrap, QKeySequence::SaveAs);
     fileMenu.addSeparator();
-    fileMenu.addAction(tr("Export to nml..."), this, SLOT(exportToNml()));
+    fileMenu.addAction(tr("Export to nml..."), this, &MainWindow::exportToNml);
     fileMenu.addSeparator();
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/menubar/quit.png"), tr("Quit"), this, &MainWindow::close, QKeySequence::Quit);
 
@@ -644,7 +644,7 @@ void MainWindow::createMenus() {
         }
     }, Qt::Key_L);
     actionMenu.addSeparator();
-    clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/menubar/trash.png"), "Clear Skeleton", this, SLOT(clearSkeletonSlot()));
+    clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/menubar/trash.png"), "Clear Skeleton", this, &MainWindow::clearSkeletonSlot);
     actionMenu.addSeparator();
     //segmentation
     newObjectAction = &addApplicationShortcut(actionMenu, QIcon(), tr("New segmentation object"), this, []() {
@@ -661,7 +661,7 @@ void MainWindow::createMenus() {
         []() { Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() - 0.5 * Dataset::current().scales[0].x); }, Qt::SHIFT + Qt::Key_Minus);
 
     actionMenu.addSeparator();
-    clearMergelistAction = actionMenu.addAction(QIcon(":/resources/icons/menubar/trash.png"), "Clear Merge List", &Segmentation::singleton(), SLOT(clear()));
+    clearMergelistAction = actionMenu.addAction(QIcon(":/resources/icons/menubar/trash.png"), "Clear Merge List", &Segmentation::singleton(), &Segmentation::clear);
     //proof reading mode
     modeSwitchSeparator = actionMenu.addSeparator();
     setMergeModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch to Segmentation Merge Mode"), this, [this]() { setWorkMode(AnnotationMode::Mode_Merge); }, Qt::Key_1);
@@ -733,18 +733,18 @@ void MainWindow::createMenus() {
     });
 
     auto preferenceMenu = menuBar()->addMenu("&Preferences");
-    preferenceMenu->addAction(tr("Load Custom Preferences"), this, SLOT(loadCustomPreferencesSlot()));
-    preferenceMenu->addAction(tr("Save Custom Preferences"), this, SLOT(saveCustomPreferencesSlot()));
-    preferenceMenu->addAction(tr("Reset to Default Preferences"), this, SLOT(defaultPreferencesSlot()));
+    preferenceMenu->addAction(tr("Load Custom Preferences"), this, &MainWindow::loadCustomPreferencesSlot);
+    preferenceMenu->addAction(tr("Save Custom Preferences"), this, &MainWindow::saveCustomPreferencesSlot);
+    preferenceMenu->addAction(tr("Reset to Default Preferences"), this, &MainWindow::defaultPreferencesSlot);
     preferenceMenu->addSeparator();
-    preferenceMenu->addAction(QIcon(":/resources/icons/menubar/preferences.png"), "Preferences", &widgetContainer.preferencesWidget, SLOT(show()));
+    preferenceMenu->addAction(QIcon(":/resources/icons/menubar/preferences.png"), "Preferences", &widgetContainer.preferencesWidget, &PreferencesWidget::show);
 
     auto windowMenu = menuBar()->addMenu("&Windows");
-    windowMenu->addAction(QIcon(":/resources/icons/menubar/tasks-management.png"), tr("Task Management"), &widgetContainer.taskManagementWidget, SLOT(updateAndRefreshWidget()));
-    windowMenu->addAction(QIcon(":/resources/icons/layers.png"), tr("Layers"), &widgetContainer.layerDialogWidget, SLOT(show()));
-    windowMenu->addAction(QIcon(":/resources/icons/menubar/annotation.png"), tr("Annotation"), &widgetContainer.annotationWidget, SLOT(show()));
-    windowMenu->addAction(QIcon(":/resources/icons/menubar/zoom.png"), tr("Zoom"), &widgetContainer.zoomWidget, SLOT(show()));
-    windowMenu->addAction(QIcon(":/resources/icons/menubar/snapshot.png"), tr("Take a Snapshot"), &widgetContainer.snapshotWidget, SLOT(show()));
+    windowMenu->addAction(QIcon(":/resources/icons/menubar/tasks-management.png"), tr("Task Management"), &widgetContainer.taskManagementWidget, &TaskManagementWidget::updateAndRefreshWidget);
+    windowMenu->addAction(QIcon(":/resources/icons/layers.png"), tr("Layers"), &widgetContainer.layerDialogWidget, &LayerDialogWidget::show);
+    windowMenu->addAction(QIcon(":/resources/icons/menubar/annotation.png"), tr("Annotation"), &widgetContainer.annotationWidget, &AnnotationWidget::show);
+    windowMenu->addAction(QIcon(":/resources/icons/menubar/zoom.png"), tr("Zoom"), &widgetContainer.zoomWidget, &ZoomWidget::show);
+    windowMenu->addAction(QIcon(":/resources/icons/menubar/snapshot.png"), tr("Take a Snapshot"), &widgetContainer.snapshotWidget, &SnapshotWidget::show);
 
     scriptingMenu = menuBar()->addMenu("&Scripting");
 
@@ -1469,10 +1469,10 @@ void MainWindow::pythonFileSlot() {
 
 void MainWindow::refreshScriptingMenu() {
     scriptingMenu->clear();
-    scriptingMenu->addAction("Properties", this, SLOT(pythonPropertiesSlot()));
-    scriptingMenu->addAction("Run File", this, SLOT(pythonFileSlot()));
-    scriptingMenu->addAction("Plugin Manager", this, SLOT(pythonPluginMgrSlot()));
-    scriptingMenu->addAction(QIcon(":/resources/icons/menubar/python.png"), "Interpreter", this, SLOT(pythonInterpreterSlot()));
+    scriptingMenu->addAction("Properties", this, &MainWindow::pythonPropertiesSlot);
+    scriptingMenu->addAction("Run File", this, &MainWindow::pythonFileSlot);
+    scriptingMenu->addAction("Plugin Manager", this, &MainWindow::pythonPluginMgrSlot);
+    scriptingMenu->addAction(QIcon(":/resources/icons/menubar/python.png"), "Interpreter", this, &MainWindow::pythonInterpreterSlot);
 
     QObject::connect(scriptingMenu->addAction("Open Plugins Directory"),
                      &QAction::triggered,
