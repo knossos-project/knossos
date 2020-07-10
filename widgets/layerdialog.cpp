@@ -157,7 +157,27 @@ Qt::ItemFlags LayerItemModel::flags(const QModelIndex &index) const {
     return {};
 }
 
+class CombineSlicesEventFilter : public QObject {
+    virtual bool eventFilter(QObject *object, QEvent *event) override {
+        int type = event->type();
+        if (type == QEvent::KeyPress || type == QEvent::KeyRelease) {
+            auto & keyEvent = static_cast<QKeyEvent &>(*event);
+            if (keyEvent.key() == Qt::Key_M && !keyEvent.isAutoRepeat()) {
+                for (int i{0}; i < 3; ++i) {
+                    state->viewerState->layerRenderSettings[i].combineSlicesEnabled = type == QEvent::KeyPress;
+                    state->viewer->layerRenderSettingsChanged();
+                    state->viewer->reslice_notify(i);
+                }
+            }
+        }
+        return QObject::eventFilter(object, event);
+    }
+public:
+    CombineSlicesEventFilter(QObject & parent) : QObject(&parent) {}
+};
+
 LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(PREFERENCES_WIDGET, parent), colorDialog(this) {
+    qApp->installEventFilter(new CombineSlicesEventFilter{*this});
     setWindowTitle("Layers");
 
     int row = 0, col;
@@ -339,12 +359,6 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
             });
         }
     });
-
-    createGlobalAction(state->mainWindow, Qt::CTRL + Qt::Key_M, [this](){// R for radius
-        combineSlicesCheck.toggle();
-        combineSlicesCheck.clicked(combineSlicesCheck.isChecked());
-    });
-
 
     QObject::connect(&treeView, &QTreeView::doubleClicked, [this](const QModelIndex & index) {
         if (index.column() == 8) {
