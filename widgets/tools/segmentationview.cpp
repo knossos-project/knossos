@@ -503,7 +503,9 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// restoreColorAction
         contextMenu.actions().at(deleteActionIndex = i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// deleteAction
         ++i;// separator
-        contextMenu.actions().at(i++)->setEnabled(true);// create new object
+        if (contextMenu.actions().size() >= i) {
+            contextMenu.actions().at(i++)->setEnabled(true);// create new object
+        }
         contextMenu.exec(table.viewport()->mapToGlobal(pos));
         // make some actions always available when ctx menu isn’t shown
         contextMenu.actions().at(copyActionIndex)->setEnabled(true);
