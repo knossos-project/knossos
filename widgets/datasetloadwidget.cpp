@@ -63,7 +63,7 @@ bool DatasetModel::setData(const QModelIndex & index, const QVariant & value, in
         datasets[index.row()] = value.toString();
         if (index.row() == rowCount() - 1) {
             beginInsertRows({}, datasets.size(), datasets.size());
-            datasets.emplace_back("");
+            datasets.push_back("");
             endInsertRows();
         }
         emit dataChanged(index, index, {role});
@@ -83,12 +83,12 @@ int DatasetModel::rowCount(const QModelIndex &) const {
 void DatasetModel::add(const QString & datasetPath) {
     if (datasets.empty()) {
         beginInsertRows({}, datasets.size(), datasets.size() + 1);
-        datasets.emplace_back(datasetPath);
+        datasets.push_back(datasetPath);
     } else {
         beginInsertRows({}, datasets.size(), datasets.size());
         datasets.back() = datasetPath;
     }
-    datasets.emplace_back("");
+    datasets.push_back("");
     endInsertRows();
 }
 
@@ -342,17 +342,6 @@ void DatasetLoadWidget::updateDatasetInfo(const QUrl & url, const QString & info
     infoLabel.setText("");
 }
 
-QStringList DatasetLoadWidget::getRecentPathItems() {
-    QStringList recentPaths;
-    for(int row = 0; row < datasetModel.rowCount() - 1; ++row) {
-        if(const QString text = datasetModel.index(row, 0).data().toString(); !text.isEmpty()) {
-            recentPaths.append(text);
-        }
-    }
-
-    return recentPaths;
-}
-
 void DatasetLoadWidget::adaptMemoryConsumption() {
     const auto fov = fovSpin.value();
     auto mebibytes = std::pow(fov + cubeEdgeSpin.value(), 3) / std::pow(1024, 2);
@@ -568,7 +557,7 @@ void DatasetLoadWidget::saveSettings() {
 
     settings.setValue(DATASET_LAST_USED, datasetUrl);
 
-    settings.setValue(DATASET_MRU, getRecentPathItems());
+    settings.setValue(DATASET_MRU, datasetModel.datasets.filter(QRegularExpression(".+")));
 
     settings.setValue(DATASET_CUBE_EDGE, Dataset::current().cubeEdgeLength);
     settings.setValue(DATASET_SUPERCUBE_EDGE, state->M);

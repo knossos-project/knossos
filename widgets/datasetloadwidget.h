@@ -49,7 +49,7 @@
 class DatasetModel : public QAbstractListModel {
 Q_OBJECT
 public:
-    std::vector<QString> datasets;
+    QStringList datasets;
     virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
     virtual bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
     virtual QVariant headerData(int, Qt::Orientation, int) const override { return QVariant(); };
@@ -173,7 +173,6 @@ class DatasetLoadWidget : public DialogVisibilityNotify {
 
     void applyGeometrySettings();
     void datasetCellChanged(const QModelIndex &topLeft, const QModelIndex &, const QVector<int> &);
-    QStringList getRecentPathItems();
     Dataset::list_t infos;
     void updateDatasetInfo(const QUrl &url, const QString &info);
 protected:
