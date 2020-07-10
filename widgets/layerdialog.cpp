@@ -390,15 +390,19 @@ void LayerDialogWidget::updateLayerProperties() {
         const auto ordered_index = itemModel.ordered_i(currentIndex.row());
         auto & layerSettings = state->viewerState->layerRenderSettings[ordered_index];
         opacitySlider.setValue(static_cast<int>(layerSettings.opacity * opacitySlider.maximum()));
-        rangeDeltaSlider.setValue(static_cast<int>(layerSettings.rangeDelta * rangeDeltaSlider.maximum()));
         biasSlider.setValue(static_cast<int>(layerSettings.bias * biasSlider.maximum()));
+        rangeDeltaSlider.setValue(static_cast<int>(layerSettings.rangeDelta * rangeDeltaSlider.maximum()));
+        linearFilteringCheckBox.setChecked(layerSettings.textureFilter == QOpenGLTexture::Linear);
+
         combineSlicesCheck.setChecked(layerSettings.combineSlicesEnabled);
+
         combineSlicesType.setEnabled(layerSettings.combineSlicesEnabled);
         combineSlicesSpin.setEnabled(layerSettings.combineSlicesEnabled);
         combineSlicesXyOnlyCheck.setEnabled(layerSettings.combineSlicesEnabled);
+
+        combineSlicesType.setCurrentIndex(layerSettings.combineSlicesType);
         combineSlicesSpin.setRange(0, Dataset::datasets[ordered_index].cubeEdgeLength * 0.5 * (state->M - 1));
         combineSlicesSpin.setValue(layerSettings.combineSlices);
         combineSlicesXyOnlyCheck.setChecked(layerSettings.combineSlicesXyOnly);
-        linearFilteringCheckBox.setChecked(layerSettings.textureFilter == QOpenGLTexture::Linear);
     }
 }
