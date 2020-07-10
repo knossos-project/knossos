@@ -100,8 +100,9 @@ protected:
         emit mouseLeft();
     }
 public:
+    QString filterString;
     explicit ButtonListView(DatasetModel & datasetModel, SortFilterProxy &proxy, QWidget * parent = 0);
-    void addDatasetUrls(const QList<QUrl> & urls);
+    void addDatasetUrls(QDropEvent * e);
 signals:
     void mouseLeft();
 };

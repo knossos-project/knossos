@@ -152,10 +152,20 @@ ButtonListView::ButtonListView(DatasetModel & datasetModel, SortFilterProxy & pr
     });
 }
 
-void ButtonListView::addDatasetUrls(const QList<QUrl> & urls) {
-    for (auto && url : urls) {
-        datasetModel->add(url.url());
+void ButtonListView::addDatasetUrls(QDropEvent * e) {
+    auto index = indexAt(e->pos());
+    if (e->mimeData()->urls().size() == 1 && index.isValid()) {
+        const auto droppedDataset = e->mimeData()->urls().first();
+        model()->setData(index, droppedDataset);
+    } else if(e->mimeData()->urls().size() > 0) {
+        for (auto && url : e->mimeData()->urls()) {
+            datasetModel->add(url.url());
+        }
     }
+    proxy->setFilterFixedString(filterString); // force update filter
+    auto lastIndex = proxy->mapFromSource(datasetModel->index(datasetModel->rowCount() - 2, 0));
+    selectionModel()->select(lastIndex, QItemSelectionModel::ClearAndSelect);
+    scrollTo(lastIndex);
 }
 
 void ButtonListView::dragEnterEvent(QDragEnterEvent * e) {
@@ -167,15 +177,9 @@ void ButtonListView::dragEnterEvent(QDragEnterEvent * e) {
 void ButtonListView::dragMoveEvent(QDragMoveEvent * e) {
     e->accept();
 }
+
 void ButtonListView::dropEvent(QDropEvent * e) {
-    auto index = indexAt(e->pos());
-    if (e->mimeData()->urls().size() == 1 && index.isValid()) {
-        const auto droppedDataset = e->mimeData()->urls().first();
-        model()->setData(index, droppedDataset);
-        selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
-    } else if(e->mimeData()->urls().size() > 0) {
-        addDatasetUrls(e->mimeData()->urls());
-    }
+    addDatasetUrls(e);
 }
 
 void ButtonDelegate::paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const {
@@ -242,6 +246,7 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
 
     setLayout(&mainLayout);
     QObject::connect(&searchField, &QLineEdit::textChanged, [this](const QString & text) {
+        tableWidget.filterString = text;
         sortAndFilterProxy.setFilterFixedString(text);
     });
     QObject::connect(&datasetModel, &DatasetModel::dataChanged, this, &DatasetLoadWidget::datasetCellChanged);
@@ -285,7 +290,7 @@ void DatasetLoadWidget::dragEnterEvent(QDragEnterEvent * e) {
 }
 
 void DatasetLoadWidget::dropEvent(QDropEvent * e) {
-    tableWidget.addDatasetUrls(e->mimeData()->urls());
+    tableWidget.addDatasetUrls(e);
 }
 
 void DatasetLoadWidget::datasetCellChanged(const QModelIndex & topLeft, const QModelIndex &, const QVector <int> &) {
