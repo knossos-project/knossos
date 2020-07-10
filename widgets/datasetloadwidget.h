@@ -87,7 +87,6 @@ friend class ButtonDelegate;
     Q_OBJECT
     DatasetModel * datasetModel;
     SortFilterProxy * proxy;
-    QPersistentModelIndex currentEditedCellIndex;
     QPushButton fileDialogButton{"…"};
     QPushButton deleteButton{"×"};
     ButtonHeaderView listHeader{Qt::Horizontal};

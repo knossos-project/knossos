@@ -126,9 +126,7 @@ ButtonListView::ButtonListView(DatasetModel & datasetModel, SortFilterProxy & pr
     deleteButton.setParent(this);
     fileDialogButton.hide();
     deleteButton.hide();
-    QObject::connect(this, &QTreeView::entered, [this](const QModelIndex & index) {
-        currentEditedCellIndex = index;
-    });
+
     QObject::connect(this, &ButtonListView::mouseLeft, [this]() {
         fileDialogButton.hide();
         deleteButton.hide();
@@ -137,16 +135,18 @@ ButtonListView::ButtonListView(DatasetModel & datasetModel, SortFilterProxy & pr
     QObject::connect(&listHeader, &ButtonHeaderView::sortIndicatorChanged, threeWaySorting(*this, sortIndex));
 
     QObject::connect(&fileDialogButton, &QPushButton::clicked, [this]() {
+        auto indexToEdit = indexAt(fileDialogButton.pos() - QPoint(0, header()->height()));
         const auto selectedFile = ::state->viewer->suspend([this] {
             return QFileDialog::getOpenFileUrl(this, "Select a KNOSSOS dataset", QDir::homePath(), "*.conf").toString();
         });
         if (!selectedFile.isEmpty()) {
-            model()->setData(currentEditedCellIndex, selectedFile);
+            model()->setData(indexToEdit, selectedFile);
         }
-        selectionModel()->select(currentEditedCellIndex, QItemSelectionModel::ClearAndSelect);
+        selectionModel()->select(indexToEdit, QItemSelectionModel::ClearAndSelect);
     });
     QObject::connect(&deleteButton, &QPushButton::clicked, [this]() {
-        model()->removeRows(currentEditedCellIndex.row(), 1);
+        auto indexToDel = indexAt(deleteButton.pos() - QPoint(0, header()->height()));
+        model()->removeRows(indexToDel.row(), 1);
     });
 }
 
