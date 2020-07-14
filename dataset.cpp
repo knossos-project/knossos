@@ -102,7 +102,7 @@ bool Dataset::isWebKnossos(const QUrl & url) {
     return url.host().contains("webknossos");
 }
 
-Dataset::list_t Dataset::parse(const QUrl & url, const QString & data) {
+Dataset::list_t Dataset::parse(const QUrl & url, const QString & data, bool add_snappy) {
     Dataset::list_t infos;
     if (Dataset::isWebKnossos(url)) {
         infos = Dataset::parseWebKnossosJson(url, data);
@@ -117,6 +117,22 @@ Dataset::list_t Dataset::parse(const QUrl & url, const QString & data) {
     }
     if (infos.empty()) {
         throw std::runtime_error("Missing [Dataset] header in config.");
+    }
+    if (add_snappy) {
+        bool overlayPresent{false};
+        for (std::size_t i = 0; i < infos.size(); ++i) {// determine segmentation layer
+            if (infos[i].isOverlay()) {
+                overlayPresent = true;
+                infos[i].allocationEnabled = infos[i].loadingEnabled = add_snappy;
+                break;// only enable the first overlay layer by default
+            }
+        }
+        if (!overlayPresent) {// add empty overlay channel
+            const auto i = infos.size();
+            infos.emplace_back(Dataset{infos.front()});// explicitly copy, because the reference will get invalidated
+            infos[i].allocationEnabled = infos[i].loadingEnabled = add_snappy;
+            infos.back().type = Dataset::CubeType::SNAPPY;
+        }
     }
     return infos;
 }

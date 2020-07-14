@@ -181,7 +181,7 @@ void DatasetLoadWidget::datasetCellChanged(int row, int col) {
 }
 
 void DatasetLoadWidget::updateDatasetInfo(const QUrl & url, const QString & info) try {
-    const auto datasetinfo = Dataset::parse(url, info).front();
+    const auto datasetinfo = Dataset::parse(url, info, segmentationOverlayCheckbox.isChecked()).front();
     //make sure supercubeedge is small again
     auto supercubeedge = (fovSpin.value() + cubeEdgeSpin.value()) / datasetinfo.cubeEdgeLength;
     supercubeedge = std::max(3, supercubeedge - !(supercubeedge % 2));
@@ -335,9 +335,9 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         }
     }
 
-    auto layers = [&path, &data, &silent]() {
+    auto layers = [this, &path, &data, &loadOverlay, &silent]() {
         try {
-            return Dataset::parse(path, data);
+            return Dataset::parse(path, data, loadOverlay.get_value_or(segmentationOverlayCheckbox.isChecked()));
         } catch(std::exception & e) {
             if (!silent) {
                 QMessageBox warning{QApplication::activeWindow()};
@@ -403,21 +403,11 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         segmentationOverlayCheckbox.setChecked(loadOverlay.get());
     }
     Segmentation::singleton().enabled = segmentationOverlayCheckbox.isChecked();
-    bool overlayPresent{false};
     for (std::size_t i = 0; i < layers.size(); ++i) {// determine segmentation layer
         if (layers[i].isOverlay()) {
-            overlayPresent = true;
-            layers[i].allocationEnabled = layers[i].loadingEnabled = Segmentation::singleton().enabled;
             Segmentation::singleton().layerId = i;
             break;// only enable the first overlay layer by default
         }
-    }
-    if (!overlayPresent) {// add empty overlay channel
-        const auto i = layers.size();
-        layers.emplace_back(Dataset{layers.front()});// explicitly copy, because the reference will get invalidated
-        layers[i].allocationEnabled = layers[i].loadingEnabled = Segmentation::singleton().enabled;
-        Segmentation::singleton().layerId = i;
-        layers.back().type = Dataset::CubeType::SNAPPY;
     }
     Dataset::datasets = layers;
 
