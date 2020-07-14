@@ -23,6 +23,7 @@
 #pragma once
 
 #include "coordinate.h"
+#include "dataset.h"
 #include "widgets/DialogVisibilityNotify.h"
 #include "widgets/UserOrientableSplitter.h"
 #include "widgets/viewports/viewportbase.h"
@@ -96,6 +97,7 @@ class DatasetLoadWidget : public DialogVisibilityNotify {
     void datasetCellChanged(int row, int col);
     QStringList getRecentPathItems();
     void insertDatasetRow(const QString & dataset, const int pos);
+    Dataset::list_t infos;
     void updateDatasetInfo(const QUrl &url, const QString &info);
 public:
     QUrl datasetUrl;//meh

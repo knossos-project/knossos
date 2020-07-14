@@ -1222,7 +1222,9 @@ void Viewer::resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge, co
         newTexEdgeLength *= 2;
     }
     if (newTexEdgeLength != state->viewerState->texEdgeLength || layerCount != viewerState.layerRenderSettings.size()) {
-        qDebug() << QString("cubeEdge = %1, sCubeEdge = %2, newTex = %3 (%4)").arg(cubeEdge).arg(superCubeEdge).arg(newTexEdgeLength).arg(state->viewerState->texEdgeLength).toStdString().c_str();
+        qDebug() << QString("cubeEdge = %1, sCubeEdge = %2, newTex = %3 (%4), size = %5 MiB")
+                    .arg(cubeEdge).arg(superCubeEdge).arg(newTexEdgeLength).arg(state->viewerState->texEdgeLength)
+                    .arg(layerCount * newTexEdgeLength * newTexEdgeLength * 4 * 2 * 3 / 1024. / 1024.).toStdString().c_str();
         viewerState.texEdgeLength = newTexEdgeLength;
         if (layerCount != viewerState.layerRenderSettings.size()) {
             viewerState.layerRenderSettings = decltype(viewerState.layerRenderSettings)(layerCount);

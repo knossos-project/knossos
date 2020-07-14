@@ -181,7 +181,8 @@ void DatasetLoadWidget::datasetCellChanged(int row, int col) {
 }
 
 void DatasetLoadWidget::updateDatasetInfo(const QUrl & url, const QString & info) try {
-    const auto datasetinfo = Dataset::parse(url, info, segmentationOverlayCheckbox.isChecked()).front();
+    infos = Dataset::parse(url, info, segmentationOverlayCheckbox.isChecked());
+    const auto datasetinfo = infos.front();
     //make sure supercubeedge is small again
     auto supercubeedge = (fovSpin.value() + cubeEdgeSpin.value()) / datasetinfo.cubeEdgeLength;
     supercubeedge = std::max(3, supercubeedge - !(supercubeedge % 2));
@@ -237,7 +238,8 @@ void DatasetLoadWidget::adaptMemoryConsumption() {
     const auto fov = fovSpin.value();
     auto mebibytes = std::pow(fov + cubeEdgeSpin.value(), 3) / std::pow(1024, 2);
     mebibytes += segmentationOverlayCheckbox.isChecked() * OBJID_BYTES * mebibytes;
-    auto text = QString("FOV per dimension (%1 MiB RAM)").arg(mebibytes);
+    mebibytes += infos.size() * std::pow(std::pow(2, std::ceil(std::log2(fov + cubeEdgeSpin.value()))), 2) * 4 * 2 * 3 / std::pow(2, 20);
+    auto text = QString("FOV per dimension (%1 MiB memory)").arg(mebibytes);
     superCubeSizeLabel.setText(text);
 }
 
