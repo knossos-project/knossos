@@ -336,7 +336,7 @@ void DatasetLoadWidget::updateDatasetInfo(const QUrl & url, const QString & info
         .arg(datasetinfo.description);
 
     infoLabel.setText(infotext);
-
+    infoLabel.setMaximumHeight(infoLabel.sizeHint().height());
     if (datasetSettingsLayout.indexOf(&cubeEdgeSpin) != -1) {
         datasetSettingsLayout.takeRow(&cubeEdgeSpin);
     }
