@@ -324,8 +324,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     };
 
     treeFilterCombo.addItems({tr("Hide synapses"), tr("Show synapses"), tr("Show only synapses")});
-    treeFilterCombo.setMinimumWidth(170);
-    treeFilterCombo.setMaximumWidth(treeFilterCombo.minimumWidth());
+    treeFilterCombo.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
     treeCommentFilter.setPlaceholderText("Tree comment");
     treeSortAndCommentFilterProxy.setFilterCaseSensitivity(Qt::CaseInsensitive);
