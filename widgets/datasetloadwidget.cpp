@@ -359,14 +359,14 @@ void DatasetLoadWidget::adaptMemoryConsumption() {
 }
 
 void DatasetLoadWidget::processButtonClicked() {
-    const auto dataset = tableWidget.currentIndex().data().toString();
-    if (dataset.isEmpty()) {
+    const auto selection = tableWidget.selectionModel()->selectedIndexes();
+    if (selection.isEmpty()) {
         QMessageBox box{QApplication::activeWindow()};
         box.setIcon(QMessageBox::Information);
         box.setText(tr("Unable to load"));
         box.setInformativeText(tr("No path selected"));
         box.exec();
-    } else if (loadDataset(boost::none, dataset)) {
+    } else if (loadDataset(boost::none, selection[0].data().toString())) {
         hide(); //hide datasetloadwidget only if we could successfully load a dataset
     }
 }
