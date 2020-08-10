@@ -61,7 +61,7 @@ QVariant DatasetModel::data(const QModelIndex & index, int role) const {
 bool DatasetModel::setData(const QModelIndex & index, const QVariant & value, int role) {
     if (index.isValid()) {
         datasets[index.row()] = value.toString();
-        if (index.row() == rowCount() - 1) {
+        if (index.row() == rowCount() - 1 && !index.data().toString().isEmpty()) {
             beginInsertRows({}, datasets.size(), datasets.size());
             datasets.push_back("");
             endInsertRows();
