@@ -183,8 +183,8 @@ public:
 
     explicit DatasetLoadWidget(QWidget *parent = 0);
     bool loadDataset(const boost::optional<bool> loadOverlay = boost::none, QUrl path = {}, const bool silent = false);
-    void saveSettings();
-    void loadSettings();
+    void saveSettings() override;
+    void loadSettings() override;
 
 signals:
     void updateDatasetCompression();
