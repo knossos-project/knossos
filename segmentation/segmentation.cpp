@@ -182,6 +182,7 @@ void Segmentation::removeObject(Object & object) {
 
 void Segmentation::changeCategory(Object & obj, const QString & category) {
     obj.category = category;
+    obj.category = obj.category.replace('\n', ' ');// mergelist doesn’t support line breaks
     emit changedRow(obj.index);
     categories.insert(category);
     emit categoriesChanged();
@@ -194,6 +195,7 @@ void Segmentation::changeColor(Object &obj, const std::tuple<uint8_t, uint8_t, u
 
 void Segmentation::changeComment(Object & obj, const QString & comment) {
     obj.comment = comment;
+    obj.comment = obj.comment.replace('\n', ' ');// mergelist doesn’t support line breaks
     emit changedRow(obj.index);
 }
 
@@ -743,10 +745,9 @@ void Segmentation::jumpToSelectedObject() {
 }
 
 bool Segmentation::placeCommentForSelectedObject(const QString & comment) {
-    if(selectedObjectIndices.size() == 1) {
+    if (selectedObjectIndices.size() == 1) {
         int index = selectedObjectIndices.front();
-        objects[index].comment = comment;
-        emit changedRow(index);
+        changeComment(objects[index], comment);
         return true;
     }
     return false;
