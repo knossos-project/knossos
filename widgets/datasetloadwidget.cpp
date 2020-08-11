@@ -247,7 +247,14 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     setLayout(&mainLayout);
     QObject::connect(&searchField, &QLineEdit::textChanged, [this](const QString & text) {
         tableWidget.filterString = text;
+        const QPersistentModelIndex previouslySelected((tableWidget.selectionModel()->selectedIndexes().isEmpty())? QModelIndex() : tableWidget.selectionModel()->selectedIndexes()[0]);
         sortAndFilterProxy.setFilterFixedString(text);
+        auto currentlySelected = (tableWidget.selectionModel()->selectedIndexes().isEmpty())? QModelIndex() : tableWidget.selectionModel()->selectedIndexes()[0];
+        if (previouslySelected != currentlySelected) {
+            tableWidget.selectionModel()->select(currentlySelected, QItemSelectionModel::Deselect);
+        } else {
+            tableWidget.scrollTo(currentlySelected);
+        }
     });
     QObject::connect(&datasetModel, &DatasetModel::dataChanged, this, &DatasetLoadWidget::datasetCellChanged);
     QObject::connect(tableWidget.selectionModel(), &QItemSelectionModel::selectionChanged, [this]() {
