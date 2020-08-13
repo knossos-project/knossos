@@ -265,7 +265,8 @@ void annotationFileSave(const QString & filename, const bool onlySelectedTrees, 
         if (!onlySelectedTrees) {
             QElapsedTimer cubeTime;
             cubeTime.start();
-            const auto & cubes = Loader::Controller::singleton().getAllModifiedCubes();
+            const auto guard = Loader::Controller::singleton().getAllModifiedCubes();
+            const auto & cubes = guard.cubes;
             for (std::size_t i = 0; i < cubes.size(); ++i) {
                 const auto mag = Dataset::current().api == Dataset::API::PyKnossos ? i + 1 : std::pow(2, i);
                 const auto nameTemplate = QString("%1_mag%2x%3y%4z%5.seg.sz").arg(Dataset::current().experimentname).arg(QString::number(mag));

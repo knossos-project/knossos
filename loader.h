@@ -45,6 +45,7 @@
 #include <atomic>
 #include <list>
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -107,7 +108,8 @@ public://matsch
     std::vector<CacheQueue> OcModifiedCacheQueue;
     using SnappyCache = std::unordered_map<CoordOfCube, std::string>;
     std::vector<SnappyCache> snappyCache;
-    QMutex snappyMutex;
+    QMutex snappyCacheMutex;
+    QMutex snappyFlushConditionMutex;
     QWaitCondition snappyFlushCondition;
 
     void moveToThread(QThread * targetThread);//reimplement to move qnam
@@ -149,7 +151,19 @@ public:
         emit snappyCacheSupplySnappySignal(std::forward<Args>(args)...);
     }
     void markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification);
-    decltype(Loader::Worker::snappyCache) getAllModifiedCubes();
+
+    struct LockedSnappy {
+        std::unique_lock<QMutex> locker;
+        decltype(Loader::Worker::snappyCache) & cubes;
+        explicit LockedSnappy(QMutex & mutex, decltype(cubes) & cache) : locker(mutex), cubes(cache) {}
+    };
+    auto getAllModifiedCubes() {
+        QMutexLocker lock(&worker->snappyFlushConditionMutex);
+        //signal to run in loader thread
+        QTimer::singleShot(0, worker.get(), &Loader::Worker::flushIntoSnappyCache);
+        worker->snappyFlushCondition.wait(&worker->snappyFlushConditionMutex);
+        return LockedSnappy{worker->snappyCacheMutex, worker->snappyCache};;
+    }
 public slots:
     bool isFinished();
     bool hasSnappyCache();

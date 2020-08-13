@@ -76,7 +76,7 @@ Loader::Controller::Controller() {
     worker->moveToThread(&workerThread);
     QObject::connect(worker.get(), &Loader::Worker::progress, this, [this](bool, int count){emit progress(count);});
     QObject::connect(worker.get(), &Loader::Worker::progress, this, &Loader::Controller::refCountChange);
-    QObject::connect(this, &Loader::Controller::loadSignal, worker.get(), &Loader::Worker::downloadAndLoadCubes);
+    QObject::connect(this, &Loader::Controller::loadSignal, worker.get(), &Loader::Worker::downloadAndLoadCubes, Qt::QueuedConnection);// avoid deadlock via snappyCacheClear
     QObject::connect(this, &Loader::Controller::unloadCurrentMagnificationSignal, worker.get(), static_cast<void(Loader::Worker::*)()>(&Loader::Worker::unloadCurrentMagnification), Qt::BlockingQueuedConnection);
     QObject::connect(this, &Loader::Controller::markOcCubeAsModifiedSignal, worker.get(), &Loader::Worker::markOcCubeAsModified, Qt::BlockingQueuedConnection);
     QObject::connect(this, &Loader::Controller::snappyCacheSupplySnappySignal, worker.get(), &Loader::Worker::snappyCacheSupplySnappy, Qt::BlockingQueuedConnection);
@@ -104,33 +104,18 @@ void Loader::Controller::markOcCubeAsModified(const CoordOfCube &cubeCoord, cons
     state->viewer->reslice_notify_all(Segmentation::singleton().layerId, cubeCoord);
 }
 
-decltype(Loader::Worker::snappyCache) Loader::Controller::getAllModifiedCubes() {
-    QMutexLocker locker(&worker->snappyMutex);
-    //signal to run in loader thread
-    QTimer::singleShot(0, worker.get(), &Loader::Worker::flushIntoSnappyCache);
-    worker->snappyFlushCondition.wait(&worker->snappyMutex);
-    return worker->snappyCache;
-}
-
 bool Loader::Controller::isFinished() {
     return worker->isFinished.load();
 }
 
 bool Loader::Controller::hasSnappyCache() {
-    bool hasSnappyCacheVal;
-    const auto func = [](){
-        for (const auto & mag : Loader::Controller::singleton().worker->snappyCache) {
-            if (!mag.empty()) {
-                return true;
-            }
+    QMutexLocker lock{&worker->snappyCacheMutex};
+    for (const auto & mag : worker->snappyCache) {
+        if (!mag.empty()) {
+            return true;
         }
-        return false;
-    };
-    if (QMetaObject::invokeMethod(Loader::Controller::singleton().worker.get(), func, Qt::BlockingQueuedConnection, &hasSnappyCacheVal)) {
-        return hasSnappyCacheVal;
-    } else {
-        throw std::runtime_error("hasSnappyCache failed");
     }
+    return false;
 }
 
 void Loader::Worker::CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, const UserMoveType userMoveType, const floatCoordinate & direction, float *metrics) {
@@ -299,6 +284,7 @@ void Loader::Worker::markOcCubeAsModified(const CoordOfCube &cubeCoord, const in
 }
 
 void Loader::Worker::snappyCacheSupplySnappy(const CoordOfCube cubeCoord, const quint64 cubeMagnification, const std::string cube) {
+    QMutexLocker lock{&snappyCacheMutex};
     if (cubeMagnification >= snappyCache.size()) {
         qWarning() << QObject::tr("ignored snappy cube (%1, %2, %3) for higher than available log2(mag) = %4 ≥ %5)")
                       .arg(cubeCoord.x).arg(cubeCoord.y).arg(cubeCoord.z).arg(cubeMagnification).arg(snappyCache.size());
@@ -325,6 +311,7 @@ void Loader::Worker::snappyCacheSupplySnappy(const CoordOfCube cubeCoord, const 
 }
 
 void Loader::Worker::snappyCacheBackupRaw(const CoordOfCube & cubeCoord, const void * cube) {
+    QMutexLocker lock{&snappyCacheMutex};
     //insert empty string into snappy cache
     auto snappyIt = snappyCache[loaderMagnification].emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple()).first;
     //compress cube into the new string
@@ -332,6 +319,7 @@ void Loader::Worker::snappyCacheBackupRaw(const CoordOfCube & cubeCoord, const v
 }
 
 void Loader::Worker::snappyCacheClear() {
+    QMutexLocker lock{&snappyCacheMutex};
     if (snappyLayerId >= state->cube2Pointer.size()) {
         return;
     }
@@ -349,7 +337,7 @@ void Loader::Worker::snappyCacheClear() {
 }
 
 void Loader::Worker::flushIntoSnappyCache() {
-    QMutexLocker locker(&snappyMutex);
+    QMutexLocker locker(&snappyFlushConditionMutex);
     for (std::size_t mag = 0; mag < OcModifiedCacheQueue.size(); ++mag) {
         for (const auto & cubeCoord : OcModifiedCacheQueue[mag]) {
             state->protectCube2Pointer.lock();
@@ -540,6 +528,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         }
         if (layerId == snappyLayerId) {
             OcModifiedCacheQueue.resize(magCount);
+            QMutexLocker lock{&snappyCacheMutex};
             snappyCache.resize(magCount);
         }
         if (layerId < datasets.size()) {
@@ -589,6 +578,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             return;
         }
         if (dataset.isOverlay()) {
+            QMutexLocker lock{&snappyCacheMutex};
             auto snappyIt = snappyCache[loaderMagnification].find(cubeCoord);
             if (snappyIt != std::end(snappyCache[loaderMagnification])) {
                 if (!freeSlots.empty()) {
