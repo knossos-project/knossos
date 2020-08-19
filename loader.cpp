@@ -651,6 +651,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             auto request = dataset.apiSwitch(cubeCoord);
 //            request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
 //            request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
+//            request.setAttribute(QNetworkRequest::BackgroundRequestAttribute, true);
 
             QByteArray payload;
             if (cubeCoord == dataset.global2cube(center)) {
@@ -743,6 +744,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     const auto workaroundProcessLocalImmediately = [](auto dataset){
         if (dataset.url.scheme() == "file") {
             QCoreApplication::processEvents();
+            QCoreApplication::processEvents();// https://bugreports.qt.io/browse/QTBUG-86159
         }
     };
     for (auto [layerId, cubeCoord] : allCubes) {
