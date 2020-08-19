@@ -538,7 +538,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
         }
         Segmentation::singleton().brush.setInverse(true);// enable erase mode on shift down
     } else if(event->key() == Qt::Key_I || event->key() == Qt::Key_O) {
-        const float angle = ctrl ? -1: 1;
+        const float angle = shift ? -1: 1;
         switch(event->key()) {
         case Qt::Key_I:
             state->viewer->addRotation(QQuaternion::fromAxisAndAngle(state->viewer->viewportArb->n, angle));
