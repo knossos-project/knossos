@@ -1078,7 +1078,10 @@ void Viewer::reslice_notify_all(const std::size_t layerId, boost::optional<Coord
         if (!cubeCoord) {
             vpOrtho.resliceNecessary[layerId] = true;
         } else {
-            QTimer::singleShot(0, this, [layerId, cubeCoord, &vpOrtho](){
+            QTimer::singleShot(0, this, [this, layerId, cubeCoord, &vpOrtho](){// some form of thread safety
+                if (layerId >= window->viewportArb->resliceNecessary.size()) {
+                    return;// loader may notify for layers that don’t exist anymore
+                }
                 vpOrtho.resliceNecessaryCubes[layerId].emplace(*cubeCoord);
             });
         }
