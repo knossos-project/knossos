@@ -77,7 +77,7 @@ struct viewportTexture {
     //Texture coordinates
     float texLUx, texLUy, texLLx, texLLy, texRUx, texRUy, texRLx, texRLy;
     // Current zoom level. 1: no zoom; near 0: maximum zoom.
-    float FOV;
+    float FOV{1};
     float usedSizeInCubePixels;
 };
 

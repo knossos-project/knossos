@@ -540,9 +540,13 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
             break;// only enable the first overlay layer by default
         }
     }
+    int prevMag{0};
+    float prevFOV{1};
     for (std::size_t i = 0; i < std::min(layers.size(), Dataset::datasets.size()); ++i) {
         layers[i].allocationEnabled = Dataset::datasets[i].allocationEnabled;
         layers[i].loadingEnabled = Dataset::datasets[i].loadingEnabled;
+        prevMag = Dataset::datasets[i].magnification;
+        prevFOV = state->mainWindow->viewportXY->texture.FOV;
     }
     Dataset::datasets = layers;
 
@@ -570,7 +574,8 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     }
     state->viewer->applyTextureFilterSetting(state->viewerState->textureFilter);// set filter for all layers
     state->viewer->datasetColorAdjustmentsChanged();// set range delta and bias for all layers
-    state->viewer->updateDatasetMag();// clear vps and notify loader
+    state->viewer->updateDatasetMag(prevMag);// clear vps and notify loader
+    state->viewer->zoom(prevFOV);
 
     emit datasetChanged();
 
