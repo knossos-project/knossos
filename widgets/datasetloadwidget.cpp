@@ -564,7 +564,9 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     if (changedBoundaryOrScale || !keepAnnotation) {
         Annotation::singleton().updateMovementArea({0, 0, 0}, Dataset::current().boundary);
         // ...beginning with loading the middle of dataset
-        state->viewer->setPosition({Dataset::current().boundary / 2});
+        if (state->viewerState->currentPosition == Coordinate{}) {
+            state->viewer->setPosition({Dataset::current().boundary / 2});
+        }
     }
     state->viewer->applyTextureFilterSetting(state->viewerState->textureFilter);// set filter for all layers
     state->viewer->datasetColorAdjustmentsChanged();// set range delta and bias for all layers
