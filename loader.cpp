@@ -735,6 +735,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         if (dataset.url.scheme() == "file") {
             QCoreApplication::processEvents();
             QCoreApplication::processEvents();// https://bugreports.qt.io/browse/QTBUG-86159
+            QCoreApplication::processEvents();
         }
     };
     for (auto [layerId, cubeCoord] : allCubes) {
