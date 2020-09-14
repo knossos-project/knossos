@@ -588,7 +588,7 @@ void Scripting::addWidgets() {
     QWidgetList list = QApplication::allWidgets();
     foreach(QWidget *widget, list) {
         QString name = widget->metaObject()->className();
-        QByteArray array;
+        QString array;
 
         for(int i = 0; i < name.size(); i++) {
             if(name.at(i).isLower()) {
@@ -604,6 +604,6 @@ void Scripting::addWidgets() {
             }
         }
 
-        addObject("knossos_global_widget_" + QString(array), widget);
+        addObject("knossos_global_widget_" + array, widget);
     }
 }
