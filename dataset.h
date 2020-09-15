@@ -48,12 +48,14 @@ struct Dataset {
     static bool isHeidelbrain(const QUrl & url);
     static bool isNeuroDataStore(const QUrl & url);
     static bool isPyKnossos(const QUrl & url);
+    static bool isToml(const QUrl & url);
     static bool isWebKnossos(const QUrl & url);
 
     static list_t parse(const QUrl & url, const QString &data, bool add_snappy);
     static list_t parseGoogleJson(const QUrl & infoUrl, const QString & json_raw);
     static list_t parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw);
     static list_t parsePyKnossosConf(const QUrl & configUrl, QString config);
+    static list_t parseToml(const QUrl & configUrl, QString config);
     static list_t parseWebKnossosJson(const QUrl &infoUrl, const QString & json_raw);
     static list_t fromLegacyConf(const QUrl & url, QString config);
     void checkMagnifications();

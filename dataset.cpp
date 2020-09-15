@@ -40,6 +40,8 @@
 #include <boost/assign.hpp>
 #include <boost/bimap.hpp>
 
+#include <toml++/toml.h>
+
 Dataset::list_t Dataset::datasets;
 
 static boost::bimap<QString, Dataset::CubeType> typeMap = boost::assign::list_of<decltype(typeMap)::relation>
@@ -98,6 +100,10 @@ bool Dataset::isPyKnossos(const QUrl & url) {
     return url.path().endsWith("ariadne.conf") || url.path().endsWith(".pyknossos.conf") || url.path().endsWith(".pyk.conf") || url.path().endsWith(".pyk.auth.conf");
 }
 
+bool Dataset::isToml(const QUrl & url) {
+    return url.path().endsWith(".k.toml");
+}
+
 bool Dataset::isWebKnossos(const QUrl & url) {
     return url.host().contains("webknossos");
 }
@@ -112,6 +118,8 @@ Dataset::list_t Dataset::parse(const QUrl & url, const QString & data, bool add_
         infos = Dataset::parseNeuroDataStoreJson(url, data);
     } else if (Dataset::isPyKnossos(url)) {
         infos = Dataset::parsePyKnossosConf(url, data);
+    } else if (Dataset::isToml(url)) {
+        infos = Dataset::parseToml(url, data);
     } else {
         infos = Dataset::fromLegacyConf(url, data);
     }
@@ -278,6 +286,22 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         }
     }
     return infos;
+}
+
+#include <iostream>
+
+Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
+    const auto data = configData.toStdString();
+    auto config = toml::parse(data);
+    std::cout << config << "\nlakjsd\n";
+    for (auto&& [k, v] : config)
+    {
+        v.visit([](auto& node) noexcept
+        {
+            std::cout << node << "\n";
+        });
+    }
+    return {};
 }
 
 Dataset::list_t Dataset::parseWebKnossosJson(const QUrl &, const QString & json_raw) {

@@ -90,6 +90,13 @@ find_package(${pythonqt} REQUIRED)
 find_package(Snappy REQUIRED)
 find_package(QuaZip 0.6.2 REQUIRED)
 
+include(FetchContent)
+FetchContent_Declare(tomlplusplus GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git)
+FetchContent_Populate(tomlplusplus)
+
+add_library(toml++::toml++ INTERFACE IMPORTED)
+target_include_directories(toml++::toml++ INTERFACE "${tomlplusplus_SOURCE_DIR}/include")
+
 #platform dependent resources
 if(WIN32)
     set(SRC_LIST "${SRC_LIST}" "${CMAKE_CURRENT_SOURCE_DIR}/resources/knossos.rc")# add windows icon and manifest
@@ -182,6 +189,7 @@ target_link_libraries(${PROJECT_NAME}
     ${pythonqt}
     QuaZip::QuaZip
     Snappy::Snappy
+    toml++::toml++
     ${LINUXLINKER}
     $<$<AND:$<PLATFORM_ID:Windows>,$<NOT:$<CONFIG:Debug>>>:-Wl,--dynamicbase># use ASLR, required by the »Windows security features test« for »Windows Desktop App Certification«
 )
