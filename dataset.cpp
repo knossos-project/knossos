@@ -40,7 +40,6 @@
 #include <boost/assign.hpp>
 #include <boost/bimap.hpp>
 
-#include <toml.hpp>
 
 Dataset::list_t Dataset::datasets;
 
@@ -292,16 +291,21 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
 
 #include <QTemporaryFile>
 
+#include "toml/parser.hpp"
+#include "toml/get.hpp"
+
+extern toml::value toml_parse(const std::string & filename);
+
 Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
     const auto data = configData.toStdString();
     QTemporaryFile file;
     file.open();
     file.write(configData.toUtf8());
     file.close();
-    auto config = toml::parse(file.fileName().toStdString());
+//    auto config = toml::parse(file.fileName().toStdString());
+    auto config = toml_parse(file.fileName().toStdString());
     Dataset::list_t infos;
     for (auto && vit : toml::find(config, "Layer").as_array()) {
-        std::cout << vit << std::endl;
         auto & info = infos.emplace_back();
         const auto & value = toml::find_or(vit, "ServerFormat", std::string{});
         info.api = value == "knossos" ? API::Heidelbrain : value == "1" ? API::OpenConnectome : API::PyKnossos;
@@ -323,7 +327,6 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         info.type = typeMap.left.at(info.fileextension);
         info.description = QString::fromStdString(toml::find(vit, "Description").as_string());
     }
-    std::cout << std::flush;
     for (auto && info : infos) {
         if (info.scales.empty()) {
             return {};

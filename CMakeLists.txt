@@ -212,6 +212,7 @@ endif(APPLE)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 
+#target_compile_options(${PROJECT_NAME} PRIVATE "-ftime-trace")
 target_compile_options(${PROJECT_NAME} PRIVATE "-pedantic-errors")
 target_compile_options(${PROJECT_NAME} PRIVATE "-Wall" "-Wextra")
 
