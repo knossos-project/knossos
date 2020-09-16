@@ -293,15 +293,43 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
 Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
     const auto data = configData.toStdString();
     auto config = toml::parse(data);
-    std::cout << config << "\nlakjsd\n";
-    for (auto&& [k, v] : config)
-    {
-        v.visit([](auto& node) noexcept
-        {
-            std::cout << node << "\n";
-        });
+    Dataset::list_t infos;
+    for (auto && vit : *config["Layer"].as_array()) {
+        const auto & v = *vit.as_table();
+        auto & info = infos.emplace_back();
+        const auto & value = v["ServerFormat"].value_or(std::string{});
+        info.api = value == "knossos" ? API::Heidelbrain : value == "1" ? API::OpenConnectome : API::PyKnossos;
+        info.url = QString::fromStdString(v["URL"].value_or(std::string{}));
+        info.experimentname = QString::fromStdString(v["Name"].ref<std::string>());
+        const auto extent = *v["Extent_px"].as_array();
+        info.boundary = Coordinate(extent[0].value<int>().value(), extent[1].value<int>().value(), extent[2].value<int>().value());
+        const auto cube_shape = *v["CubeShape_px"].as_array();
+        info.cubeShape = Coordinate{cube_shape[0].value<int>().value(), cube_shape[1].value<int>().value(), cube_shape[2].value<int>().value()};
+        const auto scales = *v["VoxelSize_nm"].as_array();
+        for (const auto & scaleit : scales) {
+            const auto scale = *scaleit.as_array();
+            info.scales.emplace_back(scale[0].value<double>().value(), scale[1].value<double>().value(), scale[2].value<double>().value());
+        }
+        info.scale = info.scales.front();
+        info.magnification = info.lowestAvailableMag = 1;
+        info.highestAvailableMag = std::pow(2, scales.size() - 1);
+        info.fileextension = QString::fromStdString(v["FileExtension"][0].ref<std::string>());
+        info.type = typeMap.left.at(info.fileextension);
+        info.description = QString::fromStdString(v["Description"].value_or(std::string{}));
     }
-    return {};
+    std::cout << std::flush;
+    for (auto && info : infos) {
+        if (info.scales.empty()) {
+            return {};
+        }
+        if (info.url.isEmpty()) {
+            info.url = QUrl::fromLocalFile(QFileInfo(configUrl.toLocalFile()).absoluteDir().absolutePath());
+        }
+        if (&info != &infos.front() && !info.renderSettings.visibleSetExplicitly && !info.isOverlay()) {// disable all non-seg layers expect the first TODO multi layer
+            info.allocationEnabled = info.loadingEnabled = info.renderSettings.visible = false;
+        }
+    }
+    return infos;
 }
 
 Dataset::list_t Dataset::parseWebKnossosJson(const QUrl &, const QString & json_raw) {
