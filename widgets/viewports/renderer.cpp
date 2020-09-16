@@ -1072,6 +1072,12 @@ void ViewportBase::renderMeshBuffer(Mesh & buf, const bool picking) {
                         : buf.useTreeColor ? meshTreeColorShader
                         : this->meshShader;
 
+    if (!meshShader.isLinked()) {
+        glPopMatrix();
+        glEnable(GL_BLEND);
+        return;
+    }
+
     meshShader.bind();
     meshShader.setUniformValue("modelview_matrix", modelview_mat);
     meshShader.setUniformValue("projection_matrix", projection_mat);
