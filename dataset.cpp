@@ -40,7 +40,7 @@
 #include <boost/assign.hpp>
 #include <boost/bimap.hpp>
 
-#include <toml++/toml.h>
+#include <toml.hpp>
 
 Dataset::list_t Dataset::datasets;
 
@@ -290,32 +290,38 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
 
 #include <iostream>
 
+#include <QTemporaryFile>
+
 Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
     const auto data = configData.toStdString();
-    auto config = toml::parse(data);
+    QTemporaryFile file;
+    file.open();
+    file.write(configData.toUtf8());
+    file.close();
+    auto config = toml::parse(file.fileName().toStdString());
     Dataset::list_t infos;
-    for (auto && vit : *config["Layer"].as_array()) {
-        const auto & v = *vit.as_table();
+    for (auto && vit : toml::find(config, "Layer").as_array()) {
+        std::cout << vit << std::endl;
         auto & info = infos.emplace_back();
-        const auto & value = v["ServerFormat"].value_or(std::string{});
+        const auto & value = toml::find_or(vit, "ServerFormat", std::string{});
         info.api = value == "knossos" ? API::Heidelbrain : value == "1" ? API::OpenConnectome : API::PyKnossos;
-        info.url = QString::fromStdString(v["URL"].value_or(std::string{}));
-        info.experimentname = QString::fromStdString(v["Name"].ref<std::string>());
-        const auto extent = *v["Extent_px"].as_array();
-        info.boundary = Coordinate(extent[0].value<int>().value(), extent[1].value<int>().value(), extent[2].value<int>().value());
-        const auto cube_shape = *v["CubeShape_px"].as_array();
-        info.cubeShape = Coordinate{cube_shape[0].value<int>().value(), cube_shape[1].value<int>().value(), cube_shape[2].value<int>().value()};
-        const auto scales = *v["VoxelSize_nm"].as_array();
+        info.url = QString::fromStdString(toml::find_or(vit, "URL", std::string{}));
+        info.experimentname = QString::fromStdString(toml::find(vit, "Name").as_string());
+        const auto extent = toml::find(vit, "Extent_px").as_array();
+        info.boundary = Coordinate(extent.at(0).as_integer(), extent.at(1).as_integer(), extent.at(2).as_integer());
+        const auto cube_shape = toml::find(vit, "CubeShape_px").as_array();
+        info.cubeShape = Coordinate(cube_shape.at(0).as_integer(), cube_shape.at(1).as_integer(), cube_shape.at(2).as_integer());
+        const auto scales = toml::find(vit, "VoxelSize_nm").as_array();
         for (const auto & scaleit : scales) {
-            const auto scale = *scaleit.as_array();
-            info.scales.emplace_back(scale[0].value<double>().value(), scale[1].value<double>().value(), scale[2].value<double>().value());
+            const auto scale = scaleit.as_array();
+            info.scales.emplace_back(scale.at(0).as_floating(), scale.at(1).as_floating(), scale.at(2).as_floating());
         }
         info.scale = info.scales.front();
         info.magnification = info.lowestAvailableMag = 1;
         info.highestAvailableMag = std::pow(2, scales.size() - 1);
-        info.fileextension = QString::fromStdString(v["FileExtension"][0].ref<std::string>());
+        info.fileextension = QString::fromStdString(toml::find(vit, "FileExtension").at(0).as_string());
         info.type = typeMap.left.at(info.fileextension);
-        info.description = QString::fromStdString(v["Description"].value_or(std::string{}));
+        info.description = QString::fromStdString(toml::find(vit, "Description").as_string());
     }
     std::cout << std::flush;
     for (auto && info : infos) {

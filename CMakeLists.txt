@@ -91,11 +91,11 @@ find_package(Snappy REQUIRED)
 find_package(QuaZip 0.6.2 REQUIRED)
 
 include(FetchContent)
-FetchContent_Declare(tomlplusplus GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git)
-FetchContent_Populate(tomlplusplus)
+FetchContent_Declare(toml11 GIT_REPOSITORY https://github.com/ToruNiina/toml11.git)
+FetchContent_Populate(toml11)
 
-add_library(toml++::toml++ INTERFACE IMPORTED)
-target_include_directories(toml++::toml++ INTERFACE "${tomlplusplus_SOURCE_DIR}/include")
+add_library(toml11::toml11 INTERFACE IMPORTED)
+target_include_directories(toml11::toml11 INTERFACE "${toml11_SOURCE_DIR}")
 
 #platform dependent resources
 if(WIN32)
@@ -189,7 +189,7 @@ target_link_libraries(${PROJECT_NAME}
     ${pythonqt}
     QuaZip::QuaZip
     Snappy::Snappy
-    toml++::toml++
+    toml11::toml11
     ${LINUXLINKER}
     $<$<AND:$<PLATFORM_ID:Windows>,$<NOT:$<CONFIG:Debug>>>:-Wl,--dynamicbase># use ASLR, required by the »Windows security features test« for »Windows Desktop App Certification«
 )
