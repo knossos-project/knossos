@@ -174,7 +174,7 @@ protected:
     QOpenGLVertexArrayObject meshPickingVao;
     QMatrix4x4 mv, p;
     boost::optional<BufferSelection> pickMesh(const QPoint pos);
-    void pickMeshIdAtPosition();
+    virtual void pickMeshIdAtPosition();
 
     virtual void zoom(const float zoomStep) = 0;
     virtual float zoomStep() const = 0;

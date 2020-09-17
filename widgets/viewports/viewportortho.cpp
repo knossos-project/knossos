@@ -105,6 +105,14 @@ void ViewportOrtho::paintGL() {
     renderViewportFrontFace();
 }
 
+#include <skeleton/skeletonizer.h>
+
+void ViewportOrtho::pickMeshIdAtPosition() {
+    p = QMatrix4x4{};
+    p.ortho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, -(0.5), -(-state->skeletonState->volBoundary()));
+    ViewportBase::pickMeshIdAtPosition();
+}
+
 void ViewportOrtho::mouseMoveEvent(QMouseEvent *event) {
     ViewportBase::mouseMoveEvent(event);
     Segmentation::singleton().brush.setView(static_cast<brush_t::view_t>(viewportType), v1, v2, n);

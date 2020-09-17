@@ -49,6 +49,8 @@ class ViewportOrtho : public ViewportBase {
     void renderBrush(const Coordinate coord);
     virtual void renderViewportFrontFace() override;
 
+    virtual void pickMeshIdAtPosition() override;
+
     floatCoordinate arbNodeDragCache = {};
     class nodeListElement *draggedNode = nullptr;
 
