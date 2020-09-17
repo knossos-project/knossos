@@ -28,12 +28,16 @@
 
 #include <QAction>
 #include <QDialog>
+#include <QMatrix4x4>
 #include <QMenu>
+#include <QOffscreenSurface>
+#include <QOpenGLContext>
 #include <QOpenGLDebugLogger>
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLFunctions_1_4>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLTexture>
+#include <QOpenGLVertexArrayObject>
 #include <QOpenGLWidget>
 #include <QPushButton>
 #include <QToolButton>
@@ -165,6 +169,10 @@ protected:
     QOpenGLShaderProgram meshShader;
     QOpenGLShaderProgram meshTreeColorShader;
     QOpenGLShaderProgram meshIdShader;
+    QOffscreenSurface meshPickingSurface;
+    QOpenGLContext meshPickingCtx;
+    QOpenGLVertexArrayObject meshPickingVao;
+    QMatrix4x4 mv, p;
     boost::optional<BufferSelection> pickMesh(const QPoint pos);
     void pickMeshIdAtPosition();
 

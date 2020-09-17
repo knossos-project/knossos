@@ -20,13 +20,6 @@ RenderOptions RenderOptions::nodePickingRenderOptions(RenderOptions::SelectionPa
     return options;
 }
 
-RenderOptions RenderOptions::meshPickingRenderOptions() {
-    RenderOptions options;
-    options.drawBoundaryAxes = options.drawBoundaryBox = options.drawCrosshairs = options.drawOverlay = options.drawSkeleton = options.drawViewportPlanes = false;
-    options.drawMesh = options.meshPicking = true;
-    return options;
-}
-
 RenderOptions RenderOptions::snapshotRenderOptions(const bool drawBoundaryAxes, const bool drawBoundaryBox, const bool drawOverlay, const bool drawMesh, const bool drawSkeleton, const bool drawViewportPlanes) {
     RenderOptions options;
     options.drawBoundaryAxes = drawBoundaryAxes;

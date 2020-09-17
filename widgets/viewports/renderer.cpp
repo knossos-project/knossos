@@ -704,6 +704,8 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, nearVal, farVal);// gluLookAt relies on an unaltered cartesian Projection
+    p = QMatrix4x4{};
+    p.ortho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, nearVal, farVal);
 
     const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
     auto view = [&](){
@@ -718,6 +720,11 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         gluLookAt(eye.x, eye.y, eye.z
                   , center.x, center.y, center.z
                   , v2.x, v2.y, v2.z);// negative up vectors, because origin is at the top
+        mv = QMatrix4x4{};
+        // get modelview and projection matrices
+        mv.lookAt(QVector3D(eye.x, eye.y, eye.z),
+                  QVector3D(center.x, center.y, center.z),
+                  QVector3D(v2.x, v2.y, v2.z));
     };
     auto slice = [&](auto & texture, std::size_t layerId){
         if (!options.nodePicking) {
@@ -832,27 +839,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glPopMatrix();
         glColor4f(1, 1, 1, 1);
     }
-    auto setStateAndRenderMesh = [this](auto func){
-        glMatrixMode(GL_PROJECTION);
-        glPushMatrix();
-        glLoadIdentity();
-        glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, -(0.5), -(-state->skeletonState->volBoundary()));
-        glMatrixMode(GL_MODELVIEW);
-
-        glEnable(GL_DEPTH_TEST);
-        glDisable(GL_BLEND);
-        func();
-        glEnable(GL_BLEND);
-        glDisable(GL_DEPTH_TEST);
-
-        glMatrixMode(GL_PROJECTION);
-        glPopMatrix();
-        glMatrixMode(GL_MODELVIEW);
-
-    };
-    if (options.meshPicking) {
-        setStateAndRenderMesh([this](){ pickMeshIdAtPosition(); });
-    } else if (state->viewerState->meshDisplay.testFlag(TreeDisplay::ShowInOrthoVPs) && options.drawMesh) {
+    if (state->viewerState->meshDisplay.testFlag(TreeDisplay::ShowInOrthoVPs) && options.drawMesh) {
         QOpenGLFramebufferObjectFormat format;
         format.setSamples(0);//state->viewerState->sampleBuffers
         format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
@@ -862,7 +849,13 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         fbo.bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?!?!?!?
 
-        setStateAndRenderMesh([this](){ renderMesh(); });
+        glEnable(GL_DEPTH_TEST);
+        glDisable(GL_BLEND);
+        p = QMatrix4x4{};
+        p.ortho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, -(0.5), -(-state->skeletonState->volBoundary()));
+        renderMesh();
+        glEnable(GL_BLEND);
+        glDisable(GL_DEPTH_TEST);
         if (auto snapshotFboPtr = snapshotFbo.lock()) {
             snapshotFboPtr->bind();
         } else {
@@ -1058,29 +1051,19 @@ void ViewportBase::renderMeshBuffer(Mesh & buf, const bool picking) {
     if (picking) {
         glDisable(GL_BLEND);
     }
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glTranslatef(0.5, 0.5, 0.5);
-
-    // get modelview and projection matrices
-    GLfloat modelview_mat[4][4];
-    glGetFloatv(GL_MODELVIEW_MATRIX, &modelview_mat[0][0]);
-    GLfloat projection_mat[4][4];
-    glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
 
     auto & meshShader = picking ? meshIdShader
                         : buf.useTreeColor ? meshTreeColorShader
                         : this->meshShader;
 
     if (!meshShader.isLinked()) {
-        glPopMatrix();
         glEnable(GL_BLEND);
         return;
     }
 
     meshShader.bind();
-    meshShader.setUniformValue("modelview_matrix", modelview_mat);
-    meshShader.setUniformValue("projection_matrix", projection_mat);
+    meshShader.setUniformValue("modelview_matrix", mv);
+    meshShader.setUniformValue("projection_matrix", p);
     floatCoordinate normal = {0, 0, 0};
     const bool isMeshSlicing = viewportType != VIEWPORT_SKELETON;
     if (isMeshSlicing) {
@@ -1091,9 +1074,6 @@ void ViewportBase::renderMeshBuffer(Mesh & buf, const bool picking) {
     if (!picking) {
         meshShader.setUniformValue("alpha_factor", alphaFactor);
     }
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_COLOR_ARRAY);
 
     buf.position_buf.bind();
     int vertexLocation = meshShader.attributeLocation("vertex");
@@ -1136,12 +1116,7 @@ void ViewportBase::renderMeshBuffer(Mesh & buf, const bool picking) {
     meshShader.disableAttributeArray(normalLocation);
     meshShader.disableAttributeArray(vertexLocation);
 
-    glDisableClientState(GL_COLOR_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisableClientState(GL_VERTEX_ARRAY);
-
     meshShader.release();
-    glPopMatrix();
     glEnable(GL_BLEND);
 }
 
@@ -1194,24 +1169,24 @@ std::array<unsigned char, 4> meshIdToColor(uint32_t id) {
 }
 
 boost::optional<BufferSelection> ViewportBase::pickMesh(const QPoint pos) {
-    makeCurrent();
-    glPushAttrib(GL_VIEWPORT_BIT);
-    glViewport(0, 0, this->width(), this->height());
+    meshPickingCtx.makeCurrent(&meshPickingSurface);
+    glViewport(0, 0, width(), height());
     QOpenGLFramebufferObject fbo(width(), height(), QOpenGLFramebufferObject::CombinedDepthStencil);
     fbo.bind();
     glClearColor(1, 1, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
-    renderViewport(RenderOptions::meshPickingRenderOptions());
+    meshPickingVao.bind();
+    pickMeshIdAtPosition();
     fbo.release();
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT);
-    glPopAttrib();
     // read color and translate to id
     QImage fboImage(fbo.toImage());
     // Need to specify image format with no premultiplied alpha.
     // Otherwise the image is automatically unpremultiplied on pixel read even though it was never premultiplied in the first place. See https://doc.qt.io/qt-5/qopenglframebufferobject.html#toImage
     QImage image(fboImage.constBits(), fboImage.width(), fboImage.height(), QImage::Format_ARGB32);
     const auto triangleID = meshColorToId(image.pixelColor(pos));
+    meshPickingVao.release();
     boost::optional<treeListElement&> treeIt;
     for (auto & tree : state->skeletonState->trees) {// find tree with appropriate triangle range
         if (tree.mesh && tree.mesh->pickingIdOffset + tree.mesh->vertex_count > triangleID) {
@@ -1371,6 +1346,8 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(left, right, bottom, top, nearVal, farVal);
+    p = QMatrix4x4{};
+    p.ortho(left, right, bottom, top, nearVal, farVal);
 
     // Now we set up the view on the skeleton and draw some very basic VP stuff like the gray background
     glEnable(GL_DEPTH_TEST);
@@ -1379,6 +1356,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     glLoadIdentity();
     // load model view matrix that stores rotation state!
     glLoadMatrixf(state->skeletonState->skeletonVpModelView);
+    mv = QMatrix4x4{QMatrix4x4{state->skeletonState->skeletonVpModelView}.constData()};
     if (!options.nodePicking) {
         // Now we draw the  background of our skeleton VP
         glClearColor(1, 1, 1, 1);// white
@@ -1613,9 +1591,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glPopMatrix();
     }
 
-    if (options.meshPicking) {
-        pickMeshIdAtPosition();
-    } else if (state->viewerState->meshDisplay.testFlag(TreeDisplay::ShowIn3DVP) && options.drawMesh) {
+    if (state->viewerState->meshDisplay.testFlag(TreeDisplay::ShowIn3DVP) && options.drawMesh) {
         renderMesh();
     }
 

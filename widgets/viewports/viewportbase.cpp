@@ -273,11 +273,38 @@ void ViewportBase::initializeGL() {
         meshTreeColorShader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/mesh/meshtreecolorshader.frag");
         meshTreeColorShader.link();
     }
-    if (!meshIdShader.isLinked()) {
-        auto enabled = meshIdShader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/mesh/meshidshader.vert");
-        enabled = enabled && meshIdShader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/mesh/meshidshader.frag");
-        state->viewerState->MeshPickingEnabled = enabled && meshIdShader.link();
+
+    auto format = meshPickingSurface.format();
+    if (this->format().version() < QPair(3, 0) || this->format().version() >= QPair(3, 2)) {
+        format.setMajorVersion(3);
+        format.setMinorVersion(2);
+        format.setProfile(QSurfaceFormat::CoreProfile);
+        format.setOption(QSurfaceFormat::DeprecatedFunctions, false);
     }
+    meshPickingSurface.setFormat(format);
+    meshPickingSurface.create();
+    meshPickingCtx.setFormat(meshPickingSurface.format());
+    meshPickingCtx.setShareContext(context());
+    meshPickingCtx.create();
+    meshPickingCtx.makeCurrent(&meshPickingSurface);
+
+    if (!meshIdShader.isLinked()) {
+        auto enabled = !meshPickingVao.isCreated() && meshPickingVao.create();
+        enabled &= meshIdShader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/mesh/meshidshader.vert");
+        enabled &= meshIdShader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/mesh/meshidshader.frag");
+        state->viewerState->MeshPickingEnabled = enabled && meshIdShader.link();
+        static bool printed = false;
+        const auto glversion  = reinterpret_cast<const char*>(::glGetString(GL_VERSION));
+        const auto glvendor   = reinterpret_cast<const char*>(::glGetString(GL_VENDOR));
+        const auto glrenderer = reinterpret_cast<const char*>(::glGetString(GL_RENDERER));
+        if (!printed) {
+            qDebug() << tr("picking ctx is %1functional").arg(!meshIdShader.isLinked() ? tr("dys") : tr("")).toUtf8().constData() << QString("%1, %2, %3").arg(glversion).arg(glvendor).arg(glrenderer);
+            printed = true;
+        }
+    }
+
+    makeCurrent();
+
     for (auto * shader : {&meshShader, &meshTreeColorShader, &meshIdShader}) {
         if (!shader->log().isEmpty()) {
             qDebug() << shader->log();
