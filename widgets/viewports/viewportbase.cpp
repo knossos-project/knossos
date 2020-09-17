@@ -272,6 +272,19 @@ void ViewportBase::initializeGL() {
     if (oglDebug && oglLogger.initialize()) {
         oglLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
     }
+    auto format = meshPickingSurface.format();
+    if (this->format().version() < QPair(3, 0) || this->format().version() >= QPair(3, 2)) {
+        format.setMajorVersion(3);
+        format.setMinorVersion(2);
+        format.setProfile(QSurfaceFormat::CoreProfile);
+        format.setOption(QSurfaceFormat::DeprecatedFunctions, false);
+    }
+    meshPickingSurface.setFormat(format);
+    meshPickingSurface.create();
+    meshPickingCtx.setFormat(meshPickingSurface.format());
+    meshPickingCtx.setShareContext(context());
+    meshPickingCtx.create();
+    meshPickingCtx.makeCurrent(&meshPickingSurface);
 
     const QString prefix{":/resources/shaders/"};
     QList<QOpenGLShaderProgram*> shaders;
@@ -293,14 +306,22 @@ void ViewportBase::initializeGL() {
     createShader(cylinderShader, {"cylinder.vert"}, {"cylinder.frag"});
     createShader(meshShader, {"color.vert"}, {"functions/diffuse.frag", "color vertexcolor.frag"});
     createShader(meshTreeColorShader, {"normal.vert"}, {"functions/diffuse.frag", "normal treecolor.frag"});
-    state->viewerState->MeshPickingEnabled = createShader(meshIdShader, {"idcolor.vert"}, {"functions/diffuse.frag", "idcolor.frag"});
+    state->viewerState->MeshPickingEnabled = !meshPickingVao.isCreated() && meshPickingVao.create() && createShader(meshIdShader, {"idcolor.vert"}, {"functions/diffuse.frag", "idcolor.frag"});
     createShader(meshSlicingCreateMaskShader, {"mvp.vert"}, {"mvp slicingmask.frag"});
     createShader(meshSlicingWithMaskShader, {"normal.vert"}, {"functions/meshslicing.frag", "normal slicingapply.frag"});
     createShader(meshSlicingIdShader, {"idcolor.vert"}, {"idcolor slicing.frag"});
     createShader(raw_data_shader, {"3DTexture.vert"}, {"3DTexture.frag"});
     createShader(overlay_data_shader, {"3DTexture.vert"}, {"3DTextureLUT.frag"});
     createShader(shaderTextureQuad, {"texturequad.vert"}, {"texturequad.frag"});
-    createShader(shaderTextureQuad2, {"texturequad2.vert"}, {"texturequad.frag"});
+	createShader(shaderTextureQuad2, {"texturequad2.vert"}, {"texturequad.frag"});
+    static bool printed2 = false;
+    if (!printed2) {
+        const auto glversion  = reinterpret_cast<const char*>(::glGetString(GL_VERSION));
+        const auto glvendor   = reinterpret_cast<const char*>(::glGetString(GL_VENDOR));
+        const auto glrenderer = reinterpret_cast<const char*>(::glGetString(GL_RENDERER));
+        qDebug() << tr("picking ctx is %1functional").arg(!meshIdShader.isLinked() ? tr("dys") : tr("")).toUtf8().constData() << QString("%1, %2, %3").arg(glversion).arg(glvendor).arg(glrenderer);
+        printed2 = true;
+    }
     for (auto * shader : shaders) {
         if (!shader->log().isEmpty() && viewportType == VIEWPORT_SKELETON) {
             qDebug().noquote() << shader->log();
