@@ -1,4 +1,4 @@
-#version 110
+#version 150
 
 uniform mat4 model_matrix;
 uniform mat4 view_matrix;

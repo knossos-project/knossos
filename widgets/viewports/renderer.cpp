@@ -1033,6 +1033,7 @@ void Viewport3D::renderViewport(const RenderOptions &options) {
 }
 
 void ViewportBase::renderMeshBuffer(Mesh & buf, boost::optional<QOpenGLShaderProgram&> prog) {
+    meshVao.bind();
     auto & meshShader = prog ? prog.get() : buf.useTreeColor ? meshTreeColorShader : this->meshShader;
 
     if (!meshShader.isLinked()) {
@@ -1095,6 +1096,7 @@ void ViewportBase::renderMeshBuffer(Mesh & buf, boost::optional<QOpenGLShaderPro
     }
     meshShader.disableAttributeArray(vertexLocation);
     meshShader.release();
+    meshVao.release();
 }
 
 static bool shouldRenderMesh(const treeListElement & tree, const ViewportType viewportType) {
@@ -1246,10 +1248,10 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         std::array<float, 16> inverseRotation;
         rotation.inverted().copyDataTo(inverseRotation.data());
         // invert rotation
-        glMatrixMode(GL_MODELVIEW);
-        glLoadMatrixf(state->skeletonState->skeletonVpModelView);
-        glTranslatef(rotationCenter.x, rotationCenter.y, rotationCenter.z);
-        glMultMatrixf(inverseRotation.data());
+//        glMatrixMode(GL_MODELVIEW);
+//        glLoadMatrixf(state->skeletonState->skeletonVpModelView);
+//        glTranslatef(rotationCenter.x, rotationCenter.y, rotationCenter.z);
+//        glMultMatrixf(inverseRotation.data());
         // add new rotation
         QMatrix4x4 singleRotation;
         singleRotation.rotate(y, {0, 1, 0});
@@ -1257,8 +1259,8 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         std::array<float, 16> rotationState;
         (rotation * singleRotation).copyDataTo(rotationState.data()); // transforms to row-major matrix
         // apply complete rotation
-        glMultMatrixf(rotationState.data());
-        glTranslatef(-rotationCenter.x, -rotationCenter.y, -rotationCenter.z);
+//        glMultMatrixf(rotationState.data());
+//        glTranslatef(-rotationCenter.x, -rotationCenter.y, -rotationCenter.z);
         // save the modified basic model view matrix
         glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
 
@@ -1337,20 +1339,20 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     const auto fars = state->skeletonState->volBoundary();
     const auto nearVal = -nears;
     const auto farVal = -fars;
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(left, right, bottom, top, nearVal, farVal);
+//    glMatrixMode(GL_PROJECTION);
+//    glLoadIdentity();
+//    glOrtho(left, right, bottom, top, nearVal, farVal);
     p = QMatrix4x4{};
     p.ortho(left, right, bottom, top, nearVal, farVal);
 
     // Now we set up the view on the skeleton and draw some very basic VP stuff like the gray background
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+//    glMatrixMode(GL_MODELVIEW);
+//    glLoadIdentity();
     // load model view matrix that stores rotation state!
-    glLoadMatrixf(state->skeletonState->skeletonVpModelView);
-    mv = QMatrix4x4{QMatrix4x4{state->skeletonState->skeletonVpModelView}.constData()};
+//    glLoadMatrixf(state->skeletonState->skeletonVpModelView);
+//    mv = QMatrix4x4{QMatrix4x4{state->skeletonState->skeletonVpModelView}.constData()};
     if (!options.nodePicking) {
         // Now we draw the  background of our skeleton VP
         glClearColor(1, 1, 1, 1);// white
@@ -1430,7 +1432,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glPopMatrix();
     }
 
-    if (options.drawBoundaryBox || options.drawBoundaryAxes) {
+    if (false) {//options.drawBoundaryBox || options.drawBoundaryAxes) {
         // Now we draw the dataset corresponding stuff (volume box of right size, axis descriptions...)
         if(options.drawBoundaryBox) {
             glPushMatrix();
@@ -1591,7 +1593,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     // Reset previously changed OGL parameters
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDisable(GL_DEPTH_TEST);
-    glLoadIdentity();
+//    glLoadIdentity();
 }
 
 void ViewportOrtho::renderBrush(const Coordinate coord) {

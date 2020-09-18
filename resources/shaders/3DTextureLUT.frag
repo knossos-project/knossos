@@ -1,4 +1,4 @@
-#version 110
+#version 150
 
 uniform sampler3D indexTexture;
 uniform float factor;//expand float to uint8 range

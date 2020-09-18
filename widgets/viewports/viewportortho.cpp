@@ -90,7 +90,7 @@ void ViewportOrtho::paintGL() {
     } else {
         renderViewport();
     }
-    renderViewportFrontFace();
+//    renderViewportFrontFace();
 }
 
 #include <skeleton/skeletonizer.h>

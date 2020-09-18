@@ -1,4 +1,4 @@
-#version 110
+#version 150
 
 varying vec3 frag_normal;
 varying vec4 frag_color;

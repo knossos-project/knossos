@@ -1,4 +1,4 @@
-#version 120
+#version 150
 
 uniform sampler2D sampler;
 uniform vec4 color_factor = vec4(1);

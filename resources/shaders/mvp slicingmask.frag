@@ -1,4 +1,4 @@
-#version 110
+#version 150
 
 void main() {
     if (gl_FrontFacing) {// front is visible means we are not inside

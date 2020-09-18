@@ -1,4 +1,4 @@
-#version 110
+#version 150
 
 uniform sampler2D samplerColor;
 uniform vec2 screen;

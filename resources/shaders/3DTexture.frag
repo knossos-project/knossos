@@ -1,4 +1,4 @@
-#version 110
+#version 150
 
 uniform sampler3D texture;
 uniform float textureOpacity;

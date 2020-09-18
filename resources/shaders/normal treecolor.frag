@@ -1,4 +1,4 @@
-#version 110
+#version 150
 
 uniform vec4 tree_color;
 uniform float alpha_factor;
