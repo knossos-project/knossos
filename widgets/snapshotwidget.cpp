@@ -33,13 +33,17 @@
 #include <QClipboard>
 #include <QDesktopWidget>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QMessageBox>
+#include <QMimeData>
 #include <QHBoxLayout>
 #include <QSettings>
 #include <QStandardItemModel>
 
 #include <boost/optional.hpp>
-#include <math.h>
+
+#include <cmath>
+#include <memory>
 
 SnapshotViewer::SnapshotViewer(const QImage & image, const QString & info, const QString & saveDir, const QString &defaultFilename, QWidget *parent)
         : QDialog(parent), imageLabel{QPixmap::fromImage(image)}, saveDir(saveDir) {
@@ -61,8 +65,11 @@ SnapshotViewer::SnapshotViewer(const QImage & image, const QString & info, const
 
     resize(minimumSize());// remove unnecessary spacing
 
-    QObject::connect(&copyButton, &QPushButton::clicked, [this]() {
-        QApplication::clipboard()->setPixmap(imageLabel.pixmap, QClipboard::Clipboard);
+    QObject::connect(&copyButton, &QPushButton::clicked, [this, defaultFilename]() {
+        auto mime = std::make_unique<QMimeData>();
+        mime->setImageData(imageLabel.pixmap);
+        mime->setText(QFileInfo{defaultFilename}.baseName());
+        QApplication::clipboard()->setMimeData(mime.release());
     });
     QObject::connect(&cancelButton, &QPushButton::clicked, this, &QDialog::close);
     QObject::connect(&saveButton, &QPushButton::clicked, [&defaultFilename, this]() {
