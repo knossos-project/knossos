@@ -412,7 +412,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         datasetModel.add(path.url());
     }
     tableWidget.selectionModel()->select(datasetModel.index(row, 0), QItemSelectionModel::ClearAndSelect);
-
+    tableWidget.scrollTo(sortAndFilterProxy.mapFromSource(tableWidget.selectionModel()->selectedIndexes()[0]));
     bool keepAnnotation = silent;
     if (!silent && !Annotation::singleton().isEmpty()) {
         QMessageBox question{QApplication::activeWindow()};
