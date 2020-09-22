@@ -279,6 +279,11 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     xml.writeAttribute("min.x", QString::number(Annotation::singleton().movementAreaMin.x));
     xml.writeAttribute("min.y", QString::number(Annotation::singleton().movementAreaMin.y));
     xml.writeAttribute("min.z", QString::number(Annotation::singleton().movementAreaMin.z));
+    const auto size = Annotation::singleton().movementAreaMax - Annotation::singleton().movementAreaMin;
+    xml.writeAttribute("size.x", QString::number(size.x));
+    xml.writeAttribute("size.y", QString::number(size.y));
+    xml.writeAttribute("size.z", QString::number(size.z));
+    // backwards compat
     xml.writeAttribute("max.x", QString::number(Annotation::singleton().movementAreaMax.x));
     xml.writeAttribute("max.y", QString::number(Annotation::singleton().movementAreaMax.y));
     xml.writeAttribute("max.z", QString::number(Annotation::singleton().movementAreaMax.z));
@@ -490,7 +495,8 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                     if (!merge) {
                         Coordinate movementAreaMin;//0
                         Coordinate movementAreaMax = Dataset::current().boundary;
-
+                        bool sizeSet{false};
+                        Coordinate movementAreaSize = Dataset::current().boundary;
                         for (const auto & attribute : attributes) {
                             const auto & name = attribute.name();
                             const auto & value = attribute.value();
@@ -500,6 +506,15 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                                 movementAreaMin.y = value.toInt();
                             } else if (name == "min.z") {
                                 movementAreaMin.z = value.toInt();
+                            } else if (name == "size.x") {
+                                sizeSet = true;
+                                movementAreaSize.x = value.toInt();
+                            } else if (name == "size.y") {
+                                sizeSet = true;
+                                movementAreaSize.y = value.toInt();
+                            } else if (name == "size.z") {
+                                sizeSet = true;
+                                movementAreaSize.z = value.toInt();
                             } else if (name == "max.x") {
                                 movementAreaMax.x = value.toInt();
                             } else if (name == "max.y") {
@@ -508,8 +523,11 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                                 movementAreaMax.z = value.toInt();
                             }
                         }
-
-                        Annotation::singleton().updateMovementArea(movementAreaMin, movementAreaMax);//range checked
+                        if (sizeSet) {
+                            Annotation::singleton().updateMovementArea(movementAreaMin, movementAreaMin + movementAreaSize);//range checked
+                        } else {
+                            Annotation::singleton().updateMovementArea(movementAreaMin, movementAreaMax + 1); // backwards compat max inclusive area
+                        }
                     }
                 } else if(xml.name() == "time") { // in case of a merge the current annotation's time is kept.
                     if (!merge) {
