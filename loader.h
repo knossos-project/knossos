@@ -28,6 +28,7 @@
 #include "usermove.h"
 
 #include <QCoreApplication>
+#include <QFutureSynchronizer>
 #include <QFutureWatcher>
 #include <QMutex>
 #include <QNetworkReply>
@@ -75,12 +76,15 @@ class Worker : public QObject {
     friend void Segmentation::clear();
 private:
     QThreadPool decompressionPool;//let pool be alive just after ~Worker
+    QFutureSynchronizer<void> sync;
+    QThreadPool localPool;
     QNetworkAccessManager qnam;
 
     template<typename T>
     using ptr = std::unique_ptr<T>;
     using DecompressionResult = std::pair<bool, void *>;
     using DecompressionOperationPtr = ptr<QFutureWatcher<DecompressionResult>>;
+    std::vector<std::unordered_map<CoordOfCube, ptr<QFutureWatcher<bool>>>> slotOpen;
     std::vector<std::unordered_map<CoordOfCube, QNetworkReply*>> slotDownload;
     std::vector<std::unordered_map<CoordOfCube, DecompressionOperationPtr>> slotDecompression;
     std::vector<std::list<std::vector<std::uint8_t>>> slotChunk;// slot ownership
