@@ -150,7 +150,7 @@ CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  g
         auto rawcube = getRawCube(globalCubeBegin);
         if (rawcube.first) {
             auto cubeRef = getCubeRef(rawcube.second);
-            const auto globalCubeEnd = globalCubeBegin + Dataset::current().scaleFactor * cubeEdgeLen - 1;
+            const auto globalCubeEnd = globalCubeBegin + Dataset::current().scaleFactor * cubeEdgeLen;
             const auto localStart = globalFirst.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeEdgeLen, Dataset::current().scaleFactor);
             const auto localEnd = globalLast.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeEdgeLen, Dataset::current().scaleFactor);
 
@@ -158,7 +158,7 @@ CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  g
             for (int y = localStart.y; y <= localEnd.y; ++y)
             for (int x = localStart.x; x <= localEnd.x; ++x) {
                 const Coordinate globalFromVoxelCoord{globalCubeBegin + Dataset::current().scaleFactor.componentMul(Coordinate{x, y, z})};
-                const auto adjustedGlobalCoord = globalFromVoxelCoord.capped(globalFirst, globalLast);// fit to region boundaries that don’t exactly match mag2+ voxel coords
+                const auto adjustedGlobalCoord = globalFromVoxelCoord.capped(globalFirst, globalLast + 1);// fit to region boundaries that don’t exactly match mag2+ voxel coords
                 func(cubeRef[z][y][x], adjustedGlobalCoord);
             }
             cubeCoords.emplace(cubeCoord);

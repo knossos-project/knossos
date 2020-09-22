@@ -140,7 +140,7 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
         Annotation::singleton().updateMovementArea(min, max);
     });
     QObject::connect(&bottomRightButton, &QPushButton::clicked, [this](){
-        const auto max = getCoordinateFromOrthogonalClick(QPointF(state->mainWindow->viewportXY->width() - 1, state->mainWindow->viewportXY->height() - 1), *state->mainWindow->viewportXY);
+        const auto max = getCoordinateFromOrthogonalClick(QPointF(state->mainWindow->viewportXY->width() - 1, state->mainWindow->viewportXY->height() - 1), *state->mainWindow->viewportXY) + 1;
         const auto min = minAuto.isChecked() ? max - sizeSpins.get() : minSpins.get() - state->skeletonState->displayMatlabCoordinates;
         Annotation::singleton().updateMovementArea(min, max);
     });
