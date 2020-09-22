@@ -202,8 +202,6 @@ private:
     floatCoordinate moveCache; //Cache for Movements smaller than pixel coordinate
 
     ViewerState viewerState;
-    void initViewer();
-    void rewire();
 
     void vpGenerateTexture(ViewportArb & vp, const std::size_t layerId);
 

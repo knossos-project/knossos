@@ -227,6 +227,7 @@ ZoomWidget::ZoomWidget(QWidget *parent, DatasetLoadWidget * datasetLoadWidget)
     connect(&lockDatasetCheckBox, &QCheckBox::toggled, [] (const bool on) {
         state->viewer->setMagnificationLock(on);
     });
+    QObject::connect(state->viewer, &Viewer::zoomChanged, this, &ZoomWidget::update);
     connect(state->viewer, &Viewer::magnificationLockChanged, [this](const bool locked){
         QSignalBlocker blocker{lockDatasetCheckBox};
         lockDatasetCheckBox.setChecked(locked);

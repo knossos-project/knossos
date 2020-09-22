@@ -96,6 +96,20 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     this->setWindowIcon(QIcon(":/resources/icons/logo.ico"));
 
     skeletonFileHistory.reserve(FILE_DIALOG_HISTORY_MAX_ENTRIES);
+
+    QObject::connect(state->viewer, &Viewer::coordinateChangedSignal, this, &MainWindow::updateCoordinateBar);
+    static auto updatePositionLabel = [this]{
+        if (viewport3D->hasCursor) {
+            updateCursorLabel(Coordinate(), VIEWPORT_SKELETON);
+        } else {
+            forEachOrthoVPDo([](ViewportOrtho & orthoVP){
+                orthoVP.sendCursorPosition();
+            });
+        }
+    };
+    QObject::connect(state->viewer, &Viewer::coordinateChangedSignal, updatePositionLabel);
+    QObject::connect(state->viewer, &Viewer::zoomChanged, updatePositionLabel);
+
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, [this]() { setSynapseState(SynapseState::Off); });
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::guiModeLoaded, [this]() { setProofReadingUI(Annotation::singleton().guiMode == GUIMode::ProofReading); });
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::lockedToNode, [this](const std::uint64_t nodeID) {
@@ -1333,9 +1347,8 @@ void MainWindow::clearSettings() {
     }
 }
 
-void MainWindow::updateCoordinateBar(int x, int y, int z) {
-    const auto inc{state->skeletonState->displayMatlabCoordinates};
-    currentPosSpins.set({x + inc, y + inc, z + inc});
+void MainWindow::updateCoordinateBar(const Coordinate & pos) {
+    currentPosSpins.set(pos + state->skeletonState->displayMatlabCoordinates);
 }
 
 void MainWindow::resizeEvent(QResizeEvent *) {

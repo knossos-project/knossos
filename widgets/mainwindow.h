@@ -274,7 +274,7 @@ public slots:
 
     /* toolbar slots */
     void coordinateEditingFinished();
-    void updateCoordinateBar(int x, int y, int z);
+    void updateCoordinateBar(const Coordinate & pos);
     // viewports
     void resetViewports();
 

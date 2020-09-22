@@ -55,8 +55,6 @@ Viewer::Viewer() : evilHack{[this](){ state->viewer = this; return true; }()} {
 
     recalcTextureOffsets();
 
-    rewire();
-
     QObject::connect(&timer, &QTimer::timeout, this, &Viewer::run);// timer is started in main
 
     QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &Viewer::segmentation_changed);
@@ -1171,23 +1169,6 @@ void Viewer::datasetColorAdjustmentsChanged() {
     }
     reslice_notify();
     emit layerRenderSettingsChanged();
-}
-
-/** Global interfaces  */
-void Viewer::rewire() {
-    // viewer signals
-    QObject::connect(this, &Viewer::zoomChanged, &window->widgetContainer.zoomWidget, &ZoomWidget::update);
-    QObject::connect(this, &Viewer::coordinateChangedSignal, [this](const Coordinate & pos) { window->updateCoordinateBar(pos.x, pos.y, pos.z); });
-    QObject::connect(this, &Viewer::coordinateChangedSignal, [this](const Coordinate &) {
-        if (window->viewport3D->hasCursor) {
-            window->updateCursorLabel(Coordinate(), VIEWPORT_SKELETON);
-        } else {
-            window->forEachOrthoVPDo([](ViewportOrtho & orthoVP) {
-                orthoVP.sendCursorPosition();
-            });
-        }
-    });
-    // end viewer signals
 }
 
 void Viewer::addRotation(const QQuaternion & quaternion) {
