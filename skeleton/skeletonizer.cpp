@@ -525,8 +525,11 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                         }
                         if (sizeSet) {
                             Annotation::singleton().updateMovementArea(movementAreaMin, movementAreaMin + movementAreaSize);//range checked
-                        } else {
-                            Annotation::singleton().updateMovementArea(movementAreaMin, movementAreaMax + 1); // backwards compat max inclusive area
+                        } else { // old max-inclusive movement area
+                            Annotation::singleton().updateMovementArea(movementAreaMin, movementAreaMax);
+                            // The movement area will appear smaller by 1 compared to before. But the data is still contained in the kzip.
+                            // If we instead incremented it by 1 to keep appearance consistent to before,
+                            // the newly saved kzip would have a different movement area than before which might break client code.
                         }
                     }
                 } else if(xml.name() == "time") { // in case of a merge the current annotation's time is kept.
