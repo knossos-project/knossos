@@ -85,8 +85,10 @@ bool Annotation::outsideMovementArea(const Coordinate & pos) {
 }
 
 void Annotation::updateMovementArea(const Coordinate & min, const Coordinate & max) {
-    movementAreaMin = min.capped({0, 0, 0}, Dataset::current().boundary + 1);
-    movementAreaMax = max.capped({0, 0, 0}, Dataset::current().boundary + 1);
+    Coordinate minMax{std::min(std::max(min.x + 1, max.x), Dataset::current().boundary.x), std::min(std::max(min.y + 1, max.y), Dataset::current().boundary.y), std::min(std::max(min.z + 1, max.z), Dataset::current().boundary.z)};
+    Coordinate maxMin{std::max(0, std::min(min.x, minMax.x - 1)), std::max(0, std::min(min.y, minMax.y - 1)), std::max(0, std::min(min.z, minMax.z - 1))};
+    movementAreaMin = min.capped(maxMin, minMax - 1);
+    movementAreaMax = max.capped(maxMin + 1, minMax + 1);
     emit movementAreaChanged();
 }
 

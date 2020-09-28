@@ -59,6 +59,9 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     addSpins(minAreaHeadLayout, minLabel, minSpins, minAuto, minAreaSpinsLayout);
     topLeftButton.setToolTip(tr("Sets movement area minimum to the visible top left corner of the xy viewport."));
     minAreaHeadLayout.addWidget(&topLeftButton);
+    sizeSpins.xSpin.setMinimum(1);
+    sizeSpins.ySpin.setMinimum(1);
+    sizeSpins.zSpin.setMinimum(1);
     addSpins(sizeAreaHeadLayout, sizeLabel, sizeSpins, sizeAuto, sizeAreaSpinsLayout);
     addSpins(maxAreaHeadLayout, maxLabel, maxSpins, maxAuto, maxAreaSpinsLayout);
     bottomRightButton.setToolTip(tr("Sets movement area maximum to the visible bottom right corner of the xy viewport."));
