@@ -291,8 +291,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
 
 #include <QTemporaryFile>
 
-#include "toml/parser.hpp"
-#include "toml/get.hpp"
+#include <toml.hpp>
 
 extern toml::value toml_parse(const std::string & filename);
 
