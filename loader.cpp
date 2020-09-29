@@ -744,23 +744,23 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 downloads[cubeCoord] = &dynamic_cast<QNetworkReply &>(io);
                 QObject::connect(downloads[cubeCoord], &QNetworkReply::finished, this, processDownload);
             } else {
-                opens[cubeCoord] = std::make_unique<QFutureWatcher<bool>>();
+                opens[cubeCoord] = std::make_unique<OpenWatcher>();
                 auto & watcher = *opens[cubeCoord];
                 io.setParent(&watcher);// reparent, so it gets destroyed upon cleanup
-                QObject::connect(&watcher, &QFutureWatcher<bool>::finished, this, [this, &watcher, loadingNr, processDownload, &opens, cubeCoord](){
-                    if (!watcher.isCanceled() && loadingNr == Loader::Controller::singleton().loadingNr) {
-                        processDownload(watcher.result());
+                QObject::connect(&watcher, &QFutureWatcher<bool>::finished, this, [this, &watcher, processDownload, &opens, cubeCoord](){
+                    if (auto res = watcher.result()) {// skip aborted open
+                        processDownload(res.get());
                     }
                     opens.erase(cubeCoord);
                     broadcastProgress();
                 });
-                watcher.setFuture(QtConcurrent::run(&localPool, [loadingNr, &io](){
+                watcher.setFuture(QtConcurrent::run(&localPool, [loadingNr, &io]() -> boost::optional<bool> {
                     // immediately exit unstarted thread from the previous loadSignal
-                    if (loadingNr == Loader::Controller::singleton().loadingNr) {
-                        io.open(QIODevice::ReadOnly);
-                        return dynamic_cast<QFile&>(io).exists();
+                    if (loadingNr != Loader::Controller::singleton().loadingNr) {
+                        return boost::none;
                     }
-                    return false;
+                    io.open(QIODevice::ReadOnly);
+                    return dynamic_cast<QFile&>(io).exists();
                 }));
             }
             broadcastProgress(true);
