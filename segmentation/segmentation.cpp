@@ -744,13 +744,11 @@ void Segmentation::jumpToSelectedObject() {
     }
 }
 
-bool Segmentation::placeCommentForSelectedObject(const QString & comment) {
-    if (selectedObjectIndices.size() == 1) {
-        int index = selectedObjectIndices.front();
+bool Segmentation::placeCommentForSelectedObjects(const QString & comment) {
+    for (auto index : selectedObjectIndices) {
         changeComment(objects[index], comment);
-        return true;
     }
-    return false;
+    return !selectedObjectIndices.empty();
 }
 
 void Segmentation::restoreDefaultColorForSelectedObjects() {

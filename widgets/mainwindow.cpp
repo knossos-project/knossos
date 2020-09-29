@@ -1435,22 +1435,23 @@ void MainWindow::updateCommentShortcut(const int index, const QString & comment)
 }
 
 bool MainWindow::placeComment(const int index) {
-    if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing) && state->skeletonState->activeNode != nullptr) {
-        CommentSetting comment = CommentSetting::comments[index];
-        if (!comment.text.isEmpty()) {
-            if(comment.appendComment) {
-                auto activeNodeComment = state->skeletonState->activeNode->getComment();
-                if(activeNodeComment.isEmpty() == false) {
-                    activeNodeComment.append(' ');
-                    comment.text.prepend(activeNodeComment);
+    if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)) {
+        for (auto & node : state->skeletonState->selectedNodes) {
+            CommentSetting comment = CommentSetting::comments[index];
+            if (!comment.text.isEmpty()) {
+                if (comment.appendComment) {
+                    auto prevNodeComment = node->getComment();
+                    if (!prevNodeComment.isEmpty()) {
+                        prevNodeComment.append(' ');
+                        comment.text.prepend(prevNodeComment);
+                    }
                 }
+                Skeletonizer::singleton().setComment(*node, comment.text);
             }
-            Skeletonizer::singleton().setComment(*state->skeletonState->activeNode, comment.text);
-            return true;
         }
-        return false;
+        return !state->skeletonState->selectedNodes.empty();
     } else {
-        return Segmentation::singleton().placeCommentForSelectedObject(CommentSetting::comments[index].text);
+        return Segmentation::singleton().placeCommentForSelectedObjects(CommentSetting::comments[index].text);
     }
 }
 
