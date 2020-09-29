@@ -1640,10 +1640,10 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
         //move from center to cursor
         glTranslatef(Dataset::current().scales[0].x * coord.x, Dataset::current().scales[0].y * coord.y, Dataset::current().scales[0].z * coord.z);
         if (viewportType == VIEWPORT_XZ && bview == brush_t::view_t::xz) {
-            glTranslatef(0, 0, Dataset::current().scale.z);//move origin to other corner of voxel, idrk why that’s necessary
+            glTranslatef(0, 0, Dataset::current().scale.z / Dataset::current().scaleFactor.z);//move origin to other corner of voxel, idrk why that’s necessary
             glRotatef(-90, 1, 0, 0);
         } else if(viewportType == VIEWPORT_ZY && bview == brush_t::view_t::zy) {
-            glTranslatef(0, 0, Dataset::current().scale.z);//move origin to other corner of voxel, idrk why that’s necessary
+            glTranslatef(0, 0, Dataset::current().scale.z  / Dataset::current().scaleFactor.z);//move origin to other corner of voxel, idrk why that’s necessary
             glRotatef( 90, 0, 1, 0);
         } else if (viewportType != VIEWPORT_XY || bview != brush_t::view_t::xy) {
             return;
