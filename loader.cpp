@@ -393,9 +393,14 @@ void Loader::Worker::abortDownloadsFinishDecompression() {
 
 template<typename Func>
 void Loader::Worker::abortDownloadsFinishDecompression(std::size_t layerId, Func keep) {
-    finalizeOperation(slotOpen[layerId], keep, [](auto & elem){ elem->cancel(); });
+    for (auto & elem : slotOpen[layerId]) {
+        elem.second->cancel();
+        elem.second->waitForFinished();
+    }
+    slotOpen[layerId].clear();
     abortDownloads(slotDownload[layerId], keep);
     finalizeOperation(slotDecompression[layerId], keep, [](auto & elem){ elem->waitForFinished(); });
+    broadcastProgress();
 }
 
 std::pair<bool, void*> decompressCube(void * currentSlot, QIODevice & reply, const std::size_t layerId, const Dataset dataset, decltype(state->cube2Pointer)::value_type::value_type & cubeHash, const CoordOfCube cubeCoord) {
@@ -703,6 +708,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                         decompressions.erase(cubeCoord);
                         broadcastProgress();
                     });
+                    io.setParent(nullptr);// reparent, so it doesn’t get destroyed with qnam
                     decompressions[cubeCoord].reset(watcher);
                     downloads.erase(cubeCoord);
                     watcher->setFuture(QtConcurrent::run(&decompressionPool, std::bind(&decompressCube, currentSlot, std::ref(io), layerId, dataset, std::ref(cubeHash), cubeCoord)));
@@ -735,12 +741,12 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 }
             };
             if (dataset.url.scheme() != "file") {
-                io.setParent(nullptr);// reparent, so it doesn’t get destroyed with qnam
                 downloads[cubeCoord] = &dynamic_cast<QNetworkReply &>(io);
                 QObject::connect(downloads[cubeCoord], &QNetworkReply::finished, this, processDownload);
             } else {
                 opens[cubeCoord] = std::make_unique<QFutureWatcher<bool>>();
                 auto & watcher = *opens[cubeCoord];
+                io.setParent(&watcher);// reparent, so it gets destroyed upon cleanup
                 QObject::connect(&watcher, &QFutureWatcher<bool>::finished, this, [this, &watcher, loadingNr, processDownload, &opens, cubeCoord](){
                     if (!watcher.isCanceled() && loadingNr == Loader::Controller::singleton().loadingNr) {
                         processDownload(watcher.result());
