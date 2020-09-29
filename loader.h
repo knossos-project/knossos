@@ -67,8 +67,7 @@ class Worker;
 }
 
 namespace Loader {
-class Worker;
-
+using DecompressionResult = std::tuple<bool, void*, QIODevice*>;
 class Worker : public QObject {
     Q_OBJECT
     friend class Loader::Controller;
@@ -82,7 +81,6 @@ private:
 
     template<typename T>
     using ptr = std::unique_ptr<T>;
-    using DecompressionResult = std::pair<bool, void *>;
     using DecompressionOperationPtr = ptr<QFutureWatcher<DecompressionResult>>;
     using OpenWatcher = QFutureWatcher<boost::optional<bool>>;
     std::vector<std::unordered_map<CoordOfCube, ptr<OpenWatcher>>> slotOpen;
@@ -102,6 +100,7 @@ private:
     void snappyCacheBackupRaw(const CoordOfCube &, const void * cube);
     void snappyCacheClear();
 
+    decltype(slotDecompression)::value_type::iterator finalizeDecompression(QFutureWatcher<DecompressionResult> & watcher, decltype(freeSlots)::value_type & freeSlots, decltype(slotDecompression)::value_type & decompressions, const CoordOfCube & cubeCoord);
     void abortDownloadsFinishDecompression();
     template<typename Func>
     void abortDownloadsFinishDecompression(std::size_t, Func);

@@ -376,19 +376,21 @@ void abortDownloads(Downloads & downloads, Func keep) {
     }
 }
 
-template<typename Decomp, typename Func, typename Func2>
-void finalizeOperation(Decomp & decompressions, Func keep, Func2 handle) {
-    for (auto && elem : decompressions) {
-        if (!keep(elem.first)) {
-            handle(elem.second);
-        }
-    }
-}
-
 void Loader::Worker::abortDownloadsFinishDecompression() {
     for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
         abortDownloadsFinishDecompression(layerId, [](const CoordOfCube &){return false;});
     }
+}
+
+decltype(Loader::Worker::slotDecompression)::value_type::iterator Loader::Worker::finalizeDecompression(QFutureWatcher<DecompressionResult> & watcher, decltype(freeSlots)::value_type & freeSlots, decltype(slotDecompression)::value_type & decompressions, const CoordOfCube & cubeCoord) {
+    auto [success, currentSlot, io] = watcher.result();
+    if (!success) {//decompression unsuccessful
+        freeSlots.emplace_back(currentSlot);
+    }
+    io->deleteLater();
+    auto it = decompressions.erase(decompressions.find(cubeCoord));
+    broadcastProgress();
+    return it;
 }
 
 template<typename Func>
@@ -398,14 +400,22 @@ void Loader::Worker::abortDownloadsFinishDecompression(std::size_t layerId, Func
         elem.second->waitForFinished();
     }
     slotOpen[layerId].clear();
-    abortDownloads(slotDownload[layerId], keep);
-    finalizeOperation(slotDecompression[layerId], keep, [](auto & elem){ elem->waitForFinished(); });
     broadcastProgress();
+    abortDownloads(slotDownload[layerId], keep);
+    for (auto it = std::begin(slotDecompression[layerId]); it != std::end(slotDecompression[layerId]);) {
+        if (!keep(it->first)) {
+            it->second->waitForFinished();
+            it = finalizeDecompression(*it->second, freeSlots[layerId], slotDecompression[layerId], it->first);
+        } else {
+            ++it;
+        }
+    }
 }
 
-std::pair<bool, void*> decompressCube(void * currentSlot, QIODevice & reply, const std::size_t layerId, const Dataset dataset, decltype(state->cube2Pointer)::value_type::value_type & cubeHash, const CoordOfCube cubeCoord) {
+Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply, const std::size_t layerId, const Dataset dataset, decltype(state->cube2Pointer)::value_type::value_type & cubeHash, const CoordOfCube cubeCoord) {
     if (!reply.isOpen()) {// sanity check, finished replies with no error should be ready for reading (https://bugreports.qt.io/browse/QTBUG-45944)
-        return {false, currentSlot};
+        qCritical() << layerId << cubeCoord << static_cast<int>(dataset.type) << "decompression failed → no fill";
+        return {false, currentSlot, &reply};
     }
     QThread::currentThread()->setPriority(QThread::IdlePriority);
     bool success = false;
@@ -467,7 +477,7 @@ std::pair<bool, void*> decompressCube(void * currentSlot, QIODevice & reply, con
         state->viewer->reslice_notify_all(layerId, cubeCoord);
     }
 
-    return {success, currentSlot};
+    return {success, currentSlot, &reply};
 }
 
 void Loader::Worker::cleanup(const Coordinate center) {
@@ -692,21 +702,8 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     auto * currentSlot = freeSlots.front();
                     freeSlots.pop_front();
                     auto * watcher = new QFutureWatcher<DecompressionResult>;
-                    QObject::connect(watcher, &QFutureWatcher<DecompressionResult>::finished, this, [this, &io, dataset, layerId, &freeSlots, &decompressions, cubeCoord, watcher, currentSlot](){
-                        if (!watcher->isCanceled()) {
-                            auto result = watcher->result();
-
-                            if (!result.first) {//decompression unsuccessful
-                                qCritical() << layerId << cubeCoord << static_cast<int>(dataset.type) << "decompression failed → no fill";
-                                freeSlots.emplace_back(result.second);
-                            }
-                        } else {
-                            qCritical() << layerId << cubeCoord << static_cast<int>(dataset.type) << "future canceled";
-                            freeSlots.emplace_back(currentSlot);
-                        }
-                        io.deleteLater();
-                        decompressions.erase(cubeCoord);
-                        broadcastProgress();
+                    QObject::connect(watcher, &QFutureWatcher<DecompressionResult>::finished, this, [this, watcher, &freeSlots, &decompressions, cubeCoord](){
+                        finalizeDecompression(*watcher, freeSlots, decompressions, cubeCoord);
                     });
                     io.setParent(nullptr);// reparent, so it doesn’t get destroyed with qnam
                     decompressions[cubeCoord].reset(watcher);
