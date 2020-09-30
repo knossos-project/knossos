@@ -654,6 +654,23 @@ void MainWindow::createMenus() {
         }
     }, Qt::Key_L);
     addApplicationShortcut(actionMenu, QIcon(), tr("Jump to potential overlap"), this, [this]() {
+        if (Skeletonizer::singleton().skeletonState.overlapFound) {
+            if (!Skeletonizer::singleton().skeletonState.selectedNodes.empty()) {
+                QMessageBox overlapFpBox{this};
+                overlapFpBox.setIcon(QMessageBox::Information);
+                overlapFpBox.setText("The current overlap is unresolved."
+                                          "\nResolve it as false overlap and go to the next one? You can also Cancel and resolve by correcting the annotation.");
+                overlapFpBox.setInformativeText("If the overlap is not resolved, it will be found again.");
+                overlapFpBox.setDetailedText("If you mark this as false overlap, one of the involved nodes will receive the property false_overlap: 1.");
+                auto * ok = overlapFpBox.addButton(tr("Mark as false overlap and find next one"), QMessageBox::AcceptRole);
+                overlapFpBox.addButton(QMessageBox::Cancel);
+                overlapFpBox.exec();
+                if (overlapFpBox.clickedButton() == ok) {
+                    Skeletonizer::singleton().skeletonState.selectedNodes.front()->properties.insert("false_overlap", 1);
+                }
+            }
+            Skeletonizer::singleton().skeletonState.overlapFound = false;
+        }
         auto overlap = Skeletonizer::singleton().findOverlap();
         if (!overlap.second.isEmpty()) {
             for (auto & tree : Skeletonizer::singleton().skeletonState.trees) {
@@ -662,7 +679,8 @@ void MainWindow::createMenus() {
             overlap.first.first->render = overlap.first.second->render = true;
             Skeletonizer::singleton().selectNodes(overlap.second);
             Skeletonizer::singleton().jumpToNode(**(overlap.second.begin()));
-            state->viewerState->AllTreesBuffers.regenVertBuffer = state->viewerState->selectedTreesBuffers.regenVertBuffer = true;
+            Skeletonizer::singleton().skeletonState.overlapFound = true;
+            state->viewerState->AllTreesBuffers.regenVertBuffer = true;
         } else {
             QMessageBox box{this};
             box.setIcon(QMessageBox::Information);

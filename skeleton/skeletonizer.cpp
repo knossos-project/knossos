@@ -128,6 +128,9 @@ Skeletonizer::Skeletonizer(bool global) {
 
         QObject::connect(this, &Skeletonizer::resetData, this, &Skeletonizer::guiModeLoaded);
         QObject::connect(this, &Skeletonizer::resetData, this, &Skeletonizer::lockingChanged);
+        QObject::connect(this, &Skeletonizer::nodeSelectionChangedSignal, [this]() {
+            this->skeletonState.overlapFound = false;
+        });
     }
 }
 
@@ -2017,7 +2020,7 @@ std::pair<std::pair<treeListElement*, treeListElement*>, QSet<nodeListElement*>>
                             nodes.insert(&overlapCandidate.get()->target);
                         }
                     }
-                    const bool valid = std::find_if(std::cbegin(nodes), std::cend(nodes), [](auto * node){ return node->getComment() == "overlap fp"; }) == std::cend(nodes);
+                    const bool valid = std::find_if(std::cbegin(nodes), std::cend(nodes), [](auto * node){ return node->properties.value("false_overlap", 0).toBool(); }) == std::cend(nodes);
                     if (valid && nodes.size() >= 3*2) {
                         return {{&*treeIt, &*treeIt2}, nodes};
                     } else {

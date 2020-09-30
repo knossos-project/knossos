@@ -150,6 +150,8 @@ struct SkeletonState {
     std::vector<std::uint64_t> branchStack;
     bool branchpointUnresolved{false};
 
+    bool overlapFound{false};
+
     boost::optional<BufferSelection> meshLastClickInformation;
     bool jumpToSkeletonNext{true};
 
@@ -184,7 +186,7 @@ struct SkeletonState {
 class Skeletonizer : public QObject {
     Q_OBJECT
     QSet<QString> textProperties;
-    QSet<QString> numberProperties;
+    QSet<QString> numberProperties{"OverlapFP"};
 public:
     bool simpleEnough(const std::vector<nodeListElement*> & nodes) {
         return nodes.size() < 100;
