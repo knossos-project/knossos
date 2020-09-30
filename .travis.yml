@@ -1,42 +1,31 @@
-language: minimal
+language: shell
 
 git:
-  depth: false # tags for git describe may be farther away than the default depth
+  depth: false # tags for `git describe` may be farther away than the default depth
 
-matrix:
-  include:
-    - os: linux
-      dist: xenial
-      services: docker
-      env: TRAVIS_TAG=nightly
-    - os: linux
-      dist: xenial
-      services: docker
-      env: TRAVIS_TAG=nightly-dev
-    - os: osx
-      sudo: enabled
-      env: TRAVIS_TAG=nightly
-      addons:
-        homebrew:
-          packages:
-            - boost
-            - ninja
-            - qt
-            - quazip
-            - snappy
-          update: true
-    - os: osx
-      sudo: enabled
-      env: TRAVIS_TAG=nightly-dev
-      addons:
-        homebrew:
-          packages:
-            - boost
-            - ninja
-            - qt
-            - quazip
-            - snappy
-          update: true
+os:
+  - linux
+  - osx
+
+env:
+  - TRAVIS_TAG=nightly
+  - TRAVIS_TAG=nightly-dev
+
+dist: focal
+
+osx_image: xcode9.4
+
+addons:
+  homebrew:
+    packages:
+      - boost
+      - ninja
+      - qt
+      - quazip
+      - snappy
+    update: true
+
+jobs:
   exclude:
     - if: branch != master
       env: TRAVIS_TAG=nightly
@@ -48,26 +37,26 @@ script:
 
 deploy:
   - provider: releases
-    api_key:
+    edge: true
+    token:
       secure: "DHBayH59cTgSeuzw0umwjc52r5p1sR3EV1vOG77cK1NIb7fi2UVmx69V2mIzfGYp0t1uFDsVvDGtFYRQxKozCteBu2oinmbiSjbeWnyldQqTFnF4QONF+eWGiHNdOdHY7Tj37+eV5BlgfsXZ5MfLN3tXZ2y++D+yfoUItsbvC3I="
     file_glob: true
     file:
       - "linux.KNOSSOS.nightly.AppImage"
       - "macos.KNOSSOS.nightly.app.zip"
-    skip_cleanup: true
     overwrite: true
     on:
       repo: knossos-project/knossos
       branch: master
       condition: $TRAVIS_TAG = nightly
   - provider: releases
-    api_key:
+    edge: true
+    token:
       secure: "DHBayH59cTgSeuzw0umwjc52r5p1sR3EV1vOG77cK1NIb7fi2UVmx69V2mIzfGYp0t1uFDsVvDGtFYRQxKozCteBu2oinmbiSjbeWnyldQqTFnF4QONF+eWGiHNdOdHY7Tj37+eV5BlgfsXZ5MfLN3tXZ2y++D+yfoUItsbvC3I="
     file_glob: true
     file:
       - "linux.*-KNOSSOS.nightly.AppImage"
       - "macos.*-KNOSSOS.nightly.app.zip"
-    skip_cleanup: true
     overwrite: true
     on:
       repo: knossos-project/knossos
