@@ -713,7 +713,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         // offset center with n at the same magnitude as the current position
         // gluLookAt only uses it to calculate the focal direction via center - camera
         // which suffers heavy loss of precision if the magnitudes differ substantially
-        const auto center = Coord<double>(isoCurPos) - Coord<double>(n) * std::pow(10, std::log10(isoCurPos.length()));
+        const auto center =  Coord<double>(isoCurPos) - Coord<double>(n) * std::max(1., static_cast<double>(isoCurPos.length()));
         const auto v2 = Coord<double>(this->v2);
         gluLookAt(eye.x, eye.y, eye.z
                   , center.x, center.y, center.z
