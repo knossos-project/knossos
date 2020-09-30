@@ -81,29 +81,21 @@ Viewer::Viewer() : evilHack{[this](){ state->viewer = this; return true; }()} {
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treesMerged, regVBuff);
 
     static auto updateSelectionColor = [this](GLBuffers & glBuffers) {
-        if(!glBuffers.regenVertBuffer) {
+        if (!glBuffers.regenVertBuffer) {
             auto & svp = glBuffers.pointVertBuffer;
-
-            //restore old node color
-            size_t offset = svp.colorBufferOffset[svp.lastSelectedNode];
-            QColor color = getNodeColor(*state->skeletonState->nodesByNodeID[svp.lastSelectedNode]);
-
-            svp.colors[offset] = decltype(glBuffers.lineVertBuffer.colors)::value_type{{static_cast<std::uint8_t>(color.red()), static_cast<std::uint8_t>(color.green()), static_cast<std::uint8_t>(color.blue()), static_cast<std::uint8_t>(color.alpha())}};
-
-            svp.color_buffer.bind();
-            svp.color_buffer.write(static_cast<int>(offset * sizeof(svp.colors[offset])), &svp.colors[offset], sizeof(svp.colors[offset]));
-            svp.color_buffer.release();
-
-            //colorize new active node
+            auto setColorAtOffset = [&svp](auto offset, auto color){
+                svp.colors[offset] = {{static_cast<std::uint8_t>(color.red()), static_cast<std::uint8_t>(color.green()), static_cast<std::uint8_t>(color.blue()), static_cast<std::uint8_t>(color.alpha())}};
+                svp.color_buffer.bind();
+                svp.color_buffer.write(static_cast<int>(offset * sizeof(svp.colors[offset])), &svp.colors[offset], sizeof(svp.colors[offset]));
+                svp.color_buffer.release();
+            };
+            if (svp.colorBufferOffset.count(svp.lastSelectedNode)) {// restore old node color
+                setColorAtOffset(svp.colorBufferOffset[svp.lastSelectedNode], getNodeColor(*state->skeletonState->nodesByNodeID[svp.lastSelectedNode]));
+            }
             svp.lastSelectedNode = state->skeletonState->selectedNodes.front()->nodeID;
-            offset = svp.colorBufferOffset[svp.lastSelectedNode];
-
-            color = Qt::green;
-            decltype(glBuffers.lineVertBuffer.colors)::value_type activeNodeColor{{static_cast<std::uint8_t>(color.red()), static_cast<std::uint8_t>(color.green()), static_cast<std::uint8_t>(color.blue()), static_cast<std::uint8_t>(color.alpha())}};
-
-            svp.color_buffer.bind();
-            svp.color_buffer.write(static_cast<int>(offset * sizeof(activeNodeColor)), &activeNodeColor, sizeof(activeNodeColor));
-            svp.color_buffer.release();
+            if (svp.colorBufferOffset.count(svp.lastSelectedNode)) {// colorize new active node
+                setColorAtOffset(svp.colorBufferOffset[svp.lastSelectedNode], QColor{Qt::green});
+            }
         } else {
             glBuffers.regenVertBuffer = true;
         }
@@ -128,10 +120,7 @@ Viewer::Viewer() : evilHack{[this](){ state->viewer = this; return true; }()} {
             }
         }
     });
-    QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [](){
-        state->viewerState->AllTreesBuffers.regenVertBuffer = true;
-        state->viewerState->selectedTreesBuffers.regenVertBuffer = true;
-    });
+    QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, regVBuff);
 
     keyRepeatTimer.start();
 }
