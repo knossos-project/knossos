@@ -59,8 +59,8 @@ ViewportOrtho::ViewportOrtho(QWidget *parent, ViewportType viewportType) : Viewp
 
 ViewportOrtho::~ViewportOrtho() {
     makeCurrent();
-    for (auto & elem : texture.texHandle) {
-        elem.destroy();
+    for (auto & elem : textures) {
+        elem.texHandle.destroy();
     }
 }
 
@@ -121,21 +121,20 @@ void ViewportOrtho::resetTexture(const std::size_t layerCount) {
     for (auto && elem : resliceNecessary) {
         elem = true;// can’t use vector init ctor for atomics
     }
-    const bool changedLayerCount{layerCount != texture.texHandle.size()};
-    const bool changedTextureSize{!texture.texHandle.empty() && texture.size != texture.texHandle.front().width()};
+    const bool changedLayerCount{layerCount != textures.size()};
+    const bool changedTextureSize{!textures.empty() && textures[0].size != textures[0].texHandle.width()};
     makeCurrent();
     if (context() != nullptr && (changedLayerCount || changedTextureSize)) {
-        texture.texHandle = decltype(texture.texHandle)(layerCount);
-        texture.texData = decltype(texture.texData)(layerCount);
+        textures = decltype(textures)(layerCount);
         for (std::size_t i{0}; i < layerCount; ++i) {
-            auto & elem = texture.texHandle[i];
-            auto & texData = texture.texData[i];
+            auto & elem = textures[i].texHandle;
+            auto & texData = textures[i].texData;
             elem.destroy();
-            elem.setSize(texture.size, texture.size);
+            elem.setSize(textures[i].size, textures[i].size);
             elem.setFormat(QOpenGLTexture::RGBA8_UNorm);
             elem.setWrapMode(QOpenGLTexture::ClampToEdge);
             elem.allocateStorage();
-            texData.resize(4 * std::pow(texture.size, 2));
+            texData.resize(4 * std::pow(textures[i].size, 2));
             for (std::size_t i = 3; i < texData.size(); i += 4) {
                 texData[i-3] = 0;
                 texData[i-2] = 0;
@@ -151,13 +150,13 @@ void ViewportOrtho::resetTexture(const std::size_t layerCount) {
 }
 
 void ViewportOrtho::applyTextureFilter() {
-    for (std::size_t layerId{0}; layerId < texture.texHandle.size(); ++layerId) {
+    for (std::size_t layerId{0}; layerId < textures.size(); ++layerId) {
         setTextureFilter(layerId, state->viewerState->layerRenderSettings[layerId].textureFilter);
     }
 }
 
 void ViewportOrtho::setTextureFilter(std::size_t layerId, const QOpenGLTexture::Filter textureFilter) {
-    auto & elem = texture.texHandle[layerId];
+    auto & elem = textures[layerId].texHandle;
     if (elem.isCreated()) {
         elem.setMinMagFilters(textureFilter, textureFilter);
     }
@@ -169,10 +168,10 @@ void ViewportOrtho::sendCursorPosition() {
     }
 }
 
-float ViewportOrtho::displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const {
+float ViewportOrtho::displayedEdgeLenghtXForZoomFactor(const float zoomFactor, const std::size_t layerId) const {
     float FOVinDCs = ((float)state->M) - 1.f;
-    float result = FOVinDCs * Dataset::current().cubeEdgeLength / static_cast<float>(texture.size);
-    return (std::floor((result * zoomFactor) / 2. / texture.texUnitsPerDataPx) * texture.texUnitsPerDataPx)*2;
+    float result = FOVinDCs * Dataset::datasets[layerId].cubeEdgeLength / static_cast<float>(textures[layerId].size);
+    return (std::floor((result * zoomFactor) / 2. / textures[layerId].texUnitsPerDataPx) * textures[layerId].texUnitsPerDataPx)*2;
 }
 
 void ViewportOrtho::zoom(const float step) {

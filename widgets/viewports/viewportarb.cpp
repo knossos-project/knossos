@@ -36,9 +36,9 @@ ViewportArb::ViewportArb(QWidget *parent, ViewportType viewportType) : ViewportO
     });
 }
 
-float ViewportArb::displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const {
-    float result = displayedIsoPx / static_cast<float>(texture.size);
-    return (std::floor((result * zoomFactor) / 2. / texture.texUnitsPerDataPx) * texture.texUnitsPerDataPx)*2;
+float ViewportArb::displayedEdgeLenghtXForZoomFactor(const float zoomFactor, const std::size_t layerId) const {
+    float result = displayedIsoPx / static_cast<float>(textures[layerId].size);
+    return (std::floor((result * zoomFactor) / 2. / textures[layerId].texUnitsPerDataPx) * textures[layerId].texUnitsPerDataPx)*2;
 }
 
 void ViewportArb::hideVP() {
@@ -63,7 +63,7 @@ void ViewportArb::updateOverlayTexture() {
     const int width = (state->M - 1) * Dataset::current().cubeEdgeLength / std::sqrt(2);
     const int height = width;
     const auto begin = leftUpperPxInAbsPx_float;
-    auto & texData = texture.texData[Segmentation::singleton().layerId];
+    auto & texData = textures[Segmentation::singleton().layerId].texData;
     texData.resize(4 * width * height, 0);
     boost::multi_array_ref<uint8_t, 3> viewportView(texData.data(), boost::extents[width][height][4]);
     // cache
@@ -85,7 +85,7 @@ void ViewportArb::updateOverlayTexture() {
             viewportView[y][x][3] = std::get<3>(color);
         }
     }
-    texture.texHandle[Segmentation::singleton().layerId].bind();
+    textures[Segmentation::singleton().layerId].texHandle.bind();
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
-    texture.texHandle[Segmentation::singleton().layerId].release();
+    textures[Segmentation::singleton().layerId].texHandle.release();
 }

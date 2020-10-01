@@ -92,9 +92,9 @@ public:
     double screenPxYPerMag1Px;
 
     char * viewPortData;
-    viewportTexture texture;
-    float screenPxXPerDataPxForZoomFactor(const float zoomFactor) const { return edgeLength / (displayedEdgeLenghtXForZoomFactor(zoomFactor) / texture.texUnitsPerDataPx); }
-    virtual float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const;
+    std::vector<viewportTexture> textures;
+    float screenPxXPerDataPxForZoomFactor(const float zoomFactor, const std::size_t layerId) const { return edgeLength / (displayedEdgeLenghtXForZoomFactor(zoomFactor, layerId) / textures[layerId].texUnitsPerDataPx); }
+    virtual float displayedEdgeLenghtXForZoomFactor(const float zoomFactor, const std::size_t layerId) const;
 
 public slots:
     void takeSnapshotDatasetSize(SnapshotOptions o);

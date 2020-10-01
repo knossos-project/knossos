@@ -156,7 +156,7 @@ bool PythonProxy::loader_finished() {
 }
 
 void PythonProxy::set_magnification_lock(const bool locked) {
-    state->viewer->setMagnificationLock(locked);
+//    state->viewer->setMagnificationLock(locked);
 }
 
 int PythonProxy::annotation_time() {

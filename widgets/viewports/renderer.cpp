@@ -571,8 +571,8 @@ void ViewportOrtho::renderViewportFast() {
 
     //z component of vp vectors specifies portion of scale to apply
     const auto zScaleIncrement = !arb ? scale - 1 : 0;
-    const float hfov = texture.FOV * fov / (1 + zScaleIncrement * std::abs(v1.z));
-    const float vfov = texture.FOV * fov / (1 + zScaleIncrement * std::abs(v2.z));
+    const float hfov = texture[0].FOV * fov / (1 + zScaleIncrement * std::abs(v1.z));
+    const float vfov = texture[0].FOV * fov / (1 + zScaleIncrement * std::abs(v2.z));
     viewMatrix.scale(width() / hfov, height() / vfov);
     const auto cameraPos = floatCoordinate{cpos} + n;
     viewMatrix.lookAt(cameraPos, cpos, v2);
@@ -719,7 +719,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
                   , center.x, center.y, center.z
                   , v2.x, v2.y, v2.z);// negative up vectors, because origin is at the top
     };
-    auto slice = [&](auto & texture, std::size_t layerId){
+    auto slice = [&](auto & textures, std::size_t layerId){
         if (!options.nodePicking) {
             state->viewer->vpGenerateTexture(*this, layerId);
             glEnable(GL_TEXTURE_2D);
@@ -759,12 +759,12 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
 
     glDisable(GL_DEPTH_TEST);// don’t clip the skeleton
     // data that’s visible through the skeleton (e.g. halo)
-    for (std::size_t i = 0; i < texture.texHandle.size(); ++i) {
+    for (std::size_t i = 0; i < textures.size(); ++i) {
         const auto ordered_i = state->viewerState->layerOrder[i];
         const auto & layerSettings = state->viewerState->layerRenderSettings[ordered_i];
         if (!options.nodePicking && layerSettings.visible && !Dataset::datasets[ordered_i].isOverlay()) {
             glColor4f(layerSettings.color.redF(), layerSettings.color.greenF(), layerSettings.color.blueF(), layerSettings.opacity);
-            slice(texture, ordered_i);// offset to the far clipping plane to avoid clipping the skeleton
+            slice(textures, ordered_i);// offset to the far clipping plane to avoid clipping the skeleton
             break;
         }
     }
@@ -784,7 +784,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     }
 
     bool first{true};
-    for (std::size_t i = 0; i < texture.texHandle.size(); ++i) {
+    for (std::size_t i = 0; i < textures.size(); ++i) {
         const auto ordered_i = state->viewerState->layerOrder[i];
         const auto & layerSettings = state->viewerState->layerRenderSettings[ordered_i];
         if (!options.nodePicking && layerSettings.visible && (options.drawOverlay || !Dataset::datasets[ordered_i].isOverlay())) {
@@ -800,7 +800,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
                 glColor4f(layerSettings.color.redF(), layerSettings.color.greenF(), layerSettings.color.blueF(), layerSettings.opacity);
                 glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
             }
-            slice(texture, ordered_i);
+            slice(textures, ordered_i);
         }
     }
 
@@ -1764,8 +1764,8 @@ void Viewport3D::renderArbitrarySlicePane(ViewportOrtho & vp, const RenderOption
     for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
         if (state->viewerState->layerRenderSettings[layerId].visible && (!Dataset::datasets[layerId].isOverlay() || options.drawOverlay)) {
             state->viewer->vpGenerateTexture(vp, layerId);// update texture before use
-            auto & texture = vp.texture;
-            texture.texHandle[layerId].bind();
+            auto & texture = vp.textures;
+            texture[layerId].texHandle.bind();
             glBegin(GL_QUADS);
                 glNormal3i(vp.n.x, vp.n.y, vp.n.z);
                 glTexCoord2f(texture.texLUx, texture.texLUy);
@@ -1785,7 +1785,7 @@ void Viewport3D::renderArbitrarySlicePane(ViewportOrtho & vp, const RenderOption
                            -dataPxX * vp.v1.y + dataPxY * vp.v2.y,
                            -dataPxX * vp.v1.z + dataPxY * vp.v2.z);
             glEnd();
-            texture.texHandle[layerId].release();
+            texture[layerId].texHandle.release();
         }
     }
 }

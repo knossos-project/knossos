@@ -285,12 +285,12 @@ public slots:
     void reslice_notify_all(const std::size_t layerId, boost::optional<CoordOfCube> globalCoord = boost::none);
     void segmentation_changed();
     void setMovementAreaFactor(float alpha);
-    int highestMag();
-    int lowestMag();
-    float highestScreenPxXPerDataPx(const bool ofCurrentMag = true);
-    float lowestScreenPxXPerDataPx(const bool ofCurrentMag = true);
-    int calcMag(const float screenPxXPerDataPx);
-    void setMagnificationLock(const bool locked);
+    int highestMag(const std::size_t layerId);
+    int lowestMag(const std::size_t layerId);
+    float highestScreenPxXPerDataPx(const std::size_t layerId, const bool ofCurrentMag = true);
+    float lowestScreenPxXPerDataPx(const std::size_t layerId, const bool ofCurrentMag = true);
+    int calcMag(const std::size_t layerId, const float screenPxXPerDataPx);
+    void setMagnificationLock(const std::size_t layerId, const bool locked);
     void setLayerVisibility(const int index, const bool enabled);
     void setMesh3dAlphaFactor(const float alpha);
     void setMeshSlicingAlphaFactor(const float alpha);

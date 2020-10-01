@@ -128,29 +128,31 @@ ZoomWidget::ZoomWidget(QWidget *parent, DatasetLoadWidget * datasetLoadWidget)
     setLayout(&mainLayout);
 
     connect(&orthoZoomSlider, &QSlider::valueChanged, [this](const int value) {
-        const float newScreenPxXPerDataPx = state->viewer->lowestScreenPxXPerDataPx() * std::pow(zoomStep, value);
-        const float prevFOV = state->viewer->viewportXY->texture.FOV;
-        float newFOV = state->viewer->viewportXY->screenPxXPerDataPxForZoomFactor(1.f) / newScreenPxXPerDataPx;
+        for (int i = 0; i < Dataset::datasets.size(); ++i) {
+            auto & layer = Dataset::datasets[i];
+            const float newScreenPxXPerDataPx = state->viewer->lowestScreenPxXPerDataPx(i) * std::pow(zoomStep, value);
+            const float prevFOV = state->viewer->viewportXY->textures[i].FOV;
+            float newFOV = state->viewer->viewportXY->screenPxXPerDataPxForZoomFactor(1.f, i) / newScreenPxXPerDataPx;
 
-        if (state->viewerState->datasetMagLock == false) {
-            if (prevFOV == VPZOOMMIN && Dataset::current().magnification < state->viewer->highestMag() && prevFOV < newFOV) {
-               state->viewer->updateDatasetMag(Dataset::current().magnification * 2);
-               newFOV = 0.5;
+            if (state->viewerState->datasetMagLock == false) {
+                if (prevFOV == VPZOOMMIN && layer.magnification < state->viewer->highestMag(i) && prevFOV < newFOV) {
+                   state->viewer->updateDatasetMag(Dataset::datasets[i].magnification * 2);
+                   newFOV = 0.5;
+                } else if(prevFOV == 0.5 && Dataset::datasets[i].magnification > state->viewer->lowestMag(i) && prevFOV > newFOV) {
+                    state->viewer->updateDatasetMag(Dataset::datasets[i].magnification / 2);
+                    newFOV = VPZOOMMIN;
+                } else {
+                    const float zoomMax = Dataset::datasets[i].magnification == Dataset::datasets[i].lowestAvailableMag ? VPZOOMMAX : 0.5;
+                    newFOV = std::max(std::min(newFOV, static_cast<float>(VPZOOMMIN)), zoomMax);
+                }
             }
-            else if(prevFOV == 0.5 && Dataset::current().magnification > state->viewer->lowestMag() && prevFOV > newFOV) {
-                state->viewer->updateDatasetMag(Dataset::current().magnification / 2);
-                newFOV = VPZOOMMIN;
-            } else {
-                const float zoomMax = Dataset::current().magnification == Dataset::current().lowestAvailableMag ? VPZOOMMAX : 0.5;
-                newFOV = std::max(std::min(newFOV, static_cast<float>(VPZOOMMIN)), zoomMax);
-            }
+            state->viewer->window->forEachOrthoVPDo([&newFOV, i](ViewportOrtho & orthoVP) {
+                orthoVP.textures[i].FOV = newFOV;
+            });
+            state->viewer->recalcTextureOffsets();
+            updateOrthogonalZoomSpinBox();
+            updateOrthogonalZoomSlider();
         }
-        state->viewer->window->forEachOrthoVPDo([&newFOV](ViewportOrtho & orthoVP) {
-            orthoVP.texture.FOV = newFOV;
-        });
-        state->viewer->recalcTextureOffsets();
-        updateOrthogonalZoomSpinBox();
-        updateOrthogonalZoomSlider();
     });
 
     connect(&orthoZoomSpinBox, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [this](const double value) {
@@ -165,7 +167,7 @@ ZoomWidget::ZoomWidget(QWidget *parent, DatasetLoadWidget * datasetLoadWidget)
         float newFOV = state->viewer->viewportXY->screenPxXPerDataPxForZoomFactor(1.f) / newScreenPxXPerDataPx;
 
         state->viewer->window->forEachOrthoVPDo([&newFOV](ViewportOrtho & orthoVP) {
-            orthoVP.texture.FOV = newFOV;
+            orthoVP.textures.FOV = newFOV;
         });
         state->viewer->recalcTextureOffsets();
         QSignalBlocker blocker{orthoZoomSpinBox};
@@ -237,7 +239,7 @@ ZoomWidget::ZoomWidget(QWidget *parent, DatasetLoadWidget * datasetLoadWidget)
 }
 
 void ZoomWidget::applyZoom(const float newScreenPxXPerDataPx) {
-    const float prevFOV = state->viewer->viewportXY->texture.FOV;
+    const float prevFOV = state->viewer->viewportXY->textures.FOV;
     float newFOV = state->viewer->viewportXY->screenPxXPerDataPxForZoomFactor(1.f) / newScreenPxXPerDataPx;
 
     if (newFOV >= 1 && Dataset::current().magnification < state->viewer->highestMag() && prevFOV < std::round(newFOV)) {
@@ -249,7 +251,7 @@ void ZoomWidget::applyZoom(const float newScreenPxXPerDataPx) {
         newFOV = 1.;
     }
     state->viewer->window->forEachOrthoVPDo([&newFOV](ViewportOrtho & orthoVP) {
-        orthoVP.texture.FOV = newFOV;
+        orthoVP.textures.FOV = newFOV;
     });
 
     state->viewer->recalcTextureOffsets();

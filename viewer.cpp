@@ -190,47 +190,47 @@ void Viewer::setMovementAreaFactor(float alpha) {
     emit movementAreaFactorChangedSignal();
 }
 
-int Viewer::highestMag() {
-    return viewerState.datasetMagLock ? Dataset::current().magnification : Dataset::current().highestAvailableMag;
+int Viewer::highestMag(const std::size_t layerId) {
+    return viewerState.datasetMagLock ? Dataset::datasets[layerId].magnification : Dataset::datasets[layerId].highestAvailableMag;
 }
 
-int Viewer::lowestMag() {
-    return viewerState.datasetMagLock ? Dataset::current().magnification : Dataset::current().lowestAvailableMag;
+int Viewer::lowestMag(const std::size_t layerId) {
+    return viewerState.datasetMagLock ? Dataset::datasets[layerId].magnification : Dataset::datasets[layerId].lowestAvailableMag;
 }
 
-float Viewer::highestScreenPxXPerDataPx(const bool ofCurrentMag) {
-    const float texUnitsPerDataPx = 1. / viewerState.texEdgeLength / (ofCurrentMag ? lowestMag() : Dataset::current().lowestAvailableMag);
+float Viewer::highestScreenPxXPerDataPx(const std::size_t layerId, const bool ofCurrentMag) {
+    const float texUnitsPerDataPx = 1. / viewerState.texEdgeLength / (ofCurrentMag ? lowestMag(layerId) : Dataset::datasets[layerId].lowestAvailableMag);
     auto * vp = viewportXY;
     float FOVinDCs = static_cast<float>(state->M) - 1.f;
-    float displayedEdgeLen = (FOVinDCs * VPZOOMMAX * Dataset::current().cubeEdgeLength) / vp->texture.size;
+    float displayedEdgeLen = (FOVinDCs * VPZOOMMAX * Dataset::datasets[layerId].cubeEdgeLength) / vp->textures[layerId].size;
     displayedEdgeLen = (std::ceil(displayedEdgeLen / 2. / texUnitsPerDataPx) * texUnitsPerDataPx) * 2.;
     return vp->edgeLength / (displayedEdgeLen / texUnitsPerDataPx);
 }
 
-float Viewer::lowestScreenPxXPerDataPx(const bool ofCurrentMag) {
-    const float texUnitsPerDataPx = 1. / viewerState.texEdgeLength / (ofCurrentMag ? highestMag() : Dataset::current().highestAvailableMag);
+float Viewer::lowestScreenPxXPerDataPx(const std::size_t layerId, const bool ofCurrentMag) {
+    const float texUnitsPerDataPx = 1. / viewerState.texEdgeLength / (ofCurrentMag ? highestMag(layerId) : Dataset::datasets[layerId].highestAvailableMag);
     auto * vp = viewportXY;
     float FOVinDCs = static_cast<float>(state->M) - 1.f;
-    float displayedEdgeLen = (FOVinDCs * Dataset::current().cubeEdgeLength) / vp->texture.size;
+    float displayedEdgeLen = (FOVinDCs * Dataset::datasets[layerId].cubeEdgeLength) / vp->textures[layerId].size;
     displayedEdgeLen = (std::ceil(displayedEdgeLen / 2. / texUnitsPerDataPx) * texUnitsPerDataPx) * 2.;
     return vp->edgeLength / (displayedEdgeLen / texUnitsPerDataPx);
 }
 
-int Viewer::calcMag(const float screenPxXPerDataPx) {
-    const float exactMag = Dataset::current().highestAvailableMag * lowestScreenPxXPerDataPx() / screenPxXPerDataPx;
+int Viewer::calcMag(const std::size_t layerId, const float screenPxXPerDataPx) {
+    const float exactMag = Dataset::datasets[layerId].highestAvailableMag * lowestScreenPxXPerDataPx(layerId) / screenPxXPerDataPx;
     const auto roundedPower = std::ceil(std::log2(exactMag));
-    return std::min(Dataset::current().highestAvailableMag, std::max(static_cast<int>(std::pow(2, roundedPower)), Dataset::current().lowestAvailableMag));
+    return std::min(Dataset::datasets[layerId].highestAvailableMag, std::max(static_cast<int>(std::pow(2, roundedPower)), Dataset::datasets[layerId].lowestAvailableMag));
 }
 
-void Viewer::setMagnificationLock(const bool locked) {
+void Viewer::setMagnificationLock(const std::size_t layerId, const bool locked) {
     viewerState.datasetMagLock = locked;
     if (!locked) {
-        const auto newMag = calcMag(viewportXY->screenPxXPerDataPx);
-        if (newMag != Dataset::current().magnification) {
+        const auto newMag = calcMag(layerId, viewportXY->screenPxXPerDataPx);
+        if (newMag != Dataset::datasets[layerId].magnification) {
             updateDatasetMag(newMag);
-            float newFOV = viewportXY->screenPxXPerDataPxForZoomFactor(1.f) / viewportXY->screenPxXPerDataPx;
-            window->forEachOrthoVPDo([&newFOV](ViewportOrtho & orthoVP) {
-                orthoVP.texture.FOV = newFOV;
+            float newFOV = viewportXY->screenPxXPerDataPxForZoomFactor(1.f, layerId) / viewportXY->screenPxXPerDataPx;
+            window->forEachOrthoVPDo([&newFOV, &layerId](ViewportOrtho & orthoVP) {
+                orthoVP.textures[layerId].FOV = newFOV;
             });
         }
     }
@@ -483,14 +483,14 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
     };
     for (int multiSlicei{-multiSliceiMax}; multiSlicei <= multiSliceiMax; ++multiSlicei) {
         const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
-        const auto offset = vp.n.componentMul(Dataset::current().scaleFactor) * multiSlicei;
+        const auto offset = vp.n.componentMul(Dataset::datasets[layerId].scaleFactor) * multiSlicei;
         const auto cpos = state->viewerState->currentPosition;
         const auto offsetCube = Dataset::datasets[layerId].global2cube(cpos + offset) - Dataset::datasets[layerId].global2cube(cpos);
         const auto & [min, max] = state->viewerState->showOnlyRawData ? std::pair(Coordinate(0, 0, 0), Dataset::current().boundary)
                                                                       : std::pair(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax);
         const CoordInCube currentPosition_inside_dc = (cpos + offset)
                 .capped(min, max)
-                .insideCube(cubeEdgeLen, Dataset::current().scaleFactor);
+                .insideCube(cubeEdgeLen, Dataset::datasets[layerId].scaleFactor);
         if (Annotation::singleton().outsideMovementArea(state->viewerState->currentPosition + offset) && !state->viewerState->showOnlyRawData) {
             continue;
         }
@@ -500,14 +500,14 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
         if (!vp.resliceNecessary[layerId] && vp.resliceNecessaryCubes[layerId].empty()) {
             return;
         }
-        const CoordOfCube upperLeftDc = Dataset::datasets[layerId].global2cube(vp.texture.leftUpperPxInAbsPx) + offsetCube;
+        const CoordOfCube upperLeftDc = Dataset::datasets[layerId].global2cube(vp.textures[layerId].leftUpperPxInAbsPx) + offsetCube;
         QFutureSynchronizer<void> sync;
         for_each_resliced_cube_do(upperLeftDc, [this, cubeEdgeLen, layerId, &vp, &sync, currentPosition_inside_dc, first](auto, auto, auto currentDc, auto index){
             int slicePositionWithinCube = vp.n.componentMul(currentPosition_inside_dc.componentMul(Coordinate{1, cubeEdgeLen, state->cubeSliceArea})).length();
             Coordinate offsetCubeGlobal = vp.n.componentMul(vp.n.componentMul(currentPosition_inside_dc));// ensure n is positive by multiplying with itself
 
             state->protectCube2Pointer.lock();
-            void * const cube = cubeQuery(state->cube2Pointer, layerId, Dataset::current().magIndex, currentDc);
+            void * const cube = cubeQuery(state->cube2Pointer, layerId, Dataset::datasets[layerId].magIndex, currentDc);
             state->protectCube2Pointer.unlock();
 
             // Take care of the data textures.
@@ -517,25 +517,25 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
             sync.addFuture(QtConcurrent::run([this, &vp, cube, first, slicePositionWithinCube, slicePosInAbsPx, index, layerId, cubeEdgeLen]()  {
                 if (cube != nullptr) {
                     if (Dataset::datasets[layerId].isOverlay()) {
-                        ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.texture.texData[layerId].data() + index, vp, layerId);
+                        ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.textures[layerId].texData.data() + index, vp, layerId);
                     } else {
                         const auto combine = boost::make_optional(!first, viewerState.layerRenderSettings[layerId].combineSlicesType);
-                        dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.texture.texData[layerId].data() + index, vp, layerId, combine);
+                        dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.textures[layerId].texData.data() + index, vp, layerId, combine);
                     }
                 } else {
-                    std::fill(vp.texture.texData[layerId].data() + index, vp.texture.texData[layerId].data() + index + 4 * cubeEdgeLen * cubeEdgeLen, 0);
+                    std::fill(vp.textures[layerId].texData.data() + index, vp.textures[layerId].texData.data() + index + 4 * cubeEdgeLen * cubeEdgeLen, 0);
                 }
             }));
         });
         sync.waitForFinished();
         first = false;
     }
-    vp.texture.texHandle[layerId].bind();
-    const CoordOfCube upperLeftDc = Dataset::datasets[layerId].global2cube(vp.texture.leftUpperPxInAbsPx);
+    vp.textures[layerId].texHandle.bind();
+    const CoordOfCube upperLeftDc = Dataset::datasets[layerId].global2cube(vp.textures[layerId].leftUpperPxInAbsPx);
     for_each_resliced_cube_do(upperLeftDc, [cubeEdgeLen, layerId, &vp](auto x_dc, auto y_dc, auto, auto index){
-        glTexSubImage2D(GL_TEXTURE_2D, 0, x_dc * cubeEdgeLen, y_dc * cubeEdgeLen, cubeEdgeLen, cubeEdgeLen, GL_RGBA, GL_UNSIGNED_BYTE, vp.texture.texData[layerId].data() + index);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, x_dc * cubeEdgeLen, y_dc * cubeEdgeLen, cubeEdgeLen, cubeEdgeLen, GL_RGBA, GL_UNSIGNED_BYTE, vp.textures[layerId].texData.data() + index);
     });
-    vp.texture.texHandle[layerId].release();
+    vp.textures[layerId].texHandle.release();
     glBindTexture(GL_TEXTURE_2D, 0);
     vp.resliceNecessary[layerId] = false;
     vp.resliceNecessaryCubes[layerId].clear();
@@ -551,89 +551,88 @@ void Viewer::arbCubes(ViewportArb & vp) {
     const floatCoordinate xAxis = {1, 0, 0}; const floatCoordinate yAxis = {0, 1, 0}; const floatCoordinate zAxis = {0, 0, 1};
     const auto normal = vp.n;// the normal vector direction is not important here because it doesn’t change the plane
 
-    for (auto & layer : layers) {
+    for (int i = 0; i < Dataset::datasets.size(); ++i) {
+        auto & layer = Dataset::datasets[i];
         layer.pendingArbCubes.clear();
-        for (auto & pair : layer.textures) {
+        for (auto & pair : layer.texture) {
             pair.second->vertices.clear();
         }
-    }
 
-    const auto gpusupercube = (state->M - 1) * Dataset::current().cubeEdgeLength / gpucubeedge + 1;//remove cpu overlap and add gpu overlap
-    const auto scroot = (state->viewerState->currentPosition / gpucubeedge) - gpusupercube / 2;
-    floatCoordinate root = vp.texture.leftUpperPxInAbsPx / Dataset::current().magnification;
-    for (int z = 0; z < gpusupercube; ++z)
-    for (int y = 0; y < gpusupercube; ++y)
-    for (int x = 0; x < gpusupercube; ++x) {
-        Coordinate currentGPUDc = scroot + Coordinate{x, y, z};
+        const auto gpusupercube = (state->M - 1) * layer.cubeEdgeLength / gpucubeedge + 1;//remove cpu overlap and add gpu overlap
+        const auto scroot = (state->viewerState->currentPosition / gpucubeedge) - gpusupercube / 2;
+        floatCoordinate root = vp.textures[i].leftUpperPxInAbsPx / layer.magnification;
+        for (int z = 0; z < gpusupercube; ++z)
+        for (int y = 0; y < gpusupercube; ++y)
+        for (int x = 0; x < gpusupercube; ++x) {
+            Coordinate currentGPUDc = scroot + Coordinate{x, y, z};
 
-        if (currentGPUDc.x < 0 || currentGPUDc.y < 0 || currentGPUDc.z < 0) {
-            continue;
-        }
-
-        floatCoordinate topPlaneUpVec = currentGPUDc * gpucubeedge;
-        floatCoordinate bottomPlaneUpVec = currentGPUDc * gpucubeedge + floatCoordinate(gpucubeedge, gpucubeedge, 0);
-        floatCoordinate leftPlaneUpVec = currentGPUDc * gpucubeedge + floatCoordinate(0, gpucubeedge, gpucubeedge);
-        floatCoordinate rightPlaneUpVec = currentGPUDc * gpucubeedge + floatCoordinate(gpucubeedge, 0, gpucubeedge);
-
-        std::vector<floatCoordinate> points;
-        auto addPoints = [&](const floatCoordinate & plane, const floatCoordinate & axis){
-            floatCoordinate point;
-            if (intersectLineAndPlane(normal, root, plane, axis, point)) {
-                if (pointInCube(currentGPUDc, point)) {
-                    points.emplace_back(point);
-                }
-            }
-        };
-        addPoints(topPlaneUpVec, xAxis);
-        addPoints(topPlaneUpVec, yAxis);
-        addPoints(topPlaneUpVec, zAxis);
-        addPoints(bottomPlaneUpVec, xAxis * -1);
-        addPoints(bottomPlaneUpVec, yAxis * -1);
-        addPoints(bottomPlaneUpVec, zAxis);
-        addPoints(leftPlaneUpVec, xAxis);
-        addPoints(leftPlaneUpVec, yAxis * -1);
-        addPoints(leftPlaneUpVec, zAxis * -1);
-        addPoints(rightPlaneUpVec, xAxis * -1);
-        addPoints(rightPlaneUpVec, yAxis);
-        addPoints(rightPlaneUpVec, zAxis * -1);
-
-        if (!points.empty()) {
-            const auto center = std::accumulate(std::begin(points), std::end(points), floatCoordinate{}) / points.size();
-            const auto first = points.front() - center;
-            std::sort(std::begin(points), std::end(points), [=](const floatCoordinate & lhs, const floatCoordinate & rhs){
-                // http://stackoverflow.com/questions/14066933/direct-way-of-computing-clockwise-angle-between-2-vectors#16544330
-                const auto line0 = lhs - center;
-                const auto line1 = rhs - center;
-                // move radiant angle range from [-ⲡ, ⲡ] into positive (4 > ⲡ) for < to work correctly
-                const auto radiant0 = std::atan2(normal.dot(first.cross(line0)), first.dot(line0)) + 4;
-                const auto radiant1 = std::atan2(normal.dot(first.cross(line1)), first.dot(line1)) + 4;
-                return radiant0 < radiant1;
-            });
-            const auto prevSize = points.size();
-            points.erase(std::unique(std::begin(points), std::end(points)), std::end(points));
-            if (prevSize != points.size()) {
-                qDebug() << prevSize << points.size();
+            if (currentGPUDc.x < 0 || currentGPUDc.y < 0 || currentGPUDc.z < 0) {
+                continue;
             }
 
-            // if the arb plane is parallel to one of the coordinate axis
-            // the intersection test will be true for adjacent cubes on cube boundaries
-            // because the edge coordinates at the end of a cube are inclusive to render across the last pixel
-            bool moreThanXEndBorder{false}, moreThanYEndBorder{false}, moreThanZEndBorder{false};
-            for (auto & point : points) {
-                if (point.x != rightPlaneUpVec.x) {
-                    moreThanXEndBorder = true;
+            floatCoordinate topPlaneUpVec = currentGPUDc * gpucubeedge;
+            floatCoordinate bottomPlaneUpVec = currentGPUDc * gpucubeedge + floatCoordinate(gpucubeedge, gpucubeedge, 0);
+            floatCoordinate leftPlaneUpVec = currentGPUDc * gpucubeedge + floatCoordinate(0, gpucubeedge, gpucubeedge);
+            floatCoordinate rightPlaneUpVec = currentGPUDc * gpucubeedge + floatCoordinate(gpucubeedge, 0, gpucubeedge);
+
+            std::vector<floatCoordinate> points;
+            auto addPoints = [&](const floatCoordinate & plane, const floatCoordinate & axis){
+                floatCoordinate point;
+                if (intersectLineAndPlane(normal, root, plane, axis, point)) {
+                    if (pointInCube(currentGPUDc, point)) {
+                        points.emplace_back(point);
+                    }
                 }
-                if (point.y != bottomPlaneUpVec.y) {
-                    moreThanYEndBorder = true;
+            };
+            addPoints(topPlaneUpVec, xAxis);
+            addPoints(topPlaneUpVec, yAxis);
+            addPoints(topPlaneUpVec, zAxis);
+            addPoints(bottomPlaneUpVec, xAxis * -1);
+            addPoints(bottomPlaneUpVec, yAxis * -1);
+            addPoints(bottomPlaneUpVec, zAxis);
+            addPoints(leftPlaneUpVec, xAxis);
+            addPoints(leftPlaneUpVec, yAxis * -1);
+            addPoints(leftPlaneUpVec, zAxis * -1);
+            addPoints(rightPlaneUpVec, xAxis * -1);
+            addPoints(rightPlaneUpVec, yAxis);
+            addPoints(rightPlaneUpVec, zAxis * -1);
+
+            if (!points.empty()) {
+                const auto center = std::accumulate(std::begin(points), std::end(points), floatCoordinate{}) / points.size();
+                const auto first = points.front() - center;
+                std::sort(std::begin(points), std::end(points), [=](const floatCoordinate & lhs, const floatCoordinate & rhs){
+                    // http://stackoverflow.com/questions/14066933/direct-way-of-computing-clockwise-angle-between-2-vectors#16544330
+                    const auto line0 = lhs - center;
+                    const auto line1 = rhs - center;
+                    // move radiant angle range from [-ⲡ, ⲡ] into positive (4 > ⲡ) for < to work correctly
+                    const auto radiant0 = std::atan2(normal.dot(first.cross(line0)), first.dot(line0)) + 4;
+                    const auto radiant1 = std::atan2(normal.dot(first.cross(line1)), first.dot(line1)) + 4;
+                    return radiant0 < radiant1;
+                });
+                const auto prevSize = points.size();
+                points.erase(std::unique(std::begin(points), std::end(points)), std::end(points));
+                if (prevSize != points.size()) {
+                    qDebug() << prevSize << points.size();
                 }
-                if (point.z != leftPlaneUpVec.z) {
-                    moreThanZEndBorder = true;
+
+                // if the arb plane is parallel to one of the coordinate axis
+                // the intersection test will be true for adjacent cubes on cube boundaries
+                // because the edge coordinates at the end of a cube are inclusive to render across the last pixel
+                bool moreThanXEndBorder{false}, moreThanYEndBorder{false}, moreThanZEndBorder{false};
+                for (auto & point : points) {
+                    if (point.x != rightPlaneUpVec.x) {
+                        moreThanXEndBorder = true;
+                    }
+                    if (point.y != bottomPlaneUpVec.y) {
+                        moreThanYEndBorder = true;
+                    }
+                    if (point.z != leftPlaneUpVec.z) {
+                        moreThanZEndBorder = true;
+                    }
                 }
-            }
-            if (moreThanXEndBorder && moreThanYEndBorder && moreThanZEndBorder) {
-                const CoordOfGPUCube gpuCoord{currentGPUDc.x, currentGPUDc.y, currentGPUDc.z};
-                const auto globalCoord = gpuCoord.cube2Global(gpucubeedge, Dataset::current().scaleFactor);
-                for (auto & layer : layers) {
+                if (moreThanXEndBorder && moreThanYEndBorder && moreThanZEndBorder) {
+                    const CoordOfGPUCube gpuCoord{currentGPUDc.x, currentGPUDc.y, currentGPUDc.z};
+                    const auto globalCoord = gpuCoord.cube2Global(gpucubeedge, Dataset::current().scaleFactor);
                     auto cubeIt = layer.textures.find(gpuCoord);
                     if (cubeIt != std::end(layer.textures)) {
                         cubeIt->second->vertices = /*std::move*/(points);
@@ -668,16 +667,16 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
     // from those cubes into the texture.
     floatCoordinate currentPxInDc_float, rowPx_float, currentPx_float;
 
-    rowPx_float = vp.texture.leftUpperPxInAbsPx / Dataset::current().scaleFactor;
+    rowPx_float = vp.textures.leftUpperPxInAbsPx / Dataset::current().scaleFactor;
     currentPx_float = rowPx_float;
 
     static std::vector<std::uint8_t> texData;// reallocation for every run would be a waste
-    texData.resize(4 * std::pow(std::ceil(vp.texture.usedSizeInCubePixels), 2), 0);
+    texData.resize(4 * std::pow(std::ceil(vp.textures.usedSizeInCubePixels), 2), 0);
 
     int s = 0, t = 0, t_old = 0;
-    while(s < vp.texture.usedSizeInCubePixels) {
+    while(s < vp.textures.usedSizeInCubePixels) {
         t = 0;
-        while(t < vp.texture.usedSizeInCubePixels) {
+        while(t < vp.textures.usedSizeInCubePixels) {
             Coordinate currentPx = {roundFloat(currentPx_float.x), roundFloat(currentPx_float.y), roundFloat(currentPx_float.z)};
             Coordinate currentDc = currentPx / Dataset::current().cubeEdgeLength;
 
@@ -692,7 +691,7 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
             currentPxInDc_float = currentPx_float - currentDc * Dataset::current().cubeEdgeLength;
             t_old = t;
 
-            dcSliceExtract(reinterpret_cast<std::uint8_t *>(datacube), &currentPxInDc_float, texData.data(), s, &t, vp.v2, layerId, vp.texture.usedSizeInCubePixels);
+            dcSliceExtract(reinterpret_cast<std::uint8_t *>(datacube), &currentPxInDc_float, texData.data(), s, &t, vp.v2, layerId, vp.textures.usedSizeInCubePixels);
             currentPx_float = currentPx_float - vp.v2 * (t - t_old);
         }
         s++;
@@ -700,95 +699,104 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
         currentPx_float = rowPx_float;
     }
 
-    vp.texture.texHandle[layerId].bind();
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, std::ceil(vp.texture.usedSizeInCubePixels), std::ceil(vp.texture.usedSizeInCubePixels), GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
-    vp.texture.texHandle[layerId].release();
+    vp.textures[layerId].texHandle.bind();
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, std::ceil(vp.textures.usedSizeInCubePixels), std::ceil(vp.textures.usedSizeInCubePixels), GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
+    vp.textures[layerId].texHandle.release();
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Viewer::calcLeftUpperTexAbsPx() {
-    window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
-        const auto fov = orthoVP.texture.usedSizeInCubePixels;
-        const CoordOfCube currentPosition_dc = viewerState.currentPosition.cube(Dataset::current().cubeEdgeLength, Dataset::current().scaleFactor);
-        const auto xy = orthoVP.viewportType == VIEWPORT_XY;
-        const auto xz = orthoVP.viewportType == VIEWPORT_XZ;
-        const auto zy = orthoVP.viewportType == VIEWPORT_ZY;
-        const auto leftUpperDc = currentPosition_dc - CoordOfCube{xy || xz, xy || zy, xz || zy} * state->M / 2;
-        orthoVP.texture.leftUpperPxInAbsPx = Dataset::current().cube2global(leftUpperDc);
-        if (orthoVP.viewportType == VIEWPORT_ARBITRARY) {
-            auto & arbVP = static_cast<ViewportArb&>(orthoVP);
-            arbVP.leftUpperPxInAbsPx_float = floatCoordinate{viewerState.currentPosition} - Dataset::current().scaleFactor.componentMul((orthoVP.v1 - orthoVP.v2) * 0.5 * fov);// broken arb slicing depends on this
-            arbVP.texture.leftUpperPxInAbsPx = arbVP.leftUpperPxInAbsPx_float;
+    window->forEachOrthoVPDo([thmis](ViewportOrtho & orthoVP) {
+        for (int i = 0; i < Dataset::datasets.size(); ++i) {
+            auto & layer = Dataset::datasets[i];
+            auto & texture = orthoVP.textures[i];
+            const auto fov = texture.usedSizeInCubePixels;
+            const CoordOfCube currentPosition_dc = viewerState.currentPosition.cube(layer.cubeEdgeLength, layer.scaleFactor);
+            const auto xy = orthoVP.viewportType == VIEWPORT_XY;
+            const auto xz = orthoVP.viewportType == VIEWPORT_XZ;
+            const auto zy = orthoVP.viewportType == VIEWPORT_ZY;
+            const auto leftUpperDc = currentPosition_dc - CoordOfCube{xy || xz, xy || zy, xz || zy} * state->M / 2;
+            texture.leftUpperPxInAbsPx = layer.cube2global(leftUpperDc);
+            if (orthoVP.viewportType == VIEWPORT_ARBITRARY) {
+                auto & arbVP = static_cast<ViewportArb&>(orthoVP);
+                arbVP.leftUpperPxInAbsPx_float = floatCoordinate{viewerState.currentPosition} - layer.scaleFactor.componentMul((orthoVP.v1 - orthoVP.v2) * 0.5 * fov);// broken arb slicing depends on this
+                arbVP.textures.leftUpperPxInAbsPx = arbVP.leftUpperPxInAbsPx_float;
+            }
         }
     });
 }
 
 void Viewer::calcDisplayedEdgeLength() {
     window->forEachOrthoVPDo([](ViewportOrtho & vpOrtho){
-        const auto & layer = Dataset::current();
-        auto & texture = vpOrtho.texture;
-        const auto voxelV1X = layer.scale.componentMul(vpOrtho.v1).length() / layer.scale.x;
-        const auto voxelV2X = std::abs(layer.scale.componentMul(vpOrtho.v2).length()) / layer.scale.x;
-        const auto voxelV1Xmag1 = layer.scales[0].componentMul(vpOrtho.v1).length() / layer.scales[0].x;
-        const auto voxelV2Xmag1 = std::abs(layer.scales[0].componentMul(vpOrtho.v2).length()) / layer.scales[0].x;
+        for (int i = 0; i < Dataset::datasets.size(); ++i) {
+            auto & layer = Dataset::datasets[i];
+            auto & texture = vpOrtho.textures[i];
+            const auto voxelV1X = layer.scale.componentMul(vpOrtho.v1).length() / layer.scale.x;
+            const auto voxelV2X = std::abs(layer.scale.componentMul(vpOrtho.v2).length()) / layer.scale.x;
+            const auto voxelV1Xmag1 = layer.scales[0].componentMul(vpOrtho.v1).length() / layer.scales[0].x;
+            const auto voxelV2Xmag1 = std::abs(layer.scales[0].componentMul(vpOrtho.v2).length()) / layer.scales[0].x;
 
-        texture.texUsedX = texture.usedSizeInCubePixels / texture.size * texture.FOV / voxelV1X;
-        texture.texUsedY = texture.usedSizeInCubePixels / texture.size * texture.FOV / voxelV2X;
+            texture.texUsedX = texture.usedSizeInCubePixels / texture.size * texture.FOV / voxelV1X;
+            texture.texUsedY = texture.usedSizeInCubePixels / texture.size * texture.FOV / voxelV2X;
 
-        vpOrtho.displayedIsoPx = layer.scales[0].x * 0.5 * texture.usedSizeInCubePixels * texture.FOV * layer.magnification;// FOV is within current mag
-        const auto dataPx = texture.usedSizeInCubePixels * texture.FOV * layer.magnification;
-        vpOrtho.screenPxXPerDataPx = vpOrtho.edgeLength / dataPx * voxelV1X;
-        vpOrtho.screenPxXPerMag1Px = vpOrtho.edgeLength / dataPx * voxelV1Xmag1;
-        vpOrtho.screenPxYPerMag1Px = vpOrtho.edgeLength / dataPx * voxelV2Xmag1;
+            vpOrtho.displayedIsoPx = layer.scales[0].x * 0.5 * texture.usedSizeInCubePixels * texture.FOV * layer.magnification;// FOV is within current mag
+            const auto dataPx = texture.usedSizeInCubePixels * texture.FOV * layer.magnification;
+            vpOrtho.screenPxXPerDataPx = vpOrtho.edgeLength / dataPx * voxelV1X;
+            vpOrtho.screenPxXPerMag1Px = vpOrtho.edgeLength / dataPx * voxelV1Xmag1;
+            vpOrtho.screenPxYPerMag1Px = vpOrtho.edgeLength / dataPx * voxelV2Xmag1;
 
-        vpOrtho.displayedlengthInNmX = layer.scales[0].componentMul(vpOrtho.v1).length() * (texture.texUsedX / texture.texUnitsPerDataPx);
+            vpOrtho.displayedlengthInNmX = layer.scales[0].componentMul(vpOrtho.v1).length() * (texture.texUsedX / texture.texUnitsPerDataPx);
+        }
     });
 }
 
 void Viewer::zoom(const float factor) {
-    const auto & texture = viewportXY->texture;
-    const bool reachedHighestMag = Dataset::current().magnification == Dataset::current().highestAvailableMag;
-    const bool reachedLowestMag = Dataset::current().magnification == Dataset::current().lowestAvailableMag;
-    const bool reachedMinZoom = texture.FOV * factor > VPZOOMMIN && reachedHighestMag;
-    const bool reachedMaxZoom = texture.FOV * factor < VPZOOMMAX && reachedLowestMag;
-    const bool magUp = texture.FOV == VPZOOMMIN && factor > 1 && !reachedHighestMag;
-    const bool magDown = texture.FOV == 0.5 && factor < 1 && !reachedLowestMag;
+    for (int i = 0; i < Dataset::datasets.size(); ++i) {
+        auto & layer = Dataset::datasets[i];
+        auto & texture = viewportXY.textures[i];
+        const bool reachedHighestMag = layer.magnification == layer.highestAvailableMag;
+        const bool reachedLowestMag = layer.magnification == layer.lowestAvailableMag;
+        const bool reachedMinZoom = texture.FOV * factor > VPZOOMMIN && reachedHighestMag;
+        const bool reachedMaxZoom = texture.FOV * factor < VPZOOMMAX && reachedLowestMag;
+        const bool magUp = texture.FOV == VPZOOMMIN && factor > 1 && !reachedHighestMag;
+        const bool magDown = texture.FOV == 0.5 && factor < 1 && !reachedLowestMag;
 
-    const auto updateFOV = [this](const float newFOV) {
-        window->forEachOrthoVPDo([&newFOV](ViewportOrtho & orthoVP) {
-            orthoVP.texture.FOV = newFOV;
-        });
-    };
-    auto newMag = Dataset::current().magnification;
-    if (reachedMinZoom) {
-        updateFOV(VPZOOMMIN);
-    } else if (reachedMaxZoom) {
-        updateFOV(VPZOOMMAX);
-    } else if (state->viewerState->datasetMagLock) {
-        updateFOV(texture.FOV * factor > VPZOOMMIN ? VPZOOMMIN :
-                  texture.FOV * factor < VPZOOMMAX ? VPZOOMMAX :
-                  texture.FOV * factor);
-    } else if (magUp) {
-        newMag *= 2;
-        updateFOV(0.5);
-    } else if (magDown) {
-        newMag /= 2;
-        updateFOV(VPZOOMMIN);
-    } else {
-        const float zoomMax = Dataset::current().magnification == Dataset::current().lowestAvailableMag ? VPZOOMMAX : 0.5;
-        updateFOV(std::max(std::min(texture.FOV * factor, static_cast<float>(VPZOOMMIN)), zoomMax));
-    }
+        const auto updateFOV = [this](const float newFOV) {
+            window->forEachOrthoVPDo([&newFOV, &texture](ViewportOrtho & orthoVP) {
+                texture.FOV = newFOV;
+            });
+        };
+        auto newMag = layer.magnification;
+        if (reachedMinZoom) {
+            updateFOV(VPZOOMMIN);
+        } else if (reachedMaxZoom) {
+            updateFOV(VPZOOMMAX);
+        } else if (state->viewerState->datasetMagLock) {
+            updateFOV(texture.FOV * factor > VPZOOMMIN ? VPZOOMMIN :
+                      texture.FOV * factor < VPZOOMMAX ? VPZOOMMAX :
+                      texture.FOV * factor);
+        } else if (magUp) {
+            newMag *= 2;
+            updateFOV(0.5);
+        } else if (magDown) {
+            newMag /= 2;
+            updateFOV(VPZOOMMIN);
+        } else {
+            const float zoomMax = layer.magnification == layer.lowestAvailableMag ? VPZOOMMAX : 0.5;
+            updateFOV(std::max(std::min(texture.FOV * factor, static_cast<float>(VPZOOMMIN)), zoomMax));
+        }
 
-    if (newMag != Dataset::current().magnification) {
-        updateDatasetMag(newMag);
+        if (newMag != layer.magnification) {
+            updateDatasetMag(newMag);
+        }
+        recalcTextureOffsets();
     }
-    recalcTextureOffsets();
     emit zoomChanged();
 }
 
 void Viewer::zoomReset() {
     state->viewer->window->forEachOrthoVPDo([](ViewportOrtho & orthoVP){
-        orthoVP.texture.FOV = 1;
+        orthoVP.textures.FOV = 1;
     });
     recalcTextureOffsets();
     emit zoomChanged();
@@ -801,15 +809,19 @@ bool Viewer::updateDatasetMag(const int mag) {
         if (!powerOf2 || mag < Dataset::current().lowestAvailableMag || mag > Dataset::current().highestAvailableMag) {
             return false;
         }
-        for (auto && layer : Dataset::datasets) {
-            layer.magnification = mag;
-            layer.magIndex = static_cast<std::size_t>(std::log2(mag));
+
+        for (int i = 0; i < Dataset::datasets.size(); ++i) {
+            auto & layer = Dataset::datasets[i];
+            auto scaleFactor = layer.scales[0].x / Dataset::datasets.front().scales[0].x;
+            layer.magnification = mag * scaleFactor;
+            layer.magIndex = static_cast<std::size_t>(std::log2(layer.magnification));
+            qDebug() << layer.magnification << layer.magIndex;
             if (layer.scales.size() > layer.magIndex) {
                 layer.scale = layer.scales[layer.magIndex];
                 layer.scaleFactor = layer.scale / layer.scales[0];
             }
             window->forEachOrthoVPDo([mag](ViewportOrtho & orthoVP) {
-                orthoVP.texture.texUnitsPerDataPx = 1.f / state->viewerState->texEdgeLength / mag;
+                orthoVP.textures[i].texUnitsPerDataPx = 1.f / state->viewerState->texEdgeLength / mag;
             });
         }
     }
@@ -1091,48 +1103,51 @@ void Viewer::recalcTextureOffsets() {
     calcLeftUpperTexAbsPx();
 
     window->forEachOrthoVPDo([&](ViewportOrtho & orthoVP) {
-        auto & texture = orthoVP.texture;
-        float midX = texture.texUnitsPerDataPx;
-        float midY = texture.texUnitsPerDataPx;
-        float xFactor = 0.5 * texture.texUsedX;
-        float yFactor = 0.5 * texture.texUsedY;
-        const auto magCoordDiffF = floatCoordinate(state->viewerState->currentPosition - texture.leftUpperPxInAbsPx) / (Dataset::current().scaleFactor / Dataset::current().magnification);
-        if (orthoVP.viewportType == VIEWPORT_XY) {
-            midX *= magCoordDiffF.x;
-            midY *= magCoordDiffF.y;
-        } else if (orthoVP.viewportType == VIEWPORT_XZ) {
-            midX *= magCoordDiffF.x;
-            midY *= magCoordDiffF.z;
-        } else if (orthoVP.viewportType == VIEWPORT_ZY) {
-            midX *= magCoordDiffF.z;
-            midY *= magCoordDiffF.y;
-        } else {
-            const auto texUsed = texture.usedSizeInCubePixels / texture.size;
-            midX = 0.5 * texUsed;
-            midY = 0.5 * texUsed;
+        for (int i = 0; i < Dataset::datasets.size(); ++i) {
+            auto & layer = Dataset::datasets[i];
+            auto & texture = orthoVP.textures[i];
+            float midX = texture.texUnitsPerDataPx;
+            float midY = texture.texUnitsPerDataPx;
+            float xFactor = 0.5 * texture.texUsedX;
+            float yFactor = 0.5 * texture.texUsedY;
+            const auto magCoordDiffF = floatCoordinate(state->viewerState->currentPosition - texture.leftUpperPxInAbsPx) / (layer.scaleFactor / layer.magnification);
+            if (orthoVP.viewportType == VIEWPORT_XY) {
+                midX *= magCoordDiffF.x;
+                midY *= magCoordDiffF.y;
+            } else if (orthoVP.viewportType == VIEWPORT_XZ) {
+                midX *= magCoordDiffF.x;
+                midY *= magCoordDiffF.z;
+            } else if (orthoVP.viewportType == VIEWPORT_ZY) {
+                midX *= magCoordDiffF.z;
+                midY *= magCoordDiffF.y;
+            } else {
+                const auto texUsed = texture.usedSizeInCubePixels / texture.size;
+                midX = 0.5 * texUsed;
+                midY = 0.5 * texUsed;
+            }
+            // Calculate the vertices in texture coordinates
+            // mid really means current pos inside the texture, in texture coordinates, relative to the texture origin 0., 0.
+    //        if (orthoVP.viewportType != VIEWPORT_ARBITRARY) {
+                texture.texLUx = midX - xFactor;
+                texture.texLUy = midY + yFactor;
+                texture.texRUx = midX + xFactor;
+                texture.texRUy = texture.texLUy;
+                texture.texRLx = texture.texRUx;
+                texture.texRLy = midY - yFactor;
+                texture.texLLx = texture.texLUx;
+                texture.texLLy = texture.texRLy;
+    //        } else {// arb should use the entirety of (a specific part) of the texture
+    //            const auto texUsed = 1;texture.fovPixel / texture.size * texture.FOV;
+    //            texture.texLUx = 0;
+    //            texture.texLUy = texUsed;
+    //            texture.texRUx = texUsed;
+    //            texture.texRUy = texUsed;
+    //            texture.texRLx = texUsed;
+    //            texture.texRLy = 0;
+    //            texture.texLLx = 0;
+    //            texture.texLLy = 0;
+    //        }
         }
-        // Calculate the vertices in texture coordinates
-        // mid really means current pos inside the texture, in texture coordinates, relative to the texture origin 0., 0.
-//        if (orthoVP.viewportType != VIEWPORT_ARBITRARY) {
-            texture.texLUx = midX - xFactor;
-            texture.texLUy = midY + yFactor;
-            texture.texRUx = midX + xFactor;
-            texture.texRUy = texture.texLUy;
-            texture.texRLx = texture.texRUx;
-            texture.texRLy = midY - yFactor;
-            texture.texLLx = texture.texLUx;
-            texture.texLLy = texture.texRLy;
-//        } else {// arb should use the entirety of (a specific part) of the texture
-//            const auto texUsed = 1;texture.fovPixel / texture.size * texture.FOV;
-//            texture.texLUx = 0;
-//            texture.texLUy = texUsed;
-//            texture.texRUx = texUsed;
-//            texture.texRUy = texUsed;
-//            texture.texRLx = texUsed;
-//            texture.texRLy = 0;
-//            texture.texLLx = 0;
-//            texture.texLLy = 0;
-//        }
     });
 }
 

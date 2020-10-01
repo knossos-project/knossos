@@ -36,5 +36,5 @@ public:
     floatCoordinate leftUpperPxInAbsPx_float;
     ViewportArb(QWidget *parent, ViewportType viewportType);
 
-    virtual float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const override;
+    virtual float displayedEdgeLenghtXForZoomFactor(const float zoomFactor, const std::size_t layerId) const override;
 };
