@@ -571,8 +571,8 @@ void ViewportOrtho::renderViewportFast() {
 
     //z component of vp vectors specifies portion of scale to apply
     const auto zScaleIncrement = !arb ? scale - 1 : 0;
-    const float hfov = texture[0].FOV * fov / (1 + zScaleIncrement * std::abs(v1.z));
-    const float vfov = texture[0].FOV * fov / (1 + zScaleIncrement * std::abs(v2.z));
+    const float hfov = textures[0].FOV * fov / (1 + zScaleIncrement * std::abs(v1.z));
+    const float vfov = textures[0].FOV * fov / (1 + zScaleIncrement * std::abs(v2.z));
     viewMatrix.scale(width() / hfov, height() / vfov);
     const auto cameraPos = floatCoordinate{cpos} + n;
     viewMatrix.lookAt(cameraPos, cpos, v2);
@@ -723,30 +723,32 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         if (!options.nodePicking) {
             state->viewer->vpGenerateTexture(*this, layerId);
             glEnable(GL_TEXTURE_2D);
-            texture.texHandle[layerId].bind();
-            glPushMatrix();
-            glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
-            glBegin(GL_QUADS);
-                glNormal3i(n.x, n.y, n.z);
-                glTexCoord2f(texture.texLUx, texture.texLUy);
-                glVertex3f(-dataPxX * v1.x - dataPxY * v2.x,
-                           -dataPxX * v1.y - dataPxY * v2.y,
-                           -dataPxX * v1.z - dataPxY * v2.z);
-                glTexCoord2f(texture.texRUx, texture.texRUy);
-                glVertex3f( dataPxX * v1.x - dataPxY * v2.x,
-                            dataPxX * v1.y - dataPxY * v2.y,
-                            dataPxX * v1.z - dataPxY * v2.z);
-                glTexCoord2f(texture.texRLx, texture.texRLy);
-                glVertex3f( dataPxX * v1.x + dataPxY * v2.x,
-                            dataPxX * v1.y + dataPxY * v2.y,
-                            dataPxX * v1.z + dataPxY * v2.z);
-                glTexCoord2f(texture.texLLx, texture.texLLy);
-                glVertex3f(-dataPxX * v1.x + dataPxY * v2.x,
-                           -dataPxX * v1.y + dataPxY * v2.y,
-                           -dataPxX * v1.z + dataPxY * v2.z);
-            glEnd();
-            glPopMatrix();
-            texture.texHandle[layerId].release();
+            for (auto & texture : textures) {
+                texture.texHandle.bind();
+                glPushMatrix();
+                glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
+                glBegin(GL_QUADS);
+                    glNormal3i(n.x, n.y, n.z);
+                    glTexCoord2f(texture.texLUx, texture.texLUy);
+                    glVertex3f(-dataPxX * v1.x - dataPxY * v2.x,
+                               -dataPxX * v1.y - dataPxY * v2.y,
+                               -dataPxX * v1.z - dataPxY * v2.z);
+                    glTexCoord2f(texture.texRUx, texture.texRUy);
+                    glVertex3f( dataPxX * v1.x - dataPxY * v2.x,
+                                dataPxX * v1.y - dataPxY * v2.y,
+                                dataPxX * v1.z - dataPxY * v2.z);
+                    glTexCoord2f(texture.texRLx, texture.texRLy);
+                    glVertex3f( dataPxX * v1.x + dataPxY * v2.x,
+                                dataPxX * v1.y + dataPxY * v2.y,
+                                dataPxX * v1.z + dataPxY * v2.z);
+                    glTexCoord2f(texture.texLLx, texture.texLLy);
+                    glVertex3f(-dataPxX * v1.x + dataPxY * v2.x,
+                               -dataPxX * v1.y + dataPxY * v2.y,
+                               -dataPxX * v1.z + dataPxY * v2.z);
+                glEnd();
+                glPopMatrix();
+                texture.texHandle.release();
+            }
             glDisable(GL_TEXTURE_2D);
         }
     };
@@ -1764,8 +1766,8 @@ void Viewport3D::renderArbitrarySlicePane(ViewportOrtho & vp, const RenderOption
     for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
         if (state->viewerState->layerRenderSettings[layerId].visible && (!Dataset::datasets[layerId].isOverlay() || options.drawOverlay)) {
             state->viewer->vpGenerateTexture(vp, layerId);// update texture before use
-            auto & texture = vp.textures;
-            texture[layerId].texHandle.bind();
+            auto & texture = vp.textures[layerId];
+            texture.texHandle.bind();
             glBegin(GL_QUADS);
                 glNormal3i(vp.n.x, vp.n.y, vp.n.z);
                 glTexCoord2f(texture.texLUx, texture.texLUy);
@@ -1785,7 +1787,7 @@ void Viewport3D::renderArbitrarySlicePane(ViewportOrtho & vp, const RenderOption
                            -dataPxX * vp.v1.y + dataPxY * vp.v2.y,
                            -dataPxX * vp.v1.z + dataPxY * vp.v2.z);
             glEnd();
-            texture[layerId].texHandle.release();
+            texture.texHandle.release();
         }
     }
 }

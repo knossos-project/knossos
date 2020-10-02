@@ -191,27 +191,31 @@ void Viewer::setMovementAreaFactor(float alpha) {
 }
 
 int Viewer::highestMag(const std::size_t layerId) {
-    return viewerState.datasetMagLock ? Dataset::datasets[layerId].magnification : Dataset::datasets[layerId].highestAvailableMag;
+    auto & dataset = layerId == 0 ? Dataset::current() : Dataset::datasets[layerId];
+    return viewerState.datasetMagLock ? dataset.magnification : dataset.highestAvailableMag;
 }
 
 int Viewer::lowestMag(const std::size_t layerId) {
-    return viewerState.datasetMagLock ? Dataset::datasets[layerId].magnification : Dataset::datasets[layerId].lowestAvailableMag;
+    auto & dataset = layerId == 0 ? Dataset::current() : Dataset::datasets[layerId];
+    return viewerState.datasetMagLock ? dataset.magnification : dataset.lowestAvailableMag;
 }
 
 float Viewer::highestScreenPxXPerDataPx(const std::size_t layerId, const bool ofCurrentMag) {
-    const float texUnitsPerDataPx = 1. / viewerState.texEdgeLength / (ofCurrentMag ? lowestMag(layerId) : Dataset::datasets[layerId].lowestAvailableMag);
+    auto & dataset = layerId == 0 ? Dataset::current() : Dataset::datasets[layerId];
+    const float texUnitsPerDataPx = 1. / viewerState.texEdgeLength / (ofCurrentMag ? lowestMag(layerId) : dataset.lowestAvailableMag);
     auto * vp = viewportXY;
     float FOVinDCs = static_cast<float>(state->M) - 1.f;
-    float displayedEdgeLen = (FOVinDCs * VPZOOMMAX * Dataset::datasets[layerId].cubeEdgeLength) / vp->textures[layerId].size;
+    float displayedEdgeLen = (FOVinDCs * VPZOOMMAX * dataset.cubeEdgeLength) / vp->textures[layerId].size;
     displayedEdgeLen = (std::ceil(displayedEdgeLen / 2. / texUnitsPerDataPx) * texUnitsPerDataPx) * 2.;
     return vp->edgeLength / (displayedEdgeLen / texUnitsPerDataPx);
 }
 
 float Viewer::lowestScreenPxXPerDataPx(const std::size_t layerId, const bool ofCurrentMag) {
-    const float texUnitsPerDataPx = 1. / viewerState.texEdgeLength / (ofCurrentMag ? highestMag(layerId) : Dataset::datasets[layerId].highestAvailableMag);
+    auto & dataset = layerId == 0 ? Dataset::current() : Dataset::datasets[layerId];
+    const float texUnitsPerDataPx = 1. / viewerState.texEdgeLength / (ofCurrentMag ? highestMag(layerId) : dataset.highestAvailableMag);
     auto * vp = viewportXY;
     float FOVinDCs = static_cast<float>(state->M) - 1.f;
-    float displayedEdgeLen = (FOVinDCs * Dataset::datasets[layerId].cubeEdgeLength) / vp->textures[layerId].size;
+    float displayedEdgeLen = (FOVinDCs * dataset.cubeEdgeLength) / vp->textures[layerId].size;
     displayedEdgeLen = (std::ceil(displayedEdgeLen / 2. / texUnitsPerDataPx) * texUnitsPerDataPx) * 2.;
     return vp->edgeLength / (displayedEdgeLen / texUnitsPerDataPx);
 }
@@ -222,16 +226,18 @@ int Viewer::calcMag(const std::size_t layerId, const float screenPxXPerDataPx) {
     return std::min(Dataset::datasets[layerId].highestAvailableMag, std::max(static_cast<int>(std::pow(2, roundedPower)), Dataset::datasets[layerId].lowestAvailableMag));
 }
 
-void Viewer::setMagnificationLock(const std::size_t layerId, const bool locked) {
+void Viewer::setMagnificationLock(const bool locked) {
     viewerState.datasetMagLock = locked;
     if (!locked) {
-        const auto newMag = calcMag(layerId, viewportXY->screenPxXPerDataPx);
-        if (newMag != Dataset::datasets[layerId].magnification) {
-            updateDatasetMag(newMag);
-            float newFOV = viewportXY->screenPxXPerDataPxForZoomFactor(1.f, layerId) / viewportXY->screenPxXPerDataPx;
-            window->forEachOrthoVPDo([&newFOV, &layerId](ViewportOrtho & orthoVP) {
-                orthoVP.textures[layerId].FOV = newFOV;
-            });
+        for (std::size_t layerId = 0; layerId < Dataset::datasets.size(); ++layerId) {
+            const auto newMag = calcMag(layerId, viewportXY->screenPxXPerDataPx);
+            if (newMag != Dataset::datasets[layerId].magnification) {
+                updateDatasetMag(newMag);
+                float newFOV = viewportXY->screenPxXPerDataPxForZoomFactor(1.f, layerId) / viewportXY->screenPxXPerDataPx;
+                window->forEachOrthoVPDo([&newFOV, &layerId](ViewportOrtho & orthoVP) {
+                    orthoVP.textures[layerId].FOV = newFOV;
+                });
+            }
         }
     }
     recalcTextureOffsets();
@@ -551,16 +557,17 @@ void Viewer::arbCubes(ViewportArb & vp) {
     const floatCoordinate xAxis = {1, 0, 0}; const floatCoordinate yAxis = {0, 1, 0}; const floatCoordinate zAxis = {0, 0, 1};
     const auto normal = vp.n;// the normal vector direction is not important here because it doesn’t change the plane
 
-    for (int i = 0; i < Dataset::datasets.size(); ++i) {
-        auto & layer = Dataset::datasets[i];
+    for (auto & layer : layers) {
         layer.pendingArbCubes.clear();
-        for (auto & pair : layer.texture) {
+        for (auto & pair : layer.textures) {
             pair.second->vertices.clear();
         }
+    }
 
-        const auto gpusupercube = (state->M - 1) * layer.cubeEdgeLength / gpucubeedge + 1;//remove cpu overlap and add gpu overlap
+    for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
+        const auto gpusupercube = (state->M - 1) * Dataset::datasets[i].cubeEdgeLength / gpucubeedge + 1;//remove cpu overlap and add gpu overlap
         const auto scroot = (state->viewerState->currentPosition / gpucubeedge) - gpusupercube / 2;
-        floatCoordinate root = vp.textures[i].leftUpperPxInAbsPx / layer.magnification;
+        floatCoordinate root = vp.textures[i].leftUpperPxInAbsPx / Dataset::datasets[i].magnification;
         for (int z = 0; z < gpusupercube; ++z)
         for (int y = 0; y < gpusupercube; ++y)
         for (int x = 0; x < gpusupercube; ++x) {
@@ -633,13 +640,15 @@ void Viewer::arbCubes(ViewportArb & vp) {
                 if (moreThanXEndBorder && moreThanYEndBorder && moreThanZEndBorder) {
                     const CoordOfGPUCube gpuCoord{currentGPUDc.x, currentGPUDc.y, currentGPUDc.z};
                     const auto globalCoord = gpuCoord.cube2Global(gpucubeedge, Dataset::current().scaleFactor);
-                    auto cubeIt = layer.textures.find(gpuCoord);
-                    if (cubeIt != std::end(layer.textures)) {
-                        cubeIt->second->vertices = /*std::move*/(points);
-                    } else {
-                        const auto cubeCoord = Dataset::current().global2cube(globalCoord);
-                        const auto offset = globalCoord - Dataset::current().cube2global(cubeCoord);
-                        layer.pendingArbCubes.emplace_back(gpuCoord, offset);
+                    for (auto & layer : layers) {
+                        auto cubeIt = layer.textures.find(gpuCoord);
+                        if (cubeIt != std::end(layer.textures)) {
+                            cubeIt->second->vertices = /*std::move*/(points);
+                        } else {
+                            const auto cubeCoord = Dataset::current().global2cube(globalCoord);
+                            const auto offset = globalCoord - Dataset::current().cube2global(cubeCoord);
+                            layer.pendingArbCubes.emplace_back(gpuCoord, offset);
+                        }
                     }
                 }
             }
@@ -667,16 +676,16 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
     // from those cubes into the texture.
     floatCoordinate currentPxInDc_float, rowPx_float, currentPx_float;
 
-    rowPx_float = vp.textures.leftUpperPxInAbsPx / Dataset::current().scaleFactor;
+    rowPx_float = vp.textures[layerId].leftUpperPxInAbsPx / Dataset::current().scaleFactor;
     currentPx_float = rowPx_float;
 
     static std::vector<std::uint8_t> texData;// reallocation for every run would be a waste
-    texData.resize(4 * std::pow(std::ceil(vp.textures.usedSizeInCubePixels), 2), 0);
+    texData.resize(4 * std::pow(std::ceil(vp.textures[layerId].usedSizeInCubePixels), 2), 0);
 
     int s = 0, t = 0, t_old = 0;
-    while(s < vp.textures.usedSizeInCubePixels) {
+    while(s < vp.textures[layerId].usedSizeInCubePixels) {
         t = 0;
-        while(t < vp.textures.usedSizeInCubePixels) {
+        while(t < vp.textures[layerId].usedSizeInCubePixels) {
             Coordinate currentPx = {roundFloat(currentPx_float.x), roundFloat(currentPx_float.y), roundFloat(currentPx_float.z)};
             Coordinate currentDc = currentPx / Dataset::current().cubeEdgeLength;
 
@@ -691,7 +700,7 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
             currentPxInDc_float = currentPx_float - currentDc * Dataset::current().cubeEdgeLength;
             t_old = t;
 
-            dcSliceExtract(reinterpret_cast<std::uint8_t *>(datacube), &currentPxInDc_float, texData.data(), s, &t, vp.v2, layerId, vp.textures.usedSizeInCubePixels);
+            dcSliceExtract(reinterpret_cast<std::uint8_t *>(datacube), &currentPxInDc_float, texData.data(), s, &t, vp.v2, layerId, vp.textures[layerId].usedSizeInCubePixels);
             currentPx_float = currentPx_float - vp.v2 * (t - t_old);
         }
         s++;
@@ -700,14 +709,14 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
     }
 
     vp.textures[layerId].texHandle.bind();
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, std::ceil(vp.textures.usedSizeInCubePixels), std::ceil(vp.textures.usedSizeInCubePixels), GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, std::ceil(vp.textures[layerId].usedSizeInCubePixels), std::ceil(vp.textures[layerId].usedSizeInCubePixels), GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
     vp.textures[layerId].texHandle.release();
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Viewer::calcLeftUpperTexAbsPx() {
-    window->forEachOrthoVPDo([thmis](ViewportOrtho & orthoVP) {
-        for (int i = 0; i < Dataset::datasets.size(); ++i) {
+    window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
+        for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
             auto & layer = Dataset::datasets[i];
             auto & texture = orthoVP.textures[i];
             const auto fov = texture.usedSizeInCubePixels;
@@ -720,7 +729,7 @@ void Viewer::calcLeftUpperTexAbsPx() {
             if (orthoVP.viewportType == VIEWPORT_ARBITRARY) {
                 auto & arbVP = static_cast<ViewportArb&>(orthoVP);
                 arbVP.leftUpperPxInAbsPx_float = floatCoordinate{viewerState.currentPosition} - layer.scaleFactor.componentMul((orthoVP.v1 - orthoVP.v2) * 0.5 * fov);// broken arb slicing depends on this
-                arbVP.textures.leftUpperPxInAbsPx = arbVP.leftUpperPxInAbsPx_float;
+                texture.leftUpperPxInAbsPx = arbVP.leftUpperPxInAbsPx_float;
             }
         }
     });
@@ -728,7 +737,7 @@ void Viewer::calcLeftUpperTexAbsPx() {
 
 void Viewer::calcDisplayedEdgeLength() {
     window->forEachOrthoVPDo([](ViewportOrtho & vpOrtho){
-        for (int i = 0; i < Dataset::datasets.size(); ++i) {
+        for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
             auto & layer = Dataset::datasets[i];
             auto & texture = vpOrtho.textures[i];
             const auto voxelV1X = layer.scale.componentMul(vpOrtho.v1).length() / layer.scale.x;
@@ -751,9 +760,9 @@ void Viewer::calcDisplayedEdgeLength() {
 }
 
 void Viewer::zoom(const float factor) {
-    for (int i = 0; i < Dataset::datasets.size(); ++i) {
+    for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
         auto & layer = Dataset::datasets[i];
-        auto & texture = viewportXY.textures[i];
+        auto & texture = viewportXY->textures[i];
         const bool reachedHighestMag = layer.magnification == layer.highestAvailableMag;
         const bool reachedLowestMag = layer.magnification == layer.lowestAvailableMag;
         const bool reachedMinZoom = texture.FOV * factor > VPZOOMMIN && reachedHighestMag;
@@ -761,9 +770,9 @@ void Viewer::zoom(const float factor) {
         const bool magUp = texture.FOV == VPZOOMMIN && factor > 1 && !reachedHighestMag;
         const bool magDown = texture.FOV == 0.5 && factor < 1 && !reachedLowestMag;
 
-        const auto updateFOV = [this](const float newFOV) {
-            window->forEachOrthoVPDo([&newFOV, &texture](ViewportOrtho & orthoVP) {
-                texture.FOV = newFOV;
+        const auto updateFOV = [this, i](const float newFOV) {
+            window->forEachOrthoVPDo([&newFOV, i](ViewportOrtho & orthoVP) {
+                orthoVP.textures[i].FOV = newFOV;
             });
         };
         auto newMag = layer.magnification;
@@ -796,7 +805,10 @@ void Viewer::zoom(const float factor) {
 
 void Viewer::zoomReset() {
     state->viewer->window->forEachOrthoVPDo([](ViewportOrtho & orthoVP){
-        orthoVP.textures.FOV = 1;
+        for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
+            auto scaleFactor = Dataset::datasets[i].scales[0].x / Dataset::datasets[0].scales[0].x;
+            orthoVP.textures[i].FOV = scaleFactor;
+        }
     });
     recalcTextureOffsets();
     emit zoomChanged();
@@ -810,7 +822,7 @@ bool Viewer::updateDatasetMag(const int mag) {
             return false;
         }
 
-        for (int i = 0; i < Dataset::datasets.size(); ++i) {
+        for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
             auto & layer = Dataset::datasets[i];
             auto scaleFactor = layer.scales[0].x / Dataset::datasets.front().scales[0].x;
             layer.magnification = mag * scaleFactor;
@@ -820,7 +832,7 @@ bool Viewer::updateDatasetMag(const int mag) {
                 layer.scale = layer.scales[layer.magIndex];
                 layer.scaleFactor = layer.scale / layer.scales[0];
             }
-            window->forEachOrthoVPDo([mag](ViewportOrtho & orthoVP) {
+            window->forEachOrthoVPDo([=](ViewportOrtho & orthoVP) {
                 orthoVP.textures[i].texUnitsPerDataPx = 1.f / state->viewerState->texEdgeLength / mag;
             });
         }
@@ -1103,7 +1115,7 @@ void Viewer::recalcTextureOffsets() {
     calcLeftUpperTexAbsPx();
 
     window->forEachOrthoVPDo([&](ViewportOrtho & orthoVP) {
-        for (int i = 0; i < Dataset::datasets.size(); ++i) {
+        for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
             auto & layer = Dataset::datasets[i];
             auto & texture = orthoVP.textures[i];
             float midX = texture.texUnitsPerDataPx;

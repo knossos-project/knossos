@@ -290,7 +290,7 @@ public slots:
     float highestScreenPxXPerDataPx(const std::size_t layerId, const bool ofCurrentMag = true);
     float lowestScreenPxXPerDataPx(const std::size_t layerId, const bool ofCurrentMag = true);
     int calcMag(const std::size_t layerId, const float screenPxXPerDataPx);
-    void setMagnificationLock(const std::size_t layerId, const bool locked);
+    void setMagnificationLock(const bool locked);
     void setLayerVisibility(const int index, const bool enabled);
     void setMesh3dAlphaFactor(const float alpha);
     void setMeshSlicingAlphaFactor(const float alpha);
