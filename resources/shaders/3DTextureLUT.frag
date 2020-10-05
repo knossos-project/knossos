@@ -10,9 +10,11 @@ uniform float textureOpacity;
 
 in vec3 texCoordFrag;
 
+out vec4 fragOut;
+
 void main() {
     float index = texture(indexTexture, texCoordFrag).r;
     index *= factor;
-    gl_FragColor = texture(textureLUT, (index + 0.5) / lutSize);
-    gl_FragColor.a = textureOpacity;
+    fragOut = texture(textureLUT, (index + 0.5) / lutSize);
+    fragOut.a = textureOpacity;
 }

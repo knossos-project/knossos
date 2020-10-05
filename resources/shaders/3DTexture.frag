@@ -5,6 +5,8 @@ uniform float textureOpacity;
 
 in vec3 texCoordFrag;
 
+out vec4 fragOut;
+
 void main() {
-    gl_FragColor = vec4(vec3(texture(cube, texCoordFrag).r), textureOpacity);
+    fragOut = vec4(vec3(texture(cube, texCoordFrag).r), textureOpacity);
 }

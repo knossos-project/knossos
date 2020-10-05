@@ -7,6 +7,8 @@ uniform float alpha_factor;
 
 vec4 meshSlicing(sampler2D, vec2, vec4);
 
+out vec4 fragOut;
+
 void main() {
-    gl_FragColor = meshSlicing(samplerColor, screen, tree_color * vec4(1,1,1,alpha_factor));
+    fragOut = meshSlicing(samplerColor, screen, tree_color * vec4(1,1,1,alpha_factor));
 }
