@@ -5,9 +5,9 @@ uniform mat4 projection_matrix;
 uniform vec4 tree_color;
 uniform vec3 vp_normal;
 
-varying vec4 frag_color;
-varying vec3 frag_normal;
-varying mat4 mvp_matrix;
+in vec4 frag_color;
+in vec3 frag_normal;
+in mat4 mvp_matrix;
 
 void main() {
     vec3 specular_color = vec3(1.0, 1.0, 1.0);
