@@ -9,6 +9,8 @@ in vec4 frag_color;
 in vec3 frag_normal;
 in mat4 mvp_matrix;
 
+out vec4 gl_FragColor;
+
 void main() {
     vec3 specular_color = vec3(1.0, 1.0, 1.0);
     float specular_exp = 3.0;
