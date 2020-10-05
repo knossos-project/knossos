@@ -34,7 +34,7 @@
 #include <QOpenGLContext>
 #include <QOpenGLDebugLogger>
 #include <QOpenGLFramebufferObject>
-#include <QOpenGLFunctions_1_4>
+#include <QOpenGLFunctions_3_2_Core>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLTexture>
 #include <QOpenGLVertexArrayObject>
@@ -135,7 +135,7 @@ class segmentListElement;
 class Mesh;
 class ViewportOrtho;
 Coordinate getCoordinateFromOrthogonalClick(const QPointF pos, ViewportOrtho & vp);
-class ViewportBase : public QOpenGLWidget, protected QOpenGLFunctions_1_4 { // glBlendFuncSeparate requires 1.4
+class ViewportBase : public QOpenGLWidget, protected QOpenGLFunctions_3_2_Core { // glBlendFuncSeparate requires 1.4
     Q_OBJECT
 protected:
     std::weak_ptr<QOpenGLFramebufferObject> snapshotFbo;
@@ -169,6 +169,7 @@ protected:
     QOpenGLShaderProgram meshShader;
     QOpenGLShaderProgram meshTreeColorShader;
     QOpenGLShaderProgram meshIdShader;
+    QOpenGLVertexArrayObject meshVao;
     QOffscreenSurface meshPickingSurface;
     QOpenGLContext meshPickingCtx;
     QOpenGLVertexArrayObject meshPickingVao;
@@ -265,7 +266,7 @@ public:
     // holds wether vp was made fullscreen from docked state. Determines if vp is docked or floated when leaving fullscreen mode.
     bool isFullOrigDocked;
     void setDock(bool isDock);
-    static inline bool oglDebug{false};
+    static inline bool oglDebug{true};
 
     explicit ViewportBase(QWidget *parent, ViewportType viewportType);
     virtual ~ViewportBase() override;

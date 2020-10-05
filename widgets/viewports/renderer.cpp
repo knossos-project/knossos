@@ -1048,6 +1048,7 @@ void Viewport3D::renderViewport(const RenderOptions &options) {
 }
 
 void ViewportBase::renderMeshBuffer(Mesh & buf, const bool picking) {
+    meshVao.bind();
     if (picking) {
         glDisable(GL_BLEND);
     }
@@ -1118,6 +1119,7 @@ void ViewportBase::renderMeshBuffer(Mesh & buf, const bool picking) {
 
     meshShader.release();
     glEnable(GL_BLEND);
+    meshVao.release();
 }
 
 static bool shouldRenderMesh(const treeListElement & tree, const ViewportType viewportType) {
@@ -1261,21 +1263,26 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         std::array<float, 16> inverseRotation;
         rotation.inverted().copyDataTo(inverseRotation.data());
         // invert rotation
-        glMatrixMode(GL_MODELVIEW);
-        glLoadMatrixf(state->skeletonState->skeletonVpModelView);
-        glTranslatef(rotationCenter.x, rotationCenter.y, rotationCenter.z);
-        glMultMatrixf(inverseRotation.data());
+//        glMatrixMode(GL_MODELVIEW);
+//        glLoadMatrixf(state->skeletonState->skeletonVpModelView);
+//        glTranslatef(rotationCenter.x, rotationCenter.y, rotationCenter.z);
+//        glMultMatrixf(inverseRotation.data());
         // add new rotation
         QMatrix4x4 singleRotation;
         singleRotation.rotate(y, {0, 1, 0});
         singleRotation.rotate(x, {1, 0, 0});
         std::array<float, 16> rotationState;
-        (rotation *= singleRotation).copyDataTo(rotationState.data()); // transforms to row-major matrix
+//        (rotation *= singleRotation).copyDataTo(rotationState.data()); // transforms to row-major matrix
         // apply complete rotation
-        glMultMatrixf(rotationState.data());
-        glTranslatef(-rotationCenter.x, -rotationCenter.y, -rotationCenter.z);
+//        glMultMatrixf(rotationState.data());
+//        glTranslatef(-rotationCenter.x, -rotationCenter.y, -rotationCenter.z);
         // save the modified basic model view matrix
-        glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
+//        glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
+
+//        mv.translate(rotationCenter.x, rotationCenter.y, rotationCenter.z);
+//        mv *= rotation.inverted();
+//        mv *= (rotation *= singleRotation);
+//        mv.translate(-rotationCenter.x, -rotationCenter.y, -rotationCenter.z);
     };
 
     // perform user defined coordinate system rotations. use single matrix multiplication as opt.! TDitem
@@ -1291,7 +1298,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         state->skeletonState->definedSkeletonVpView = SKELVP_CUSTOM;
 
         rotation.setToIdentity();
-        QMatrix4x4{}.copyDataTo(state->skeletonState->skeletonVpModelView);
+        mv.setToIdentity();
         const auto previousRotation = state->viewerState->rotationCenter;
         state->viewerState->rotationCenter = RotationCenter::CurrentPosition;
         rotateMe(90 * xz, -90 * zy);// updates rotationState and skeletonVpModelView, must therefore also be called for xy
@@ -1317,7 +1324,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         emit updateZoomWidget();
 
         rotation.setToIdentity();
-        QMatrix4x4{}.copyDataTo(state->skeletonState->skeletonVpModelView);
+        mv.setToIdentity();
         const auto previousRotationCenter = state->viewerState->rotationCenter;
         state->viewerState->rotationCenter = RotationCenter::DatasetCenter;
         rotateMe(90, 0);
@@ -1343,27 +1350,27 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     const auto fars = state->skeletonState->volBoundary();
     const auto nearVal = -nears;
     const auto farVal = -fars;
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(left, right, bottom, top, nearVal, farVal);
+//    glMatrixMode(GL_PROJECTION);
+//    glLoadIdentity();
+//    glOrtho(left, right, bottom, top, nearVal, farVal);
     p = QMatrix4x4{};
     p.ortho(left, right, bottom, top, nearVal, farVal);
 
     // Now we set up the view on the skeleton and draw some very basic VP stuff like the gray background
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+//    glMatrixMode(GL_MODELVIEW);
+//    glLoadIdentity();
     // load model view matrix that stores rotation state!
-    glLoadMatrixf(state->skeletonState->skeletonVpModelView);
-    mv = QMatrix4x4{QMatrix4x4{state->skeletonState->skeletonVpModelView}.constData()};
+//    glLoadMatrixf(state->skeletonState->skeletonVpModelView);
+//    mv = QMatrix4x4{QMatrix4x4{state->skeletonState->skeletonVpModelView}.constData()};
     if (!options.nodePicking) {
         // Now we draw the  background of our skeleton VP
         glClearColor(1, 1, 1, 1);// white
         glClear(GL_COLOR_BUFFER_BIT);
     }
 
-    if (options.drawViewportPlanes) { // Draw the slice planes for orientation inside the data stack
+    if (false && options.drawViewportPlanes) { // Draw the slice planes for orientation inside the data stack
         glPushMatrix();
 
         const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
@@ -1437,7 +1444,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         glPopMatrix();
     }
 
-    if (options.drawBoundaryBox || options.drawBoundaryAxes) {
+    if (false) {//options.drawBoundaryBox || options.drawBoundaryAxes) {
         // Now we draw the dataset corresponding stuff (volume box of right size, axis descriptions...)
         if(options.drawBoundaryBox) {
             glPushMatrix();
@@ -1584,7 +1591,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         }
     }
 
-    if (options.drawSkeleton && state->viewerState->skeletonDisplayVP3D.testFlag(TreeDisplay::ShowIn3DVP)) {
+    if (false) {//options.drawSkeleton && state->viewerState->skeletonDisplayVP3D.testFlag(TreeDisplay::ShowIn3DVP)) {
         glPushMatrix();
         updateFrustumClippingPlanes();// should update on vp view translate, rotate or scale
         renderSkeleton(options);
@@ -1598,7 +1605,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     // Reset previously changed OGL parameters
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDisable(GL_DEPTH_TEST);
-    glLoadIdentity();
+//    glLoadIdentity();
 }
 
 void ViewportOrtho::renderBrush(const Coordinate coord) {

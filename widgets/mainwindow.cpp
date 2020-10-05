@@ -287,14 +287,13 @@ void MainWindow::resetTextureProperties() {
 
 void MainWindow::createViewports() {
     QSurfaceFormat format = QSurfaceFormat::defaultFormat();
-    format.setMajorVersion(2);
-    format.setMinorVersion(0);
+    format.setVersion(3, 2);
     format.setSamples(state->viewerState->sampleBuffers);
     format.setDepthBufferSize(24);
 //    format.setSwapInterval(0);
 //    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
-    format.setProfile(QSurfaceFormat::CompatibilityProfile);
-    format.setOption(QSurfaceFormat::DeprecatedFunctions);
+    format.setProfile(QSurfaceFormat::CoreProfile);
+//    format.setOption(QSurfaceFormat::DeprecatedFunctions);
     if (ViewportBase::oglDebug) {
         format.setOption(QSurfaceFormat::DebugContext);
     }

@@ -100,9 +100,9 @@ void ViewportOrtho::paintGL() {
     if (state->gpuSlicer && state->viewer->gpuRendering) {
         renderViewportFast();
     } else {
-        renderViewport();
+//        renderViewport();
     }
-    renderViewportFrontFace();
+//    renderViewportFrontFace();
 }
 
 #include <skeleton/skeletonizer.h>

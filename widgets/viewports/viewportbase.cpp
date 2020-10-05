@@ -273,6 +273,7 @@ void ViewportBase::initializeGL() {
         meshTreeColorShader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/mesh/meshtreecolorshader.frag");
         meshTreeColorShader.link();
     }
+    meshVao.create();
 
     auto format = meshPickingSurface.format();
     if (this->format().version() < QPair(3, 0) || this->format().version() >= QPair(3, 2)) {
@@ -313,12 +314,15 @@ void ViewportBase::initializeGL() {
 }
 
 void ViewportBase::resizeGL(int width, int height) {
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
+//    glMatrixMode(GL_PROJECTION);
+//    glLoadIdentity();
     GLfloat x = (GLfloat)width / height;
 
-    glFrustum(-x, +x, -1.0, + 1.0, 0.1, 10.0);
-    glMatrixMode(GL_MODELVIEW);
+    p.setToIdentity();
+    mv.setToIdentity();
+
+//    glFrustum(-x, +x, -1.0, + 1.0, 0.1, 10.0);
+//    glMatrixMode(GL_MODELVIEW);
 
     edgeLength = width;
     state->viewer->recalcTextureOffsets();
