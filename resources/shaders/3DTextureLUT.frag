@@ -8,7 +8,7 @@ uniform float lutSize;//float(textureSize1D(textureLUT, 0));
 
 uniform float textureOpacity;
 
-varying vec3 texCoordFrag;
+in vec3 texCoordFrag;
 
 void main() {
     float index = texture3D(indexTexture, texCoordFrag).r;

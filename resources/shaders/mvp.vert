@@ -1,6 +1,6 @@
 #version 150
 
-attribute vec3 vertex;
+in vec3 vertex;
 
 uniform mat4 modelview_matrix;
 uniform mat4 projection_matrix;

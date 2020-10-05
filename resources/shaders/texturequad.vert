@@ -1,6 +1,6 @@
 #version 150
 
-attribute vec3 vertex;
+in vec3 vertex;
 
 varying vec2 ftex;
 

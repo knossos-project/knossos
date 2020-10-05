@@ -3,7 +3,7 @@
 uniform vec4 tree_color;
 uniform float alpha_factor;
 
-varying vec3 frag_normal;
+in vec3 frag_normal;
 
 vec4 diffuse(vec3, vec4);
 

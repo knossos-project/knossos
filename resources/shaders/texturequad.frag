@@ -3,6 +3,7 @@
 uniform sampler2D sampler;
 uniform vec4 color_factor = vec4(1);
 
+
 varying vec2 ftex;
 
 void main() {

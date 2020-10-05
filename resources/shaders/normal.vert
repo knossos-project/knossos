@@ -1,12 +1,12 @@
 #version 150
 
-attribute vec3 vertex;
-attribute vec3 normal;
+in vec3 vertex;
+in vec3 normal;
 
 uniform mat4 modelview_matrix;
 uniform mat4 projection_matrix;
 
-varying vec3 frag_normal;
+out vec3 frag_normal;
 
 void main() {
     mat4 mvp_matrix = projection_matrix * modelview_matrix;
