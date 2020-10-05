@@ -117,9 +117,12 @@ void writeSWC(QIODevice & file, const treeListElement & tree, const bool pixelSp
     std::back_insert_iterator<std::string> sink{swcText};
     multiplier = pixelSpace ? floatCoordinate(1, 1, 1) : Dataset::current().scale / 1000.f;
     std::vector<std::pair<std::reference_wrapper<nodeListElement>, std::uint64_t>> nodes;
-    auto allNodes = const_cast<treeListElement &>(tree).getNodes()->toSet();
+    QSet<nodeListElement *> allNodes;
+    for (const auto & elem : tree.nodes) {
+        allNodes.insert(const_cast<nodeListElement *>(&elem));
+    }
     auto somata = Skeletonizer::singleton().findNodesInTree(const_cast<treeListElement&>(tree), "soma");
-     while (!allNodes.isEmpty()) {
+    while (!allNodes.isEmpty()) {
         auto * root = somata.isEmpty() ? *allNodes.begin() : somata.takeFirst(); // first soma component(s), then the rest
         for (NodeGenerator nodeGen(*root, NodeGenerator::Direction::Any); !nodeGen.reachedEnd; ++nodeGen) {
             allNodes.remove(&*nodeGen);
