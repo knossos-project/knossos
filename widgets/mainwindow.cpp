@@ -293,7 +293,7 @@ void MainWindow::createViewports() {
 //    format.setSwapInterval(0);
 //    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
     format.setProfile(QSurfaceFormat::CoreProfile);
-//    format.setOption(QSurfaceFormat::DeprecatedFunctions);
+    format.setOption(QSurfaceFormat::DeprecatedFunctions);
     if (ViewportBase::oglDebug) {
         format.setOption(QSurfaceFormat::DebugContext);
     }
