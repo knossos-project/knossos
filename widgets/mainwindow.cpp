@@ -286,18 +286,18 @@ void MainWindow::resetTextureProperties() {
 }
 
 void MainWindow::createViewports() {
-    QSurfaceFormat format = QSurfaceFormat::defaultFormat();
-    format.setVersion(3, 2);
-    format.setSamples(state->viewerState->sampleBuffers);
-    format.setDepthBufferSize(24);
-//    format.setSwapInterval(0);
-//    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
-    format.setProfile(QSurfaceFormat::CoreProfile);
-    format.setOption(QSurfaceFormat::DeprecatedFunctions);
-    if (ViewportBase::oglDebug) {
-        format.setOption(QSurfaceFormat::DebugContext);
-    }
-    QSurfaceFormat::setDefaultFormat(format);
+//    QSurfaceFormat format = QSurfaceFormat::defaultFormat();
+//    format.setVersion(3, 2);
+//    format.setSamples(state->viewerState->sampleBuffers);
+//    format.setDepthBufferSize(24);
+////    format.setSwapInterval(0);
+////    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
+//    format.setProfile(QSurfaceFormat::CoreProfile);
+//    format.setOption(QSurfaceFormat::DeprecatedFunctions);
+//    if (ViewportBase::oglDebug) {
+//        format.setOption(QSurfaceFormat::DebugContext);
+//    }
+//    QSurfaceFormat::setDefaultFormat(format);
 
     viewportXY = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_XY));
     viewportXZ = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_XZ));

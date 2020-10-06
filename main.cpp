@@ -102,6 +102,17 @@ Q_DECLARE_METATYPE(std::string)
 
 int main(int argc, char *argv[]) {
     QtConcurrent::run([](){ QSslSocket::supportsSsl(); });// workaround until https://bugreports.qt.io/browse/QTBUG-59750
+
+    QSurfaceFormat format = QSurfaceFormat::defaultFormat();
+    format.setVersion(3, 2);
+    format.setDepthBufferSize(24);
+    format.setProfile(QSurfaceFormat::CoreProfile);
+    format.setOption(QSurfaceFormat::DeprecatedFunctions);
+    if (ViewportBase::oglDebug) {
+        format.setOption(QSurfaceFormat::DebugContext);
+    }
+    QSurfaceFormat::setDefaultFormat(format);
+
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);// explicitly enable sharing for undocked viewports
 #ifdef Q_OS_OSX
     const auto end = std::next(argv, argc);
