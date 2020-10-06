@@ -264,6 +264,9 @@ void ZoomWidget::applyZoom(const float newScreenPxXPerDataPx) {
 }
 
 void ZoomWidget::reinitializeOrthoZoomWidgets() {
+    if (Dataset::datasets.empty()) {
+        return;
+    }
     const auto mags = static_cast<std::size_t>(std::log2(state->viewer->highestMag(0) / state->viewer->lowestMag(0))) + 1;
     const auto interval = 50;
 
@@ -303,6 +306,9 @@ void ZoomWidget::zoomDefaultsClicked() {
 }
 
 void ZoomWidget::update() {
+    if (Dataset::datasets.empty()) {
+        return;
+    }
     updateOrthogonalZoomSlider();
     updateOrthogonalZoomSpinBox();
     skeletonViewportSpinBox.setValue(100 * state->mainWindow->viewport3D->zoomFactor);

@@ -719,36 +719,34 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
                   , center.x, center.y, center.z
                   , v2.x, v2.y, v2.z);// negative up vectors, because origin is at the top
     };
-    auto slice = [&](auto & textures, std::size_t layerId){
+    auto slice = [&](auto & texture, std::size_t layerId){
         if (!options.nodePicking) {
             state->viewer->vpGenerateTexture(*this, layerId);
             glEnable(GL_TEXTURE_2D);
-            for (auto & texture : textures) {
-                texture.texHandle.bind();
-                glPushMatrix();
-                glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
-                glBegin(GL_QUADS);
-                    glNormal3i(n.x, n.y, n.z);
-                    glTexCoord2f(texture.texLUx, texture.texLUy);
-                    glVertex3f(-dataPxX * v1.x - dataPxY * v2.x,
-                               -dataPxX * v1.y - dataPxY * v2.y,
-                               -dataPxX * v1.z - dataPxY * v2.z);
-                    glTexCoord2f(texture.texRUx, texture.texRUy);
-                    glVertex3f( dataPxX * v1.x - dataPxY * v2.x,
-                                dataPxX * v1.y - dataPxY * v2.y,
-                                dataPxX * v1.z - dataPxY * v2.z);
-                    glTexCoord2f(texture.texRLx, texture.texRLy);
-                    glVertex3f( dataPxX * v1.x + dataPxY * v2.x,
-                                dataPxX * v1.y + dataPxY * v2.y,
-                                dataPxX * v1.z + dataPxY * v2.z);
-                    glTexCoord2f(texture.texLLx, texture.texLLy);
-                    glVertex3f(-dataPxX * v1.x + dataPxY * v2.x,
-                               -dataPxX * v1.y + dataPxY * v2.y,
-                               -dataPxX * v1.z + dataPxY * v2.z);
-                glEnd();
-                glPopMatrix();
-                texture.texHandle.release();
-            }
+            texture.texHandle.bind();
+            glPushMatrix();
+            glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
+            glBegin(GL_QUADS);
+                glNormal3i(n.x, n.y, n.z);
+                glTexCoord2f(texture.texLUx, texture.texLUy);
+                glVertex3f(-dataPxX * v1.x - dataPxY * v2.x,
+                           -dataPxX * v1.y - dataPxY * v2.y,
+                           -dataPxX * v1.z - dataPxY * v2.z);
+                glTexCoord2f(texture.texRUx, texture.texRUy);
+                glVertex3f( dataPxX * v1.x - dataPxY * v2.x,
+                            dataPxX * v1.y - dataPxY * v2.y,
+                            dataPxX * v1.z - dataPxY * v2.z);
+                glTexCoord2f(texture.texRLx, texture.texRLy);
+                glVertex3f( dataPxX * v1.x + dataPxY * v2.x,
+                            dataPxX * v1.y + dataPxY * v2.y,
+                            dataPxX * v1.z + dataPxY * v2.z);
+                glTexCoord2f(texture.texLLx, texture.texLLy);
+                glVertex3f(-dataPxX * v1.x + dataPxY * v2.x,
+                           -dataPxX * v1.y + dataPxY * v2.y,
+                           -dataPxX * v1.z + dataPxY * v2.z);
+            glEnd();
+            glPopMatrix();
+            texture.texHandle.release();
             glDisable(GL_TEXTURE_2D);
         }
     };
@@ -766,7 +764,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         const auto & layerSettings = state->viewerState->layerRenderSettings[ordered_i];
         if (!options.nodePicking && layerSettings.visible && !Dataset::datasets[ordered_i].isOverlay()) {
             glColor4f(layerSettings.color.redF(), layerSettings.color.greenF(), layerSettings.color.blueF(), layerSettings.opacity);
-            slice(textures, ordered_i);// offset to the far clipping plane to avoid clipping the skeleton
+            slice(textures[ordered_i], ordered_i);// offset to the far clipping plane to avoid clipping the skeleton
             break;
         }
     }
@@ -802,7 +800,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
                 glColor4f(layerSettings.color.redF(), layerSettings.color.greenF(), layerSettings.color.blueF(), layerSettings.opacity);
                 glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
             }
-            slice(textures, ordered_i);
+            slice(textures[ordered_i], ordered_i);
         }
     }
 

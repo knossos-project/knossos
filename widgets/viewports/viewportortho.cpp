@@ -124,16 +124,11 @@ void ViewportOrtho::resetTexture(const std::size_t layerCount) {
     const bool changedLayerCount{layerCount != textures.size()};
     const bool changedTextureSize{!textures.empty() && textures[0].size != textures[0].texHandle.width()};
     makeCurrent();
-    if (context() != nullptr && (changedLayerCount || changedTextureSize)) {
+    if ((changedLayerCount || changedTextureSize)) {
         textures = decltype(textures)(layerCount);
         for (std::size_t i{0}; i < layerCount; ++i) {
             auto & elem = textures[i].texHandle;
             auto & texData = textures[i].texData;
-            elem.destroy();
-            elem.setSize(textures[i].size, textures[i].size);
-            elem.setFormat(QOpenGLTexture::RGBA8_UNorm);
-            elem.setWrapMode(QOpenGLTexture::ClampToEdge);
-            elem.allocateStorage();
             texData.resize(4 * std::pow(textures[i].size, 2));
             for (std::size_t i = 3; i < texData.size(); i += 4) {
                 texData[i-3] = 0;
@@ -141,9 +136,15 @@ void ViewportOrtho::resetTexture(const std::size_t layerCount) {
                 texData[i-1] = 255;
                 texData[i] = 255;
             }
-            const auto & cdata = texData;
-            elem.setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, cdata.data());
-            elem.release();
+            if (context() != nullptr) {
+                elem.destroy();
+                elem.setSize(textures[i].size, textures[i].size);
+                elem.setFormat(QOpenGLTexture::RGBA8_UNorm);
+                elem.setWrapMode(QOpenGLTexture::ClampToEdge);
+                elem.allocateStorage();
+                elem.setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, const_cast<const std::uint8_t*>(texData.data()));
+                elem.release();
+            }
         }
         applyTextureFilter();
     }
