@@ -260,7 +260,7 @@ signals:
     void meshSlicingAlphaFactorChanged(float);
 public slots:
     void updateCurrentPosition();
-    bool updateDatasetMag(const int mag = 0);
+    bool updateDatasetMag(const std::size_t layerId, const int mag = 0);
     void setPosition(const floatCoordinate & pos, UserMoveType userMoveType = USERMOVE_NEUTRAL, const Coordinate & viewportNormal = {0, 0, 0});
     void setPositionWithRecentering(const Coordinate &pos);
     void setPositionWithRecenteringAndRotation(const Coordinate &pos);

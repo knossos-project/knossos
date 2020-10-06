@@ -558,7 +558,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     }
     state->viewer->applyTextureFilterSetting(state->viewerState->textureFilter);// set filter for all layers
     state->viewer->datasetColorAdjustmentsChanged();// set range delta and bias for all layers
-    state->viewer->updateDatasetMag();// clear vps and notify loader
+    state->viewer->updateDatasetMag(0);// clear vps and notify loader
 
     emit datasetChanged();
 
@@ -586,8 +586,6 @@ void DatasetLoadWidget::applyGeometrySettings() {
     state->cubeBytes = std::pow(Dataset::current().cubeEdgeLength, 3);
     state->cubeSetElements = std::pow(state->M, 3);
     state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
-
-    state->viewer->window->resetTextureProperties();
 }
 
 void DatasetLoadWidget::loadSettings() {

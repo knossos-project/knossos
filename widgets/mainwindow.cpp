@@ -272,21 +272,6 @@ void MainWindow::updateCursorLabel(const Coordinate & position, const ViewportTy
     cursorPositionLabel.setText(QString("%1, %2, %3%4").arg(position.x + inc).arg(position.y + inc).arg(position.z + inc).arg(cubePosText));
 }
 
-void MainWindow::resetTextureProperties() {
-    //reset viewerState texture properties
-    forEachOrthoVPDo([](ViewportOrtho & orthoVP) {
-        for (auto & texture : orthoVP.textures) {
-            texture.size = state->viewerState->texEdgeLength;
-            texture.texUnitsPerDataPx = (1.0 / texture.size) / Dataset::current().magnification;
-            texture.FOV = 1;
-            texture.usedSizeInCubePixels = (state->M - 1) * Dataset::current().cubeEdgeLength;
-            if (orthoVP.viewportType == VIEWPORT_ARBITRARY) {
-                texture.usedSizeInCubePixels /= std::sqrt(2);
-            }
-        }
-    });
-}
-
 void MainWindow::createViewports() {
     QSurfaceFormat format = QSurfaceFormat::defaultFormat();
     format.setMajorVersion(2);
@@ -311,7 +296,6 @@ void MainWindow::createViewports() {
     state->viewer->viewportXZ = viewportXZ.get();
     state->viewer->viewportZY = viewportZY.get();
     state->viewer->viewportArb = viewportArb.get();
-    resetTextureProperties();
     forEachVPDo([this](ViewportBase & vp) {
         QObject::connect(&vp, &ViewportBase::cursorPositionChanged, this, &MainWindow::updateCursorLabel);
         QObject::connect(&vp, &ViewportBase::cursorPositionChanged, this, [](const Coordinate & coord){
@@ -621,7 +605,7 @@ void MainWindow::createMenus() {
             std::swap(Dataset::datasets[0].loadingEnabled, Dataset::datasets[1].loadingEnabled);
             state->viewer->layerRenderSettingsChanged();
             emit widgetContainer.datasetLoadWidget.datasetChanged();
-            state->viewer->updateDatasetMag();
+            state->viewer->updateDatasetMag(0);
             updateCompressionRatioDisplay();
         }
     }, Qt::Key_F4);

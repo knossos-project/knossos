@@ -126,10 +126,16 @@ void ViewportOrtho::resetTexture(const std::size_t layerCount) {
     makeCurrent();
     if ((changedLayerCount || changedTextureSize)) {
         textures = decltype(textures)(layerCount);
-        for (std::size_t i{0}; i < layerCount; ++i) {
-            auto & elem = textures[i].texHandle;
-            auto & texData = textures[i].texData;
-            texData.resize(4 * std::pow(textures[i].size, 2));
+        for (auto & texture : textures) {
+            auto & elem = texture.texHandle;
+            auto & texData = texture.texData;
+            texture.size = state->viewerState->texEdgeLength;
+            texture.usedSizeInCubePixels = (state->M - 1) * Dataset::current().cubeEdgeLength;
+            if (viewportType == VIEWPORT_ARBITRARY) {
+                texture.usedSizeInCubePixels /= std::sqrt(2);
+            }
+            texture.texUnitsPerDataPx = (1.0 / texture.size) / Dataset::current().magnification;
+            texData.resize(4 * std::pow(texture.size, 2));
             for (std::size_t i = 3; i < texData.size(); i += 4) {
                 texData[i-3] = 0;
                 texData[i-2] = 0;
@@ -138,7 +144,7 @@ void ViewportOrtho::resetTexture(const std::size_t layerCount) {
             }
             if (context() != nullptr) {
                 elem.destroy();
-                elem.setSize(textures[i].size, textures[i].size);
+                elem.setSize(texture.size, texture.size);
                 elem.setFormat(QOpenGLTexture::RGBA8_UNorm);
                 elem.setWrapMode(QOpenGLTexture::ClampToEdge);
                 elem.allocateStorage();
@@ -147,6 +153,9 @@ void ViewportOrtho::resetTexture(const std::size_t layerCount) {
             }
         }
         applyTextureFilter();
+    }
+    for (auto & texture : textures) {
+        texture.FOV = 1;
     }
 }
 

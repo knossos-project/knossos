@@ -202,8 +202,8 @@ int Viewer::lowestMag(const std::size_t layerId) {
 
 float Viewer::highestScreenPxXPerDataPx(const std::size_t layerId, const bool ofCurrentMag) {
     auto & dataset = layerId == 0 ? Dataset::current() : Dataset::datasets[layerId];
-    const float texUnitsPerDataPx = 1. / viewerState.texEdgeLength / (ofCurrentMag ? lowestMag(layerId) : dataset.lowestAvailableMag);
     auto * vp = viewportXY;
+    const float texUnitsPerDataPx = 1. / vp->textures[layerId].size / (ofCurrentMag ? lowestMag(layerId) : dataset.lowestAvailableMag);
     float FOVinDCs = static_cast<float>(state->M) - 1.f;
     float displayedEdgeLen = (FOVinDCs * VPZOOMMAX * dataset.cubeEdgeLength) / vp->textures[layerId].size;
     displayedEdgeLen = (std::ceil(displayedEdgeLen / 2. / texUnitsPerDataPx) * texUnitsPerDataPx) * 2.;
@@ -212,8 +212,8 @@ float Viewer::highestScreenPxXPerDataPx(const std::size_t layerId, const bool of
 
 float Viewer::lowestScreenPxXPerDataPx(const std::size_t layerId, const bool ofCurrentMag) {
     auto & dataset = layerId == 0 ? Dataset::current() : Dataset::datasets[layerId];
-    const float texUnitsPerDataPx = 1. / viewerState.texEdgeLength / (ofCurrentMag ? highestMag(layerId) : dataset.highestAvailableMag);
     auto * vp = viewportXY;
+    const float texUnitsPerDataPx = 1. / vp->textures[layerId].size / (ofCurrentMag ? highestMag(layerId) : dataset.highestAvailableMag);
     float FOVinDCs = static_cast<float>(state->M) - 1.f;
     float displayedEdgeLen = (FOVinDCs * dataset.cubeEdgeLength) / vp->textures[layerId].size;
     displayedEdgeLen = (std::ceil(displayedEdgeLen / 2. / texUnitsPerDataPx) * texUnitsPerDataPx) * 2.;
@@ -482,7 +482,7 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
                 if (!vp.resliceNecessary[layerId] && vp.resliceNecessaryCubes[layerId].find(currentDc) == std::end(vp.resliceNecessaryCubes[layerId])) {
                     continue;
                 }
-                const int index = 4 * (y_dc * viewerState.texEdgeLength * cubeEdgeLen + x_dc * cubeEdgeLen * cubeEdgeLen);
+                const int index = 4 * (y_dc * vp.textures[layerId].size * cubeEdgeLen + x_dc * cubeEdgeLen * cubeEdgeLen);
                 func(x_dc, y_dc, currentDc, index);
             }
         }
@@ -814,28 +814,27 @@ void Viewer::zoomReset() {
     emit zoomChanged();
 }
 
-bool Viewer::updateDatasetMag(const int mag) {
-    Loader::Controller::singleton().unloadCurrentMagnification(); //unload all the cubes
+bool Viewer::updateDatasetMag(const std::size_t layerId, const int mag) {
+    Loader::Controller::singleton().unloadCurrentMagnification();// unload all the cubes
     if (mag != 0) {// change global mag after unloading
         const bool powerOf2 = mag > 0 && (mag & (mag - 1)) == 0;
-        if (!powerOf2 || mag < Dataset::current().lowestAvailableMag || mag > Dataset::current().highestAvailableMag) {
+        if (!powerOf2 || mag < Dataset::datasets[layerId].lowestAvailableMag || mag > Dataset::datasets[layerId].highestAvailableMag) {
             return false;
         }
 
-        for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
-            auto & layer = Dataset::datasets[i];
-            auto scaleFactor = layer.scales[0].x / Dataset::datasets.front().scales[0].x;
-            layer.magnification = mag * scaleFactor;
-            layer.magIndex = static_cast<std::size_t>(std::log2(layer.magnification));
-            qDebug() << layer.magnification << layer.magIndex;
-            if (layer.scales.size() > layer.magIndex) {
-                layer.scale = layer.scales[layer.magIndex];
-                layer.scaleFactor = layer.scale / layer.scales[0];
-            }
-            window->forEachOrthoVPDo([=](ViewportOrtho & orthoVP) {
-                orthoVP.textures[i].texUnitsPerDataPx = 1.f / state->viewerState->texEdgeLength / mag;
-            });
+        qDebug() << "fo";
+        auto & layer = Dataset::datasets[layerId];
+        auto scaleFactor = layer.scales[0].x / Dataset::datasets.front().scales[0].x;
+        layer.magnification = mag * scaleFactor;
+        layer.magIndex = static_cast<std::size_t>(std::log2(layer.magnification));
+        qDebug() << layer.magnification << layer.magIndex;
+        if (layer.scales.size() > layer.magIndex) {
+            layer.scale = layer.scales[layer.magIndex];
+            layer.scaleFactor = layer.scale / layer.scales[0];
         }
+        window->forEachOrthoVPDo([=](ViewportOrtho & orthoVP) {
+            orthoVP.textures[layerId].texUnitsPerDataPx = 1.f / orthoVP.textures[layerId].size / mag;
+        });
     }
     //clear the viewports
     reslice_notify();
@@ -1229,7 +1228,6 @@ void Viewer::resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge, co
         if (layerCount != viewerState.layerRenderSettings.size()) {
             viewerState.layerRenderSettings = decltype(viewerState.layerRenderSettings)(layerCount);
         }
-        window->resetTextureProperties();
         window->forEachOrthoVPDo([layerCount](ViewportOrtho & vp) {
             vp.resetTexture(layerCount);
         });
