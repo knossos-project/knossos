@@ -44,6 +44,8 @@
 #include <QNetworkReply>
 #include <QtConcurrent>
 
+#include <boost/range/combine.hpp>
+
 #include <cmath>
 #include <fstream>
 #include <stdexcept>
@@ -511,8 +513,8 @@ void Loader::Controller::startLoading(const Coordinate & center, const UserMoveT
 
 void Loader::Worker::broadcastProgress(bool startup) {
     std::size_t count{0};
-    for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
-        count += slotOpen[layerId].size() + slotDownload[layerId].size() + slotDecompression[layerId].size();
+    for (const auto & tup : boost::combine(slotOpen, slotDownload, slotDecompression)) {
+        count += tup.get<0>().size() + tup.get<1>().size() + tup.get<2>().size();
     }
     isFinished = count == 0;
     emit progress(startup, count);
