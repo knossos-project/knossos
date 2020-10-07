@@ -829,14 +829,14 @@ bool Viewer::updateDatasetMag(const std::size_t layerId, const int mag) {
         auto scaleFactor = layer.scales[0].x / Dataset::datasets.front().scales[0].x;
         layer.magnification = mag * scaleFactor;
         layer.magIndex = static_cast<std::size_t>(std::log2(layer.magnification));
-        qDebug() << layer.magnification << layer.magIndex;
-        if (layer.scales.size() > layer.magIndex) {
-            layer.scale = layer.scales[layer.magIndex];
-            layer.scaleFactor = layer.scale / layer.scales[0];
-        }
         window->forEachOrthoVPDo([=](ViewportOrtho & orthoVP) {
             orthoVP.textures[layerId].texUnitsPerDataPx = 1.f / orthoVP.textures[layerId].size / mag;
         });
+    }
+    auto & layer = Dataset::datasets[layerId];
+    if (layer.scales.size() > layer.magIndex) {
+        layer.scale = layer.scales[layer.magIndex];
+        layer.scaleFactor = layer.scale / Dataset::datasets[0].scales[0];
     }
     //clear the viewports
     reslice_notify();
