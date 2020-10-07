@@ -256,6 +256,7 @@ void unloadCubes(CubeHash & loadedCubes, Slots & freeSlots, Keep keep, UnloadHoo
 void Loader::Worker::unloadCurrentMagnification(const std::size_t layerId) {
     abortDownloadsFinishDecompression(layerId, [](const CoordOfCube &){return false;});
     QMutexLocker locker(&state->protectCube2Pointer);
+    const auto loaderMagnification = datasets[layerId].magIndex;
     if (loaderMagnification >= state->cube2Pointer[layerId].size()) {
         return;
     }
@@ -294,6 +295,7 @@ void Loader::Worker::snappyCacheSupplySnappy(const CoordOfCube cubeCoord, const 
     }
     snappyCache[cubeMagnification].emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple(cube));
 
+    const auto loaderMagnification = datasets[snappyLayerId].magIndex;
     if (cubeMagnification == loaderMagnification) {//unload if currently loaded
         auto openIt = slotOpen[snappyLayerId].find(cubeCoord);
         if (openIt != std::end(slotOpen[snappyLayerId])) {
@@ -319,7 +321,7 @@ void Loader::Worker::snappyCacheSupplySnappy(const CoordOfCube cubeCoord, const 
 void Loader::Worker::snappyCacheBackupRaw(const CoordOfCube & cubeCoord, const void * cube) {
     QMutexLocker lock{&snappyCacheMutex};
     //insert empty string into snappy cache
-    auto snappyIt = snappyCache[loaderMagnification].emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple()).first;
+    auto snappyIt = snappyCache[datasets[snappyLayerId].magIndex].emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple()).first;
     //compress cube into the new string
     snappy::Compress(reinterpret_cast<const char *>(cube), OBJID_BYTES * state->cubeBytes, &snappyIt->second);
 }
@@ -485,12 +487,13 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
 void Loader::Worker::cleanup(const Coordinate center) {
     for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
         abortDownloadsFinishDecompression(layerId, currentlyVisibleWrap(center, datasets[layerId]));
+        const auto loaderMagnification = datasets[layerId].magIndex;
         if (loaderMagnification >= state->cube2Pointer[layerId].size()) {
             continue;
         }
         QMutexLocker locker(&state->protectCube2Pointer);
         unloadCubes(state->cube2Pointer[layerId][loaderMagnification], freeSlots[layerId], insideCurrentSupercubeWrap(center, datasets[layerId])
-                    , [this, layerId](const CoordOfCube & cubeCoord, void * remSlotPtr){
+                    , [this, layerId, loaderMagnification](const CoordOfCube & cubeCoord, void * remSlotPtr){
             if (datasets[layerId].isOverlay()) {// TODO is it the snappy layer?
                 if (OcModifiedCacheQueue[loaderMagnification].find(cubeCoord) != std::end(OcModifiedCacheQueue[loaderMagnification])) {
                     snappyCacheBackupRaw(cubeCoord, remSlotPtr);
@@ -571,22 +574,23 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             freeSlots[layerId].emplace_back(slotChunk[layerId].back().data());// append newest element
         }
     }
+    for (std::size_t layerId{0}; layerId < changedDatasets.size(); ++layerId) {
+        if (!datasets.empty() && changedDatasets[layerId].magIndex != datasets[layerId].magIndex) {
+            unloadCurrentMagnification(layerId);
+        }
+    }
     datasets = changedDatasets;
     snappyLayerId = segmentationLayer;
     loaderCacheSize = cacheSize;
 
-    if (loaderMagnification != datasets[0].magIndex) {
-        unloadCurrentMagnification();
-        loaderMagnification = datasets[0].magIndex;
-    }
-    const auto Dcoi = DcoiFromPos(datasets[0].global2cube(center), userMoveType, direction);//datacubes of interest prioritized around the current position
     //split dcoi into slice planes and rest
     std::vector<std::pair<std::size_t, CoordOfCube>> allCubes;
-    for (auto && todo : Dcoi) {
+    for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
+        const auto Dcoi = DcoiFromPos(datasets[layerId].global2cube(center), userMoveType, direction);//datacubes of interest prioritized around the current position
         QMutexLocker locker(&state->protectCube2Pointer);
-        for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
+        for (auto && todo : Dcoi) {
             // only queue downloads which are necessary
-            if (cubeQuery(state->cube2Pointer, layerId, loaderMagnification, todo) == nullptr) {
+            if (cubeQuery(state->cube2Pointer, layerId, datasets[layerId].magIndex, todo) == nullptr) {
                 allCubes.emplace_back(layerId, todo);
             }
         }
@@ -602,8 +606,8 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         }
         if (dataset.isOverlay()) {
             QMutexLocker lock{&snappyCacheMutex};
-            auto snappyIt = snappyCache[loaderMagnification].find(cubeCoord);
-            if (snappyIt != std::end(snappyCache[loaderMagnification])) {
+            auto snappyIt = snappyCache[dataset.magIndex].find(cubeCoord);
+            if (snappyIt != std::end(snappyCache[dataset.magIndex])) {
                 if (!freeSlots.empty()) {
                     auto downloadIt = downloads.find(cubeCoord);
                     if (downloadIt != std::end(downloads)) {
@@ -676,7 +680,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     const auto inmagCoord = cubeCoord * dataset.cubeEdgeLength;
                     request.setRawHeader("Content-Type", "application/octet-stream");
                     const QString json(R"json({"geometry":{"corner":"%1,%2,%3", "size":"%4,%4,%4", "scale":%5}, "subvolume_format":"SINGLE_IMAGE", "image_format_options":{"image_format":"JPEG", "jpeg_quality":70}})json");
-                    payload = json.arg(inmagCoord.x).arg(inmagCoord.y).arg(inmagCoord.z).arg(dataset.cubeEdgeLength).arg(loaderMagnification).toUtf8();
+                    payload = json.arg(inmagCoord.x).arg(inmagCoord.y).arg(inmagCoord.z).arg(dataset.cubeEdgeLength).arg(dataset.magIndex).toUtf8();
                 } else if (dataset.api == Dataset::API::WebKnossos) {
                     const auto globalCoord = dataset.cube2global(cubeCoord);
                     request.setRawHeader("Content-Type", "application/json");
@@ -770,7 +774,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         if (loadingNr == Loader::Controller::singleton().loadingNr) {
             if (datasets[layerId].loadingEnabled) {
                 try {
-                    startDownload(layerId, datasets[layerId], cubeCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer.at(layerId).at(loaderMagnification));
+                    startDownload(layerId, datasets[layerId], cubeCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer.at(layerId).at(datasets[layerId].magIndex));
                 } catch (const std::out_of_range &) {}
             }
         }
