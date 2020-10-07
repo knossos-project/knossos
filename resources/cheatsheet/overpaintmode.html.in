@@ -1,0 +1,38 @@
+<html>
+<head>
+	<meta content="text/html; charset=utf-8"/>
+	<link rel="stylesheet" href=":/resources/cheatsheet/cheatsheet.css" type="text/css" />
+</head>
+
+<body>
+	<h1>Segmentation Overpaint</h1>
+
+	<p><a href=#annotation_seg>Segmentation table view</a> | <a href=#pref_seg>Visibility preferences</a></p>
+	<p><a href=#navi>Navigation preferences</a></p>
+
+	<p>
+	Overpainting allows fine-grained reassignment of existing segmentation to new objects by not painting on the background and therefore retaining detail.
+	</p>
+
+	<p>
+	<table>
+		<thead>
+			<tr>
+				<th align="left">Shortcut</th><th align="left">Action</th>
+			</tr>
+		</thead>
+		<tr><td><span class="sh"><img src=":/resources/cheatsheet/middleclick.png" alt="Middle click"/> click</span></td><td>Bucket fill</td></tr>
+		<tr><td><span class="sh">Shift +  <img src=":/resources/cheatsheet/middleclick.png" alt="Middle click"/> scroll</span></td><td>Change brush size</td></tr>
+		<tr><td><span class="sh"><img src=":/resources/cheatsheet/rightclick.png" alt="Right click"/></span></td><td>Draw</td></tr>
+		<tr><td><span class="sh">Shift + <img src=":/resources/cheatsheet/rightclick.png" alt="Right click"/></span></td><td>Erase</td></tr>
+		<tr><td><span class="sh">-</span></td><td>Overlay: decrease opacity</td></tr>
+		<tr><td><span class="sh">+</span></td><td>Overlay: increase opacity</td></tr>
+		<tr><td><span class="sh">Hold space</span></td><td>Reveal raw data temporarily</td></tr>
+		<tr><td><span class="sh"><img src=":/resources/cheatsheet/leftclick.png" alt="Left click"/></span></td><td>Select object</td></tr>
+		<tr><td><span class="sh">Ctrl + +</span></td><td>Zoom in</td></tr>
+		<tr><td><span class="sh">Ctrl + -</span></td><td>Zoom out</td></tr>
+		<tr><td><span class="sh">Ctrl + 0</span></td><td>Zoom reset</td></tr>
+	</table>
+	</p>
+</body>
+</html>

@@ -358,6 +358,7 @@ void MainWindow::createToolbars() {
                          "<b>" + workModes[AnnotationMode::Mode_Selection] + ":</b> Skeleton manipulation and segmentation selection<br/>"
                          "<b>" + workModes[AnnotationMode::Mode_Merge] + ":</b> Segmentation by merging objects<br/>"
                          "<b>" + workModes[AnnotationMode::Mode_Paint] + ":</b> Segmentation by painting<br/>"
+                         "<b>" + workModes[AnnotationMode::Mode_OverPaint] + ":</b> Segmentation by painting only over existing segmentation<br/>"
                          "<b>" + workModes[AnnotationMode::Mode_Tracing] + ":</b> Skeletonization on one tree<br/>"
                          "<b>" + workModes[AnnotationMode::Mode_TracingAdvanced] + ":</b> Unrestricted skeletonization<br/>");
     basicToolbar.addSeparator();
@@ -1068,7 +1069,7 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
     mode = workMode;
     const bool trees = mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
     const bool skeleton = mode.testFlag(AnnotationMode::Mode_Tracing) || mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
-    const bool segmentation = mode.testFlag(AnnotationMode::Mode_Paint) || mode.testFlag(AnnotationMode::Mode_Merge) || mode.testFlag(AnnotationMode::Mode_MergeSimple) || mode.testFlag(AnnotationMode::Mode_MergeTracing) || mode.testFlag(AnnotationMode::Mode_Selection);
+    const bool segmentation = mode.testFlag(AnnotationMode::Mode_Paint) || mode.testFlag(AnnotationMode::Mode_OverPaint) || mode.testFlag(AnnotationMode::Mode_Merge) || mode.testFlag(AnnotationMode::Mode_MergeSimple) || mode.testFlag(AnnotationMode::Mode_MergeTracing) || mode.testFlag(AnnotationMode::Mode_Selection);
     toggleSegmentsAction->setVisible(mode.testFlag(AnnotationMode::Mode_TracingAdvanced));
     segmentStateLabel.setVisible(mode.testFlag(AnnotationMode::Mode_TracingAdvanced));
     if (mode.testFlag(AnnotationMode::Mode_TracingAdvanced)) {
@@ -1077,7 +1078,7 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
         setSegmentState(SegmentState::On);
     }
     newTreeAction->setVisible(trees);
-    newObjectAction->setVisible(mode.testFlag(AnnotationMode::Mode_Paint));
+    newObjectAction->setVisible(mode.testFlag(AnnotationMode::Mode_Paint) || mode.testFlag(AnnotationMode::Mode_OverPaint));
     pushBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
     popBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
     createSynapse->setVisible(mode.testFlag(AnnotationMode::Mode_TracingAdvanced));

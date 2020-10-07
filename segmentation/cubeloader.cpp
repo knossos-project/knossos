@@ -197,7 +197,7 @@ void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush
     //the brush differentiations were moved outside the core lambda which is called for every voxel
     CubeCoordSet cubeChangeSet;
     CubeCoordSet cubeChangeSetWholeCube;
-    if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint)) {
+    if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint) || Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_OverPaint)) {
         const auto region = getRegion(centerPos, brush);
         if (brush.shape == brush_t::shape_t::angular) {
             if (!brush.inverse || Segmentation::singleton().selectedObjectsCount() == 0) {
@@ -219,20 +219,31 @@ void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush
                     }
                 });
             }
-        } else if (!brush.inverse || Segmentation::singleton().selectedObjectsCount() == 0) {
-            //voxel need to check if they are inside the circle
-            cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate globalPos){
-                if (isInsideSphere(globalPos.x - centerPos.x, globalPos.y - centerPos.y, globalPos.z - centerPos.z, brush.radius)) {
-                    voxel = value;
+        } else {
+            if (!brush.inverse || Segmentation::singleton().selectedObjectsCount() == 0) {
+                //voxel need to check if they are inside the circle
+                if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_OverPaint)) {
+                    cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate globalPos){
+                        if (isInsideSphere(globalPos.x - centerPos.x, globalPos.y - centerPos.y, globalPos.z - centerPos.z, brush.radius)
+                                && Segmentation::singleton().getBackgroundId() != voxel) {
+                            voxel = value;
+                        }
+                    });
+                } else {
+                    cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos, value](uint64_t & voxel, Coordinate globalPos){
+                        if (isInsideSphere(globalPos.x - centerPos.x, globalPos.y - centerPos.y, globalPos.z - centerPos.z, brush.radius)) {
+                            voxel = value;
+                        }
+                    });
                 }
-            });
-        } else {//circle, inverse and selected
-            cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos](uint64_t & voxel, Coordinate globalPos){
-                if (isInsideSphere(globalPos.x - centerPos.x, globalPos.y - centerPos.y, globalPos.z - centerPos.z, brush.radius)
-                        && Segmentation::singleton().isSubObjectIdSelected(voxel)) {
-                    voxel = 0;
-                }
-            });
+            } else {//circle, inverse and selected
+                cubeChangeSet = processRegion(region.first, region.second, [&brush, centerPos](uint64_t & voxel, Coordinate globalPos){
+                    if (isInsideSphere(globalPos.x - centerPos.x, globalPos.y - centerPos.y, globalPos.z - centerPos.z, brush.radius)
+                            && Segmentation::singleton().isSubObjectIdSelected(voxel)) {
+                        voxel = 0;
+                    }
+                });
+            }
         }
     }
     if (isMarkChanged) {

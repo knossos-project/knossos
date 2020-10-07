@@ -144,6 +144,7 @@ void Scripting::initialize() {
     addVariable("Mode_Tracing", AnnotationMode::Mode_Tracing);
     addVariable("Mode_TracingAdvanced", AnnotationMode::Mode_TracingAdvanced);
     addVariable("Mode_Paint", AnnotationMode::Mode_Paint);
+    addVariable("Mode_Paint", AnnotationMode::Mode_OverPaint);
     addVariable("Mode_Merge", AnnotationMode::Mode_Merge);
     addVariable("Mode_MergeSimple", AnnotationMode::Mode_MergeSimple);
     addVariable("Mode_Selection", AnnotationMode::Mode_Selection);

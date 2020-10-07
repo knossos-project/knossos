@@ -13,6 +13,7 @@ void Cheatsheet::load(const AnnotationMode mode) {
                    (mode == AnnotationMode::Mode_Merge) ? "mergemode" :
                    (mode == AnnotationMode::Mode_MergeTracing) ? "mergetracingmode" :
                    (mode == AnnotationMode::Mode_Paint) ? "paintmode" :
+                   (mode == AnnotationMode::Mode_OverPaint) ? "overpaintmode" :
                    (mode == AnnotationMode::Mode_Tracing) ? "tracingmode" :
                    (mode == AnnotationMode::Mode_TracingAdvanced) ? "tracingadvancedmode" :
                    /*mode == AnnotationMode::Mode_Selection:*/ "reviewmode"));

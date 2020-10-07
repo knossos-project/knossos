@@ -97,7 +97,7 @@ void segmentation_brush_work(const QMouseEvent *event, ViewportOrtho & vp) {
 
     if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::ObjectMerge)) {
         merging(event, vp);
-    } else if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint)) {//paint and erase
+    } else if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint) || Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_OverPaint)) {//paint and erase
         if (!seg.brush.isInverse() && seg.selectedObjectsCount() == 0) {
             seg.createAndSelectObject(coord);
         }
@@ -107,7 +107,6 @@ void segmentation_brush_work(const QMouseEvent *event, ViewportOrtho & vp) {
         }
     }
 }
-
 
 void ViewportOrtho::handleMouseHover(const QMouseEvent *event) {
     auto coord = getCoordinateFromOrthogonalClick(event->pos(), *this);
@@ -423,7 +422,7 @@ void ViewportOrtho::handleMouseReleaseMiddle(const QMouseEvent *event) {
     if (!Annotation::singleton().outsideMovementArea(clickedCoordinate)) {
         EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseReleaseMiddle, state->signalRelay, clickedCoordinate, viewportType, event);
         auto & seg = Segmentation::singleton();
-        if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint) && seg.selectedObjectsCount() == 1) {
+        if ((Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint) || Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_OverPaint)) && seg.selectedObjectsCount() == 1) {
             auto brush_copy = seg.brush.value();
             uint64_t soid = brush_copy.inverse ? seg.getBackgroundId() : seg.subobjectIdOfFirstSelectedObject(clickedCoordinate);
             brush_copy.shape = brush_t::shape_t::angular;

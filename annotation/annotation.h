@@ -49,12 +49,13 @@ enum AnnotationMode {
     Mode_TracingAdvanced = (1 << 8) | NodeEditing | SkeletonCycles,
 
     Mode_Paint = (1 << 9) | Brush | ObjectSelection,
-    Mode_Merge = (1 << 10) | Brush | ObjectSelection | ObjectMerge,
-    Mode_MergeSimple = (1 << 11) | Brush | ObjectMerge,
+    Mode_OverPaint = (1 << 10) | Brush | ObjectSelection,
+    Mode_Merge = (1 << 11) | Brush | ObjectSelection | ObjectMerge,
+    Mode_MergeSimple = (1 << 12) | Brush | ObjectMerge,
 
-    Mode_MergeTracing = (1 << 12) | NodeEditing | LinkedNodes | SkeletonCycles,
+    Mode_MergeTracing = (1 << 13) | NodeEditing | LinkedNodes | SkeletonCycles,
 
-    Mode_Selection = (1 << 13) | NodeSelection | ObjectSelection,
+    Mode_Selection = (1 << 14) | NodeSelection | ObjectSelection,
 };
 
 struct AAMTask {

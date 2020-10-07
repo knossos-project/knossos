@@ -1735,7 +1735,7 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
             glVertex3f(point.x, point.y, point.z);
         }
         glEnd();
-        if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint)) { // fill brush with object color
+        if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint) && Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_OverPaint)) { // fill brush with object color
             glBegin(GL_TRIANGLE_FAN);
             glColor4f(r, g, b, .25);
             glVertex3f(center.x, center.y, center.z);
