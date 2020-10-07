@@ -748,13 +748,15 @@ void Viewer::calcDisplayedEdgeLength() {
             texture.texUsedX = texture.usedSizeInCubePixels / texture.size * texture.FOV / voxelV1X;
             texture.texUsedY = texture.usedSizeInCubePixels / texture.size * texture.FOV / voxelV2X;
 
-            vpOrtho.displayedIsoPx = layer.scales[0].x * 0.5 * texture.usedSizeInCubePixels * texture.FOV * layer.magnification;// FOV is within current mag
-            const auto dataPx = texture.usedSizeInCubePixels * texture.FOV * layer.magnification;
-            vpOrtho.screenPxXPerDataPx = vpOrtho.edgeLength / dataPx * voxelV1X;
-            vpOrtho.screenPxXPerMag1Px = vpOrtho.edgeLength / dataPx * voxelV1Xmag1;
-            vpOrtho.screenPxYPerMag1Px = vpOrtho.edgeLength / dataPx * voxelV2Xmag1;
+            if (i == 0) {// HACK
+                vpOrtho.displayedIsoPx = layer.scales[0].x * 0.5 * texture.usedSizeInCubePixels * texture.FOV * layer.magnification;// FOV is within current mag
+                const auto dataPx = texture.usedSizeInCubePixels * texture.FOV * layer.magnification;
+                vpOrtho.screenPxXPerDataPx = vpOrtho.edgeLength / dataPx * voxelV1X;
+                vpOrtho.screenPxXPerMag1Px = vpOrtho.edgeLength / dataPx * voxelV1Xmag1;
+                vpOrtho.screenPxYPerMag1Px = vpOrtho.edgeLength / dataPx * voxelV2Xmag1;
 
-            vpOrtho.displayedlengthInNmX = layer.scales[0].componentMul(vpOrtho.v1).length() * (texture.texUsedX / texture.texUnitsPerDataPx);
+                vpOrtho.displayedlengthInNmX = layer.scales[0].componentMul(vpOrtho.v1).length() * (texture.texUsedX / texture.texUnitsPerDataPx);
+            }
         }
     });
 }
