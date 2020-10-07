@@ -843,6 +843,7 @@ bool Viewer::updateDatasetMag(const std::size_t layerId, const int mag) {
 
     loader_notify();//start loading
     emit zoomChanged();
+    emit layerVisibilityChanged(layerId);
     return true;
 }
 
