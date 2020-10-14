@@ -600,7 +600,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             , decltype(slotDecompression)::value_type & decompressions, decltype(freeSlots)::value_type & freeSlots, decltype(state->cube2Pointer)::value_type::value_type & cubeHash){
         auto & opens = slotOpen[layerId];
         const auto c = dataset.cube2global(cubeCoord);
-        const auto b = dataset.boundary * dataset.scales[0].x / datasets[0].scales[0].x;
+        const auto b = floatCoordinate(dataset.boundary) * dataset.scales[0].x / datasets[0].scales[0].x;
         if (c.x < 0 || c.y < 0 || c.z < 0 || c.x >= b.x || c.y >= b.y || c.z >= b.z) {
             return;
         }
