@@ -62,7 +62,7 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
                 auto visible = state->viewerState->layerRenderSettings[ordered_i(index.row())].visible;
                 return visible ? Qt::Checked : Qt::Unchecked;
             } else if (index.column() == 2) {
-                return ordered_i(index.row()) == Segmentation::singleton().layerId ? Qt::PartiallyChecked : data.isOverlay() ? Qt::Unchecked : QVariant{};
+                return Segmentation::singleton().enabled && ordered_i(index.row()) == Segmentation::singleton().layerId ? Qt::PartiallyChecked : data.isOverlay() ? Qt::Unchecked : QVariant{};
             }
         } else if (role == Qt::ForegroundRole) {
             if (index.column() == 8) {
