@@ -286,19 +286,11 @@ void MainWindow::resetTextureProperties() {
 }
 
 void MainWindow::createViewports() {
-    QSurfaceFormat format = QSurfaceFormat::defaultFormat();
-    format.setMajorVersion(2);
-    format.setMinorVersion(0);
-    format.setSamples(state->viewerState->sampleBuffers);
-    format.setDepthBufferSize(24);
-//    format.setSwapInterval(0);
-//    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
-    format.setProfile(QSurfaceFormat::CompatibilityProfile);
-    format.setOption(QSurfaceFormat::DeprecatedFunctions);
-    if (ViewportBase::oglDebug) {
-        format.setOption(QSurfaceFormat::DebugContext);
+    QSurfaceFormat format{QSurfaceFormat::defaultFormat()};
+    if (format.samples() != state->viewerState->sampleBuffers) {
+        format.setSamples(state->viewerState->sampleBuffers);
+        QSurfaceFormat::setDefaultFormat(format);
     }
-    QSurfaceFormat::setDefaultFormat(format);
 
     viewportXY = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_XY));
     viewportXZ = std::unique_ptr<ViewportOrtho>(new ViewportOrtho(centralWidget(), VIEWPORT_XZ));

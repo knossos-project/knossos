@@ -103,6 +103,19 @@ Q_DECLARE_METATYPE(std::string)
 int main(int argc, char *argv[]) {
     QtConcurrent::run([](){ QSslSocket::supportsSsl(); });// workaround until https://bugreports.qt.io/browse/QTBUG-59750
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);// explicitly enable sharing for undocked viewports
+
+    QSurfaceFormat format{QSurfaceFormat::defaultFormat()};
+    format.setVersion(2, 0);
+    format.setDepthBufferSize(24);
+    format.setSamples(8);// set it here to the most common value (the default) so it doesn’t complain unnecessarily later
+//    format.setSwapInterval(0);
+//    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
+    format.setProfile(QSurfaceFormat::CompatibilityProfile);
+    format.setOption(QSurfaceFormat::DeprecatedFunctions);
+    if (ViewportBase::oglDebug) {
+        format.setOption(QSurfaceFormat::DebugContext);
+    }
+    QSurfaceFormat::setDefaultFormat(format);
 #ifdef Q_OS_OSX
     const auto end = std::next(argv, argc);
     bool styleOverwrite = std::find_if(argv, end, [](const auto & argvv){
