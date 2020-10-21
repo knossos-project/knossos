@@ -29,6 +29,7 @@
 #include <QAbstractListModel>
 #include <QButtonGroup>
 #include <QCheckBox>
+#include <QCollator>
 #include <QColorDialog>
 #include <QComboBox>
 #include <QDoubleSpinBox>
@@ -43,6 +44,15 @@
 #include <QMenu>
 
 #include <functional>
+
+class NaturalSortProxyModel : public QSortFilterProxyModel {
+public:
+    bool lessThan(const QModelIndex &source_left, const QModelIndex &source_right) const {
+        QCollator sorter;
+        sorter.setNumericMode(true);
+        return sorter.compare(sourceModel()->data(source_left).toString(), sourceModel()->data(source_right).toString()) < 0;
+    }
+};
 
 class CategoryDelegate : public QStyledItemDelegate {
     mutable PreventDeferredDelete<QComboBox> box;
@@ -110,8 +120,8 @@ Q_OBJECT
     QCheckBox regExCheckbox{"Regex"};
 
     SegmentationObjectModel objectModel;
-    QSortFilterProxyModel objectProxyModelCategory;
-    QSortFilterProxyModel objectProxyModelComment;
+    NaturalSortProxyModel objectProxyModelCategory;
+    NaturalSortProxyModel objectProxyModelComment;
     TouchedObjectModel touchedObjectModel;
 
     CategoryDelegate categoryDelegate;
