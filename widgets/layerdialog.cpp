@@ -163,10 +163,12 @@ class CombineSlicesEventFilter : public QObject {
         if (type == QEvent::KeyPress || type == QEvent::KeyRelease) {
             auto & keyEvent = static_cast<QKeyEvent &>(*event);
             if (keyEvent.key() == Qt::Key_M && !keyEvent.isAutoRepeat()) {
-                for (int i{0}; i < 3; ++i) {
-                    state->viewerState->layerRenderSettings[i].combineSlicesEnabled = type == QEvent::KeyPress;
-                    state->viewer->layerRenderSettingsChanged();
-                    state->viewer->reslice_notify(i);
+                if (state->viewerState->layerRenderSettings.size() > 2) {
+                    for (int i{0}; i < 3; ++i) {
+                        state->viewerState->layerRenderSettings[i].combineSlicesEnabled = type == QEvent::KeyPress;
+                        state->viewer->layerRenderSettingsChanged();
+                        state->viewer->reslice_notify(i);
+                    }
                 }
             }
         }
