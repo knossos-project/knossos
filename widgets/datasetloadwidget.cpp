@@ -315,7 +315,13 @@ void DatasetLoadWidget::datasetCellChanged(const QModelIndex & topLeft, const QM
 }
 
 void DatasetLoadWidget::updateDatasetInfo(const QUrl & url, const QString & info) try {
-    infos = Dataset::parse(url, info, segmentationOverlayCheckbox.isChecked());
+    updateDatasetInfo(Dataset::parse(url, info, segmentationOverlayCheckbox.isChecked()));
+} catch (std::exception &) {
+    infoLabel.setText("");
+}
+
+void DatasetLoadWidget::updateDatasetInfo(const Dataset::list_t & datas) {
+    infos = datas;
     const auto datasetinfo = infos.front();
     //make sure supercubeedge is small again
     auto supercubeedge = (fovSpin.value() + cubeEdgeSpin.value()) / datasetinfo.cubeEdgeLength;
@@ -352,8 +358,6 @@ void DatasetLoadWidget::updateDatasetInfo(const QUrl & url, const QString & info
     if (!(datasetinfo.api == Dataset::API::Heidelbrain || datasetinfo.api == Dataset::API::PyKnossos)) {
         datasetSettingsLayout.insertRow(0, &cubeEdgeSpin, &cubeEdgeLabel);
     }
-} catch (std::exception &) {
-    infoLabel.setText("");
 }
 
 void DatasetLoadWidget::adaptMemoryConsumption() {
@@ -538,7 +542,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
 
     state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M, Dataset::datasets.size());// resets textures
 
-    updateDatasetInfo(path, download.second);
+    updateDatasetInfo(Dataset::datasets);
     applyGeometrySettings();
 
     if (changedBoundaryOrScale || !keepAnnotation) {

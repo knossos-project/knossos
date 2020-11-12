@@ -175,6 +175,7 @@ class DatasetLoadWidget : public DialogVisibilityNotify {
     void datasetCellChanged(const QModelIndex &topLeft, const QModelIndex &, const QVector<int> &);
     Dataset::list_t infos;
     void updateDatasetInfo(const QUrl &url, const QString &info);
+    void updateDatasetInfo(const Dataset::list_t & datas);
 protected:
     virtual void dragEnterEvent(QDragEnterEvent * e) override;
     virtual void dropEvent(QDropEvent * e) override;
