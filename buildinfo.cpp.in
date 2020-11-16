@@ -1,0 +1,4 @@
+#include "buildinfo.h"
+
+extern const char * const KREVISION = "@KREVISION@";
+extern const char * const KREVISIONDATE = "@KREVISIONDATE@";

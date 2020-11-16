@@ -20,6 +20,7 @@
  *  or contact knossosteam@gmail.com
  */
 
+#include "buildinfo.h"
 #include "coordinate.h"
 #include "dataset.h"
 #include "loader.h"
@@ -140,6 +141,7 @@ int main(int argc, char *argv[]) {
     QCoreApplication::setOrganizationDomain("knossos.app");
     QCoreApplication::setOrganizationName("MPIN");
     QCoreApplication::setApplicationName("KNOSSOS");
+    QCoreApplication::setApplicationVersion(KREVISION);
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     QFile::copy(QSettings{QSettings::IniFormat, QSettings::UserScope, "MPIN", "KNOSSOS 5.0"}.fileName(), QSettings{}.fileName());// doesn’t overwrite
@@ -153,6 +155,9 @@ int main(int argc, char *argv[]) {
     qRegisterMetaType<SnapshotOptions>();
     qRegisterMetaType<UserMoveType>();
     qRegisterMetaType<ViewportType>();
+
+    qDebug() << QDateTime::currentDateTimeUtc().toString(Qt::ISODate).toUtf8().constData();
+    qDebug() << KREVISION << " " << KREVISIONDATE;
 
     stateInfo state;
     ::state = &state;

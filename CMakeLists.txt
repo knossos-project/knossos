@@ -46,7 +46,7 @@ endif()
 
 include(CustomLibraryLocations.cmake)#prefill variables
 
-file(GLOB sources *.cpp resources.qrc version.h.in)
+file(GLOB sources *.cpp resources.qrc)
 file(GLOB headers *.h)
 file(GLOB uis widgets/*.ui)
 file(GLOB_RECURSE sources2 ./annotation/*.cpp ./mesh/*.cpp ./scriptengine/*.cpp ./segmentation/*.cpp ./slicer/*.cpp ./skeleton/*.cpp ./tinyply/*.cpp ./widgets/*.cpp)
@@ -106,18 +106,17 @@ elseif(APPLE)
 endif()
 
 add_custom_target(buildinfo DEPENDS buildinfocreator)#forces the pseudo target to be generated
-#is always triggered by the pseudo target which is never actually created, creates buildinfo.h instead
+#is always triggered by the pseudo target which is never actually created, creates buildinfo.cpp instead
 add_custom_command(
     OUTPUT
         buildinfocreator
-        ${CMAKE_CURRENT_BINARY_DIR}/buildinfo.h
+        ${CMAKE_CURRENT_BINARY_DIR}/buildinfo.cpp
     COMMAND ${CMAKE_COMMAND}
-        -D SRC=${CMAKE_CURRENT_SOURCE_DIR}/buildinfo.h.in
-        -D DST=${CMAKE_CURRENT_BINARY_DIR}/buildinfo.h
+        -D SRC=${CMAKE_CURRENT_SOURCE_DIR}/buildinfo.cpp.in
+        -D DST=${CMAKE_CURRENT_BINARY_DIR}/buildinfo.cpp
         -D GIT=${CMAKE_CURRENT_SOURCE_DIR}
         -P ${CMAKE_CURRENT_SOURCE_DIR}/buildinfo.cmake
 )
-set_property(SOURCE buildinfo.h PROPERTY SKIP_AUTOGEN ON)
 
 # rcc --project adds all content of a directory to a new .qrc, so create folder for cheatsheet pages.
 add_custom_command(OUTPUT ${cheatsheet_dir}
@@ -147,7 +146,7 @@ add_custom_command(OUTPUT ${cheatsheet_dir}/cheatsheet.qrc
     DEPENDS ${genpages}
 )
 
-add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE ${SRC_LIST} buildinfo.h)
+add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE ${SRC_LIST} buildinfo.cpp)
 set_source_files_properties(${cheatsheet_dir}/cheatsheet.qrc PROPERTIES
     AUTORCC_OPTIONS "--root;/cheatsheet"
 )
