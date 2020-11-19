@@ -34,8 +34,6 @@
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 
-#include <Python.h>
-
 #include <QApplication>
 #include <QFile>
 

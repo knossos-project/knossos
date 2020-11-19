@@ -29,9 +29,6 @@
 #include <QList>
 #include <QVector>
 
-struct _object;
-using PyObject = _object;
-
 class PythonProxy : public QObject {
     Q_OBJECT
 signals:

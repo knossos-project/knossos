@@ -94,6 +94,9 @@ const QString PLUGIN_NAMES_VAL_NAME = "PluginNames";
 
 const QString PLUGINS_DIRECTORY = "knossos_plugins";
 
+struct _object;
+using PyObject = _object;
+
 /** This class intializes the python qt engine */
 class Scripting : public QObject {
     Q_OBJECT
