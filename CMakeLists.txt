@@ -29,8 +29,6 @@ message(STATUS "${CMAKE_BUILD_TYPE}")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake/Modules")
 
-option(AUTOGEN "use CMAKE_AUTOMOC and CMAKE_AUTORCC instead of manual qt_wrap_cpp and qt5_add_resources" ON)
-
 # find static qt libs (default msys2 location), MINGW_PREFIX is /mingw??
 if(WIN32 AND DEFINED BUILD_SHARED_LIBS AND NOT BUILD_SHARED_LIBS)
     message(STATUS "$ENV{MINGW_PREFIX} static build")
@@ -61,8 +59,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_AUTOMOC ${AUTOGEN})
-set(CMAKE_AUTORCC ${AUTOGEN})#resource files
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)#resource files
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -90,11 +88,6 @@ find_package(${pythonqt} REQUIRED)
 find_package(Snappy REQUIRED)
 find_package(QuaZip 0.6.2 REQUIRED)
 
-if(NOT AUTOGEN)
-    qt_wrap_cpp(${PROJECT_NAME} SRC_LIST ${headers} ${headers2})
-    qt5_add_resources(SRC_LIST resources.qrc)
-    qt5_add_resources(SRC_LIST ${cheatsheet_dir}/cheatsheet.qrc OPTIONS "--root;/cheatsheet")
-endif()
 #platform dependent resources
 if(WIN32)
     set(SRC_LIST "${SRC_LIST}" "${CMAKE_CURRENT_SOURCE_DIR}/resources/knossos.rc")# add windows icon and manifest
