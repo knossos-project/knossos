@@ -359,7 +359,7 @@ void ViewportBase::mouseMoveEvent(QMouseEvent *event) {
         } else {
             handleMouseMotionLeftHold(event);
         }
-    } else if(mouseBtn == Qt::MidButton) {
+    } else if(mouseBtn == Qt::MiddleButton) {
         handleMouseMotionMiddleHold(event);
     } else if( (!penmode && mouseBtn == Qt::RightButton) || (penmode && mouseBtn == Qt::LeftButton)) {
         handleMouseMotionRightHold(event);
