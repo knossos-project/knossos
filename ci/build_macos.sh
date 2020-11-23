@@ -1,26 +1,15 @@
 #!/bin/bash
 set -euxo pipefail
 
-# Fix Python headers
-# https://bugs.python.org/review/10910/diff2/2561:8559/Include/pyport.h
-cd ..
-mkdir python2.7
-time cp /usr/include/python2.7/* python2.7
-ed -s python2.7/pyport.h << EOF
-/#ifdef _PY_PORT_CTYPE_UTF8_ISSUE/
-a
-#ifndef __cplusplus
-.
-+16
-a
-#endif
-.
-w
-EOF
+# Build PythonQt
+time git clone --single-branch --branch new https://github.com/knossos-project/PythonQt.git
+mkdir PythonQt-build && cd PythonQt-build
+time cmake -G Ninja ../PythonQt -DCMAKE_PREFIX_PATH=/usr/local/opt/qt
+time ninja install
 
 # Download and install PythonQt
-time curl -JLO https://github.com/knossos-project/knossos/releases/download/nightly-dev/macOS-PythonQt.zip
-time unzip -d / macOS-PythonQt.zip
+#time curl -JLO https://github.com/knossos-project/knossos/releases/download/nightly-dev/macOS-PythonQt.zip
+#time unzip -d / macOS-PythonQt.zip
 
 # Fix QuaZip include directory name
 cd $TRAVIS_BUILD_DIR && cd ..
