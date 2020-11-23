@@ -30,4 +30,4 @@ install_name_tool KNOSSOS.app/Contents/Frameworks/libquazip.1.dylib -change /usr
 
 # Deployment
 time zip -r ${TRAVIS_BUILD_DIR}/macos.KNOSSOS.nightly.app.zip KNOSSOS.app
-time zip -r ${TRAVIS_BUILD_DIR}/macos.${TRAVIS_BRANCH}-KNOSSOS.nightly.app.zip KNOSSOS.app
+cp -v ${TRAVIS_BUILD_DIR}/macos.KNOSSOS.nightly.app.zip ${TRAVIS_BUILD_DIR}/macos.${TRAVIS_BRANCH}-KNOSSOS.nightly.app.zip
