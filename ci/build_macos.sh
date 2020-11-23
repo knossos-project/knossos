@@ -11,15 +11,12 @@ time ninja install
 #time curl -JLO https://github.com/knossos-project/knossos/releases/download/nightly-dev/macOS-PythonQt.zip
 #time unzip -d / macOS-PythonQt.zip
 
-# Fix QuaZip include directory name
-cd $TRAVIS_BUILD_DIR && cd ..
-mkdir -p quazip/quazip5
-QUAZIP_VERSION=`brew list --versions quazip | cut -d " " -f2`
-time cp -R /usr/local/Cellar/quazip/${QUAZIP_VERSION}/include/quazip/* quazip/quazip5/
+QUAZIP_VERSION=$(brew list --versions quazip | cut -d " " -f2)
 
+cd $TRAVIS_BUILD_DIR && cd ..
 # Build KNOSSOS
 mkdir knossos-build && cd knossos-build
-time cmake -G Ninja ../knossos -DCMAKE_PREFIX_PATH=/usr/local/opt/qt -DCMAKE_CXX_FLAGS=-isystem\ ${TRAVIS_BUILD_DIR}/../quazip
+time cmake -G Ninja ../knossos -DCMAKE_PREFIX_PATH=/usr/local/opt/qt
 time ninja
 
 # OS X housekeeping
