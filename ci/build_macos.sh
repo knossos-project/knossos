@@ -6,15 +6,19 @@ PYTHON_MAJOR=$(echo ${PYTHON_VERSION} | cut -d '.' -f1)
 PYTHON_MINOR=$(echo ${PYTHON_VERSION} | cut -d '.' -f2)
 
 # Build PythonQt
-time git clone --single-branch --branch new https://github.com/knossos-project/PythonQt.git || cd PythonQt && git fetch && git reset --hard && cd ..
+tar -xvf cache/cache.tar || time git clone --single-branch --branch new https://github.com/knossos-project/PythonQt.git
+cd PythonQt
+git fetch
+git reset --hard
+cd ..
 mkdir -p PythonQt-build && cd PythonQt-build
-#rm -v CMakeCache.txt
+rm -fv CMakeCache.txt
 time cmake -G Ninja ../PythonQt -DCMAKE_PREFIX_PATH=/usr/local/opt/qt
 time ninja install
 
-# Download and install PythonQt
-#time curl -JLO https://github.com/knossos-project/knossos/releases/download/nightly-dev/macOS-PythonQt.zip
-#time unzip -d / macOS-PythonQt.zip
+cd ..
+mkdir -p cache
+tar -cvf cache/cache.tar PythonQt PythonQt-build
 
 QUAZIP_VERSION=$(brew list --versions quazip | cut -d " " -f2)
 

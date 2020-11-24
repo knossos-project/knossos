@@ -33,8 +33,7 @@ jobs:
 
 cache:
   directories:
-  - PythonQt
-  - PythonQt-build
+  - cache
 
 script:
   - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then docker pull knossostool/knossos; fi
