@@ -6,7 +6,7 @@ PYTHON_MAJOR=$(echo ${PYTHON_VERSION} | cut -d '.' -f1)
 PYTHON_MINOR=$(echo ${PYTHON_VERSION} | cut -d '.' -f2)
 
 # Build PythonQt
-time git clone --single-branch --branch new https://github.com/knossos-project/PythonQt.git || cd PythonQt && git fetch && git reset --hard && cd -
+time git clone --single-branch --branch new https://github.com/knossos-project/PythonQt.git || cd PythonQt && git fetch && git reset --hard && cd ..
 mkdir -p PythonQt-build && cd PythonQt-build
 #rm -v CMakeCache.txt
 time cmake -G Ninja ../PythonQt -DCMAKE_PREFIX_PATH=/usr/local/opt/qt
