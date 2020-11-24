@@ -7,7 +7,8 @@ PYTHON_MINOR=$(echo ${PYTHON_VERSION} | cut -d '.' -f2)
 
 # Build PythonQt
 time git clone --single-branch --branch new https://github.com/knossos-project/PythonQt.git
-mkdir PythonQt-build && cd PythonQt-build
+mkdir -p PythonQt-build && cd PythonQt-build
+rm -v CMakeCache.txt
 time cmake -G Ninja ../PythonQt -DCMAKE_PREFIX_PATH=/usr/local/opt/qt
 time ninja install
 
