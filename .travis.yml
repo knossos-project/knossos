@@ -33,6 +33,7 @@ jobs:
 
 cache:
   directories:
+  - PythonQt
   - PythonQt-build
 
 script:
