@@ -133,7 +133,8 @@ void ViewportOrtho::resetTexture(const std::size_t layerCount) {
             elem.destroy();
             elem.setSize(texture.size, texture.size);
             elem.setFormat(QOpenGLTexture::RGBA8_UNorm);
-            elem.setWrapMode(QOpenGLTexture::ClampToEdge);
+            elem.setWrapMode(QOpenGLTexture::ClampToBorder);
+            elem.setBorderColor(Qt::darkBlue);
             elem.allocateStorage();
             texData.resize(4 * std::pow(texture.size, 2));
             for (std::size_t i = 3; i < texData.size(); i += 4) {
