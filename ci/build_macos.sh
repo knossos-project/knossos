@@ -6,7 +6,7 @@ PYTHON_MAJOR=$(echo ${PYTHON_VERSION} | cut -d '.' -f1)
 PYTHON_MINOR=$(echo ${PYTHON_VERSION} | cut -d '.' -f2)
 
 # Build PythonQt
-tar -xvf cache/cache.tar || time git clone --single-branch --branch new https://github.com/knossos-project/PythonQt.git
+time git clone --single-branch --branch new https://github.com/knossos-project/PythonQt.git || true
 cd PythonQt
 git fetch
 git reset --hard
@@ -15,10 +15,6 @@ mkdir -p PythonQt-build && cd PythonQt-build
 rm -fv CMakeCache.txt
 time cmake -G Ninja ../PythonQt -DCMAKE_PREFIX_PATH=/usr/local/opt/qt
 time ninja install
-
-cd ..
-mkdir -p cache
-tar -cvf cache/cache.tar PythonQt PythonQt-build
 
 QUAZIP_VERSION=$(brew list --versions quazip | cut -d " " -f2)
 
