@@ -28,8 +28,9 @@ time ninja
 mv knossos.app KNOSSOS.app
 time /usr/local/opt/qt/bin/macdeployqt KNOSSOS.app
 cp -v /usr/local/Cellar/quazip/${QUAZIP_VERSION}/lib/libquazip.1.0.0.dylib KNOSSOS.app/Contents/Frameworks/libquazip.1.dylib
-cp -v /usr/local/Frameworks/Python.framework/Versions/${PYTHON_MAJOR}.${PYTHON_MINOR}/lib/libpython${PYTHON_MAJOR}.${PYTHON_MINOR}.dylib KNOSSOS.app/Contents/Frameworks/
 install_name_tool KNOSSOS.app/Contents/Frameworks/libquazip.1.dylib -change /usr/local/opt/qt/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore
+cp -r /usr/local/Frameworks/Python.framework KNOSSOS.app/Contents/Frameworks/
+install_name_tool KNOSSOS.app/Contents/MacOS/knossos -change /usr/local/opt/python@${PYTHON_MAJOR}.${PYTHON_MINOR}/Python.framework/Versions/${PYTHON_MAJOR}.${PYTHON_MINOR}/Python @executable_path/../Frameworks/Python.framework/Versions/${PYTHON_MAJOR}.${PYTHON_MINOR}/Python
 
 # Deployment
 time zip -r ${TRAVIS_BUILD_DIR}/macos.KNOSSOS.nightly.app.zip KNOSSOS.app
