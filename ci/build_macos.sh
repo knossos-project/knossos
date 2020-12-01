@@ -14,7 +14,7 @@ cd ..
 mkdir -p PythonQt-build && cd PythonQt-build
 rm -fv CMakeCache.txt
 time cmake -G Ninja ../PythonQt -DCMAKE_PREFIX_PATH=/usr/local/opt/qt
-time ninja install
+time ninja install > /dev/null
 
 QUAZIP_VERSION=$(brew list --versions quazip | cut -d " " -f2)
 
