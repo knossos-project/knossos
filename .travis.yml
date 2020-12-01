@@ -24,7 +24,6 @@ addons:
       - qt
       - quazip
       - snappy
-    update: true
 
 jobs:
   exclude:
@@ -41,6 +40,7 @@ cache:
 script:
   - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then docker pull knossostool/knossos; fi
   - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then docker run -it --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${PWD}:/root/knossos -e TRAVIS_BRANCH -e TRAVIS_TAG knossostool/knossos bash -c '/root/knossos/ci/build_linux.sh'; fi
+  - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then brew update && brew upgrade; fi
   - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then sh $TRAVIS_BUILD_DIR/ci/build_macos.sh; fi
 
 before_cache:
