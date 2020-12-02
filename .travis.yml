@@ -1,36 +1,20 @@
 language: shell
+os: linux
+dist: focal
+osx_image: xcode12.2
 
 git:
   depth: false # tags for `git describe` may be farther away than the default depth
 
-os:
-  - linux
-  - osx
-
-env:
-  - TRAVIS_TAG=nightly
-  - TRAVIS_TAG=nightly-dev
-
-dist: focal
-
-osx_image: xcode12.2
-
-stages:
-  - compile
-  - test
-  - deploy
-
 jobs:
   include:
     - stage: compile
-      osx_image: xcode12.2
+      os: osx
       install:
-        - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then brew update && brew upgrade; fi
-        - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then sh ci/build_macos_PythonQt.sh; fi
-        - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then docker pull knossostool/knossos; fi
+        - brew update && brew upgrade
+        - sh ci/build_macos_PythonQt.sh
       script:
-        - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then docker run -it --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${PWD}:/root/knossos -e TRAVIS_BRANCH -e TRAVIS_TAG knossostool/knossos bash -c '/root/knossos/ci/build_linux.sh'; fi
-        - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then sh ci/build_macos.sh; fi
+        - sh ci/build_macos.sh
       addons:
         homebrew:
           packages:
@@ -40,15 +24,24 @@ jobs:
             - qt
             - quazip
             - snappy
+    - os: linux
+      install:
+        - docker pull knossostool/knossos
+      script:
+        - docker run -it --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${PWD}:/root/knossos -e TRAVIS_BRANCH -e TRAVIS_TAG knossostool/knossos bash -c '/root/knossos/ci/build_linux.sh'
     - stage: test
+      os: osx
       osx_image: xcode9.4
+    - dist: bionic
+    - dist: xenial
+    - dist: trusty
   exclude:
     - if: branch != master
       env: TRAVIS_TAG=nightly
 
 script:
   - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then wget https://github.com/knossos-project/knossos/releases/download/nightly/linux.KNOSSOS.nightly.AppImage && chmod +x linux.KNOSSOS.nightly.AppImage && ./linux.KNOSSOS.nightly.AppImage test; fi
-  - if [[ "${TRAVIS_OS_NAME}" == "osx"   ]];  wget https://github.com/knossos-project/knossos/releases/download/nightly-dev/macos.py3-KNOSSOS.nightly.app.zip && unzip macos.py3-KNOSSOS.nightly.app.zip && ./macos.py3-KNOSSOS.nightly.app test; fi
+  - if [[ "${TRAVIS_OS_NAME}" == "osx"   ]]; then wget https://github.com/knossos-project/knossos/releases/download/nightly-dev/macos.py3-KNOSSOS.nightly.app.zip && unzip macos.py3-KNOSSOS.nightly.app.zip && ./macos.py3-KNOSSOS.nightly.app test; fi
 
 deploy:
   - provider: releases
