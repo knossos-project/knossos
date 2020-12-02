@@ -31,9 +31,25 @@ jobs:
       script:
         - docker run -it --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${PWD}:/root/knossos -e TRAVIS_BRANCH -e TRAVIS_TAG knossostool/knossos bash -c '/root/knossos/ci/build_linux.sh'
     - stage: test
-      osx_image: xcode9.4
+      osx_image: xcode12.2
       os: osx
-    - osx_image: xcode12.2
+    - osx_image: xcode12u
+      os: osx
+    - osx_image: xcode12
+      os: osx
+    - osx_image: xcode11.6
+      os: osx
+    - osx_image: xcode11.5
+      os: osx
+    - osx_image: xcode11.4
+      os: osx
+    - osx_image: xcode11.3
+      os: osx
+    - osx_image: xcode10.1
+      os: osx
+    - osx_image: xcode9.2
+      os: osx
+    - osx_image: xcode8
       os: osx
     - dist: focal
     - dist: bionic
@@ -46,6 +62,24 @@ jobs:
       env: TRAVIS_TAG=nightly
   allow_failures:
     - dist: precise
+    - osx_image: xcode12u
+      os: osx
+    - osx_image: xcode12
+      os: osx
+    - osx_image: xcode11.6
+      os: osx
+    - osx_image: xcode11.5
+      os: osx
+    - osx_image: xcode11.4
+      os: osx
+    - osx_image: xcode11.3
+      os: osx
+    - osx_image: xcode10.1
+      os: osx
+    - osx_image: xcode9.2
+      os: osx
+    - osx_image: xcode8
+      os: osx
 
 script:
   - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then wget https://github.com/knossos-project/knossos/releases/download/nightly/linux.KNOSSOS.nightly.AppImage && chmod +x linux.KNOSSOS.nightly.AppImage && ./linux.KNOSSOS.nightly.AppImage test; fi
