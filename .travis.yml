@@ -24,12 +24,6 @@ jobs:
             - qt
             - quazip
             - snappy
-    - os: linux
-      name: Arch Linux
-      install:
-        - docker pull knossostool/knossos
-      script:
-        - docker run -it --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${PWD}:/root/knossos -e TRAVIS_BRANCH -e TRAVIS_TAG knossostool/knossos bash -c '/root/knossos/ci/build_linux.sh'
     - stage: test
       osx_image: xcode12.2
       os: osx
