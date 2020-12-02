@@ -2,9 +2,6 @@ language: shell
 os: linux
 dist: focal
 
-env:
-  TRAVIS_TAG: nightly-dev
-
 git:
   depth: false # tags for `git describe` may be farther away than the default depth
 
