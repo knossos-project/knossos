@@ -25,6 +25,7 @@ jobs:
             - quazip
             - snappy
     - os: linux
+      name: Arch Linux
       install:
         - docker pull knossostool/knossos
       script:
