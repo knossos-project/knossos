@@ -57,8 +57,6 @@ jobs:
       env: TRAVIS_TAG=nightly
   allow_failures:
     - dist: precise
-    - osx_image: xcode10.1
-      os: osx
     - osx_image: xcode9.2
       os: osx
     - osx_image: xcode8
