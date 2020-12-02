@@ -7,23 +7,6 @@ git:
 
 jobs:
   include:
-    - stage: compile
-      os: osx
-      osx_image: xcode12.2
-      install:
-        - brew update && brew upgrade
-        - sh ci/build_macos_PythonQt.sh
-      script:
-        - sh ci/build_macos.sh
-      addons:
-        homebrew:
-          packages:
-            - boost
-            - ninja
-            - python
-            - qt
-            - quazip
-            - snappy
     - stage: test
       osx_image: xcode12.2
       os: osx
@@ -45,12 +28,14 @@ jobs:
       os: osx
     - osx_image: xcode8
       os: osx
-    - dist: focal
+    - stage: test2
+      os: windows
+    - stage: test3
+      dist: focal
     - dist: bionic
     - dist: xenial
     - dist: trusty
     - dist: precise
-    - os: windows
   exclude:
     - if: branch != master
       env: TRAVIS_TAG=nightly
