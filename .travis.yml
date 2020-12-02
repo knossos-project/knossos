@@ -25,19 +25,28 @@ addons:
       - quazip
       - snappy
 
+stages:
+  - compile
+  - test
+  - deploy
+
 jobs:
+  include:
+    - stage: compile
+      osx_image: xcode12.2
+      script:
+        - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then docker pull knossostool/knossos; fi
+        - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then brew update && brew upgrade; fi
+        - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then sh ci/build_macos_PythonQt.sh; fi
+        - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then docker run -it --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${PWD}:/root/knossos -e TRAVIS_BRANCH -e TRAVIS_TAG knossostool/knossos bash -c '/root/knossos/ci/build_linux.sh'; fi
+        - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then sh ci/build_macos.sh; fi
   exclude:
     - if: branch != master
       env: TRAVIS_TAG=nightly
 
-install:
-  - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then docker pull knossostool/knossos; fi
-  - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then brew update && brew upgrade; fi
-  - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then sh ci/build_macos_PythonQt.sh; fi
-
 script:
-  - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then docker run -it --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${PWD}:/root/knossos -e TRAVIS_BRANCH -e TRAVIS_TAG knossostool/knossos bash -c '/root/knossos/ci/build_linux.sh'; fi
-  - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then sh ci/build_macos.sh; fi
+  - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then wget https://github.com/knossos-project/knossos/releases/download/nightly/linux.KNOSSOS.nightly.AppImage && chmod +x linux.KNOSSOS.nightly.AppImage && ./linux.KNOSSOS.nightly.AppImage test; fi
+  - if [[ "${TRAVIS_OS_NAME}" == "osx"   ]];  wget https://github.com/knossos-project/knossos/releases/download/nightly-dev/macos.py3-KNOSSOS.nightly.app.zip && unzip macos.py3-KNOSSOS.nightly.app.zip && ./macos.py3-KNOSSOS.nightly.app test; fi
 
 deploy:
   - provider: releases
