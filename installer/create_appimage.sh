@@ -34,7 +34,6 @@ rm -v AppRun
 cp -v ../../knossos/installer/AppRun .
 
 cd lib
-rm -v libpython2.7.so.1.0
 mkdir -p supplemental
 mv -v libGLdispatch.so.0 supplemental/
 cd ..
