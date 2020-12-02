@@ -16,10 +16,6 @@ jobs:
       os: osx
     - osx_image: xcode11.6
       os: osx
-    - osx_image: xcode11.5
-      os: osx
-    - osx_image: xcode11.4
-      os: osx
     - osx_image: xcode11.3
       os: osx
     - osx_image: xcode10.1
