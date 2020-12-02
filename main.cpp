@@ -102,6 +102,9 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext &
 Q_DECLARE_METATYPE(std::string)
 
 int main(int argc, char *argv[]) {
+    if (argc == 2 && std::string(argv[1]) == "test") {
+        return 0;
+    }
     QtConcurrent::run([](){ QSslSocket::supportsSsl(); });// workaround until https://bugreports.qt.io/browse/QTBUG-59750
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);// explicitly enable sharing for undocked viewports
 
