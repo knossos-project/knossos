@@ -85,9 +85,9 @@ jobs:
       os: osx
 
 script:
-  - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then wget https://github.com/knossos-project/knossos/releases/download/nightly/linux.KNOSSOS.nightly.AppImage && chmod +x linux.KNOSSOS.nightly.AppImage && ./linux.KNOSSOS.nightly.AppImage test; fi
-  - if [[ "${TRAVIS_OS_NAME}" == "osx"   ]]; then wget https://github.com/knossos-project/knossos/releases/download/nightly-dev/macos.py3-KNOSSOS.nightly.app.zip && unzip macos.py3-KNOSSOS.nightly.app.zip && ./KNOSSOS.app/Contents/MacOS/knossos test; fi
-  - if [[ "${TRAVIS_OS_NAME}" == "windows"   ]]; then wget https://github.com/knossos-project/knossos/releases/download/nightly-dev/win.py3-KNOSSOS.nightly.exe && ./win.py3-KNOSSOS.nightly.exe test; fi
+  - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then wget -q https://github.com/knossos-project/knossos/releases/download/nightly/linux.KNOSSOS.nightly.AppImage && chmod +x linux.KNOSSOS.nightly.AppImage && ./linux.KNOSSOS.nightly.AppImage test; fi
+  - if [[ "${TRAVIS_OS_NAME}" == "osx"   ]]; then wget -q https://github.com/knossos-project/knossos/releases/download/nightly-dev/macos.py3-KNOSSOS.nightly.app.zip && unzip -q macos.py3-KNOSSOS.nightly.app.zip && ./KNOSSOS.app/Contents/MacOS/knossos test; fi
+  - if [[ "${TRAVIS_OS_NAME}" == "windows"   ]]; then wget -q https://github.com/knossos-project/knossos/releases/download/nightly-dev/win.py3-KNOSSOS.nightly.exe && ./win.py3-KNOSSOS.nightly.exe test; fi
 
 deploy:
   - provider: releases
