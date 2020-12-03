@@ -12,7 +12,7 @@ jobs:
       osx_image: xcode12.2
       env: 
         - TRAVIS_TAG=nightly-dev
-        - MACOSX_DEPLOYMENT_TARGET=10.12
+        - MACOSX_DEPLOYMENT_TARGET=10.13
       install:
         - brew update && brew upgrade
         - travis_wait sh ci/build_macos_PythonQt.sh
