@@ -92,6 +92,7 @@ jobs:
     - dist: trusty
     - dist: precise
   allow_failures:
+    - dist: trusty
     - dist: precise
     - osx_image: xcode9.2
       os: osx
