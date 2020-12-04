@@ -83,6 +83,8 @@ jobs:
       os: osx
     - stage: test2
       os: windows
+      before_install:
+        - powershell -c "Install-WindowsFeature Server-Media-Foundation"
     - stage: test3
     - dist: focal
     - dist: bionic
@@ -99,7 +101,7 @@ jobs:
 script:
   - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then wget -q https://github.com/knossos-project/knossos/releases/download/nightly-dev/linux.py3-KNOSSOS.nightly.AppImage && chmod +x linux.py3-KNOSSOS.nightly.AppImage && ./linux.py3-KNOSSOS.nightly.AppImage test; fi
   - if [[ "${TRAVIS_OS_NAME}" == "osx"   ]]; then wget -q https://github.com/knossos-project/knossos/releases/download/nightly-dev/macos.py3-KNOSSOS.nightly.app.zip && unzip -q macos.py3-KNOSSOS.nightly.app.zip && ./KNOSSOS.app/Contents/MacOS/knossos test; fi
-  - if [[ "${TRAVIS_OS_NAME}" == "windows"   ]]; then wget -q https://github.com/knossos-project/knossos/releases/download/nightly-dev/win.py3-KNOSSOS.nightly.exe && wget -q https://github.com/knossos-project/knossos/releases/download/nightly-dev/nightly+python.zip && unzip -q nightly+python.zip && wget -q --content-disposition https://downloads.fdossena.com/geth.php?r=mesa64-latest && 7z e *.7z && cp -v opengl32.dll glu32.dll && ./win.py3-KNOSSOS.nightly.exe test; fi
+  - if [[ "${TRAVIS_OS_NAME}" == "windows"   ]]; then wget -q https://github.com/knossos-project/knossos/releases/download/nightly-dev/win.py3-KNOSSOS.nightly.exe && wget -q https://github.com/knossos-project/knossos/releases/download/nightly-dev/nightly+python.zip && unzip -q nightly+python.zip && wget -q --content-disposition https://downloads.fdossena.com/geth.php?r=mesa64-latest && 7z e *.7z && ./win.py3-KNOSSOS.nightly.exe test; fi
 
 deploy:
   - provider: releases
