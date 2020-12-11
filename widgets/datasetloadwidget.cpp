@@ -475,6 +475,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
                 warning.setText(tr("Failed to load dataset"));
                 warning.setInformativeText(tr("%1\n\n%2").arg(path.toString()).arg(e.what()));
                 warning.exec();
+                open();
             }
             qDebug() << "Failed to load dataset" << path << e.what();
             return Dataset::list_t{};
