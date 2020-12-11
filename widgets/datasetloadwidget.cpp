@@ -203,6 +203,7 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     setAcceptDrops(true);
 
     searchField.setPlaceholderText("Filter datasets…");
+    searchField.setClearButtonEnabled(true);
     tableWidget.setUniformRowHeights(true);
     tableWidget.setTextElideMode(Qt::ElideMiddle);
     tableWidget.setSelectionBehavior(QAbstractItemView::SelectRows);
