@@ -250,6 +250,9 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
             info.boundary = Coordinate(tokenList.at(0).toFloat(), tokenList.at(1).toFloat(), tokenList.at(2).toFloat());
         } else if (token == "_CubeSize") {
             info.cubeEdgeLength = value.split(",").at(0).toInt();
+            if (value.split(",").at(2).toInt() == 1) {
+                throw std::runtime_error("2D support is not yet integrated here");
+            }
         } else if (token == "_Description") {
             info.description = value.split('"', Qt::SkipEmptyParts)[0];
         } else if (!token.isEmpty() && token != "_NumberofCubes" && token != "_Origin") {
