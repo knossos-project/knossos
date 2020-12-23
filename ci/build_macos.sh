@@ -1,44 +1,27 @@
 #!/bin/bash
 set -euxo pipefail
 
-# Fix Python headers
-# https://bugs.python.org/review/10910/diff2/2561:8559/Include/pyport.h
-cd ..
-mkdir python2.7
-time cp /usr/include/python2.7/* python2.7
-ed -s python2.7/pyport.h << EOF
-/#ifdef _PY_PORT_CTYPE_UTF8_ISSUE/
-a
-#ifndef __cplusplus
-.
-+16
-a
-#endif
-.
-w
-EOF
+PYTHON_VERSION=$(brew list --versions python | cut -d " " -f2)
+PYTHON_MAJOR=$(echo ${PYTHON_VERSION} | cut -d '.' -f1)
+PYTHON_MINOR=$(echo ${PYTHON_VERSION} | cut -d '.' -f2)
 
-# Download and install PythonQt
-time curl -JLO https://github.com/knossos-project/knossos/releases/download/nightly-dev/macOS-PythonQt.zip
-time unzip -d / macOS-PythonQt.zip
+QUAZIP_VERSION=$(brew list --versions quazip | cut -d " " -f2)
 
-# Fix QuaZip include directory name
 cd $TRAVIS_BUILD_DIR && cd ..
-mkdir -p quazip/quazip5
-QUAZIP_VERSION=`brew list --versions quazip | cut -d " " -f2`
-time cp -R /usr/local/Cellar/quazip/${QUAZIP_VERSION}/include/quazip/* quazip/quazip5/
-
 # Build KNOSSOS
 mkdir knossos-build && cd knossos-build
-time cmake -G Ninja ../knossos -DCMAKE_PREFIX_PATH=/usr/local/opt/qt -DCMAKE_CXX_FLAGS=-isystem\ ${TRAVIS_BUILD_DIR}/../quazip
+time cmake -G Ninja ../knossos -Dpythonqt=Qt5Python${PYTHON_MAJOR}${PYTHON_MINOR} -DCMAKE_PREFIX_PATH=/usr/local/opt/qt
 time ninja
 
 # OS X housekeeping
 mv knossos.app KNOSSOS.app
 time /usr/local/opt/qt/bin/macdeployqt KNOSSOS.app
-cp /usr/local/Cellar/quazip/${QUAZIP_VERSION}/lib/libquazip.1.0.0.dylib KNOSSOS.app/Contents/Frameworks/libquazip.1.dylib
+cp -v /usr/local/Cellar/quazip/${QUAZIP_VERSION}/lib/libquazip.1.0.0.dylib KNOSSOS.app/Contents/Frameworks/libquazip.1.dylib
 install_name_tool KNOSSOS.app/Contents/Frameworks/libquazip.1.dylib -change /usr/local/opt/qt/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore
+cp -r /usr/local/Frameworks/Python.framework KNOSSOS.app/Contents/Frameworks/
+rm -rf KNOSSOS.app/Contents/Frameworks/Python.framework/Versions/2.7
+install_name_tool KNOSSOS.app/Contents/MacOS/knossos -change /usr/local/opt/python@${PYTHON_MAJOR}.${PYTHON_MINOR}/Frameworks/Python.framework/Versions/${PYTHON_MAJOR}.${PYTHON_MINOR}/Python @executable_path/../Frameworks/Python.framework/Versions/${PYTHON_MAJOR}.${PYTHON_MINOR}/Python
 
 # Deployment
 time zip -r ${TRAVIS_BUILD_DIR}/macos.KNOSSOS.nightly.app.zip KNOSSOS.app
-time zip -r ${TRAVIS_BUILD_DIR}/macos.${TRAVIS_BRANCH}-KNOSSOS.nightly.app.zip KNOSSOS.app
+cp -v ${TRAVIS_BUILD_DIR}/macos.KNOSSOS.nightly.app.zip ${TRAVIS_BUILD_DIR}/macos.${TRAVIS_BRANCH}-KNOSSOS.nightly.app.zip

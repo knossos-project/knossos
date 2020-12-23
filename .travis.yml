@@ -1,39 +1,69 @@
 language: shell
+os: linux
+dist: focal
 
 git:
   depth: false # tags for `git describe` may be farther away than the default depth
 
-os:
-  - linux
-  - osx
-
-env:
-  - TRAVIS_TAG=nightly
-  - TRAVIS_TAG=nightly-dev
-
-dist: focal
-
-osx_image: xcode9.4
-
-addons:
-  homebrew:
-    packages:
-      - boost
-      - ninja
-      - qt
-      - quazip
-      - snappy
-    update: true
-
 jobs:
-  exclude:
-    - if: branch != master
-      env: TRAVIS_TAG=nightly
-
-script:
-  - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then docker pull knossostool/knossos; fi
-  - if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then docker run -it --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${PWD}:/root/knossos -e TRAVIS_BRANCH -e TRAVIS_TAG knossostool/knossos bash -c '/root/knossos/ci/build_linux.sh'; fi
-  - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then sh $TRAVIS_BUILD_DIR/ci/build_macos.sh; fi
+  include:
+    - stage: compile
+      os: osx
+      osx_image: xcode12.2
+      env: 
+        - TRAVIS_TAG=nightly-dev
+        - MACOSX_DEPLOYMENT_TARGET=10.13
+      install:
+        - brew update && brew upgrade
+        - travis_wait sh ci/build_macos_PythonQt.sh
+      script:
+        - sh ci/build_macos.sh
+      addons:
+        homebrew:
+          packages:
+            - boost
+            - ninja
+            - python
+            - qt
+            - quazip
+            - snappy
+    - os: osx
+      osx_image: xcode12.2
+      if: branch == master
+      env: 
+        - TRAVIS_TAG=nightly
+        - MACOSX_DEPLOYMENT_TARGET=10.13
+      install:
+        - brew update && brew upgrade
+        - travis_wait sh ci/build_macos_PythonQt.sh
+      script:
+        - sh ci/build_macos.sh
+      addons:
+        homebrew:
+          packages:
+            - boost
+            - ninja
+            - python
+            - qt
+            - quazip
+            - snappy
+    - os: linux
+      name: Arch Linux nightly-dev
+      env: 
+        - TRAVIS_TAG=nightly-dev
+      install:
+        - docker pull knossostool/knossos
+      script:
+        - docker run -it --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${PWD}:/root/knossos -e TRAVIS_BRANCH -e TRAVIS_TAG knossostool/knossos bash -c '/root/knossos/ci/build_linux.sh'
+    - os: linux
+      name: Arch Linux nightly
+      if: branch == master
+      env: 
+        - TRAVIS_TAG=nightly
+      install:
+        - docker pull knossostool/knossos
+      script:
+        - docker run -it --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${PWD}:/root/knossos -e TRAVIS_BRANCH -e TRAVIS_TAG knossostool/knossos bash -c '/root/knossos/ci/build_linux.sh'
 
 deploy:
   - provider: releases
