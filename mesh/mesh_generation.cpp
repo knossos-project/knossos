@@ -176,7 +176,7 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
         const std::array<double, 6> extent{{0, dims[0], 0, dims[1], 0, dims[2]}};
 
         marchingCubes(obj2points, obj2faces, obj2idCounter, extractedCubeForCoord(pair.first), soid2oid, origin, dims, spacing, extent);
-        for (std::size_t i = 0; i < 6; ++i) {
+        for (std::size_t i = 1; i < 6; i+=2) {
             const std::array<double, 3> dims{{i < 2 ? 2.0 : cubeEdgeLen + 2, i % 4 < 2 ? cubeEdgeLen + 2 : 2.0, i < 4 ? cubeEdgeLen + 2 : 2.0}};
             const floatCoordinate unscaledOrigin(inMagCoord + floatCoordinate(i == 1 ? 127 : -1, i == 3 ? 127 : -1, i == 5 ? 127 : -1));
             const std::array<double, 6> extent{{0, dims[0], 0, dims[1], 0, dims[2]}};
