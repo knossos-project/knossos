@@ -107,10 +107,10 @@ bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, in
             } else if (index.column() == 2 && value.toBool()) {
                 const auto beginIt = std::cbegin(state->viewerState->layerOrder);
                 const auto segi = std::distance(beginIt, std::find(beginIt, std::cend(state->viewerState->layerOrder), Segmentation::singleton().layerId));
-                const auto prevSegLayerIndex = this->index(segi);
+                const auto prevSegLayerModelIndex = this->index(segi, 2);
                 Segmentation::singleton().clear();// clear selection and snappy cache
                 Segmentation::singleton().layerId = ordered_i(index.row());
-                emit dataChanged(prevSegLayerIndex, prevSegLayerIndex, QVector<int>(role));
+                emit dataChanged(prevSegLayerModelIndex, prevSegLayerModelIndex, QVector<int>(role));
             }
         }
     }
