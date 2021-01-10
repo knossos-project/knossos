@@ -97,7 +97,7 @@ private:
     floatCoordinate find_close_xyz(floatCoordinate direction);
     std::vector<CoordOfCube> DcoiFromPos(const CoordOfCube & currentOrigin, const UserMoveType userMoveType, const floatCoordinate & direction);
     uint loadCubes();
-    void snappyCacheBackupRaw(const CoordOfCube &, const void * cube);
+    void snappyCacheBackupRaw(const std::size_t layerId, const CoordOfCube &, const void * cube);
     void snappyCacheClear();
 
     decltype(slotDecompression)::value_type::iterator finalizeDecompression(QFutureWatcher<DecompressionResult> & watcher, decltype(freeSlots)::value_type & freeSlots, decltype(slotDecompression)::value_type & decompressions, const CoordOfCube & cubeCoord);
@@ -108,10 +108,9 @@ private:
     decltype(Dataset::datasets) datasets;
 public://matsch
     using CacheQueue = std::unordered_set<CoordOfCube>;
-    std::size_t snappyLayerId{1};
-    std::vector<CacheQueue> OcModifiedCacheQueue;
-    using SnappyCache = std::unordered_map<CoordOfCube, std::string>;
-    std::vector<SnappyCache> snappyCache;
+    std::vector<std::vector<CacheQueue>> modifiedCacheQueue;
+    using SnappySet = std::unordered_map<CoordOfCube, std::string>;
+    std::vector<std::vector<SnappySet>> snappyCache;
     QMutex snappyCacheMutex;
     QMutex snappyFlushConditionMutex;
     QWaitCondition snappyFlushCondition;
@@ -120,8 +119,8 @@ public://matsch
 
     void unloadCurrentMagnification(const std::size_t);
     void unloadCurrentMagnification();
-    void markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification);
-    void snappyCacheSupplySnappy(const CoordOfCube, const quint64 cubeMagnification, const std::string cube);
+    void markCubeAsModified(const std::size_t layerId, const CoordOfCube &cubeCoord, const int magnification);
+    void snappyCacheSupplySnappy(const std::size_t layerId, const CoordOfCube, const quint64 cubeMagnification, const std::string cube);
     void flushIntoSnappyCache();
     void broadcastProgress(bool startup = false);
     Worker();
@@ -130,7 +129,7 @@ signals:
     void progress(bool incremented, int count);
 public slots:
     void cleanup(const Coordinate center);
-    void downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, Dataset::list_t changedDatasets, const size_t segmentationLayer, const size_t cacheSize);
+    void downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, Dataset::list_t changedDatasets, const size_t cacheSize);
 };
 
 class Controller : public QObject {
@@ -154,19 +153,19 @@ public:
     void snappyCacheSupplySnappy(Args&&... args) {
         emit snappyCacheSupplySnappySignal(std::forward<Args>(args)...);
     }
-    void markOcCubeAsModified(const CoordOfCube &cubeCoord, const int magnification);
+    void markCubeAsModified(const std::size_t layerId, const CoordOfCube &cubeCoord, const int magnification);
 
     struct LockedSnappy {
         std::unique_lock<QMutex> locker;
-        decltype(Loader::Worker::snappyCache) & cubes;
+        decltype(Loader::Worker::snappyCache[0]) & cubes;
         explicit LockedSnappy(QMutex & mutex, decltype(cubes) & cache) : locker(mutex), cubes(cache) {}
     };
-    auto getAllModifiedCubes() {
+    auto getAllModifiedCubes(const std::size_t layerId) {
         QMutexLocker lock(&worker->snappyFlushConditionMutex);
         //signal to run in loader thread
-        QTimer::singleShot(0, worker.get(), &Loader::Worker::flushIntoSnappyCache);
+        QTimer::singleShot(0, worker.get(), &Worker::flushIntoSnappyCache);
         worker->snappyFlushCondition.wait(&worker->snappyFlushConditionMutex);
-        return LockedSnappy{worker->snappyCacheMutex, worker->snappyCache};;
+        return LockedSnappy{worker->snappyCacheMutex, worker->snappyCache[layerId]};
     }
 public slots:
     bool isFinished();
@@ -175,8 +174,8 @@ signals:
     void progress(int count);
     void refCountChange(bool isIncrement, int refCount);
     void unloadCurrentMagnificationSignal();
-    void loadSignal(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset::list_t & changedDatasets, const quint64 segmentationLayer, const quint64 cacheSize);
-    void markOcCubeAsModifiedSignal(const CoordOfCube &cubeCoord, const int magnification);
-    void snappyCacheSupplySnappySignal(const CoordOfCube, const quint64 cubeMagnification, const std::string cube);
+    void loadSignal(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset::list_t & changedDatasets, const quint64 cacheSize);
+    void markCubeAsModifiedSignal(const std::size_t layerId, const CoordOfCube &cubeCoord, const int magnification);
+    void snappyCacheSupplySnappySignal(const std::size_t layerId, const CoordOfCube, const quint64 cubeMagnification, const std::string cube);
 };
 }//namespace Loader

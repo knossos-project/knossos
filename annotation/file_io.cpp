@@ -87,7 +87,7 @@ void annotationFileLoad(const QString & filename, bool mergeSkeleton, const QStr
                 const auto cubeCoord = CoordOfCube(match.captured("x").toInt(), match.captured("y").toInt(), match.captured("z").toInt());
                 const auto anisoMags = Dataset::current().api == Dataset::API::PyKnossos;
                 const auto cubeMagnification = anisoMags ? match.captured("mag").toInt() - 1 : static_cast<int>(std::log2(match.captured("mag").toInt()));
-                Loader::Controller::singleton().snappyCacheSupplySnappy(cubeCoord, cubeMagnification, file.readAll().toStdString());
+                Loader::Controller::singleton().snappyCacheSupplySnappy(Segmentation::singleton().layerId, cubeCoord, cubeMagnification, file.readAll().toStdString());
             }
         }
         const auto getSpecificFile = [&archive, &nonExtraFiles](const QString & filename, auto func){
@@ -265,7 +265,7 @@ void annotationFileSave(const QString & filename, const bool onlySelectedTrees, 
         if (!onlySelectedTrees) {
             QElapsedTimer cubeTime;
             cubeTime.start();
-            const auto guard = Loader::Controller::singleton().getAllModifiedCubes();
+            const auto guard = Loader::Controller::singleton().getAllModifiedCubes(Segmentation::singleton().layerId);
             const auto & cubes = guard.cubes;
             for (std::size_t i = 0; i < cubes.size(); ++i) {
                 const auto mag = Dataset::current().api == Dataset::API::PyKnossos ? i + 1 : std::pow(2, i);

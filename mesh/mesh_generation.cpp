@@ -137,7 +137,7 @@ void marchingCubes(std::unordered_map<U, std::unordered_map<floatCoordinate, int
     }
 }
 
-auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uint64_t> & soid2oid, const std::vector<std::uint64_t> & objects, const Loader::Worker::SnappyCache & cubes, QProgressDialog & progress) {
+auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uint64_t> & soid2oid, const std::vector<std::uint64_t> & objects, const Loader::Worker::SnappySet & cubes, QProgressDialog & progress) {
     std::vector<std::unordered_map<std::uint64_t, std::unordered_map<floatCoordinate, int>>> obj2totalpoints(cubes.size());
     std::vector<std::unordered_map<std::uint64_t, std::vector<unsigned int>>> obj2totalfaces(cubes.size());
     const auto processCube = [&](const auto & val){
@@ -300,7 +300,7 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
 }
 
 void generateMeshesForSubobjectsOfSelectedObjects() {
-    const auto guard = Loader::Controller::singleton().getAllModifiedCubes();
+    const auto guard = Loader::Controller::singleton().getAllModifiedCubes(Segmentation::singleton().layerId);
     const auto & cubes = guard.cubes;
 
     const auto count = Segmentation::singleton().selectedObjectsCount();

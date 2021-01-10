@@ -233,7 +233,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         for (int z = cpos.z; z < cpos.z + state->M; ++z)
         for (int y = cpos.y; y < cpos.y + state->M; ++y)
         for (int x = cpos.x; x < cpos.x + state->M; ++x) {
-            Loader::Controller::singleton().markOcCubeAsModified({x, y, z}, Dataset::current().magnification);
+            Loader::Controller::singleton().markCubeAsModified(Segmentation::singleton().layerId, {x, y, z}, Dataset::current().magnification);
         }
 
     });

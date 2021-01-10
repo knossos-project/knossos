@@ -66,7 +66,7 @@ bool writeVoxel(const Coordinate & pos, const uint64_t value, bool isMarkChanged
     const auto inCube = pos.insideCube(Dataset::current().cubeEdgeLength, Dataset::current().scaleFactor);
     getCubeRef(cubeIt.second)[inCube.z][inCube.y][inCube.x] = value;
     if (isMarkChanged) {
-        Loader::Controller::singleton().markOcCubeAsModified(pos.cube(Dataset::current().cubeEdgeLength, Dataset::current().scaleFactor), Dataset::current().magnification);
+        Loader::Controller::singleton().markCubeAsModified(Segmentation::singleton().layerId, pos.cube(Dataset::current().cubeEdgeLength, Dataset::current().scaleFactor), Dataset::current().magnification);
     }
     return true;
 }
@@ -102,7 +102,7 @@ std::pair<Coordinate, Coordinate> getRegion(const floatCoordinate & centerPos, c
 
 void coordCubesMarkChanged(const CubeCoordSet & cubeChangeSet) {
     for (auto &cubeCoord : cubeChangeSet) {
-        Loader::Controller::singleton().markOcCubeAsModified(cubeCoord, Dataset::current().magnification);
+        Loader::Controller::singleton().markCubeAsModified(Segmentation::singleton().layerId, cubeCoord, Dataset::current().magnification);
     }
 }
 
