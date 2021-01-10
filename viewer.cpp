@@ -381,7 +381,7 @@ void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx,
     //cache
     uint64_t subobjectIdCache = Segmentation::singleton().getBackgroundId();
     bool selectedCache = seg.isSubObjectIdSelected(subobjectIdCache);
-    auto colorCache = seg.colorObjectFromSubobjectId(subobjectIdCache);
+    Segmentation::color_t colorCache;
     //first and last row boundaries
     const std::size_t min = cubeEdgeLen;
     const std::size_t max = cubeEdgeLen * (cubeEdgeLen - 1);
@@ -401,7 +401,16 @@ void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx,
             if(hide == false) {
                 const uint64_t subobjectId = datacube[0];
 
-                const auto color = (subobjectIdCache == subobjectId) ? colorCache : seg.colorObjectFromSubobjectId(subobjectId);
+                const auto queryColor = [&](){
+                    if (layerId == seg.layerId) {// apply mergelist
+                        return seg.colorObjectFromSubobjectId(subobjectId);
+                    } else if (subobjectId != seg.getBackgroundId()) {
+                         return seg.subobjectColor(subobjectId);
+                    } else {// blank background
+                        return Segmentation::color_t{};
+                    }
+                };
+                const auto color = (subobjectIdCache == subobjectId) ? colorCache : queryColor();
                 slice[0] = std::get<0>(color);
                 slice[1] = std::get<1>(color);
                 slice[2] = std::get<2>(color);
