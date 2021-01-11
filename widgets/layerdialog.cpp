@@ -198,9 +198,9 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     controlButtonLayout.addWidget(&addLayerButton);
     controlButtonLayout.addWidget(&removeLayerButton);
 
-    mainLayout.addWidget(&optionsSpoiler);
     mainLayout.addWidget(&treeView);
     mainLayout.addLayout(&controlButtonLayout);
+    mainLayout.addWidget(&optionsSpoiler);
     setLayout(&mainLayout);
 
 
