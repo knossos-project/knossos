@@ -183,7 +183,6 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     treeView.resizeColumnToContents(1);
     treeView.setRootIsDecorated(false);
     treeView.setUniformRowHeights(true); // for optimization
-    treeView.setDragDropMode(QAbstractItemView::InternalMove);
 
     dupLayerButton.setText("duplicate");
     addLayerButton.setText("add");
