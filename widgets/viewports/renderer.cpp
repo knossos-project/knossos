@@ -1831,7 +1831,7 @@ hash_list<nodeListElement *> ViewportBase::pickNodes(int centerX, int centerY, i
             for (std::size_t i = 0; i < bytes.size(); ++i) {
                 name |= static_cast<std::uint64_t>(bytes[i]) << (8 * i);
             }
-            nodeListElement * const foundNode = Skeletonizer::findNodeByNodeID(name - GLNames::NodeOffset);
+            nodeListElement * const foundNode = Skeletonizer::singleton().findNodeByNodeID(name - GLNames::NodeOffset);
             if (foundNode != nullptr) {
                 foundNodes.emplace_back(foundNode);
             }

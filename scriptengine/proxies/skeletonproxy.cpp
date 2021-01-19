@@ -36,7 +36,7 @@
 #include <QMessageBox>
 
 treeListElement & treeFromId(decltype(treeListElement::treeID) treeId) {
-    if (auto * tree = Skeletonizer::findTreeByTreeID(treeId)) {
+    if (auto * tree = Skeletonizer::singleton().findTreeByTreeID(treeId)) {
         return *tree;
     }
     const auto errorText = QObject::tr("skeletonproxy treeFromId: not tree with id %1").arg(treeId);
@@ -45,12 +45,12 @@ treeListElement & treeFromId(decltype(treeListElement::treeID) treeId) {
 }
 
 treeListElement *SkeletonProxy::tree_with_previous_id(quint64 tree_id) {
-    treeListElement *tree = Skeletonizer::findTreeByTreeID(tree_id);
+    treeListElement *tree = Skeletonizer::singleton().findTreeByTreeID(tree_id);
     return Skeletonizer::singleton().getTreeWithPrevID(tree);
 }
 
 treeListElement *SkeletonProxy::tree_with_next_id(quint64 tree_id) {
-    treeListElement *tree = Skeletonizer::findTreeByTreeID(tree_id);
+    treeListElement *tree = Skeletonizer::singleton().findTreeByTreeID(tree_id);
     return Skeletonizer::singleton().getTreeWithNextID(tree);
 }
 
@@ -67,7 +67,7 @@ bool SkeletonProxy::extract_connected_component(quint64 node_id) {
 }
 
 treeListElement *SkeletonProxy::find_tree_by_id(quint64 tree_id) {
-    return Skeletonizer::findTreeByTreeID(tree_id);
+    return Skeletonizer::singleton().findTreeByTreeID(tree_id);
 }
 
 QList<treeListElement *> SkeletonProxy::find_trees(const QString & comment) {
@@ -123,7 +123,7 @@ void SkeletonProxy::delete_tree_mesh(quint64 tree_id) {
 }
 
 nodeListElement *SkeletonProxy::find_node_by_id(quint64 node_id) {
-    return Skeletonizer::findNodeByNodeID(node_id);
+    return Skeletonizer::singleton().findNodeByNodeID(node_id);
 }
 
 QList<nodeListElement *> SkeletonProxy::find_nodes_in_tree(treeListElement & tree, const QString & comment) {
@@ -131,24 +131,24 @@ QList<nodeListElement *> SkeletonProxy::find_nodes_in_tree(treeListElement & tre
 }
 
 void SkeletonProxy::move_node_to_tree(quint64 node_id, quint64 tree_id) {
-    nodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
+    nodeListElement *node = Skeletonizer::singleton().findNodeByNodeID(node_id);
     Skeletonizer::singleton().selectNodes({node});
     Skeletonizer::singleton().moveSelectedNodesToTree(tree_id);
 }
 
 nodeListElement *SkeletonProxy::find_nearby_node_from_tree(quint64 tree_id, int x, int y, int z) {
-    treeListElement *tree = Skeletonizer::findTreeByTreeID(tree_id);
+    treeListElement *tree = Skeletonizer::singleton().findTreeByTreeID(tree_id);
     Coordinate coord(x, y, z);
     return Skeletonizer::singleton().findNearbyNode(tree, coord);
 }
 
 nodeListElement *SkeletonProxy::node_with_prev_id(quint64 node_id, bool same_tree) {
-    nodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
+    nodeListElement *node = Skeletonizer::singleton().findNodeByNodeID(node_id);
     return Skeletonizer::singleton().getNodeWithPrevID(node, same_tree);
 }
 
 nodeListElement *SkeletonProxy::node_with_next_id(quint64 node_id, bool same_tree) {
-    nodeListElement *node = Skeletonizer::findNodeByNodeID(node_id);
+    nodeListElement *node = Skeletonizer::singleton().findNodeByNodeID(node_id);
     return Skeletonizer::singleton().getNodeWithNextID(node, same_tree);
 }
 
@@ -347,8 +347,8 @@ bool SkeletonProxy::delete_comment(quint64 node_id) {
 }
 
 bool SkeletonProxy::add_segment(quint64 source_id, quint64 target_id) {
-    auto * sourceNode = Skeletonizer::findNodeByNodeID(source_id);
-    auto * targetNode = Skeletonizer::findNodeByNodeID(target_id);
+    auto * sourceNode = Skeletonizer::singleton().findNodeByNodeID(source_id);
+    auto * targetNode = Skeletonizer::singleton().findNodeByNodeID(target_id);
     if(sourceNode != nullptr && targetNode != nullptr) {
         if (!Skeletonizer::singleton().addSegment(*sourceNode, *targetNode)) {
             emit echo(QString("could not add a segment with source id %1 and target id %2").arg(source_id).arg(target_id));
@@ -360,7 +360,7 @@ bool SkeletonProxy::add_segment(quint64 source_id, quint64 target_id) {
 }
 
 bool SkeletonProxy::set_branch_node(quint64 node_id) {
-    nodeListElement *currentNode = Skeletonizer::findNodeByNodeID(node_id);
+    nodeListElement *currentNode = Skeletonizer::singleton().findNodeByNodeID(node_id);
     if(nullptr == currentNode) {
         emit echo(QString("no node with id %1 found").arg(node_id));
         return false;

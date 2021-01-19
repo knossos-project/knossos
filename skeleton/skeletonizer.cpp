@@ -120,16 +120,18 @@ auto connectedComponent(nodeListElement & node) {
     return std::pair{visitedNodes, visitedTrees};
 }
 
-Skeletonizer::Skeletonizer() {
-    state->skeletonState = &skeletonState;
+Skeletonizer::Skeletonizer(bool global) {
+    if (global) {
+        state->skeletonState = &skeletonState;
 
-    QObject::connect(this, &Skeletonizer::resetData, this, &Skeletonizer::guiModeLoaded);
-    QObject::connect(this, &Skeletonizer::resetData, this, &Skeletonizer::lockingChanged);
+        QObject::connect(this, &Skeletonizer::resetData, this, &Skeletonizer::guiModeLoaded);
+        QObject::connect(this, &Skeletonizer::resetData, this, &Skeletonizer::lockingChanged);
+    }
 }
 
 treeListElement* Skeletonizer::findTreeByTreeID(decltype(treeListElement::treeID) treeID) {
-    const auto treeIt = state->skeletonState->treesByID.find(treeID);
-    return treeIt != std::end(state->skeletonState->treesByID) ? treeIt->second : nullptr;
+    const auto treeIt = skeletonState.treesByID.find(treeID);
+    return treeIt != std::end(skeletonState.treesByID) ? treeIt->second : nullptr;
 }
 
 QList<treeListElement *> Skeletonizer::findTreesContainingComment(const QString &comment) {
@@ -143,14 +145,14 @@ QList<treeListElement *> Skeletonizer::findTreesContainingComment(const QString 
 }
 
 boost::optional<nodeListElement &> Skeletonizer::UI_addSkeletonNode(const Coordinate & clickedCoordinate, ViewportType VPtype) {
-    if(!state->skeletonState->activeTree) {
+    if(!skeletonState.activeTree) {
         addTree();
     }
 
     auto addedNode = addNode(
                           boost::none,
-                          state->skeletonState->defaultNodeRadius,
-                          state->skeletonState->activeTree->treeID,
+                          skeletonState.defaultNodeRadius,
+                          skeletonState.activeTree->treeID,
                           clickedCoordinate,
                           VPtype,
                           Dataset::current().magnification,
@@ -163,7 +165,7 @@ boost::optional<nodeListElement &> Skeletonizer::UI_addSkeletonNode(const Coordi
 
     setActiveNode(&addedNode.get());
 
-    if (state->skeletonState->activeTree->nodes.size() == 1) {//First node tree is branch node
+    if (skeletonState.activeTree->nodes.size() == 1) {//First node tree is branch node
         pushBranchNode(addedNode.get());
         setComment(addedNode.get(), "First Node");
     }
@@ -171,7 +173,7 @@ boost::optional<nodeListElement &> Skeletonizer::UI_addSkeletonNode(const Coordi
 }
 
 boost::optional<nodeListElement &> Skeletonizer::addSkeletonNodeAndLinkWithActive(const Coordinate & clickedCoordinate, ViewportType VPtype, int makeNodeActive) {
-    if(!state->skeletonState->activeNode) {
+    if(!skeletonState.activeNode) {
         qDebug() << "Please create a node before trying to link nodes.";
         return boost::none;
     }
@@ -179,8 +181,8 @@ boost::optional<nodeListElement &> Skeletonizer::addSkeletonNodeAndLinkWithActiv
     //Add a new node at the target position first.
     auto targetNode = addNode(
                            boost::none,
-                           state->skeletonState->defaultNodeRadius,
-                           state->skeletonState->activeTree->treeID,
+                           skeletonState.defaultNodeRadius,
+                           skeletonState.activeTree->treeID,
                            clickedCoordinate,
                            VPtype,
                            Dataset::current().magnification,
@@ -191,12 +193,12 @@ boost::optional<nodeListElement &> Skeletonizer::addSkeletonNodeAndLinkWithActiv
         return boost::none;
     }
 
-    addSegment(*state->skeletonState->activeNode, targetNode.get());
+    addSegment(*skeletonState.activeNode, targetNode.get());
 
     if(makeNodeActive) {
         setActiveNode(&targetNode.get());
     }
-    if (state->skeletonState->activeTree->nodes.size() == 1) {
+    if (skeletonState.activeTree->nodes.size() == 1) {
         /* First node in this tree */
         pushBranchNode(targetNode.get());
         setComment(targetNode.get(), "First Node");
@@ -251,7 +253,7 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     xml.writeEndElement();
 
     xml.writeStartElement("createdin");
-    xml.writeAttribute("version", state->skeletonState->skeletonCreatedInVersion);
+    xml.writeAttribute("version", skeletonState.skeletonCreatedInVersion);
     xml.writeEndElement();
 
     if (!skeletonState.saveMatlabCoordinates) {
@@ -296,9 +298,9 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     xml.writeEndElement();
 
     xml.writeStartElement("RadiusLocking");
-    xml.writeAttribute("enableCommentLocking", QString::number(state->skeletonState->lockPositions));
-    xml.writeAttribute("lockingRadius", QString::number(state->skeletonState->lockRadius));
-    xml.writeAttribute("lockToNodesWithComment", QString(state->skeletonState->lockingComment));
+    xml.writeAttribute("enableCommentLocking", QString::number(skeletonState.lockPositions));
+    xml.writeAttribute("lockingRadius", QString::number(skeletonState.lockRadius));
+    xml.writeAttribute("lockToNodesWithComment", QString(skeletonState.lockingComment));
     xml.writeEndElement();
 
     xml.writeStartElement("time");
@@ -309,8 +311,8 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     xml.writeAttribute("checksum", timeChecksum);
     xml.writeEndElement();
 
-    if (state->skeletonState->activeNode != nullptr) {
-        auto * activeNode = state->skeletonState->activeNode;
+    if (skeletonState.activeNode != nullptr) {
+        auto * activeNode = skeletonState.activeNode;
         if (!onlySelected || activeNode->correspondingTree->selected) {
             xml.writeStartElement("activeNode");
             xml.writeAttribute("id", QString::number(activeNode->nodeID));
@@ -330,7 +332,7 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
 
     xml.writeStartElement("skeletonVPState");
     for (int j = 0; j < 16; ++j) {
-        xml.writeAttribute(QString("E%1").arg(j), QString::number(state->skeletonState->skeletonVpModelView[j]));
+        xml.writeAttribute(QString("E%1").arg(j), QString::number(skeletonState.skeletonVpModelView[j]));
     }
     xml.writeAttribute("translateX", QString::number(state->viewer->window->viewport3D->translateX));
     xml.writeAttribute("translateY", QString::number(state->viewer->window->viewport3D->translateY));
@@ -403,7 +405,7 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     }
 
     xml.writeStartElement("comments");
-    TreeTraverser commentTraverser(state->skeletonState->trees);
+    TreeTraverser commentTraverser(skeletonState.trees);
     for (; !commentTraverser.reachedEnd; ++commentTraverser) {
         if (!onlySelected || skeletonState.nodesByNodeID[(*commentTraverser).nodeID]->correspondingTree->selected) {
             if(!(*commentTraverser).getComment().isEmpty()) {
@@ -417,7 +419,7 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     xml.writeEndElement(); // end comments
 
     xml.writeStartElement("branchpoints");
-    for (const auto branchNodeID : state->skeletonState->branchStack) {
+    for (const auto branchNodeID : skeletonState.branchStack) {
         if (!onlySelected || skeletonState.nodesByNodeID[branchNodeID]->correspondingTree->selected) {
             xml.writeStartElement("branchpoint");
             xml.writeAttribute("id", QString::number(branchNodeID));
@@ -440,8 +442,8 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
 
 std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> Skeletonizer::loadXmlSkeleton(QXmlStreamReader & xml, const bool merge, const QString & treeCmtOnMultiLoad) {
     // If "createdin"-node does not exist, skeleton was created in a version before 3.2
-    state->skeletonState->skeletonCreatedInVersion = "pre-3.2";
-    state->skeletonState->skeletonLastSavedInVersion = "pre-3.2";
+    skeletonState.skeletonCreatedInVersion = "pre-3.2";
+    skeletonState.skeletonLastSavedInVersion = "pre-3.2";
 
     Annotation::singleton().guiMode = GUIMode::None;
 
@@ -474,9 +476,9 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                 if (xml.name() == "experiment") {
                     experimentName = attributes.value("name").toString();
                 } else if (xml.name() == "createdin") {
-                    state->skeletonState->skeletonCreatedInVersion = attributes.value("version").toString();
+                    skeletonState.skeletonCreatedInVersion = attributes.value("version").toString();
                 } else if(xml.name() == "lastsavedin") {
-                    state->skeletonState->skeletonLastSavedInVersion = attributes.value("version").toString();
+                    skeletonState.skeletonLastSavedInVersion = attributes.value("version").toString();
                 } else if (xml.name() == "nodes_0_based") {
                     matlabCoordinates = false;
                 } else if (xml.name() == "node_position_numbering") {// legacy tag
@@ -554,10 +556,10 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                     if (!merge) {
                           // non-working code for skelvp rotation and translation restoration
 //                        for (int j = 0; j < 16; ++j) {
-//                            state->skeletonState->skeletonVpModelView[j] = attributes.value(QString("E%1").arg(j)).toFloat();
+//                            skeletonState.skeletonVpModelView[j] = attributes.value(QString("E%1").arg(j)).toFloat();
 //                        }
-//                        state->skeletonState->translateX = attributes.value("translateX").toFloat();
-//                        state->skeletonState->translateY = attributes.value("translateY").toFloat();
+//                        skeletonState.translateX = attributes.value("translateX").toFloat();
+//                        skeletonState.translateY = attributes.value("translateY").toFloat();
                     }
                 } else if(xml.name() == "vpSettingsZoom") {
                     QStringRef attribute = attributes.value("XYPlane");
@@ -578,15 +580,15 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                 } else if(xml.name() == "RadiusLocking") {
                     QStringRef attribute = attributes.value("enableCommentLocking");
                     if(attribute.isNull() == false) {
-                        state->skeletonState->lockPositions = attribute.toString().toInt();
+                        skeletonState.lockPositions = attribute.toString().toInt();
                     }
                     attribute = attributes.value("lockingRadius");
                     if(attribute.isNull() == false) {
-                        state->skeletonState->lockRadius = attribute.toString().toInt();
+                        skeletonState.lockRadius = attribute.toString().toInt();
                     }
                     attribute = attributes.value("lockToNodesWithComment");
                     if(attribute.isNull() == false) {
-                        state->skeletonState->lockingComment = attribute.toString();
+                        skeletonState.lockingComment = attribute.toString();
                     }
                 } else if(xml.name() == "idleTime") { // in case of a merge the current annotation's idleTime is kept.
                     if (!merge) {
@@ -715,7 +717,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                     while(xml.readNextStartElement()) {
                         if(xml.name() == "node") {
                             boost::optional<decltype(nodeListElement::nodeID)> nodeID;
-                            float radius = state->skeletonState->defaultNodeRadius;
+                            float radius = skeletonState.defaultNodeRadius;
                             Coordinate currentCoordinate;
                             ViewportType inVP = VIEWPORT_UNDEFINED;
                             int inMag = 0;
@@ -802,6 +804,10 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
         }
     };
 
+    auto findNodeByNodeID = [this](std::uint64_t nodeID){
+        return this->findNodeByNodeID(nodeID);
+    };
+
     for (const auto & elem : edgeVector) {
         auto sourceNode = getElem(nodeMap, elem.first, findNodeByNodeID);
         auto targetNode = getElem(nodeMap, elem.second, findNodeByNodeID);
@@ -826,11 +832,11 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
         }
     }
 
-    for (const auto & tree : state->skeletonState->trees) {
+    for (const auto & tree : skeletonState.trees) {
         if(tree.properties.contains("synapticCleft")) {
             auto preSynapse = tree.properties.contains("preSynapse") ? getElem(nodeMap, tree.properties["preSynapse"].toULongLong(), findNodeByNodeID) : boost::none;
             auto postSynapse = tree.properties.contains("postSynapse") ? getElem(nodeMap, tree.properties["postSynapse"].toULongLong(), findNodeByNodeID) : boost::none;
-            auto synapticCleft = getElem(treeMap, tree.treeID, findTreeByTreeID);
+            auto synapticCleft = getElem(treeMap, tree.treeID, [this](auto id){ return findTreeByTreeID(id); });
             if (preSynapse && postSynapse && synapticCleft) {
                 addFinishedSynapse(**synapticCleft, **preSynapse, **postSynapse);
             } else {
@@ -923,24 +929,24 @@ bool Skeletonizer::delNode(std::uint64_t nodeID, nodeListElement *nodeToDel) {
     }
 
     if (nodeToDel->isBranchNode) {
-        auto foundIt = std::find(std::begin(state->skeletonState->branchStack), std::end(state->skeletonState->branchStack), nodeToDel->nodeID);
-        state->skeletonState->branchStack.erase(foundIt);
+        auto foundIt = std::find(std::begin(skeletonState.branchStack), std::end(skeletonState.branchStack), nodeToDel->nodeID);
+        skeletonState.branchStack.erase(foundIt);
     }
 
-    state->skeletonState->nodesByNodeID.erase(nodeToDel->nodeID);
-    if (nodeID < state->skeletonState->nextAvailableNodeID) {
-        state->skeletonState->nextAvailableNodeID = nodeID;
+    skeletonState.nodesByNodeID.erase(nodeToDel->nodeID);
+    if (nodeID < skeletonState.nextAvailableNodeID) {
+        skeletonState.nextAvailableNodeID = nodeID;
     }
 
     if (nodeToDel->selected) {
-        auto & selectedNodes = state->skeletonState->selectedNodes;
+        auto & selectedNodes = skeletonState.selectedNodes;
         const auto eraseit = std::find(std::begin(selectedNodes), std::end(selectedNodes), nodeToDel);
         if (eraseit != std::end(selectedNodes)) {
             selectedNodes.erase(eraseit);
         }
     }
 
-    bool resetActiveNode = state->skeletonState->activeNode == nodeToDel;
+    bool resetActiveNode = skeletonState.activeNode == nodeToDel;
     auto tree = nodeToDel->correspondingTree;
     const auto pos = nodeToDel->position;
 
@@ -987,10 +993,10 @@ bool Skeletonizer::delTree(decltype(treeListElement::treeID) treeID) {
     }
 
     if(treeToDel->isSynapticCleft) { //if we delete a synapsticCleft, remove tree from synapses and unset the synaptic nodes
-        for(auto it = std::begin(state->skeletonState->synapses); it != std::end(state->skeletonState->synapses);) {
+        for(auto it = std::begin(skeletonState.synapses); it != std::end(skeletonState.synapses);) {
             if(treeToDel == it->getCleft()) {
                 it->reset();
-                it = state->skeletonState->synapses.erase(it);
+                it = skeletonState.synapses.erase(it);
                 break;
             } else {
                ++it;
@@ -1006,7 +1012,7 @@ bool Skeletonizer::delTree(decltype(treeListElement::treeID) treeID) {
 
 
     if (treeToDel->selected) {
-        auto & selectedTrees = state->skeletonState->selectedTrees;
+        auto & selectedTrees = skeletonState.selectedTrees;
         const auto eraseit = std::find(std::begin(selectedTrees), std::end(selectedTrees), treeToDel);
         if (eraseit != std::end(selectedTrees)) {
             selectedTrees.erase(eraseit);
@@ -1072,24 +1078,24 @@ bool Skeletonizer::setActiveTreeByID(decltype(treeListElement::treeID) treeID) {
     if (currentTree == nullptr) {
         qDebug() << tr("There exists no tree with ID %1!").arg(treeID);
         return false;
-    } else if (currentTree == state->skeletonState->activeTree) {
+    } else if (currentTree == skeletonState.activeTree) {
         return true;
     }
 
-    state->skeletonState->activeTree = currentTree;
+    skeletonState.activeTree = currentTree;
 
     selectTrees({currentTree});
 
     //switch to nearby node of new tree
-    if (state->skeletonState->activeNode != nullptr && state->skeletonState->activeNode->correspondingTree != currentTree) {
+    if (skeletonState.activeNode != nullptr && skeletonState.activeNode->correspondingTree != currentTree) {
         //prevent ping pong if tree was activated from setActiveNode
-        auto * node = findNearbyNode(currentTree, state->skeletonState->activeNode->position);
+        auto * node = findNearbyNode(currentTree, skeletonState.activeNode->position);
         if (node->correspondingTree == currentTree) {
             setActiveNode(node);
         } else if (!currentTree->nodes.empty()) {
             setActiveNode(&currentTree->nodes.front());
         }
-    } else if (state->skeletonState->activeNode == nullptr && !currentTree->nodes.empty()) {
+    } else if (skeletonState.activeNode == nullptr && !currentTree->nodes.empty()) {
         setActiveNode(&currentTree->nodes.front());
     }
 
@@ -1099,11 +1105,11 @@ bool Skeletonizer::setActiveTreeByID(decltype(treeListElement::treeID) treeID) {
 }
 
 bool Skeletonizer::setActiveNode(nodeListElement *node) {
-    if (node == state->skeletonState->activeNode) {
+    if (node == skeletonState.activeNode) {
         return true;
     }
 
-    state->skeletonState->activeNode = node;
+    skeletonState.activeNode = node;
 
     if (node == nullptr) {
         selectNodes({});
@@ -1144,16 +1150,16 @@ boost::optional<nodeListElement &> Skeletonizer::addNode(boost::optional<decltyp
 
 boost::optional<nodeListElement &> Skeletonizer::addNode(boost::optional<std::uint64_t> nodeID, const float radius, const decltype(treeListElement::treeID) treeID, const Coordinate & position
         , const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties) {
-    state->skeletonState->branchpointUnresolved = false;
+    skeletonState.branchpointUnresolved = false;
 
      // respectLocks refers to locking the position to a specific coordinate such as to
      // disallow tracing areas further than a certain distance away from a specific point in the
      // dataset.
     if (respectLocks) {
-        if(state->skeletonState->positionLocked) {
-            const floatCoordinate lockVector = position - state->skeletonState->lockedPosition;
+        if(skeletonState.positionLocked) {
+            const floatCoordinate lockVector = position - skeletonState.lockedPosition;
             float lockDistance = lockVector.length();
-            if (lockDistance > state->skeletonState->lockRadius) {
+            if (lockDistance > skeletonState.lockRadius) {
                 qDebug() << tr("Node is too far away from lock point (%1), not adding.").arg(lockDistance);
                 return boost::none;
             }
@@ -1185,7 +1191,7 @@ boost::optional<nodeListElement &> Skeletonizer::addNode(boost::optional<std::ui
     updateCircRadius(&tempNode);
     updateSubobjectCountFromProperty(tempNode);
 
-    state->skeletonState->nodesByNodeID.emplace(nodeID.get(), &tempNode);
+    skeletonState.nodesByNodeID.emplace(nodeID.get(), &tempNode);
 
     bool isPropertiesChanged = false;
     for (auto & property : properties.keys()) {
@@ -1198,7 +1204,7 @@ boost::optional<nodeListElement &> Skeletonizer::addNode(boost::optional<std::ui
         emit propertiesChanged(numberProperties, textProperties);
     }
 
-    if (nodeID == state->skeletonState->nextAvailableNodeID) {
+    if (nodeID == skeletonState.nextAvailableNodeID) {
         skeletonState.nextAvailableNodeID = findNextAvailableID(skeletonState.nextAvailableNodeID, skeletonState.nodesByNodeID);
     }
     Annotation::singleton().unsavedChanges = true;
@@ -1339,8 +1345,8 @@ template<typename Func>
 nodeListElement * Skeletonizer::getNodeWithRelationalID(nodeListElement * currentNode, bool sameTree, Func func) {
     if (currentNode == nullptr) {
         // no current node, return active node
-        if (state->skeletonState->activeNode != nullptr) {
-            return state->skeletonState->activeNode;
+        if (skeletonState.activeNode != nullptr) {
+            return skeletonState.activeNode;
         }
         // no active node, simply return first node found
         for (auto & tree : skeletonState.trees) {
@@ -1389,8 +1395,8 @@ nodeListElement * Skeletonizer::getNodeWithNextID(nodeListElement * currentNode,
 }
 
 nodeListElement* Skeletonizer::findNodeByNodeID(std::uint64_t nodeID) {
-    const auto nodeIt = state->skeletonState->nodesByNodeID.find(nodeID);
-    return nodeIt != std::end(state->skeletonState->nodesByNodeID) ? nodeIt->second : nullptr;
+    const auto nodeIt = skeletonState.nodesByNodeID.find(nodeID);
+    return nodeIt != std::end(skeletonState.nodesByNodeID) ? nodeIt->second : nullptr;
 }
 
 QList<nodeListElement*> Skeletonizer::findNodesInTree(treeListElement & tree, const QString & comment) {
@@ -1416,7 +1422,7 @@ treeListElement & Skeletonizer::addTree(boost::optional<decltype(treeListElement
     skeletonState.trees.emplace_back(treeID.get(), properties);
     treeListElement & newTree = skeletonState.trees.back();
     newTree.iterator = std::prev(std::end(skeletonState.trees));
-    state->skeletonState->treesByID.emplace(newTree.treeID, &newTree);
+    skeletonState.treesByID.emplace(newTree.treeID, &newTree);
 
     if (!color) {// set default tree color
         QSignalBlocker blocker{this};// don’t emit treeChanged before treeAdded later
@@ -1426,7 +1432,7 @@ treeListElement & Skeletonizer::addTree(boost::optional<decltype(treeListElement
         newTree.colorSetManually = true;
     }
 
-    if (newTree.treeID == state->skeletonState->nextAvailableTreeID) {
+    if (newTree.treeID == skeletonState.nextAvailableTreeID) {
         skeletonState.nextAvailableTreeID = findNextAvailableID(skeletonState.nextAvailableTreeID, skeletonState.treesByID);
     }
 
@@ -1661,8 +1667,8 @@ void Skeletonizer::addSynapseFromNodes(std::vector<nodeListElement *> & nodes) {
                           minz + ( std::abs(nodes[0]->position.z-nodes[1]->position.z)/2 )};
 
     addNode(  boost::none,
-              state->skeletonState->defaultNodeRadius,
-              state->skeletonState->activeTree->treeID,
+              skeletonState.defaultNodeRadius,
+              skeletonState.activeTree->treeID,
               coord,
               VIEWPORT_UNDEFINED,
               Dataset::current().magnification,
@@ -1671,33 +1677,33 @@ void Skeletonizer::addSynapseFromNodes(std::vector<nodeListElement *> & nodes) {
 }
 
 bool Skeletonizer::unlockPosition() {
-    if(state->skeletonState->positionLocked) {
+    if(skeletonState.positionLocked) {
         qDebug() << "Spatial locking disabled.";
     }
-    state->skeletonState->positionLocked = false;
+    skeletonState.positionLocked = false;
     emit unlockedNode();
     return true;
 }
 
 bool Skeletonizer::lockPosition(Coordinate lockCoordinate) {
     qDebug("locking to (%d, %d, %d).", lockCoordinate.x, lockCoordinate.y, lockCoordinate.z);
-    state->skeletonState->positionLocked = true;
-    state->skeletonState->lockedPosition = lockCoordinate;
+    skeletonState.positionLocked = true;
+    skeletonState.lockedPosition = lockCoordinate;
     emit lockedToNode(skeletonState.activeNode->nodeID);
     return true;
 }
 
 nodeListElement * Skeletonizer::popBranchNode() {
-    if (state->skeletonState->branchStack.empty()) {
+    if (skeletonState.branchStack.empty()) {
         return nullptr;
     }
-    std::size_t branchNodeID = state->skeletonState->branchStack.back();
-    state->skeletonState->branchStack.pop_back();
+    std::size_t branchNodeID = skeletonState.branchStack.back();
+    skeletonState.branchStack.pop_back();
 
     auto * branchNode = findNodeByNodeID(branchNodeID);
     assert(branchNode->isBranchNode);
     branchNode->isBranchNode = false;
-    state->skeletonState->branchpointUnresolved = true;
+    skeletonState.branchpointUnresolved = true;
     qDebug() << "Branch point" << branchNodeID << "deleted.";
 
     setActiveNode(branchNode);
@@ -1710,7 +1716,7 @@ nodeListElement * Skeletonizer::popBranchNode() {
 
 void Skeletonizer::pushBranchNode(nodeListElement & branchNode) {
     if (!branchNode.isBranchNode) {
-        state->skeletonState->branchStack.emplace_back(branchNode.nodeID);
+        skeletonState.branchStack.emplace_back(branchNode.nodeID);
         branchNode.isBranchNode = true;
         qDebug() << "Branch point" << branchNode.nodeID << "added.";
         emit branchPushedSignal();
@@ -1823,7 +1829,7 @@ void Skeletonizer::goToNode(const NodeGenerator::Direction direction) {
 
 void Skeletonizer::moveSelectedNodesToTree(decltype(treeListElement::treeID) treeID) {
     if (auto * newTree = findTreeByTreeID(treeID)) {
-        for (auto * const node : state->skeletonState->selectedNodes) {
+        for (auto * const node : skeletonState.selectedNodes) {
             newTree->nodes.splice(std::end(newTree->nodes), node->correspondingTree->nodes, node->iterator);
             node->correspondingTree = newTree;
         }
@@ -1832,13 +1838,13 @@ void Skeletonizer::moveSelectedNodesToTree(decltype(treeListElement::treeID) tre
     }
 }
 
-template<typename T, std::enable_if_t<std::is_same<T, nodeListElement>::value>* = nullptr>
-auto & selected() {
-    return state->skeletonState->selectedNodes;
+template<>
+auto & Skeletonizer::selected<nodeListElement>() {
+    return skeletonState.selectedNodes;
 }
-template<typename T, std::enable_if_t<std::is_same<T, treeListElement>::value>* = nullptr>
-auto & selected() {
-    return state->skeletonState->selectedTrees;
+template<>
+auto & Skeletonizer::selected<treeListElement>() {
+    return skeletonState.selectedTrees;
 }
 
 auto getId(const nodeListElement & elem) {
@@ -1857,11 +1863,11 @@ void Skeletonizer::setActive(treeListElement & elem) {
 
 template<>
 nodeListElement * Skeletonizer::active<nodeListElement>() {
-    return state->skeletonState->activeNode;
+    return skeletonState.activeNode;
 }
 template<>
 treeListElement * Skeletonizer::active<treeListElement>() {
-    return state->skeletonState->activeTree;
+    return skeletonState.activeTree;
 }
 
 template<>
@@ -1943,7 +1949,7 @@ void Skeletonizer::inferTreeSelectionFromNodeSelection() {
 
 void Skeletonizer::deleteSelectedTrees() {
     // make a copy because the selected objects can change
-    const auto treesToDelete = state->skeletonState->selectedTrees;
+    const auto treesToDelete = skeletonState.selectedTrees;
     bulkOperation(treesToDelete, [this](auto & tree){
         delTree(tree.treeID);
     });
@@ -1951,17 +1957,17 @@ void Skeletonizer::deleteSelectedTrees() {
 
 void Skeletonizer::deleteSelectedNodes() {
     // make a copy because the selected objects can change
-    const auto nodesToDelete = state->skeletonState->selectedNodes;
+    const auto nodesToDelete = skeletonState.selectedNodes;
     bulkOperation(nodesToDelete, [this](auto & node){
         delNode(0, &node);
     });
     if (skeletonState.activeNode != nullptr) {
-        selectNodes({state->skeletonState->activeNode});
+        selectNodes({skeletonState.activeNode});
     }
 }
 
 QSet<nodeListElement *> Skeletonizer::findCycle() {
-    for (TreeTraverser nodeTraverser(state->skeletonState->trees); !nodeTraverser.reachedEnd; ++nodeTraverser) {
+    for (TreeTraverser nodeTraverser(skeletonState.trees); !nodeTraverser.reachedEnd; ++nodeTraverser) {
         if (!nodeTraverser.nodeIter.cycle.empty()) {
             return nodeTraverser.nodeIter.cycle;
         }

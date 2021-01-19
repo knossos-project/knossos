@@ -211,6 +211,8 @@ public:
         }
     }
     template<typename T>
+    auto & selected();
+    template<typename T>
     T * active();
     template<typename T>
     void select(QSet<T*>);
@@ -224,9 +226,9 @@ public:
     void notifyChanged(nodeListElement & node);
 
     SkeletonState skeletonState;
-    Skeletonizer();
+    Skeletonizer(bool global = false);
     static Skeletonizer & singleton() {
-        static Skeletonizer skeletonizer;
+        static Skeletonizer skeletonizer(true);
         return skeletonizer;
     }
 
@@ -292,8 +294,8 @@ public:
     void pushBranchNode(nodeListElement & branchNode);
     void goToNode(const NodeGenerator::Direction direction);
     void moveSelectedNodesToTree(decltype(treeListElement::treeID) treeID);
-    static treeListElement* findTreeByTreeID(decltype(treeListElement::treeID) treeID);
-    static nodeListElement *findNodeByNodeID(std::uint64_t nodeID);
+    treeListElement * findTreeByTreeID(decltype(treeListElement::treeID) treeID);
+    nodeListElement * findNodeByNodeID(std::uint64_t nodeID);
     static QList<nodeListElement *> findNodesInTree(treeListElement & tree, const QString & comment);
     bool addSegment(nodeListElement &sourceNodeID, nodeListElement &targetNodeID);
     bool delSegment(std::list<segmentListElement>::iterator segToDelIt);
