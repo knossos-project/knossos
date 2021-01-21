@@ -175,7 +175,7 @@ struct ViewerState {
     bool drawVPCrosshairs{true};
     RotationCenter rotationCenter{RotationCenter::ActiveNode};
     int showIntersections{false};
-    bool showScalebar{false};
+    int showScalebar{false};
     bool enableArbVP{false};
     bool showVpPlanes{true};
     bool showXYplane{true};

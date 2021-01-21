@@ -255,7 +255,7 @@ static void restore_gl_state() {
     glPopClientAttrib();
 }
 
-void ViewportBase::renderText(const Coordinate & pos, const QString & str, const bool fontScaling, bool centered) {
+void ViewportBase::renderText(const Coordinate & pos, const QString & str, const bool fontScaling, bool centered, const QColor color) {
     GLdouble x, y, z, model[16], projection[16];
     GLint gl_viewport[4];
     glGetDoublev(GL_MODELVIEW_MATRIX, &model[0]);
@@ -267,7 +267,7 @@ void ViewportBase::renderText(const Coordinate & pos, const QString & str, const
     QPainter painter(&paintDevice);
     painter.setFont(QFont(painter.font().family(), (fontScaling ? std::ceil(0.02*gl_viewport[2]) : defaultFontSize) * devicePixelRatio()));
     gluProject(pos.x, pos.y - 0.01*edgeLength, pos.z, &model[0], &projection[0], &gl_viewport[0], &x, &y, &z);
-    painter.setPen(Qt::black);
+    painter.setPen(color);
     painter.drawText(centered ? x - QFontMetrics(painter.font()).horizontalAdvance(str)/2. : x, gl_viewport[3] - y, str);//inverse y coordinate, extract height from gl viewport
     painter.end();//would otherwise fiddle with the gl state in the dtor
     restore_gl_state();
@@ -496,7 +496,8 @@ void ViewportBase::renderScaleBar() {
     const int height = 0.007 * edgeLength;
     Coordinate min(margin,  edgeLength - margin - height, -1);
     Coordinate max(min.x + scalebarLenPx, min.y + height, -1);
-    glColor3f(0., 0., 0.);
+    const QColor color{state->viewerState->showScalebar == 1 ? Qt::black : Qt::white};
+    glColor3f(color.redF(), color.greenF(), color.blueF());
     glBegin(GL_POLYGON);
     glVertex3d(min.x, min.y, min.z);
     glVertex3d(max.x, min.y, min.z);
@@ -504,7 +505,7 @@ void ViewportBase::renderScaleBar() {
     glVertex3d(min.x, max.y, min.z);
     glEnd();
 
-    renderText(Coordinate(min.x + scalebarLenPx / 2, min.y, min.z), sizeLabel, true, true);
+    renderText(Coordinate(min.x + scalebarLenPx / 2, min.y, min.z), sizeLabel, true, true, color);
 }
 
 void ViewportOrtho::renderViewportFast() {

@@ -27,6 +27,7 @@
 #include "widgets/viewports/viewportbase.h"
 
 ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
+    showScalebarCheckBox.setTristate();
     boundaryGroup.addButton(&boundariesPixelRadioBtn);
     boundaryGroup.addButton(&boundariesPhysicalRadioBtn);
 
@@ -64,7 +65,7 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
     mainLayout.addWidget(&viewport3DBox);
     setLayout(&mainLayout);
 
-    QObject::connect(&showScalebarCheckBox, &QCheckBox::clicked, [] (bool checked) { state->viewerState->showScalebar = checked; });
+    QObject::connect(&showScalebarCheckBox, &QCheckBox::stateChanged, [] (int checkState) { state->viewerState->showScalebar = checkState; });
     QObject::connect(&showVPDecorationCheckBox, &QCheckBox::clicked, this, [] (const bool checked) {
         state->viewerState->showVpDecorations = checked;
         state->viewer->mainWindow.forEachVPDo([&checked](ViewportBase & vp) { vp.showHideButtons(checked); });
@@ -97,7 +98,7 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
 }
 
 void ViewportTab::saveSettings(QSettings & settings) const {
-    settings.setValue(SHOW_SCALEBAR, showScalebarCheckBox.isChecked());
+    settings.setValue(SHOW_SCALEBAR, showScalebarCheckBox.checkState());
     settings.setValue(SHOW_VP_DECORATION, showVPDecorationCheckBox.isChecked());
     settings.setValue(DRAW_INTERSECTIONS_CROSSHAIRS, drawIntersectionsCrossHairCheckBox.isChecked());
     settings.setValue(ADD_ARB_VP, addArbVPCheckBox.isChecked());
@@ -111,8 +112,12 @@ void ViewportTab::saveSettings(QSettings & settings) const {
 }
 
 void ViewportTab::loadSettings(const QSettings & settings) {
-    showScalebarCheckBox.setChecked(settings.value(SHOW_SCALEBAR, false).toBool());
-    showScalebarCheckBox.clicked(showScalebarCheckBox.isChecked());
+    bool ok{false};
+    int scaleBarSetting = settings.value(SHOW_SCALEBAR, 0).toInt(&ok);
+    if (!ok) {
+        scaleBarSetting = settings.value(SHOW_SCALEBAR, false).toBool();
+    }
+    showScalebarCheckBox.setCheckState(static_cast<Qt::CheckState>(scaleBarSetting));
     showVPDecorationCheckBox.setChecked(settings.value(SHOW_VP_DECORATION, true).toBool());
     showVPDecorationCheckBox.clicked(showVPDecorationCheckBox.isChecked());
     drawIntersectionsCrossHairCheckBox.setChecked(settings.value(DRAW_INTERSECTIONS_CROSSHAIRS, true).toBool());
