@@ -451,52 +451,29 @@ void ViewportBase::handleWheelEvent(const QWheelEvent *event) {
     }
     setFocus();//get keyboard focus for this widget for viewport specific shortcuts
 
-    const int directionSign = event->angleDelta().y() > 0 ? -1 : 1;
-    auto& seg = Segmentation::singleton();
-
     if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)
-            && event->modifiers() == Qt::SHIFT
+            && event->modifiers().testFlag(Qt::ShiftModifier)
             && state->skeletonState->activeNode != nullptr)
     {//change node radius
-        float radius = state->skeletonState->activeNode->radius + directionSign * 0.2 * state->skeletonState->activeNode->radius;
+        const float radius = state->skeletonState->activeNode->radius - event->angleDelta().y() / 120. * 0.2 * state->skeletonState->activeNode->radius;
         Skeletonizer::singleton().setRadius(*state->skeletonState->activeNode, radius);
-    } else if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Brush) && event->modifiers() == Qt::SHIFT) {
+    } else if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Brush) && event->modifiers().testFlag(Qt::ShiftModifier)) {
+        auto & seg = Segmentation::singleton();
         auto curRadius = seg.brush.getRadius();
         // brush radius delta factor (float), as a function of current radius
-        seg.brush.setRadius(curRadius + 0.1 * curRadius * (event->angleDelta().y() / 120));
+        seg.brush.setRadius(curRadius + 0.1 * curRadius * (event->angleDelta().y() / 120.));
     }
 }
 
 void ViewportBase::applyZoom(const QWheelEvent *event, float direction) {
-    QPoint scrollPixels = event->pixelDelta();
-    QPoint scrollAngle = event->angleDelta() / 8;
-    float scrollAmount = 0.0f;
-
-    if (!scrollPixels.isNull()) {
-        scrollAmount = scrollPixels.y() / 15.0f;
-    } else if (!scrollAngle.isNull()) {
-        scrollAmount = scrollAngle.y() / 15.0f;
-    } else { // fallback legacy mode zoom
-        if(event->phase() == Qt::NoScrollPhase) { // macOS fix
-            if (event->angleDelta().y() > 0) {
-                zoomIn();
-            } else {
-                zoomOut();
-            }
-        }
-    }
-
-    if(scrollAmount != 0.0f) {
-        zoom(std::pow(2, scrollAmount * zoomSpeed * direction));
-        scrollAmount = 0.0f;
-    }
+    zoom(std::pow(2, event->angleDelta().y() / 8. / 15. * zoomSpeed * direction));
 }
 
 void Viewport3D::handleWheelEvent(const QWheelEvent *event) {
     if (event->modifiers() == Qt::NoModifier) {
         if(Segmentation::singleton().volume_render_toggle) {
             auto& seg = Segmentation::singleton();
-            seg.volume_mouse_zoom *= (event->angleDelta().y() > 0) ? 1.1f : 0.9f;
+            seg.volume_mouse_zoom *= 1 + 0.1 * event->angleDelta().y() / 120.;
         } else {
             const QPointF mouseRel{event->position() - 0.5 * QPointF(width(), height())};
             const auto oldZoom = zoomFactor;

@@ -316,7 +316,6 @@ float Viewport3D::zoomStep() const {
 }
 
 void Viewport3D::zoom(const float step) {
-    auto & zoomLvl = zoomFactor;
-    zoomLvl = std::min(std::max(zoomLvl * step, SKELZOOMMIN), SKELZOOMMAX);
+    zoomFactor = std::min(std::max(zoomFactor * step, SKELZOOMMIN), SKELZOOMMAX);
     emit updateZoomWidget();
 }
