@@ -450,18 +450,19 @@ void ViewportBase::handleWheelEvent(const QWheelEvent *event) {
         activateWindow();//steal keyboard focus
     }
     setFocus();//get keyboard focus for this widget for viewport specific shortcuts
-
+    // on mac scrolling is rotated with shift
+    const auto scroll = std::abs(event->angleDelta().y()) > std::abs(event->angleDelta().x()) ? event->angleDelta().y() : event->angleDelta().x();
     if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing)
             && event->modifiers().testFlag(Qt::ShiftModifier)
             && state->skeletonState->activeNode != nullptr)
     {//change node radius
-        const float radius = state->skeletonState->activeNode->radius - event->angleDelta().y() / 120. * 0.2 * state->skeletonState->activeNode->radius;
+        const float radius = state->skeletonState->activeNode->radius - scroll / 120. * 0.2 * state->skeletonState->activeNode->radius;
         Skeletonizer::singleton().setRadius(*state->skeletonState->activeNode, radius);
     } else if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Brush) && event->modifiers().testFlag(Qt::ShiftModifier)) {
         auto & seg = Segmentation::singleton();
         auto curRadius = seg.brush.getRadius();
         // brush radius delta factor (float), as a function of current radius
-        seg.brush.setRadius(curRadius + 0.1 * curRadius * (event->angleDelta().y() / 120.));
+        seg.brush.setRadius(curRadius + 0.1 * curRadius * scroll / 120.);
     }
 }
 
