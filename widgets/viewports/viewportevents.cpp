@@ -492,9 +492,8 @@ void ViewportOrtho::handleWheelEvent(const QWheelEvent *event) {
     if (event->modifiers() == Qt::CTRL) { // Orthogonal VP or outside VP
         applyZoom(event, -1.0f);
     } else if (event->modifiers() == Qt::NoModifier) {
-        const float directionSign = event->angleDelta().y() > 0 ? -1 : 1;
-        const auto multiplier = directionSign * state->viewerState->dropFrames;
-        state->viewer->userMove(Dataset::current().scaleFactor.componentMul(n) * multiplier, USERMOVE_DRILL, n);
+        const auto scroll = state->viewerState->dropFrames * event->angleDelta().y() / 120.;
+        state->viewer->userMove(Dataset::current().scaleFactor.componentMul(n) * -1 * scroll, USERMOVE_DRILL, n);
     }
     ViewportBase::handleWheelEvent(event);
 }
