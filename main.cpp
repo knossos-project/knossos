@@ -101,6 +101,11 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext &
 
 Q_DECLARE_METATYPE(std::string)
 
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QWheelEvent>
+#include <QWidget>
+
 int main(int argc, char *argv[]) {
     QtConcurrent::run([](){ QSslSocket::supportsSsl(); });// workaround until https://bugreports.qt.io/browse/QTBUG-59750
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);// explicitly enable sharing for undocked viewports
@@ -174,5 +179,21 @@ int main(int argc, char *argv[]) {
     // ensure killed QNAM’s before QNetwork deinitializes
     std::unique_ptr<Loader::Controller> loader_deleter{&Loader::Controller::singleton()};
     std::unique_ptr<Network> network_deleter{&Network::singleton()};
+    struct testWidget : QWidget {
+        QHBoxLayout layout;
+        QLabel text;
+        testWidget() {
+            setWindowFlag(Qt::WindowStaysOnTopHint);
+            text.setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
+            this->layout.addWidget(&text);
+            setLayout(&layout);
+            resize(640, 480);
+            show();
+        }
+        virtual void wheelEvent(QWheelEvent * event) override {
+            text.setText(text.text() + QString("%1 %2  %3  %4,%5  %6,%7\n").arg(event->modifiers(), 0, 16).arg(event->phase()).arg(event->delta())
+                         .arg(event->angleDelta().x()).arg(event->angleDelta().y()).arg(event->pixelDelta().x()).arg(event->pixelDelta().y()));
+        }
+    } w;
     return app.exec();
 }
