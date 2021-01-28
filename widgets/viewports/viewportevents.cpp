@@ -456,13 +456,13 @@ void ViewportBase::handleWheelEvent(const QWheelEvent *event) {
             && event->modifiers().testFlag(Qt::ShiftModifier)
             && state->skeletonState->activeNode != nullptr)
     {//change node radius
-        const float radius = state->skeletonState->activeNode->radius - scroll / 120. * 0.2 * state->skeletonState->activeNode->radius;
+        const float radius = state->skeletonState->activeNode->radius + std::copysign(std::min(std::abs(scroll) / 120., 9.), scroll) * 0.1 * state->skeletonState->activeNode->radius;
         Skeletonizer::singleton().setRadius(*state->skeletonState->activeNode, radius);
     } else if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Brush) && event->modifiers().testFlag(Qt::ShiftModifier)) {
         auto & seg = Segmentation::singleton();
         auto curRadius = seg.brush.getRadius();
         // brush radius delta factor (float), as a function of current radius
-        seg.brush.setRadius(curRadius + 0.1 * curRadius * scroll / 120.);
+        seg.brush.setRadius(curRadius + scroll / 120. * 0.1 * curRadius);
     }
 }
 
