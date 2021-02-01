@@ -204,7 +204,7 @@ protected:
     virtual void keyReleaseEvent(QKeyEvent *event) override;
     virtual void wheelEvent(QWheelEvent *event) override { handleWheelEvent(event); }
 
-    float zoomSpeed{0.5f};
+    float zoomSpeed{0.25f};
     QPoint mouseDown;
     QPoint prevMouseMove;
     bool stylusDetected{false};
