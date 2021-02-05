@@ -119,18 +119,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     });
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::unlockedNode, [this]() { nodeLockingLabel.hide(); });
     QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this]() {
-        const auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
-        std::map<AnnotationMode, QString> rawModes = workModes;
-        AnnotationMode defaultMode = AnnotationMode::Mode_Tracing;
-        if (!Segmentation::singleton().enabled) {
-            rawModes = {{AnnotationMode::Mode_Tracing, workModes[AnnotationMode::Mode_Tracing]}, {AnnotationMode::Mode_TracingAdvanced, workModes[AnnotationMode::Mode_TracingAdvanced]}};
-        } else if (Annotation::singleton().guiMode == GUIMode::ProofReading) {
-            rawModes = {{AnnotationMode::Mode_Merge, workModes[AnnotationMode::Mode_Merge]}, {AnnotationMode::Mode_Paint, workModes[AnnotationMode::Mode_Paint]}};
-            defaultMode = AnnotationMode::Mode_Merge;
-        }
-        workModeModel.recreate(rawModes);
-        setWorkMode((rawModes.find(currentMode) != std::end(rawModes))? currentMode : defaultMode);
-
+        resetWorkModes();
         widgetContainer.annotationWidget.setSegmentationVisibility(Segmentation::singleton().enabled);
 
         const auto scale = Dataset::current().scales[0];
@@ -420,6 +409,20 @@ void MainWindow::createToolbars() {
     segJobModeToolbar.addWidget(&todosLeftLabel);
 }
 
+void MainWindow::resetWorkModes() {
+    const auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
+    std::map<AnnotationMode, QString> rawModes = workModes;
+    AnnotationMode defaultMode = AnnotationMode::Mode_Tracing;
+    if (!Segmentation::singleton().enabled) {
+        rawModes = {{AnnotationMode::Mode_Tracing, workModes[AnnotationMode::Mode_Tracing]}, {AnnotationMode::Mode_TracingAdvanced, workModes[AnnotationMode::Mode_TracingAdvanced]}};
+    } else if (Annotation::singleton().guiMode == GUIMode::ProofReading) {
+        rawModes = {{AnnotationMode::Mode_Merge, workModes[AnnotationMode::Mode_Merge]}, {AnnotationMode::Mode_Paint, workModes[AnnotationMode::Mode_Paint]}};
+        defaultMode = AnnotationMode::Mode_Merge;
+    }
+    workModeModel.recreate(rawModes);
+    setWorkMode((rawModes.find(currentMode) != std::end(rawModes))? currentMode : defaultMode);
+}
+
 void MainWindow::updateLoaderProgress(int refCount) {
     if ((refCount % 5 > 0) && (loaderLastProgress > 0)) {
         return;
@@ -434,8 +437,8 @@ void MainWindow::updateLoaderProgress(int refCount) {
 }
 
 void MainWindow::setProofReadingUI(const bool on) {
-    const auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
     if (on) {
+        const auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
         workModeModel.recreate({{AnnotationMode::Mode_Merge, workModes[AnnotationMode::Mode_Merge]}, {AnnotationMode::Mode_Paint, workModes[AnnotationMode::Mode_Paint]}});
         if (currentMode == AnnotationMode::Mode_Merge || currentMode == AnnotationMode::Mode_Paint) {
             setWorkMode(currentMode);
@@ -445,8 +448,7 @@ void MainWindow::setProofReadingUI(const bool on) {
         state->viewer->saveSettings();
         resetViewports();
     } else {
-        workModeModel.recreate(workModes);
-        setWorkMode(currentMode);
+        resetWorkModes();
         state->viewer->loadSettings();
     }
 

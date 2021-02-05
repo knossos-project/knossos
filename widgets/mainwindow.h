@@ -187,6 +187,7 @@ class MainWindow : public QMainWindow {
     // for creating action, menus and the toolbar
     void createMenus();
     void createToolbars();
+    void resetWorkModes();
 
     bool placeComment(const int index);
     void toggleSegments();
