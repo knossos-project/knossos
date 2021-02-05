@@ -262,7 +262,7 @@ void annotationFileSave(const QString & filename, const bool onlySelectedTrees, 
             }
         }
         qDebug() << "saving ply" << time.nsecsElapsed() / 1e9;
-        if (!onlySelectedTrees) {
+        if (!onlySelectedTrees && Segmentation::singleton().enabled) {
             QElapsedTimer cubeTime;
             cubeTime.start();
             const auto guard = Loader::Controller::singleton().getAllModifiedCubes(Segmentation::singleton().layerId);
