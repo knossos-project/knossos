@@ -205,6 +205,8 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     target_compile_options(${PROJECT_NAME} PRIVATE "-fdiagnostics-color=always")
 endif()
 
+#list(APPEND CMAKE_CXX_FLAGS "-fsanitize=address")
+
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UPPER_CASE)
 if(CMAKE_BUILD_TYPE_UPPER_CASE MATCHES "DEBUG")
     target_compile_definitions(${PROJECT_NAME} PRIVATE "_GLIBCXX_DEBUG")
