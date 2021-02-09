@@ -29,7 +29,8 @@ cp -av /usr/lib/libgpg-error.so.* lib/
 cp -av /usr/lib/libxcb.so.* lib/
 cp -av /usr/lib/libharfbuzz.so.* lib/
 cp -av /usr/lib/libfreetype.so.* lib/
-cp -av /usr/lib/libpython2.7.so.* lib/
+#cp -av /usr/lib/libpython2.7.so.* lib/
+rm -fv lib/libpython2.7.so.*
 
 rm -v AppRun
 cp -v ../../knossos/installer/AppRun .
