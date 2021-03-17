@@ -34,7 +34,6 @@ NodeGenerator & NodeGenerator::operator++() {
                 for (; queuedNodes.at(predecessor) != predecessor && predecessor != cycleBegin; predecessor = queuedNodes.at(predecessor)) {
                     cycle.insert(predecessor);
                 }
-                break;
             }
         }
     }
