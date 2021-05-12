@@ -22,6 +22,7 @@
 
 #include "segmentationsplit.h"
 
+#include "annotation/annotation.h"
 #include "coordinate.h"
 #include "cubeloader.h"
 #include "dataset.h"
@@ -43,7 +44,7 @@ void subobjectBucketFill(const Coordinate & seed, const uint64_t fillsoid, const
     CubeCoordSet cubeCoords;
 
     const auto clickedsoid = readVoxel(seed);
-    if (clickedsoid == fillsoid) {
+    if (clickedsoid == fillsoid || (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_OverPaint) && clickedsoid == Segmentation::singleton().getBackgroundId())) {
         return;
     }
 
