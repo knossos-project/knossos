@@ -14,8 +14,8 @@ jobs:
         - TRAVIS_TAG=nightly-dev
         - MACOSX_DEPLOYMENT_TARGET=10.13
       install:
-        - brew list --formula | xargs brew uninstall --force
-        - brew list --cask | xargs brew uninstall --force
+        - yes | /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"
+        - /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         - brew update && brew upgrade
         - brew install cmake ninja qt5 boost snappy quazip python
         - travis_wait sh ci/build_macos_PythonQt.sh
@@ -27,8 +27,7 @@ jobs:
         - TRAVIS_TAG=nightly
         - MACOSX_DEPLOYMENT_TARGET=10.13
       install:
-        - brew list --formula | xargs brew uninstall --force
-        - brew list --cask | xargs brew uninstall --force
+        - /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         - brew update && brew upgrade
         - brew install cmake ninja qt5 boost snappy quazip python
         - travis_wait sh ci/build_macos_PythonQt.sh
