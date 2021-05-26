@@ -14,62 +14,24 @@ jobs:
         - TRAVIS_TAG=nightly-dev
         - MACOSX_DEPLOYMENT_TARGET=10.13
       install:
+        - brew list | xargs brew uninstall --force
         - brew update && brew upgrade
-        - brew remove qt6 || true
+        - brew install cmake ninja qt5 boost snappy quazip python
         - travis_wait sh ci/build_macos_PythonQt.sh
       script:
         - sh ci/build_macos.sh
-      addons:
-        homebrew:
-          packages:
-            - boost
-            - ninja
-            - python
-            - qt5
-            - quazip
-            - snappy
     - os: osx
       osx_image: xcode12.2
-      if: branch == master
       env: 
         - TRAVIS_TAG=nightly
         - MACOSX_DEPLOYMENT_TARGET=10.13
       install:
+        - brew list | xargs brew uninstall --force
         - brew update && brew upgrade
-        - brew remove qt6 || true
+        - brew install cmake ninja qt5 boost snappy quazip python
         - travis_wait sh ci/build_macos_PythonQt.sh
       script:
         - sh ci/build_macos.sh
-      addons:
-        homebrew:
-          packages:
-            - boost
-            - ninja
-            - python
-            - qt5
-            - quazip
-            - snappy
-    - os: osx
-      osx_image: xcode12.5 # build with the newest Xcode for testing
-      if: branch == master
-      env: 
-        - TRAVIS_TAG=none
-        - MACOSX_DEPLOYMENT_TARGET=10.13
-      install:
-        - brew update && brew upgrade
-        - brew remove qt6 || true
-        - travis_wait sh ci/build_macos_PythonQt.sh
-      script:
-        - sh ci/build_macos.sh
-      addons:
-        homebrew:
-          packages:
-            - boost
-            - ninja
-            - python
-            - qt5
-            - quazip
-            - snappy
     - os: linux
       name: Arch Linux nightly-dev
       env: 
