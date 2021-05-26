@@ -9,7 +9,7 @@ jobs:
   include:
     - stage: compile
       os: osx
-      osx_image: xcode12.2
+      osx_image: xcode12.2 # newest Xcode on a box with macOS 10.15
       env: 
         - TRAVIS_TAG=nightly-dev
         - MACOSX_DEPLOYMENT_TARGET=10.13
@@ -33,6 +33,27 @@ jobs:
       if: branch == master
       env: 
         - TRAVIS_TAG=nightly
+        - MACOSX_DEPLOYMENT_TARGET=10.13
+      install:
+        - brew update && brew upgrade
+        - brew remove qt6 || true
+        - travis_wait sh ci/build_macos_PythonQt.sh
+      script:
+        - sh ci/build_macos.sh
+      addons:
+        homebrew:
+          packages:
+            - boost
+            - ninja
+            - python
+            - qt5
+            - quazip
+            - snappy
+    - os: osx
+      osx_image: xcode12.5 # build with the newest Xcode for testing
+      if: branch == master
+      env: 
+        - TRAVIS_TAG=none
         - MACOSX_DEPLOYMENT_TARGET=10.13
       install:
         - brew update && brew upgrade
