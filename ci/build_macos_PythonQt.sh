@@ -9,5 +9,5 @@ git reset --hard
 cd ..
 mkdir -p PythonQt-build && cd PythonQt-build
 rm -fv CMakeCache.txt
-time cmake -G Ninja ../PythonQt -DCMAKE_PREFIX_PATH=/usr/local/opt/qt
+time cmake -G Ninja ../PythonQt -DCMAKE_PREFIX_PATH=/usr/local/opt/qt@5/
 time ninja install > /dev/null

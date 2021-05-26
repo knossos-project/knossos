@@ -15,6 +15,7 @@ jobs:
         - MACOSX_DEPLOYMENT_TARGET=10.13
       install:
         - brew update && brew upgrade
+        - brew remove qt6 || true
         - travis_wait sh ci/build_macos_PythonQt.sh
       script:
         - sh ci/build_macos.sh
@@ -24,7 +25,7 @@ jobs:
             - boost
             - ninja
             - python
-            - qt
+            - qt5
             - quazip
             - snappy
     - os: osx
@@ -35,6 +36,7 @@ jobs:
         - MACOSX_DEPLOYMENT_TARGET=10.13
       install:
         - brew update && brew upgrade
+        - brew remove qt6 || true
         - travis_wait sh ci/build_macos_PythonQt.sh
       script:
         - sh ci/build_macos.sh
@@ -44,7 +46,7 @@ jobs:
             - boost
             - ninja
             - python
-            - qt
+            - qt5
             - quazip
             - snappy
     - os: linux
