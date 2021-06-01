@@ -73,6 +73,9 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&drawIntersectionsCrossHairCheckBox, &QCheckBox::clicked, [](const bool on) { state->viewerState->drawVPCrosshairs = on; });
     QObject::connect(&addArbVPCheckBox, &QCheckBox::clicked, [this](const bool on){
         showArbPlaneCheckBox.setEnabled(on);
+        // HACK register arb box to group (doesn’t toggle otherwise)
+        planesBox.setChecked(!planesBox.isChecked());
+        planesBox.setChecked(!planesBox.isChecked());
         state->viewerState->enableArbVP = on;
         state->viewer->viewportArb->setVisible(on);
     });
