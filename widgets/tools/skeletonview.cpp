@@ -102,7 +102,7 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const {
         case 5:
             auto treeProperties = propertyStringWithoutComment(tree.properties);
             if(tree.mesh != nullptr) {
-                treeProperties.prepend("Mesh");
+                treeProperties.prepend("Mesh; ");
             }
             return treeProperties;
         }
@@ -150,9 +150,9 @@ QVariant NodeModel::data(const QModelIndex &index, int role) const {
             auto nodeProperties = propertyStringWithoutComment(node.properties);
             if(node.isSynapticNode) {
                 if(node.correspondingSynapse->getPreSynapse() == &node) {
-                    nodeProperties.prepend("PreSynapse");
+                    nodeProperties.prepend("PreSynapse; ");
                 } else if(node.correspondingSynapse->getPostSynapse() == &node){
-                    nodeProperties.prepend("PostSynapse");
+                    nodeProperties.prepend("PostSynapse; ");
                 }
             }
             return nodeProperties;
