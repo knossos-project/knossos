@@ -78,9 +78,11 @@ template class AbstractSkeletonModel<TreeModel>;//please clang, should actually 
 
 QString propertyStringWithoutComment(const QVariantHash & properties) {
     QString propertiesString("");
-    for (auto it = std::cbegin(properties); it != std::cend(properties); ++it) {
-        if (it.key() != "comment") {
-            propertiesString += it.key() + ": " + it.value().toString() + "; ";
+    auto keys = properties.keys();
+    std::sort(std::begin(keys), std::end(keys), [](const auto & elemL, const auto & elemR) { return elemL < elemR; });
+    for (auto & key : keys) {
+        if (key != "comment") {
+            propertiesString += key + ": " + properties[key].toString() + "; ";
         }
     }
     return propertiesString;
