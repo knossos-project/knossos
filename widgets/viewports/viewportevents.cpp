@@ -173,7 +173,7 @@ void ViewportOrtho::handleMouseButtonRight(const QMouseEvent *event) {
         return;
     }
     Coordinate clickedCoordinate = getCoordinateFromOrthogonalClick(event->pos(), *this);
-    if (Annotation::singleton().outsideMovementArea(clickedCoordinate)) {
+    if (Annotation::singleton().outsideMag1MovementArea(clickedCoordinate)) {
         return;
     }
     const quint64 subobjectId = readVoxel(clickedCoordinate);

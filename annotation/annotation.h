@@ -100,6 +100,7 @@ public:
     Coordinate movementAreaMin; // Center of movement area
     Coordinate movementAreaMax; // Range around movement center for every dimension
     bool outsideMovementArea(const Coordinate &pos);
+    bool outsideMag1MovementArea(const Coordinate & pos);
     void updateMovementArea(const Coordinate &min, const Coordinate &max);
     void resetMovementArea();
 

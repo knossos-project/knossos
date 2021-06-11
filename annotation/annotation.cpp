@@ -84,6 +84,12 @@ bool Annotation::outsideMovementArea(const Coordinate & pos) {
            maxMagPos.z < movementAreaMin.z || magMinPos.z >= movementAreaMax.z;
 }
 
+bool Annotation::outsideMag1MovementArea(const Coordinate & pos) {
+    return pos.x < movementAreaMin.x || pos.x > movementAreaMax.x ||
+           pos.y < movementAreaMin.y || pos.y > movementAreaMax.y ||
+           pos.z < movementAreaMin.z || pos.z > movementAreaMax.z;
+}
+
 void Annotation::updateMovementArea(const Coordinate & min, const Coordinate & max) {
     Coordinate minMax{std::min(std::max(min.x + 1, max.x), Dataset::current().boundary.x), std::min(std::max(min.y + 1, max.y), Dataset::current().boundary.y), std::min(std::max(min.z + 1, max.z), Dataset::current().boundary.z)};
     Coordinate maxMin{std::max(0, std::min(min.x, minMax.x - 1)), std::max(0, std::min(min.y, minMax.y - 1)), std::max(0, std::min(min.z, minMax.z - 1))};
