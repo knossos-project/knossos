@@ -111,7 +111,6 @@ const QString SEGMENTATITION_HIGHLIGHT_BORDER = "segmentation_border_highlightin
 // Preferences Viewports Tab
 const QString ADD_ARB_VP = "add_arb_vp";
 const QString DRAW_INTERSECTIONS_CROSSHAIRS = "draw_intersections_crosshairs";
-const QString RENDER_VOLUME = "render_volume";
 const QString ROTATION_CENTER = "rotation_center2";// rotation_center was used with different values in 4.1.2 ini
 const QString SHOW_ARB_PLANE = "show_arb_plane";
 const QString SHOW_PHYSICAL_BOUNDARIES = "show_physical_boundaries";

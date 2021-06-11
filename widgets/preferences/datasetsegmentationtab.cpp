@@ -46,6 +46,7 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     segmentationOverlaySpinBox.setRange(0, 255);
     segmentationOverlaySlider.setRange(0, 255);
     volumeGroup.setCheckable(true);
+    volumeGroup.setChecked(false);
 
     volumeColorButton.setStyleSheet("background-color : " + Segmentation::singleton().volume_background_color.name() + ";");
     volumeOpaquenessSpinBox.setRange(0, 255);
@@ -198,7 +199,6 @@ void DatasetAndSegmentationTab::saveSettings() const {
     settings.setValue(SEGMENTATITION_HIGHLIGHT_BORDER, segmentationBorderHighlight.isChecked());
     settings.setValue(DATASET_LUT_FILE, lutFilePath);
     settings.setValue(DATASET_LUT_FILE_USED, useOwnDatasetColorsCheckBox.isChecked());
-    settings.setValue(RENDER_VOLUME, volumeGroup.isChecked());
     settings.setValue(VOLUME_ALPHA, volumeOpaquenessSpinBox.value());
     settings.setValue(VOLUME_BACKGROUND_COLOR, Segmentation::singleton().volume_background_color);
 }
@@ -220,8 +220,6 @@ void DatasetAndSegmentationTab::loadSettings() {
     segmentationOverlaySlider.valueChanged(segmentationOverlaySlider.value());
     segmentationBorderHighlight.setChecked(settings.value(SEGMENTATITION_HIGHLIGHT_BORDER, true).toBool());
     segmentationBorderHighlight.clicked(segmentationBorderHighlight.isChecked());
-    volumeGroup.setChecked(settings.value(RENDER_VOLUME, false).toBool());
-    volumeGroup.clicked(volumeGroup.isChecked());
     volumeOpaquenessSpinBox.setValue(settings.value(VOLUME_ALPHA, 37).toInt());
     volumeOpaquenessSpinBox.valueChanged(volumeOpaquenessSpinBox.value());
     Segmentation::singleton().volume_background_color = settings.value(VOLUME_BACKGROUND_COLOR, QColor(Qt::darkGray)).value<QColor>();
