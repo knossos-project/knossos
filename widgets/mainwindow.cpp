@@ -682,6 +682,11 @@ void MainWindow::createMenus() {
             Skeletonizer::singleton().skeletonState.overlapFound = true;
             state->viewerState->AllTreesBuffers.regenVertBuffer = true;
         } else {
+            for (auto & tree : Skeletonizer::singleton().skeletonState.trees) {
+                tree.render = true;
+            }
+            Skeletonizer::singleton().selectNodes({});
+            state->viewerState->AllTreesBuffers.regenVertBuffer = true;
             QMessageBox box{this};
             box.setIcon(QMessageBox::Information);
             box.setText(tr("There are no overlaps, i think."));
