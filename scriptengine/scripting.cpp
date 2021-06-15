@@ -55,7 +55,20 @@ SignalRelay::SignalRelay() {
      state->signalRelay = this;
 }
 
+#include <delayimp.h>
+
 void PythonQtInit() {
+    __pfnDliFailureHook2 = [](unsigned int dliNotify, PDelayLoadInfo info){
+        if (dliNotify == dliFailLoadLib) {
+            const auto msg = std::string("no ") + info->szDll;
+            std::cerr << msg << std::endl;
+            throw std::runtime_error(msg);
+        }
+        return static_cast<FARPROC>(0);
+    };
+
+    Py_IsInitialized();// trigger a delay load to make the module available to GetModuleHandle in LoadPythonSymbol
+
     PythonQt::init();
 #ifdef QtAll
     PythonQt_QtAll::init();
@@ -88,6 +101,17 @@ const QString SCRIPTING_KNOSSOS_MODULE = "knossos";
 const QString SCRIPTING_PLUGIN_CONTAINER = "plugin_container";
 const QString SCRIPTING_IMPORT_KEY = "import";
 const QString SCRIPTING_INSTANCE_KEY = "instance";
+
+Scripting::Scripting() {
+    try {
+        PythonQtInit();
+    } catch (...) {
+        qDebug() << "nono scripting";
+        return;
+    }
+
+    state->scripting = this;
+}
 
 void Scripting::initialize() {
     auto makeDecorator = [](QObject * decorator, const char * typeName){

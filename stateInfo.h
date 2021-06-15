@@ -100,7 +100,7 @@ public:
     struct ViewerState * viewerState;
     class MainWindow * mainWindow{nullptr};
     class Viewer * viewer;
-    class Scripting * scripting;
+    class Scripting * scripting{nullptr};
     class SignalRelay * signalRelay;
     struct SkeletonState * skeletonState;
 };
