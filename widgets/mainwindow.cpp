@@ -1508,6 +1508,10 @@ void MainWindow::pythonFileSlot() {
 }
 
 void MainWindow::refreshScriptingMenu() {
+    if (state->scripting == nullptr) {
+        scriptingMenu->setEnabled(false);
+        return;
+    }
     scriptingMenu->clear();
     scriptingMenu->addAction("Properties", this, &MainWindow::pythonPropertiesSlot);
     scriptingMenu->addAction("Run File", this, &MainWindow::pythonFileSlot);

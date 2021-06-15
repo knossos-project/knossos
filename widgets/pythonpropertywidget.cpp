@@ -53,14 +53,16 @@ PythonPropertyWidget::PythonPropertyWidget(QWidget *parent) : DialogVisibilityNo
     layout.addWidget(&customPathsEdit, row, 0, 1, 3);
     setLayout(&layout);
 
-    QObject::connect(state->scripting, &Scripting::workingDirChanged, [this](const QString & newDir) {
-        workingDirLabel.setText(tr("Working directory: %1").arg(newDir));
-    });
+    if (state->scripting != nullptr) {
+        QObject::connect(state->scripting, &Scripting::workingDirChanged, [this](const QString & newDir) {
+            workingDirLabel.setText(tr("Working directory: %1").arg(newDir));
+        });
+        QObject::connect(state->scripting, &Scripting::pluginDirChanged, [this](const QString & newDir) {
+            pluginDirLabel.setText(tr("Plugin folder: %1").arg(newDir));
+        });
+    }
     QObject::connect(&resetWorkingDirButton, &QPushButton::clicked, []() {
         state->scripting->changeWorkingDirectory(QCoreApplication::applicationDirPath());
-    });
-    QObject::connect(state->scripting, &Scripting::pluginDirChanged, [this](const QString & newDir) {
-        pluginDirLabel.setText(tr("Plugin folder: %1").arg(newDir));
     });
     QObject::connect(&pluginDirButton, &QPushButton::clicked, this, &PythonPropertyWidget::pluginFolderButtonClicked);
     QObject::connect(&resetPluginDirButton, &QPushButton::clicked, []() {
@@ -84,21 +86,23 @@ void PythonPropertyWidget::saveSettings() {
     settings.beginGroup(PYTHON_PROPERTY_WIDGET);
     settings.setValue(VISIBLE, isVisible());
 
-    settings.setValue(PYTHON_WORKING_DIRECTORY, state->scripting->workingDir);
-    settings.setValue(PYTHON_PLUGIN_FOLDER, state->scripting->getPluginDir());
-    settings.setValue(PYTHON_CUSTOM_PATHS, customPathsEdit.toPlainText().split("\n"));
+    if (state->scripting != nullptr) {
+        settings.setValue(PYTHON_WORKING_DIRECTORY, state->scripting->workingDir);
+        settings.setValue(PYTHON_PLUGIN_FOLDER, state->scripting->getPluginDir());
 
-    settings.beginGroup(PYTHON_REGISTERED_PLUGINS);
-    for (auto iter = std::begin(state->scripting->registeredPlugins); iter != std::end(state->scripting->registeredPlugins); iter++) {
-        if (QFileInfo{iter.value().first}.exists()) {
-            settings.beginGroup(iter.key());
-            settings.setValue(PYTHON_PLUGIN_PATH, iter.value().first);
-            settings.setValue(PYTHON_PLUGIN_VERSION, iter.value().second);
-            settings.endGroup();
+        settings.setValue(PYTHON_CUSTOM_PATHS, customPathsEdit.toPlainText().split("\n"));
+
+        settings.beginGroup(PYTHON_REGISTERED_PLUGINS);
+        for (auto iter = std::begin(state->scripting->registeredPlugins); iter != std::end(state->scripting->registeredPlugins); iter++) {
+            if (QFileInfo{iter.value().first}.exists()) {
+                settings.beginGroup(iter.key());
+                settings.setValue(PYTHON_PLUGIN_PATH, iter.value().first);
+                settings.setValue(PYTHON_PLUGIN_VERSION, iter.value().second);
+                settings.endGroup();
+            }
         }
+        settings.endGroup();
     }
-    settings.endGroup();
-
     settings.endGroup();
 }
 
@@ -107,23 +111,27 @@ void PythonPropertyWidget::loadSettings() {
     settings.beginGroup(PYTHON_PROPERTY_WIDGET);
     restoreGeometry(settings.value(GEOMETRY).toByteArray());
 
-    state->scripting->setPluginDir(settings.value(PYTHON_PLUGIN_FOLDER, state->scripting->getDefaultPluginDir()).toString());
-    state->scripting->changeWorkingDirectory(settings.value(PYTHON_WORKING_DIRECTORY, "").toString());
-    customPathsEdit.setText(settings.value(PYTHON_CUSTOM_PATHS).toStringList().join("\n"));
+    if (state->scripting != nullptr) {
+        state->scripting->setPluginDir(settings.value(PYTHON_PLUGIN_FOLDER, state->scripting->getDefaultPluginDir()).toString());
+        state->scripting->changeWorkingDirectory(settings.value(PYTHON_WORKING_DIRECTORY, "").toString());
 
-    settings.beginGroup(PYTHON_REGISTERED_PLUGINS);
-    for (auto & key :  settings.childKeys()) {
-        settings.beginGroup(key);
-        auto absPath = settings.value(PYTHON_PLUGIN_PATH).toString();
-        auto version = settings.value(PYTHON_PLUGIN_VERSION).toString();
-        state->scripting->registeredPlugins[key] = {absPath, version};
+        customPathsEdit.setText(settings.value(PYTHON_CUSTOM_PATHS).toStringList().join("\n"));
+
+        settings.beginGroup(PYTHON_REGISTERED_PLUGINS);
+        for (auto & key :  settings.childKeys()) {
+            settings.beginGroup(key);
+            auto absPath = settings.value(PYTHON_PLUGIN_PATH).toString();
+            auto version = settings.value(PYTHON_PLUGIN_VERSION).toString();
+            state->scripting->registeredPlugins[key] = {absPath, version};
+            settings.endGroup();
+        }
         settings.endGroup();
     }
     settings.endGroup();
 
-    settings.endGroup();
-
-    state->scripting->initialize();
+    if (state->scripting != nullptr) {
+        state->scripting->initialize();
+    }
 }
 
 void PythonPropertyWidget::workingDirectoryButtonClicked() {

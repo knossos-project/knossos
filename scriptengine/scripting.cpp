@@ -92,7 +92,9 @@ const QString SCRIPTING_INSTANCE_KEY = "instance";
 Scripting::Scripting() {
     PythonQtInit();
     state->scripting = this;
+}
 
+void Scripting::initialize() {
     auto makeDecorator = [](QObject * decorator, const char * typeName){
         // PythonQt tries to reparent the decorators, we do their missing work of pushing it into their thread first
         // due to the QObject handling they also get deleted by PythonQt then
@@ -105,9 +107,7 @@ Scripting::Scripting() {
     makeDecorator(new NodeListDecorator, "Node");
     makeDecorator(new SegmentListDecorator, "Segment");
     makeDecorator(new TreeListDecorator, "Tree");
-}
 
-void Scripting::initialize() {
     PythonQt::self()->registerClass(&EmitOnCtorDtor::staticMetaObject);
 
     evalScript("import sys");
