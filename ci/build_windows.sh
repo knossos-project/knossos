@@ -5,20 +5,18 @@ pacman -R mingw-w64-{i686,x86_64}-gcc-{ada,objc} --noconfirm # https://github.co
 time pacman -Syuu --needed --noconfirm ${MINGW_PACKAGE_PREFIX}-{boost,cmake,jasper,ninja,python2,qt5-static,snappy,toolchain}
 
 # Download and install static PythonQt and QuaZIP
-time curl -JLO https://github.com/knossos-project/knossos/releases/download/nightly-dev/${MINGW_PACKAGE_PREFIX}-pythonqt-static.pkg.tar.xz
-time curl -JLO https://github.com/knossos-project/knossos/releases/download/nightly-dev/${MINGW_PACKAGE_PREFIX}-quazip-static.pkg.tar.xz
-time pacman -U --noconfirm ${MINGW_PACKAGE_PREFIX}-{pythonqt,quazip}-static.pkg.tar.xz
+time curl -JLO https://github.com/knossos-project/knossos/releases/download/nightly-dev/${MINGW_PACKAGE_PREFIX}-pythonqt-static.pkg.tar.zst
+time curl -JLO https://github.com/knossos-project/knossos/releases/download/nightly-dev/${MINGW_PACKAGE_PREFIX}-quazip-static.pkg.tar.zst
+time pacman -U --noconfirm ${MINGW_PACKAGE_PREFIX}-{pythonqt,quazip}-static.pkg.tar.zst
 
 PROJECTPATH=$(cygpath ${APPVEYOR_BUILD_FOLDER})
 
 mkdir knossos-build
 cd knossos-build
-gendef /C//Windows/System32/python27.dll
-dlltool -v  --input-def python27.def --output-delaylib libpython27.dl.a
 DEBUG_FLAGS='' && ${WITH_DEBUG_SYMBOLS} && DEBUG_FLAGS=-DCMAKE_CXX_FLAGS="-g -fno-omit-frame-pointer"
 # https://gitlab.kitware.com/cmake/cmake/-/issues/22299
 sed -i 's/\^{commit}/\^0/' /mingw64/share/cmake-3.20/Modules/ExternalProject-gitupdate.cmake.in
-time cmake -G Ninja -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=RELEASE -DPYTHON_LIBRARY=libpython27.dl.a "${DEBUG_FLAGS}" ${PROJECTPATH}
+time cmake -G Ninja -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=RELEASE "${DEBUG_FLAGS}" ${PROJECTPATH}
 
 # Build
 time ninja
