@@ -7,7 +7,7 @@ PYTHON_MINOR=$(echo ${PYTHON_VERSION} | cut -d '.' -f2)
 
 QUAZIP_VERSION=$(brew list --versions quazip | tr " " "\n" | tail -1)
 
-cd $TRAVIS_BUILD_DIR && cd ..
+cd ${APPVEYOR_BUILD_FOLDER} && cd ..
 # Build KNOSSOS
 mkdir knossos-build && cd knossos-build
 time cmake -G Ninja ../knossos -Dpythonqt=Qt5Python${PYTHON_MAJOR}${PYTHON_MINOR} -DCMAKE_PREFIX_PATH=/usr/local/opt/qt@5/
@@ -28,5 +28,5 @@ rm -rf KNOSSOS.app/Contents/Frameworks/Python.framework/Versions/2.7
 install_name_tool KNOSSOS.app/Contents/MacOS/knossos -change /usr/local/opt/python@${PYTHON_MAJOR}.${PYTHON_MINOR}/Frameworks/Python.framework/Versions/${PYTHON_MAJOR}.${PYTHON_MINOR}/Python @executable_path/../Frameworks/Python.framework/Versions/${PYTHON_MAJOR}.${PYTHON_MINOR}/Python
 
 # Deployment
-time zip -r ${TRAVIS_BUILD_DIR}/macos.KNOSSOS.nightly.app.zip KNOSSOS.app
-cp -v ${TRAVIS_BUILD_DIR}/macos.KNOSSOS.nightly.app.zip ${TRAVIS_BUILD_DIR}/macos.${TRAVIS_BRANCH}-KNOSSOS.nightly.app.zip
+time zip -r ${APPVEYOR_BUILD_FOLDER}/macos.KNOSSOS.nightly.app.zip KNOSSOS.app
+cp -v ${APPVEYOR_BUILD_FOLDER}/macos.KNOSSOS.nightly.app.zip ${APPVEYOR_BUILD_FOLDER}/macos.${APPVEYOR_REPO_BRANCH}-KNOSSOS.nightly.app.zip

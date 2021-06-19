@@ -1,36 +1,75 @@
 version: 5.1-{branch}+{build}
 
-image: Visual Studio 2019
+image: 
+  - Visual Studio 2019
+  - macos-mojave
+  - Ubuntu
 
 environment:
   MSYSTEM: MINGW64
+  matrix:
+    - WITH_DEBUG_SYMBOLS: false
+    - WITH_DEBUG_SYMBOLS: true
 
 for:
 -
   branches:
+    except:
+      - master
+  matrix:
+    exclude:
+      - image: Visual Studio 2019
+        WITH_DEBUG_SYMBOLS: false
+      - image: Ubuntu
+        WITH_DEBUG_SYMBOLS: false
+      - image: macos-mojave
+        WITH_DEBUG_SYMBOLS: false
+-
+  branches:
     only:
       - master
-  environment:
-    matrix:
-      - WITH_DEBUG_SYMBOLS: false
-      - WITH_DEBUG_SYMBOLS: true
+  matrix:
+    exclude:
+      - image: Ubuntu
+        WITH_DEBUG_SYMBOLS: true
+      - image: macos-mojave
+        WITH_DEBUG_SYMBOLS: true
 -
+  matrix:
+    only:
+      - image: Ubuntu
+  services:
+    - docker
+  install:
+    - docker pull knossostool/knossos
+-
+  matrix:
+    only:
+      - image: macos-mojave
   environment:
-    WITH_DEBUG_SYMBOLS: true
-
-artifacts:
-  - path: '*nightly.exe'
+    MACOSX_DEPLOYMENT_TARGET: 10.13
+  install:
+    - brew update && brew upgrade
+    - brew remove qt6 || true
+    - brew install boost ninja python qt5 quazip snappy
+    - sh ci/build_macos_PythonQt.sh
+  build_script:
+    - sh ci/build_macos.sh
 
 build_script:
-  - C:\msys64\usr\bin\bash -lc "pacman -Syuu --noconfirm"
-  - C:\msys64\usr\bin\bash -lc "$(cygpath ${APPVEYOR_BUILD_FOLDER})/ci/build_windows.sh"
+  - cmd: C:\msys64\usr\bin\bash -lc "pacman -Syuu --noconfirm"
+  - cmd: C:\msys64\usr\bin\bash -lc "$(cygpath ${APPVEYOR_BUILD_FOLDER})/ci/build_windows.sh"
+  - sh: docker run --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${APPVEYOR_BUILD_FOLDER}:/root/knossos -e APPVEYOR_REPO_BRANCH knossostool/knossos bash -c '/root/knossos/ci/build_linux.sh'
+
+artifacts:
+  - path: '*nightly.*'
 
 deploy:
   - provider: GitHub
     tag: nightly
     auth_token:
       secure: 9tKkhsqR9qSoKt3390923aZ0EauffZQQ/6Ho0HdYlTEudtFJ1eTnw6B3TGclgqA0 # your encrypted token from GitHub
-    artifact: win.KNOSSOS.nightly.exe
+    artifact: /.*\.KNOSSOS\..*/
     prerelease: true
     force_update: true
     on:
@@ -40,7 +79,7 @@ deploy:
     tag: nightly-dev
     auth_token:
       secure: 9tKkhsqR9qSoKt3390923aZ0EauffZQQ/6Ho0HdYlTEudtFJ1eTnw6B3TGclgqA0 # your encrypted token from GitHub
-    artifact: /win\..*-KNOSSOS.nightly\.exe/
+    artifact: /.*-KNOSSOS\..*/
     prerelease: true
     force_update: true
     on:

@@ -1,4 +1,4 @@
-# KNOSSOS [![Build Status](https://travis-ci.org/knossos-project/knossos.svg?branch=master)](https://travis-ci.org/knossos-project/knossos) [![Build Status](https://ci.appveyor.com/api/projects/status/qehrybs5vpvjou28?svg=true&pendingText=building&passingText=OK&failingText=not%20OK&branch=master)](https://ci.appveyor.com/project/knossos/knossos)
+# KNOSSOS [![Build Status](https://ci.appveyor.com/api/projects/status/qehrybs5vpvjou28?svg=true&pendingText=building&passingText=OK&failingText=not%20OK&branch=master)](https://ci.appveyor.com/project/knossos/knossos)
 
 ## Background
 KNOSSOS is a software tool for the visualization and annotation of 3D image data and was developed for the rapid reconstruction of neural morphology and connectivity.
