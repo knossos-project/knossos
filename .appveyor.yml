@@ -7,33 +7,8 @@ image:
 
 environment:
   MSYSTEM: MINGW64
-  matrix:
-    - WITH_DEBUG_SYMBOLS: false
-    - WITH_DEBUG_SYMBOLS: true
 
 for:
--
-  branches:
-    except:
-      - master
-  matrix:
-    exclude:
-      - image: Visual Studio 2019
-        WITH_DEBUG_SYMBOLS: false
-      - image: Ubuntu
-        WITH_DEBUG_SYMBOLS: false
-      - image: macos-mojave
-        WITH_DEBUG_SYMBOLS: false
--
-  branches:
-    only:
-      - master
-  matrix:
-    exclude:
-      - image: Ubuntu
-        WITH_DEBUG_SYMBOLS: true
-      - image: macos-mojave
-        WITH_DEBUG_SYMBOLS: true
 -
   matrix:
     only:
@@ -74,7 +49,6 @@ deploy:
     force_update: true
     on:
       branch: master
-      WITH_DEBUG_SYMBOLS: false
   - provider: GitHub
     tag: nightly-dev
     auth_token:
@@ -82,5 +56,3 @@ deploy:
     artifact: /.*-KNOSSOS\..*/
     prerelease: true
     force_update: true
-    on:
-      WITH_DEBUG_SYMBOLS: true

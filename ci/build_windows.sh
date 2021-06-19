@@ -13,7 +13,7 @@ PROJECTPATH=$(cygpath ${APPVEYOR_BUILD_FOLDER})
 
 mkdir knossos-build
 cd knossos-build
-DEBUG_FLAGS='' && ${WITH_DEBUG_SYMBOLS} && DEBUG_FLAGS=-DCMAKE_CXX_FLAGS="-g -fno-omit-frame-pointer"
+DEBUG_FLAGS=-DCMAKE_CXX_FLAGS="-g -fno-omit-frame-pointer"
 # https://gitlab.kitware.com/cmake/cmake/-/issues/22299
 test -f /mingw64/share/cmake-3.20/Modules/ExternalProject-gitupdate.cmake.in && 
 	sed  -i 's/\^{commit}/\^0/' /mingw64/share/cmake-3.20/Modules/ExternalProject-gitupdate.cmake.in
@@ -23,8 +23,7 @@ time cmake -G Ninja -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=RELEASE "${DEBUG_
 time ninja
 
 # Deploy
-BRANCH_PREFIX=""
-if $WITH_DEBUG_SYMBOLS; then
-	BRANCH_PREFIX=${APPVEYOR_REPO_BRANCH}-
-fi
+BRANCH_PREFIX=${APPVEYOR_REPO_BRANCH}-
 cp knossos.exe $PROJECTPATH/win.${BRANCH_PREFIX}KNOSSOS.nightly.exe
+strip -v knossos.exe
+mv knossos.exe $PROJECTPATH/win.KNOSSOS.nightly.exe
