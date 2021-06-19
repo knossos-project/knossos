@@ -49,9 +49,9 @@ for:
   environment:
     MACOSX_DEPLOYMENT_TARGET: 10.13
   install:
-    - brew update && brew upgrade
-    - brew remove qt6 || true
-    - brew install boost ninja python qt5 quazip snappy
+    - time brew update && time brew upgrade
+    - time brew remove qt6 || true
+    - time brew install boost ninja python qt5 quazip snappy
     - sh ci/build_macos_PythonQt.sh
   build_script:
     - sh ci/build_macos.sh
