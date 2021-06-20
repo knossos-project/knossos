@@ -69,6 +69,7 @@ void Annotation::clearAnnotation() {
     resetMovementArea();
     setAnnotationTime(0);
     annotationFilename = "";
+    magLock.reset();
     extraFiles.clear();
     emit clearedAnnotation();
     unsavedChanges = false;

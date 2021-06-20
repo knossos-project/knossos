@@ -92,6 +92,9 @@ void merging(const QMouseEvent *event, ViewportOrtho & vp) {
 }
 
 void segmentation_brush_work(const QMouseEvent *event, ViewportOrtho & vp) {
+    if (Annotation::singleton().magLock && Dataset::datasets[Segmentation::singleton().layerId].magIndex != Annotation::singleton().magLock.value()) {
+        return;
+    }
     const Coordinate coord = getCoordinateFromOrthogonalClick(event->pos(), vp);
     auto & seg = Segmentation::singleton();
 

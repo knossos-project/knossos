@@ -303,6 +303,13 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     xml.writeAttribute("lockToNodesWithComment", QString(skeletonState.lockingComment));
     xml.writeEndElement();
 
+    if (Annotation::singleton().magLock) {
+        xml.writeStartElement("brush_lock");
+        const auto magLock = Annotation::singleton().magLock.value();
+        xml.writeAttribute("mag", QString::number(Dataset::current().api == Dataset::API::PyKnossos ? magLock + 1 : static_cast<int>(std::pow(2, magLock))));
+        xml.writeEndElement();
+    }
+
     xml.writeStartElement("time");
     const auto time = saveTime? Annotation::singleton().getAnnotationTime() : 0;
     xml.writeAttribute("ms", QString::number(time));
@@ -534,6 +541,9 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                             // the newly saved kzip would have a different movement area than before which might break client code.
                         }
                     }
+                } else if(xml.name() == "brush_lock") {
+                    const auto mag = attributes.value("mag").toInt();
+                    Annotation::singleton().magLock = Dataset::current().api == Dataset::API::PyKnossos ? mag - 1 : static_cast<int>(std::log2(mag));
                 } else if(xml.name() == "time") { // in case of a merge the current annotation's time is kept.
                     if (!merge) {
                         const auto ms = attributes.value("ms").toULongLong();
@@ -851,6 +861,9 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
 
     if (!merge) {
         setActiveNode(Skeletonizer::singleton().findNodeByNodeID(activeNodeID));
+        if (Annotation::singleton().magLock) {
+            state->viewer->updateDatasetMag(std::pow(2, Annotation::singleton().magLock.value()));
+        }
         if (loadedPosition) {
             state->viewer->setPosition(loadedPosition.get());
         }

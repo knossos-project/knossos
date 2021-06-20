@@ -822,6 +822,7 @@ bool Viewer::updateDatasetMag(const int mag) {
             });
         }
     }
+    recalcTextureOffsets();
     //clear the viewports
     reslice_notify();
 
