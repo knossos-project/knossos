@@ -362,7 +362,9 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
 
     QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this]() {
         itemModel.reset();
-        updateLayerProperties();
+        if (!treeView.selectionModel()->currentIndex().isValid() && itemModel.rowCount() > 0) {
+            treeView.selectionModel()->setCurrentIndex(itemModel.index(0), QItemSelectionModel::Rows | QItemSelectionModel::SelectCurrent);
+        }
     });
 
     resize(800, 600);
