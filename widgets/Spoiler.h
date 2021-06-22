@@ -40,9 +40,5 @@ private:
     int animationDuration{300};
 public:
     explicit Spoiler(const QString & title = "", const int animationDuration = 300, QWidget *parent = 0);
-    void setContentLayout(QLayout & contentLayout); // replaces and deletes the current layout but does not delete its contents.
-
-signals:
-
-public slots:
+    void setContentLayout(QLayout & contentLayout, bool init = false); // replaces and deletes the current layout but does not delete its contents.
 };

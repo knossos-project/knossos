@@ -176,7 +176,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     optionsLayout.addWidget(&combineSlicesType, row, ++col);
     optionsLayout.addWidget(&combineSlicesSpin, row, ++col);
     optionsLayout.addWidget(&combineSlicesXyOnlyCheck, row, ++col);
-    optionsSpoiler.setContentLayout(optionsLayout);
+    optionsSpoiler.setContentLayout(optionsLayout, true);
 
     treeView.setModel(&itemModel);
     treeView.resizeColumnToContents(0);
