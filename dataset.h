@@ -24,6 +24,9 @@
 
 #include "coordinate.h"
 
+#include <QOpenGLTexture>
+
+#include <QColor>
 #include <QNetworkRequest>
 #include <QString>
 #include <QUrl>
@@ -100,6 +103,22 @@ struct Dataset {
     QString token;
     bool allocationEnabled{true};
     bool loadingEnabled{true};
+
+    struct LayerRenderSettings {
+        bool visibleSetExplicitly{false};
+        bool visible{true};
+        double opacity{1.0};
+        double rangeDelta{1.};
+        double bias{0.};
+        bool combineSlicesEnabled{false};
+        bool combineSlicesXyOnly{true};
+        enum : int {
+            min, max
+        } combineSlicesType;
+        int combineSlices{4};
+        QOpenGLTexture::Filter textureFilter{QOpenGLTexture::Nearest};
+        QColor color{Qt::white};
+    } renderSettings;
 
     static Dataset::list_t datasets;
     static auto & current() {

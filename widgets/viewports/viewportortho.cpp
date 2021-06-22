@@ -154,7 +154,7 @@ void ViewportOrtho::resetTexture(const std::size_t layerCount) {
 
 void ViewportOrtho::applyTextureFilter() {
     for (std::size_t layerId{0}; layerId < texture.texHandle.size(); ++layerId) {
-        setTextureFilter(layerId, state->viewerState->layerRenderSettings[layerId].textureFilter);
+        setTextureFilter(layerId, Dataset::datasets[layerId].renderSettings.textureFilter);
     }
 }
 

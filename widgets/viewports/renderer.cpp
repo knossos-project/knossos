@@ -762,7 +762,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     // data that’s visible through the skeleton (e.g. halo)
     for (std::size_t i = 0; i < texture.texHandle.size(); ++i) {
         const auto ordered_i = state->viewerState->layerOrder[i];
-        const auto & layerSettings = state->viewerState->layerRenderSettings[ordered_i];
+        const auto & layerSettings = Dataset::datasets[ordered_i].renderSettings;
         if (!options.nodePicking && layerSettings.visible && !Dataset::datasets[ordered_i].isOverlay()) {
             glColor4f(layerSettings.color.redF(), layerSettings.color.greenF(), layerSettings.color.blueF(), layerSettings.opacity);
             slice(texture, ordered_i);// offset to the far clipping plane to avoid clipping the skeleton
@@ -787,7 +787,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     bool first{true};
     for (std::size_t i = 0; i < texture.texHandle.size(); ++i) {
         const auto ordered_i = state->viewerState->layerOrder[i];
-        const auto & layerSettings = state->viewerState->layerRenderSettings[ordered_i];
+        const auto & layerSettings = Dataset::datasets[ordered_i].renderSettings;
         if (!options.nodePicking && layerSettings.visible && (options.drawOverlay || !Dataset::datasets[ordered_i].isOverlay())) {
             if (!Dataset::datasets[ordered_i].isOverlay()) {
                 if (first) {// first raw layer rendered is semi transparent, letting the skeleton show through (blending) in one direction
@@ -1763,7 +1763,7 @@ void Viewport3D::renderArbitrarySlicePane(ViewportOrtho & vp, const RenderOption
     const float dataPxY = vp.displayedIsoPx;
 
     for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
-        if (state->viewerState->layerRenderSettings[layerId].visible && (!Dataset::datasets[layerId].isOverlay() || options.drawOverlay)) {
+        if (Dataset::datasets[layerId].renderSettings.visible && (!Dataset::datasets[layerId].isOverlay() || options.drawOverlay)) {
             state->viewer->vpGenerateTexture(vp, layerId);// update texture before use
             auto & texture = vp.texture;
             texture.texHandle[layerId].bind();

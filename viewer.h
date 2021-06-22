@@ -86,21 +86,6 @@ struct GLBuffers {
     std::vector<std::array<std::uint8_t, 4>> colorPickingBuffer24, colorPickingBuffer48, colorPickingBuffer64;
 };
 
-struct LayerRenderSettings {
-    bool visible{true};
-    double opacity{1.0};
-    double rangeDelta{1.};
-    double bias{0.};
-    bool combineSlicesEnabled{false};
-    bool combineSlicesXyOnly{true};
-    enum : int {
-        min, max
-    } combineSlicesType;
-    int combineSlices{4};
-    QOpenGLTexture::Filter textureFilter{QOpenGLTexture::Nearest};
-    QColor color{Qt::white};
-};
-
 struct ViewerState {
     ViewerState();
 
@@ -183,7 +168,6 @@ struct ViewerState {
     bool showZYplane{true};
     bool showArbplane{true};
     bool showVpDecorations{true};
-    std::vector<LayerRenderSettings> layerRenderSettings;
     std::vector<std::size_t> layerOrder;
     double meshAlphaFactor3d{1};
     double meshAlphaFactorSlicing{0.5};
@@ -205,7 +189,7 @@ private:
 
     void vpGenerateTexture(ViewportArb & vp, const std::size_t layerId);
 
-    void dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId, const boost::optional<decltype(LayerRenderSettings::combineSlicesType)> combineType);
+    void dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId, const boost::optional<decltype(Dataset::LayerRenderSettings::combineSlicesType)> combineType);
     void dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxInDc_float, std::uint8_t * slice, int s, int *t, const floatCoordinate & v2, const std::size_t layerId, float usedSizeInCubePixels);
 
     void ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId);

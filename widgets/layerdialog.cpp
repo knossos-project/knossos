@@ -45,7 +45,7 @@ QVariant LayerItemModel::headerData(int section, Qt::Orientation orientation, in
 QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
     if (index.isValid()) {
         const auto& data = Dataset::datasets[ordered_i(index.row())];
-        auto& layerSettings = state->viewerState->layerRenderSettings[ordered_i(index.row())];
+        auto& layerSettings = Dataset::datasets[ordered_i(index.row())].renderSettings;
         if (role == Qt::DisplayRole || role == Qt::EditRole) {
             switch(index.column()) {
             case 1: return QString::number(layerSettings.opacity * 100.0f) + (role == Qt::EditRole ? "" : "%");
@@ -59,7 +59,7 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
             }
         } else if (role == Qt::CheckStateRole) {
             if (index.column() == 0) {
-                auto visible = state->viewerState->layerRenderSettings[ordered_i(index.row())].visible;
+                auto visible = Dataset::datasets[ordered_i(index.row())].renderSettings.visible;
                 return visible ? Qt::Checked : Qt::Unchecked;
             } else if (index.column() == 2) {
                 return Segmentation::singleton().enabled && ordered_i(index.row()) == Segmentation::singleton().layerId ? Qt::PartiallyChecked : data.isOverlay() ? Qt::Unchecked : QVariant{};
@@ -86,7 +86,7 @@ void reloadLayers() {
 
 bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, int role) {
     if(index.isValid()) {
-        auto& layerSettings = state->viewerState->layerRenderSettings[ordered_i(index.row())];
+        auto& layerSettings = Dataset::datasets[ordered_i(index.row())].renderSettings;
         if (role == Qt::EditRole) {
             switch(index.column()) {
             case 1:
@@ -264,7 +264,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if(currentIndex.isValid()) {
             std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
-            auto& layerSettings = state->viewerState->layerRenderSettings[ordered_index];
+            auto& layerSettings = Dataset::datasets[ordered_index].renderSettings;
             layerSettings.opacity = static_cast<float>(value) / opacitySlider.maximum();
             const auto& changeIndex = currentIndex.sibling(currentIndex.row(), 1); // todo: enum the 1
             emit itemModel.dataChanged(changeIndex, changeIndex, QVector<int>(Qt::EditRole));
@@ -275,7 +275,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if(currentIndex.isValid()) {;
             std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
-            auto& layerSettings = state->viewerState->layerRenderSettings[ordered_index];
+            auto& layerSettings = Dataset::datasets[ordered_index].renderSettings;
             layerSettings.rangeDelta = static_cast<float>(value) / rangeDeltaSlider.maximum();
             state->viewer->reslice_notify(ordered_index);
         }
@@ -285,7 +285,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if(currentIndex.isValid()) {
             std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
-            auto& layerSettings = state->viewerState->layerRenderSettings[ordered_index];
+            auto& layerSettings = Dataset::datasets[ordered_index].renderSettings;
             layerSettings.bias = static_cast<float>(value) / biasSlider.maximum();
             state->viewer->reslice_notify(ordered_index);
         }
@@ -295,7 +295,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if (currentIndex.isValid()) {
             std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
-            state->viewerState->layerRenderSettings[ordered_index].combineSlicesEnabled = checkstate == Qt::Checked;
+            Dataset::datasets[ordered_index].renderSettings.combineSlicesEnabled = checkstate == Qt::Checked;
             state->viewer->layerRenderSettingsChanged();
             state->viewer->reslice_notify(ordered_index);
         }
@@ -304,7 +304,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if (currentIndex.isValid()) {
             std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
-            state->viewerState->layerRenderSettings[ordered_index].combineSlicesType = static_cast<decltype(LayerRenderSettings::combineSlicesType)>(index);
+            Dataset::datasets[ordered_index].renderSettings.combineSlicesType = static_cast<decltype(Dataset::LayerRenderSettings::combineSlicesType)>(index);
             state->viewer->layerRenderSettingsChanged();
             state->viewer->reslice_notify(ordered_index);
         }
@@ -313,7 +313,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if (currentIndex.isValid()) {
             std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
-            state->viewerState->layerRenderSettings[ordered_index].combineSlices = value;
+            Dataset::datasets[ordered_index].renderSettings.combineSlices = value;
             state->viewer->layerRenderSettingsChanged();
             state->viewer->reslice_notify(ordered_index);
         }
@@ -322,7 +322,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if (currentIndex.isValid()) {
             std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
-            state->viewerState->layerRenderSettings[ordered_index].combineSlicesXyOnly = checkstate == Qt::Checked;
+            Dataset::datasets[ordered_index].renderSettings.combineSlicesXyOnly = checkstate == Qt::Checked;
             state->viewer->layerRenderSettingsChanged();
             state->viewer->reslice_notify(ordered_index);
         }
@@ -332,7 +332,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
         if(currentIndex.isValid()) {
             std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
-            auto& layerSettings = state->viewerState->layerRenderSettings[ordered_index];
+            auto& layerSettings = Dataset::datasets[ordered_index].renderSettings;
             layerSettings.textureFilter = (checkstate == Qt::Checked) ? QOpenGLTexture::Linear : QOpenGLTexture::Nearest;
             state->mainWindow->forEachOrthoVPDo([&](ViewportOrtho & orthoVP){
                 orthoVP.applyTextureFilter();
@@ -391,7 +391,7 @@ void LayerDialogWidget::updateLayerProperties() {
     optionsSpoiler.setEnabled(currentIndex.isValid());
     if (currentIndex.isValid()) {
         const auto ordered_index = itemModel.ordered_i(currentIndex.row());
-        auto & layerSettings = state->viewerState->layerRenderSettings[ordered_index];
+        auto & layerSettings = Dataset::datasets[ordered_index].renderSettings;
         opacitySlider.setValue(static_cast<int>(layerSettings.opacity * opacitySlider.maximum()));
         biasSlider.setValue(static_cast<int>(layerSettings.bias * biasSlider.maximum()));
         rangeDeltaSlider.setValue(static_cast<int>(layerSettings.rangeDelta * rangeDeltaSlider.maximum()));

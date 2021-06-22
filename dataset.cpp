@@ -123,14 +123,15 @@ Dataset::list_t Dataset::parse(const QUrl & url, const QString & data, bool add_
         for (std::size_t i = 0; i < infos.size(); ++i) {// determine segmentation layer
             if (infos[i].isOverlay()) {
                 overlayPresent = true;
-                infos[i].allocationEnabled = infos[i].loadingEnabled = add_snappy;
+                infos[i].allocationEnabled = infos[i].loadingEnabled = infos[i].renderSettings.visible = true;
                 break;// only enable the first overlay layer by default
             }
         }
         if (!overlayPresent) {// add empty overlay channel
             const auto i = infos.size();
             infos.emplace_back(Dataset{infos.front()});// explicitly copy, because the reference will get invalidated
-            infos[i].allocationEnabled = infos[i].loadingEnabled = add_snappy;
+            infos[i].renderSettings = {};
+            infos[i].allocationEnabled = infos[i].loadingEnabled = infos[i].renderSettings.visible = true;
             infos.back().type = Dataset::CubeType::SNAPPY;
         }
     }
@@ -210,7 +211,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         if (infos.empty()) {// support empty lines in the beginning
             continue;
         }
-        const auto & value = tokenList.back();
+        const auto value = QString{tokenList.back()}.remove(QChar{'"'});
         auto & info = infos.back();
         if (token == "_BaseName") {
             info.experimentname = value;
@@ -253,8 +254,13 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
             if (value.split(",").at(2).toInt() == 1) {
                 throw std::runtime_error("2D support is not yet integrated here");
             }
+        } else if (token == "_Color") {
+            info.renderSettings.color = QColor{value};
+        } else if (token == "_Visible") {
+            infos.back().renderSettings.visibleSetExplicitly = true;
+            infos.back().allocationEnabled = infos.back().loadingEnabled = info.renderSettings.visible = QVariant{value}.toBool();
         } else if (token == "_Description") {
-            info.description = value.split('"', Qt::SkipEmptyParts)[0];
+            info.description = value;
         } else if (!token.isEmpty() && token != "_NumberofCubes" && token != "_Origin") {
             qDebug() << "Skipping unknown parameter" << token;
         }
@@ -267,8 +273,8 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         if (info.url.isEmpty()) {
             info.url = QUrl::fromLocalFile(QFileInfo(configUrl.toLocalFile()).absoluteDir().absolutePath());
         }
-        if (&info != &infos.front()) {// disable all layers expect the first TODO multi layer
-            info.allocationEnabled = info.loadingEnabled = false;
+        if (&info != &infos.front() && !info.renderSettings.visibleSetExplicitly && !info.isOverlay()) {// disable all non-seg layers expect the first TODO multi layer
+            info.allocationEnabled = info.loadingEnabled = info.renderSettings.visible = false;
         }
     }
     return infos;
@@ -410,7 +416,7 @@ Dataset::list_t Dataset::fromLegacyConf(const QUrl & configUrl, QString config) 
     if (info.type != Dataset::CubeType::RAW_UNCOMPRESSED) {
         auto info2 = info;
         info2.type = hasPNG ? Dataset::CubeType::RAW_PNG : Dataset::CubeType::RAW_UNCOMPRESSED;
-        info2.allocationEnabled = info2.loadingEnabled = false;
+        info2.allocationEnabled = info2.loadingEnabled = info2.renderSettings.visible = false;
         return {info, info2, info.createCorrespondingOverlayLayer()};
     } else {
         info.type = hasPNG ? Dataset::CubeType::RAW_PNG : Dataset::CubeType::RAW_UNCOMPRESSED;

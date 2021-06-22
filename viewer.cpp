@@ -243,13 +243,13 @@ const auto datasetAdjustment = [](auto layerId, auto index){
         return state->viewerState->datasetColortable[index];
     } else {
         const auto MAX_COLORVAL{std::numeric_limits<uint8_t>::max()};
-        int dynIndex = ((index - state->viewerState->layerRenderSettings[layerId].bias * 255) / (state->viewerState->layerRenderSettings[layerId].rangeDelta));
+        int dynIndex = ((index - Dataset::datasets[layerId].renderSettings.bias * 255) / (Dataset::datasets[layerId].renderSettings.rangeDelta));
         std::uint8_t val = std::min(static_cast<int>(MAX_COLORVAL), std::max(0, dynIndex));
         return std::tuple(val, val, val);
     }
 };
 
-void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId, const boost::optional<decltype(LayerRenderSettings::combineSlicesType)> combineType) {
+void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId, const boost::optional<decltype(Dataset::LayerRenderSettings::combineSlicesType)> combineType) {
     const auto cubeCoord = Dataset::current().global2cube(cubePosInAbsPx);
     const auto cubeMaxGlobalCoord = Dataset::current().cube2global(cubeCoord + CoordOfCube{1,1,1}) - Coordinate{1,1,1};
     const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
@@ -262,7 +262,7 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
     const std::size_t texNext = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen * 4 : 4;// RGBA per pixel
     const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? 4 - 4 * cubeEdgeLen * cubeEdgeLen : 0;
 
-    const bool isDatasetAdjustment = state->viewerState->datasetColortableOn || state->viewerState->layerRenderSettings[layerId].bias > 0.0 || state->viewerState->layerRenderSettings[layerId].rangeDelta < 1.0;
+    const bool isDatasetAdjustment = state->viewerState->datasetColortableOn || Dataset::datasets[layerId].renderSettings.bias > 0.0 || Dataset::datasets[layerId].renderSettings.rangeDelta < 1.0;
     for (int yzz = 0; yzz < cubeEdgeLen; ++yzz) {
         for (int xxy = 0; xxy < cubeEdgeLen; ++xxy) {
             uint8_t r, g, b;
@@ -280,11 +280,11 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
                 }
             }
             if (combineType) {
-                if (combineType.get() == decltype(LayerRenderSettings::combineSlicesType)::min) {
+                if (combineType.get() == decltype(Dataset::LayerRenderSettings::combineSlicesType)::min) {
                     slice[0] = std::min(slice[0], r);
                     slice[1] = std::min(slice[1], g);
                     slice[2] = std::min(slice[2], b);
-                } else if (combineType.get() == decltype(LayerRenderSettings::combineSlicesType)::max) {
+                } else if (combineType.get() == decltype(Dataset::LayerRenderSettings::combineSlicesType)::max) {
                     slice[0] = std::max(slice[0], r);
                     slice[1] = std::max(slice[1], g);
                     slice[2] = std::max(slice[2], b);
@@ -472,9 +472,9 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
         vpGenerateTexture(static_cast<ViewportArb&>(vp), layerId);
         return;
     }
-    const int multiSliceiMax = viewerState.layerRenderSettings[layerId].combineSlicesEnabled
-            * viewerState.layerRenderSettings[layerId].combineSlices
-            * ((vp.viewportType == VIEWPORT_XY) || !viewerState.layerRenderSettings[layerId].combineSlicesXyOnly);
+    const int multiSliceiMax = Dataset::datasets[layerId].renderSettings.combineSlicesEnabled
+            * Dataset::datasets[layerId].renderSettings.combineSlices
+            * ((vp.viewportType == VIEWPORT_XY) || !Dataset::datasets[layerId].renderSettings.combineSlicesXyOnly);
     bool first{true};
     const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
     auto for_each_resliced_cube_do = [this, layerId, cubeEdgeLen, &vp](const CoordOfCube upperLeftDc, auto func){
@@ -528,7 +528,7 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
                     if (Dataset::datasets[layerId].isOverlay()) {
                         ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.texture.texData[layerId].data() + index, vp, layerId);
                     } else {
-                        const auto combine = boost::make_optional(!first, viewerState.layerRenderSettings[layerId].combineSlicesType);
+                        const auto combine = boost::make_optional(!first, Dataset::datasets[layerId].renderSettings.combineSlicesType);
                         dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.texture.texData[layerId].data() + index, vp, layerId, combine);
                     }
                 } else {
@@ -911,9 +911,9 @@ void Viewer::applyTextureFilterSetting(const QOpenGLTexture::Filter texFiltering
     viewerState.textureFilter = texFiltering;
     for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
         if (!Dataset::datasets[layerId].isOverlay()) {
-            viewerState.layerRenderSettings[layerId].textureFilter = texFiltering;
+            Dataset::datasets[layerId].renderSettings.textureFilter = texFiltering;
         } else {// overlay should have sharp edges by default
-            viewerState.layerRenderSettings[layerId].textureFilter = QOpenGLTexture::Nearest;
+            Dataset::datasets[layerId].renderSettings.textureFilter = QOpenGLTexture::Nearest;
         }
     }
     window->forEachOrthoVPDo([](ViewportOrtho & orthoVP) {
@@ -1163,8 +1163,8 @@ void Viewer::loadDatasetLUT(const QString & path) {
 
 void Viewer::datasetColorAdjustmentsChanged() {
     for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
-        viewerState.layerRenderSettings[layerId].rangeDelta = state->viewerState->luminanceRangeDelta;
-        viewerState.layerRenderSettings[layerId].bias = state->viewerState->luminanceBias;
+        Dataset::datasets[layerId].renderSettings.rangeDelta = state->viewerState->luminanceRangeDelta;
+        Dataset::datasets[layerId].renderSettings.bias = state->viewerState->luminanceBias;
     }
     reslice_notify();
     emit layerRenderSettingsChanged();
@@ -1204,22 +1204,16 @@ void Viewer::resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge, co
     while (newTexEdgeLength < cubeEdge * superCubeEdge) {
         newTexEdgeLength *= 2;
     }
-    if (newTexEdgeLength != state->viewerState->texEdgeLength || layerCount != viewerState.layerRenderSettings.size()) {
+    if (newTexEdgeLength != state->viewerState->texEdgeLength || layerCount != viewportXY->texture.texHandle.size()) {
         qDebug() << QString("cubeEdge = %1, sCubeEdge = %2, newTex = %3 (%4), size = %5 MiB")
                     .arg(cubeEdge).arg(superCubeEdge).arg(newTexEdgeLength).arg(state->viewerState->texEdgeLength)
                     .arg(layerCount * newTexEdgeLength * newTexEdgeLength * 4 * 2 * 3 / 1024. / 1024.).toStdString().c_str();
         viewerState.texEdgeLength = newTexEdgeLength;
-        if (layerCount != viewerState.layerRenderSettings.size()) {
-            viewerState.layerRenderSettings = decltype(viewerState.layerRenderSettings)(layerCount);
-        }
         window->resetTextureProperties();
         window->forEachOrthoVPDo([layerCount](ViewportOrtho & vp) {
             vp.resetTexture(layerCount);
         });
         recalcTextureOffsets();
-    }
-    for (auto tup : boost::combine(viewerState.layerRenderSettings, Dataset::datasets)) {
-        tup.get<0>().visible = tup.get<1>().loadingEnabled;// TODO multi layer
     }
 }
 
@@ -1270,7 +1264,7 @@ QColor Viewer::getNodeColor(const nodeListElement & node) const {
 }
 
 void Viewer::setLayerVisibility(const int index, const bool enabled) {
-    viewerState.layerRenderSettings.at(index).visible = enabled;
+    Dataset::datasets.at(index).renderSettings.visible = enabled;
     emit layerVisibilityChanged(index);
 }
 

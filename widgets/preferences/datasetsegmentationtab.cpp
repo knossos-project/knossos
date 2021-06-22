@@ -116,10 +116,10 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
 
     QObject::connect(state->viewer, &Viewer::layerVisibilityChanged, [this](const int index) {
         if (index == 1) {
-            overlayGroup.setChecked(state->viewerState->layerRenderSettings.at(1).visible);
+            overlayGroup.setChecked(Dataset::datasets.at(1).renderSettings.visible);
         }
     });
-    QObject::connect(&overlayGroup, &QGroupBox::clicked, [](const bool checked) { state->viewerState->layerRenderSettings.at(Segmentation::singleton().layerId).visible = checked; });
+    QObject::connect(&overlayGroup, &QGroupBox::clicked, [](const bool checked) { Dataset::datasets.at(Segmentation::singleton().layerId).renderSettings.visible = checked; });
     QObject::connect(&segmentationOverlaySlider, &QSlider::valueChanged, [this](int value){
         segmentationOverlaySpinBox.setValue(value);
         Segmentation::singleton().alpha = value;
@@ -134,7 +134,7 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
         Segmentation::singleton().highlightBorder = checked;
         state->viewer->segmentation_changed();
     });
-    
+
     QObject::connect(&volumeGroup, &QGroupBox::clicked, &Segmentation::singleton(), &Segmentation::toggleVolumeRender);
     QObject::connect(&Segmentation::singleton(), &Segmentation::volumeRenderToggled, &volumeGroup, &QGroupBox::setChecked);
 
