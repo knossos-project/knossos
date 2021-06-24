@@ -64,6 +64,8 @@ set(CMAKE_AUTORCC ON)#resource files
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+set_property(SOURCE ${sources};${sources2} PROPERTY SKIP_AUTOMOC ON)
+
 if(NOT BUILD_SHARED_LIBS) # try to force search for static libraries if BUILD_SHARED_LIBS was disabled
     list(PREPEND CMAKE_FIND_LIBRARY_SUFFIXES .a .lib) # prefer static (*.a) over import (*.dll.a) libraries
 endif()
