@@ -48,7 +48,7 @@ file(GLOB sources *.cpp resources.qrc)
 file(GLOB headers *.h)
 file(GLOB uis widgets/*.ui)
 file(GLOB_RECURSE sources2 ./annotation/*.cpp ./mesh/*.cpp ./scriptengine/*.cpp ./segmentation/*.cpp ./slicer/*.cpp ./skeleton/*.cpp ./tinyply/*.cpp ./widgets/*.cpp)
-file(GLOB_RECURSE headers2 ./annotation/*.cpp ./mesh/*.h ./scriptengine/*.h ./segmentation/*.h ./slicer/*.h ./skeleton/*.h ./tinyply/*.h ./widgets/*.h)
+file(GLOB_RECURSE headers2 ./annotation/*.h ./mesh/*.h ./scriptengine/*.h ./segmentation/*.h ./slicer/*.h ./skeleton/*.h ./tinyply/*.h ./widgets/*.h)
 
 set(SRC_LIST ${sources} ${sources2} ${headers} ${headers2} ${uis})
 
