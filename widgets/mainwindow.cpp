@@ -256,9 +256,9 @@ void MainWindow::updateCursorLabel(const Coordinate & position, const ViewportTy
     QString cubePosText = "";
     if (state->viewerState->showCubeCoordinates) {
         auto cubePos = Dataset::current().global2cube(position);
-        cubePosText = QString(" | %1, %2, %3 (mag %4)").arg(cubePos.x).arg(cubePos.y).arg(cubePos.z).arg(Dataset::current().magnification);
+        cubePosText = QString(" | %1 %2 %3 (mag %4)").arg(cubePos.x).arg(cubePos.y).arg(cubePos.z).arg(Dataset::current().magnification);
     }
-    cursorPositionLabel.setText(QString("%1, %2, %3%4").arg(position.x + inc).arg(position.y + inc).arg(position.z + inc).arg(cubePosText));
+    cursorPositionLabel.setText(QString("%1 %2 %3%4").arg(position.x + inc).arg(position.y + inc).arg(position.z + inc).arg(cubePosText));
 }
 
 void MainWindow::resetTextureProperties() {
