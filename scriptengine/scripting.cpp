@@ -57,6 +57,8 @@ SignalRelay::SignalRelay() {
 
 #include <delayimp.h>
 
+#include <QtGlobal>
+
 void PythonQtInit() {
     __pfnDliFailureHook2 = [](unsigned int dliNotify, PDelayLoadInfo info){
         if (dliNotify == dliFailLoadLib) {
@@ -69,6 +71,12 @@ void PythonQtInit() {
     };
 
     Py_IsInitialized();// trigger a delay load to make the module available to GetModuleHandle in LoadPythonSymbol
+    qDebug() << "Python" << Py_GetVersion() << qEnvironmentVariable("PYTHONHOME")/* << Py_GetPythonHome()*/;
+
+    if (Py_GetVersion()[0] > 2 && qEnvironmentVariable("PYTHONHOME").isEmpty()) {
+//        qputenv("PYTHONHOME", "G:/msys64/mingw64");
+//        qputenv("PYTHONHOME", "C:/Users/niemand/AppData/Local/Programs/Python/Python38");
+    }
 
     PythonQt::init();
 #ifdef QtAll
