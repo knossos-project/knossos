@@ -437,18 +437,11 @@ void MainWindow::updateLoaderProgress(int refCount) {
 }
 
 void MainWindow::setProofReadingUI(const bool on) {
+    resetWorkModes();
     if (on) {
-        const auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
-        workModeModel.recreate({{AnnotationMode::Mode_Merge, workModes[AnnotationMode::Mode_Merge]}, {AnnotationMode::Mode_Paint, workModes[AnnotationMode::Mode_Paint]}});
-        if (currentMode == AnnotationMode::Mode_Merge || currentMode == AnnotationMode::Mode_Paint) {
-            setWorkMode(currentMode);
-        } else {
-            setWorkMode(AnnotationMode::Mode_Merge);
-        }
         state->viewer->saveSettings();
         resetViewports();
     } else {
-        resetWorkModes();
         state->viewer->loadSettings();
     }
 
@@ -1313,7 +1306,9 @@ void MainWindow::loadSettings() {
     show();
     activateWindow();// prevent mainwin in background in gnome when other widgets are also visible
     state->viewer->loadSettings();// size vps after show() for proper maximized space
-    setProofReadingUI(Annotation::singleton().guiMode == GUIMode::ProofReading);
+    if (Annotation::singleton().guiMode == GUIMode::ProofReading) {
+        setProofReadingUI(true);// this breaks restoring segmentation work modes
+    }
     forEachVPDo([](ViewportBase & vp) { // show undocked vps after mainwindow
         if (vp.isDocked == false) {
             vp.setDock(false);
