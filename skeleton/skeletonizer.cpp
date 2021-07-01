@@ -2088,7 +2088,7 @@ void Skeletonizer::saveMesh(QIODevice & file, const treeListElement & tree, QVec
     }
 }
 
-void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeID)> treeID, QVector<float> & verts, QVector<float> & normals, QVector<unsigned int> & indices, QVector<std::uint8_t> & colors, int draw_mode, bool swap_xy) {
+void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeID)> treeID, QVector<float> & verts, QVector<float> & normals, const QVector<unsigned int> & indices, const QVector<std::uint8_t> & colors, int draw_mode, bool swap_xy) {
     std::vector<int> vertex_face_count(verts.size() / 3);
     try {
         for(const auto indice : indices) {
