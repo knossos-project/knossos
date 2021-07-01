@@ -501,7 +501,6 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                         state->viewer->window->widgetContainer.datasetLoadWidget.loadDataset(overlay, path, true);
                     }
                 } else if(xml.name() == "MovementArea") {
-                    if (!merge) {
                         Coordinate movementAreaMin;//0
                         Coordinate movementAreaMax = Dataset::current().boundary;
                         bool sizeSet{false};
@@ -532,6 +531,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                                 movementAreaMax.z = value.toInt();
                             }
                         }
+                    if (!merge) {
                         if (sizeSet) {
                             Annotation::singleton().updateMovementArea(movementAreaMin, movementAreaMin + movementAreaSize);//range checked
                         } else { // old max-inclusive movement area
@@ -540,6 +540,35 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                             // If we instead incremented it by 1 to keep appearance consistent to before,
                             // the newly saved kzip would have a different movement area than before which might break client code.
                         }
+                    }
+                    if (!sizeSet) {
+                        movementAreaSize = movementAreaMax - movementAreaMin;
+                    }
+                    if (!treeCmtOnMultiLoad.isEmpty() && movementAreaSize != Dataset::current().boundary) {
+                        QVector<float> verts, emptyNormals;
+                        auto addVert = [&verts](floatCoordinate coord){
+                            coord = Dataset::current().scale.componentMul(coord);
+                            verts.push_back(coord.x);
+                            verts.push_back(coord.y);
+                            verts.push_back(coord.z);
+                        };
+                        std::array<floatCoordinate, 8> coords{floatCoordinate{0, 0, 0}, {1, 1, 0}, {1 ,0 ,0}, {0 ,1 ,0}, {1, 0, 1}, {0 ,0 ,1}, {0 ,1 ,1}, {1, 1, 1}};
+                        QVector<std::uint32_t> indices{
+                            0, 1, 2, 0, 3, 1
+                            , 0, 2, 4, 0, 4, 5
+                            , 0, 6, 3, 0, 5, 6,
+                            7, 6, 5, 7, 5, 4
+                            , 7, 3, 6, 7, 1, 3
+                            , 7, 4, 2, 7, 2, 1
+                        };
+                        for (auto & elem : coords) {
+                            addVert(movementAreaMin + elem.componentMul(movementAreaSize));
+                        }
+                        auto & tree = addTree(boost::none, boost::none, {{tr("file"),treeCmtOnMultiLoad}});
+                        addMeshToTree(tree.treeID, verts, emptyNormals, indices, {});
+                        addNode(boost::none, movementAreaMin, tree, {{tr("movementAreaMin"),{}}});
+                        addNode(boost::none, movementAreaMax, tree, {{tr("movementAreaMax"),{}}});
+                        Annotation::singleton().resetMovementArea();
                     }
                 } else if(xml.name() == "brush_lock") {
                     const auto mag = attributes.value("mag").toInt();
