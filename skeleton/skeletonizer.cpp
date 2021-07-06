@@ -545,7 +545,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                         movementAreaSize = movementAreaMax - movementAreaMin;
                     }
                     if (!treeCmtOnMultiLoad.isEmpty() && movementAreaSize != Dataset::current().boundary) {
-                        QVector<float> verts, emptyNormals;
+                        QVector<float> verts, normals;
                         auto addVert = [&verts](floatCoordinate coord){
                             coord = Dataset::current().scale.componentMul(coord);
                             verts.push_back(coord.x);
@@ -561,11 +561,18 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                             , 7, 3, 6, 7, 1, 3
                             , 7, 4, 2, 7, 2, 1
                         };
-                        for (auto & elem : coords) {
-                            addVert(movementAreaMin + elem.componentMul(movementAreaSize));
+                        for (auto & elem : indices) {
+                            addVert(movementAreaMin + coords[elem].componentMul(movementAreaSize));
+                        }
+                        for (auto normal : {floatCoordinate{0, 0, -1}, {0, -1, 0}, {-1, 0, 0}, {0, 0, 1}, {0, 1, 0}, {1, 0, 0}}) {
+                            for (std::size_t i = 0; i < 6; ++i) {
+                                normals.push_back(normal.x);
+                                normals.push_back(normal.y);
+                                normals.push_back(normal.z);
+                            }
                         }
                         auto & tree = addTree(boost::none, boost::none, {{tr("file"),treeCmtOnMultiLoad}});
-                        addMeshToTree(tree.treeID, verts, emptyNormals, indices, {});
+                        addMeshToTree(tree.treeID, verts, normals, {}, {});
                         addNode(boost::none, movementAreaMin, tree, {{tr("movementAreaMin"),{}}});
                         addNode(boost::none, movementAreaMax, tree, {{tr("movementAreaMax"),{}}});
                         Annotation::singleton().resetMovementArea();
