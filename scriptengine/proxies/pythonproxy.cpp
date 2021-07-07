@@ -75,7 +75,7 @@ QString PythonProxy::get_knossos_revision_date() const {
 }
 
 int PythonProxy::get_cube_edge_length() {
-    return Dataset::current().cubeEdgeLength;
+    return Dataset::current().cubeEdgeLength.x;
 }
 
 QList<int> PythonProxy::get_position() {

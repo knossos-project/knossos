@@ -165,7 +165,7 @@ void Viewport3D::updateVolumeTexture() {
 
     tex_gen_profiler.start(); // ----------------------------------------------------------- profiling
     const auto currentPosDc = state->viewerState->currentPosition.cube(Dataset::current().cubeEdgeLength, Dataset::current().scaleFactor);
-    int cubeLen = Dataset::current().cubeEdgeLength;
+    const auto cubeLen = Dataset::current().cubeEdgeLength;
     int M = state->M;
     int M_radius = (M - 1) / 2;
     GLubyte* colcube = new GLubyte[4*texLen*texLen*texLen];
@@ -190,12 +190,12 @@ void Viewport3D::updateVolumeTexture() {
     for(int z = 0; z < texLen; ++z)
     for(int y = 0; y < texLen; ++y)
     for(int x = 0; x < texLen; ++x) {
-        Coordinate DcCoord{(x * M)/cubeLen, (y * M)/cubeLen, (z * M)/cubeLen};
+        Coordinate DcCoord{(x * M)/cubeLen.x, (y * M)/cubeLen.y, (z * M)/cubeLen.z};
         auto cubeIndex = DcCoord.z*M*M + DcCoord.y*M + DcCoord.x;
         auto& rawcube = rawcubes[cubeIndex];
 
         if(rawcube != nullptr) {
-            auto indexInDc  = ((z * M)%cubeLen)*cubeLen*cubeLen + ((y * M)%cubeLen)*cubeLen + (x * M)%cubeLen;
+            auto indexInDc  = ((z * M)%cubeLen.z)*cubeLen.y*cubeLen.x + ((y * M)%cubeLen.y)*cubeLen.x + (x * M)%cubeLen.x;
             auto indexInTex = z*texLen*texLen + y*texLen + x;
             auto subobjectId = rawcube[indexInDc];
             if(subobjectId == std::get<0>(lastIdColor)) {

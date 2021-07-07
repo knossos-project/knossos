@@ -33,8 +33,8 @@ constexpr bool inRange(const int value, const int min, const int max) {
     return value >= min && value < max;
 }
 
-bool insideCurrentSupercube(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const Coordinate & cubeSize) {
-    const auto halfSupercube = cubeSize * cubesPerDimension / 2;
+bool insideCurrentSupercube(const Coordinate & coord, const Coordinate & center, const Coordinate & cubesPerDimension, const Coordinate & cubeSize) {
+    const auto halfSupercube = cubeSize.componentMul(cubesPerDimension) / 2;
     const int xcube = center.x - center.x % cubeSize.x + cubeSize.x / 2;
     const int ycube = center.y - center.y % cubeSize.y + cubeSize.y / 2;
     const int zcube = center.z - center.z % cubeSize.z + cubeSize.z / 2;
@@ -45,7 +45,11 @@ bool insideCurrentSupercube(const Coordinate & coord, const Coordinate & center,
     return valid;
 }
 
-bool currentlyVisible(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const Coordinate & cubeSize) {
+bool insideCurrentSupercube(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const Coordinate & cubeSize) {
+    return insideCurrentSupercube(coord, center, {cubesPerDimension, cubesPerDimension, cubesPerDimension}, cubeSize);
+}
+
+bool currentlyVisible(const Coordinate & coord, const Coordinate & center, const Coordinate & cubesPerDimension, const Coordinate & cubeSize) {
     const bool valid = insideCurrentSupercube(coord, center, cubesPerDimension, cubeSize);
     const int xmin = std::max(0, std::min(Dataset::current().boundary.x, center.x - center.x % cubeSize.x));
     const int ymin = std::max(0, std::min(Dataset::current().boundary.y, center.y - center.y % cubeSize.y));
@@ -54,6 +58,10 @@ bool currentlyVisible(const Coordinate & coord, const Coordinate & center, const
     const bool yvalid = valid & inRange(coord.y, ymin, ymin + cubeSize.y);
     const bool zvalid = valid & inRange(coord.z, zmin, zmin + cubeSize.z);
     return xvalid || yvalid || zvalid;
+}
+
+bool currentlyVisible(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const Coordinate & cubeSize) {
+    return currentlyVisible(coord, center, {cubesPerDimension, cubesPerDimension, cubesPerDimension}, cubeSize);
 }
 
 int roundFloat(float number) {

@@ -60,7 +60,7 @@ void ViewportArb::updateOverlayTexture() {
         return;
     }
     resliceNecessary[Segmentation::singleton().layerId] = false;
-    const int width = (state->M - 1) * Dataset::current().cubeEdgeLength / std::sqrt(2);
+    const int width = (state->M - 1) * std::max({Dataset::current().cubeEdgeLength.x, Dataset::current().cubeEdgeLength.y, Dataset::current().cubeEdgeLength.z}) / std::sqrt(2);
     const int height = width;
     const auto begin = leftUpperPxInAbsPx_float;
     auto & texData = texture.texData[Segmentation::singleton().layerId];

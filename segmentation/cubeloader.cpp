@@ -45,7 +45,7 @@ std::pair<bool, void *> getRawCube(const Coordinate & pos) {
 
 boost::multi_array_ref<uint64_t, 3> getCubeRef(void * const rawcube) {
     const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
-    const auto dims = boost::extents[cubeEdgeLen][cubeEdgeLen][cubeEdgeLen];
+    const auto dims = boost::extents[cubeEdgeLen.z][cubeEdgeLen.y][cubeEdgeLen.x];
     return boost::multi_array_ref<uint64_t, 3>(reinterpret_cast<uint64_t *>(rawcube), dims);
 }
 
@@ -150,7 +150,7 @@ CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  g
         auto rawcube = getRawCube(globalCubeBegin);
         if (rawcube.first) {
             auto cubeRef = getCubeRef(rawcube.second);
-            const auto globalCubeEnd = globalCubeBegin + Dataset::current().scaleFactor * cubeEdgeLen;
+            const auto globalCubeEnd = globalCubeBegin + Dataset::current().scaleFactor.componentMul(cubeEdgeLen);
             const auto localStart = globalFirst.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeEdgeLen, Dataset::current().scaleFactor);
             const auto localEnd = globalLast.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeEdgeLen, Dataset::current().scaleFactor);
 

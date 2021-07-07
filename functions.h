@@ -25,7 +25,9 @@
 #include "coordinate.h"
 
 constexpr bool inRange(const int value, const int min, const int max);
+bool insideCurrentSupercube(const Coordinate & coord, const Coordinate & center, const Coordinate & cubesPerDimension, const Coordinate & cubeSize);
 bool insideCurrentSupercube(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const Coordinate & cubeSize);
+bool currentlyVisible(const Coordinate & coord, const Coordinate & center, const Coordinate & cubesPerDimension, const Coordinate & cubeSize);
 bool currentlyVisible(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const Coordinate & cubeSize);
 
 class Rotation {

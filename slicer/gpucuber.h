@@ -87,9 +87,9 @@ public:
     TextureLayer(QOpenGLContext & sharectx);
     ~TextureLayer();
     template<typename cube_type, typename elem_type>
-    void createBogusCube(const int cpucubeedge, const int gpucubeedge);
-    void createBogusCube(const int cpucubeedge, const int gpucubeedge);
+    void createBogusCube(const Coordinate & cpucubeedge, const int gpucubeedge);
+    void createBogusCube(const Coordinate & cpucubeedge, const int gpucubeedge);
     template<typename cube_type, typename elem_type>
     void cubeSubArray(const boost::const_multi_array_ref<elem_type, 3> cube, const int gpucubeedge, const CoordOfGPUCube gpuCoord, const Coordinate offset);
-    void cubeSubArray(const void * data, const int cpucubeedge, const int gpucubeedge, const CoordOfGPUCube gpuCoord, const Coordinate offset);
+    void cubeSubArray(const void * data, const Coordinate &  cpucubeedge, const int gpucubeedge, const CoordOfGPUCube gpuCoord, const Coordinate & offset);
 };

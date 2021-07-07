@@ -250,10 +250,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
             const auto tokenList = value.split(",");
             info.boundary = Coordinate(tokenList.at(0).toFloat(), tokenList.at(1).toFloat(), tokenList.at(2).toFloat());
         } else if (token == "_CubeSize") {
-            info.cubeEdgeLength = value.split(",").at(0).toInt();
-            if (value.split(",").at(2).toInt() == 1) {
-                throw std::runtime_error("2D support is not yet integrated here");
-            }
+            info.cubeEdgeLength = {value.split(",").at(0).toInt(), value.split(",").at(1).toInt(), value.split(",").at(2).toInt()};
         } else if (token == "_Color") {
             info.renderSettings.color = QColor{value};
         } else if (token == "_Visible") {
@@ -369,7 +366,7 @@ Dataset::list_t Dataset::fromLegacyConf(const QUrl & configUrl, QString config) 
         } else if (token == "magnification") {
             info.magnification = tokenList.at(1).toInt();
         } else if (token == "cube_edge_length") {
-            info.cubeEdgeLength = tokenList.at(1).toInt();
+            info.cubeEdgeLength = {tokenList.at(1).toInt(), tokenList.at(1).toInt(), tokenList.at(1).toInt()};
         } else if (token == "ftp_mode") {
             auto urltokenList = tokenList;
             urltokenList.pop_front();
@@ -460,12 +457,12 @@ QUrl Dataset::openConnectomeCubeUrl(CoordOfCube coord) const {
     auto path = url.path();
 
     path += (!path.endsWith('/') ? "/" : "") + QString::number(static_cast<std::size_t>(std::log2(magnification)));// >= 0
-    coord.x *= cubeEdgeLength;
-    coord.y *= cubeEdgeLength;
+    coord.x *= cubeEdgeLength.x;
+    coord.y *= cubeEdgeLength.y;
     coord.z += 1;//offset
-    path += "/" + QString("%1,%2").arg(coord.x).arg(coord.x + cubeEdgeLength);
-    path += "/" + QString("%1,%2").arg(coord.y).arg(coord.y + cubeEdgeLength);
-    path += "/" + QString("%1,%2").arg(coord.z).arg(coord.z + cubeEdgeLength);
+    path += "/" + QString("%1,%2").arg(coord.x).arg(coord.x + cubeEdgeLength.x);
+    path += "/" + QString("%1,%2").arg(coord.y).arg(coord.y + cubeEdgeLength.y);
+    path += "/" + QString("%1,%2").arg(coord.z).arg(coord.z + cubeEdgeLength.z);
 
     auto base = url;
     base.setPath(path + "/");
