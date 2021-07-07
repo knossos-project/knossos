@@ -96,6 +96,8 @@ public:
     float screenPxXPerDataPxForZoomFactor(const float zoomFactor) const { return edgeLength / (displayedEdgeLenghtXForZoomFactor(zoomFactor) / texture.texUnitsPerDataPx); }
     virtual float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const;
 
+    void renderArbitrarySlicePane(const RenderOptions & options, float orthoFactor = 1, bool breakFirst = false);
+
 public slots:
     void takeSnapshotDatasetSize(SnapshotOptions o);
     virtual void zoomIn() override { zoom(zoomStep()); }

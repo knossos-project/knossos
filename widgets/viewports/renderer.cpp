@@ -720,37 +720,6 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
                   , center.x, center.y, center.z
                   , v2.x, v2.y, v2.z);// negative up vectors, because origin is at the top
     };
-    auto slice = [&](auto & texture, std::size_t layerId){
-        if (!options.nodePicking) {
-            state->viewer->vpGenerateTexture(*this, layerId);
-            glEnable(GL_TEXTURE_2D);
-            texture.texHandle[layerId].bind();
-            glPushMatrix();
-            glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
-            glBegin(GL_QUADS);
-                glNormal3i(n.x, n.y, n.z);
-                glTexCoord2f(texture.texLUx, texture.texLUy);
-                glVertex3f(-dataPxX * v1.x - dataPxY * v2.x,
-                           -dataPxX * v1.y - dataPxY * v2.y,
-                           -dataPxX * v1.z - dataPxY * v2.z);
-                glTexCoord2f(texture.texRUx, texture.texRUy);
-                glVertex3f( dataPxX * v1.x - dataPxY * v2.x,
-                            dataPxX * v1.y - dataPxY * v2.y,
-                            dataPxX * v1.z - dataPxY * v2.z);
-                glTexCoord2f(texture.texRLx, texture.texRLy);
-                glVertex3f( dataPxX * v1.x + dataPxY * v2.x,
-                            dataPxX * v1.y + dataPxY * v2.y,
-                            dataPxX * v1.z + dataPxY * v2.z);
-                glTexCoord2f(texture.texLLx, texture.texLLy);
-                glVertex3f(-dataPxX * v1.x + dataPxY * v2.x,
-                           -dataPxX * v1.y + dataPxY * v2.y,
-                           -dataPxX * v1.z + dataPxY * v2.z);
-            glEnd();
-            glPopMatrix();
-            texture.texHandle[layerId].release();
-            glDisable(GL_TEXTURE_2D);
-        }
-    };
     glMatrixMode(GL_MODELVIEW);
     view();
     updateFrustumClippingPlanes();
@@ -759,15 +728,9 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     glDisable(GL_DEPTH_TEST);// don’t clip the skeleton
-    // data that’s visible through the skeleton (e.g. halo)
-    for (std::size_t i = 0; i < texture.texHandle.size(); ++i) {
-        const auto ordered_i = state->viewerState->layerOrder[i];
-        const auto & layerSettings = Dataset::datasets[ordered_i].renderSettings;
-        if (!options.nodePicking && layerSettings.visible && !Dataset::datasets[ordered_i].isOverlay()) {
-            glColor4f(layerSettings.color.redF(), layerSettings.color.greenF(), layerSettings.color.blueF(), layerSettings.opacity);
-            slice(texture, ordered_i);// offset to the far clipping plane to avoid clipping the skeleton
-            break;
-        }
+    if (!options.nodePicking) {
+        // data that’s visible through the skeleton (e.g. halo)
+        renderArbitrarySlicePane(options, 1.0, true);
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -784,25 +747,8 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glPopMatrix();
     }
 
-    bool first{true};
-    for (std::size_t i = 0; i < texture.texHandle.size(); ++i) {
-        const auto ordered_i = state->viewerState->layerOrder[i];
-        const auto & layerSettings = Dataset::datasets[ordered_i].renderSettings;
-        if (!options.nodePicking && layerSettings.visible && (options.drawOverlay || !Dataset::datasets[ordered_i].isOverlay())) {
-            if (!Dataset::datasets[ordered_i].isOverlay()) {
-                if (first) {// first raw layer rendered is semi transparent, letting the skeleton show through (blending) in one direction
-                    glColor4f(layerSettings.color.redF(), layerSettings.color.greenF(), layerSettings.color.blueF(), 0.6 * layerSettings.opacity);
-                    first = false;
-                } else {
-                    glColor4f(layerSettings.color.redF() * layerSettings.opacity, layerSettings.color.greenF() * layerSettings.opacity, layerSettings.color.blueF() * layerSettings.opacity, layerSettings.opacity);
-                    glBlendFunc(GL_ONE, GL_ONE);// mix all non overlay channels
-                }
-            } else {
-                glColor4f(layerSettings.color.redF(), layerSettings.color.greenF(), layerSettings.color.blueF(), layerSettings.opacity);
-                glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-            }
-            slice(texture, ordered_i);
-        }
+    if (!options.nodePicking) {
+        renderArbitrarySlicePane(options, 0.6);
     }
 
     glColor4f(1, 1, 1, 1);
@@ -1387,31 +1333,30 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     }
 
     if (options.drawViewportPlanes) { // Draw the slice planes for orientation inside the data stack
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        if (state->viewerState->showVpPlanes) {
+            glPushMatrix();
+            if (state->viewerState->showXYplane && state->viewer->window->viewportXY->isVisible()) {
+                state->viewer->window->viewportXY->renderArbitrarySlicePane(options);
+            }
+            if (state->viewerState->showXZplane && state->viewer->window->viewportXZ->isVisible()) {
+                state->viewer->window->viewportXZ->renderArbitrarySlicePane(options);
+            }
+            if (state->viewerState->showZYplane && state->viewer->window->viewportZY->isVisible()) {
+                state->viewer->window->viewportZY->renderArbitrarySlicePane(options);
+            }
+            if (state->viewerState->showArbplane && state->viewer->window->viewportArb->isVisible()) {
+                state->viewer->window->viewportArb->renderArbitrarySlicePane(options);
+            }
+            glPopMatrix();
+        }
         glPushMatrix();
 
         const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
         glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
-        // raw slice image
-        glEnable(GL_TEXTURE_2D);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glColor4f(1., 1., 1., 1.);
-        if (state->viewerState->showVpPlanes) {
-            if (state->viewerState->showXYplane && state->viewer->window->viewportXY->isVisible()) {
-                renderArbitrarySlicePane(*state->viewer->window->viewportXY, options);
-            }
-            if (state->viewerState->showXZplane && state->viewer->window->viewportXZ->isVisible()) {
-                renderArbitrarySlicePane(*state->viewer->window->viewportXZ, options);
-            }
-            if (state->viewerState->showZYplane && state->viewer->window->viewportZY->isVisible()) {
-                renderArbitrarySlicePane(*state->viewer->window->viewportZY, options);
-            }
-            if (state->viewerState->showArbplane && state->viewer->window->viewportArb->isVisible()) {
-                renderArbitrarySlicePane(*state->viewer->window->viewportArb, options);
-            }
-        }
         // colored slice boundaries
         if (options.vp3dSliceBoundaries) {
-            glDisable(GL_TEXTURE_2D);
             state->viewer->window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
                 if (orthoVP.isVisible()) {
                     const float dataPxX = orthoVP.displayedIsoPx;
@@ -1757,38 +1702,60 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
     glPopMatrix();
 }
 
-void Viewport3D::renderArbitrarySlicePane(ViewportOrtho & vp, const RenderOptions & options) {
-    // Used for calculation of slice pane length inside the 3d view
-    const float dataPxX = vp.displayedIsoPx;
-    const float dataPxY = vp.displayedIsoPx;
+void ViewportOrtho::renderArbitrarySlicePane(const RenderOptions & options, float orthoFactor, bool breakFirst) {
+    bool first{true};
+    for (std::size_t i{0}; i < Dataset::datasets.size(); ++i) {
+        const auto layerId = state->viewerState->layerOrder[i];
+        const auto & layerSettings = Dataset::datasets[layerId].renderSettings;
+        if (layerSettings.visible && (!Dataset::datasets[layerId].isOverlay() || options.drawOverlay)) {
+            state->viewer->vpGenerateTexture(*this, layerId);// update texture before use
+            // raw slice image
+            glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+            if (!Dataset::datasets[layerId].isOverlay()) {
+                if (first) {// first raw layer rendered can be semi transparent with orthoFactor, letting the skeleton show through (blending) in one direction
+                    glColor4f(layerSettings.color.redF(), layerSettings.color.greenF(), layerSettings.color.blueF(), orthoFactor * layerSettings.opacity);
+                    first = false;
+                } else {
+                    glColor4f(layerSettings.color.redF() * layerSettings.opacity, layerSettings.color.greenF() * layerSettings.opacity, layerSettings.color.blueF() * layerSettings.opacity, layerSettings.opacity);
+                    glBlendFunc(GL_ONE, GL_ONE);// mix all non overlay channels
+                }
+            } else {
+                glColor4f(layerSettings.color.redF(), layerSettings.color.greenF(), layerSettings.color.blueF(), layerSettings.opacity);
+            }
 
-    for (std::size_t layerId{0}; layerId < Dataset::datasets.size(); ++layerId) {
-        if (Dataset::datasets[layerId].renderSettings.visible && (!Dataset::datasets[layerId].isOverlay() || options.drawOverlay)) {
-            state->viewer->vpGenerateTexture(vp, layerId);// update texture before use
-            auto & texture = vp.texture;
+            const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
+            const float dataPxX = displayedIsoPx;
+            const float dataPxY = displayedIsoPx;
+            std::vector<floatCoordinate> vertices{
+                isoCurPos - dataPxX * v1 - dataPxY * v2,
+                isoCurPos + dataPxX * v1 - dataPxY * v2,
+                isoCurPos + dataPxX * v1 + dataPxY * v2,
+                isoCurPos - dataPxX * v1 + dataPxY * v2
+            };
+            std::vector<float> texCoordComponents{texture.texLUx, texture.texLUy, texture.texRUx, texture.texRUy, texture.texRLx, texture.texRLy, texture.texLLx, texture.texLLy};
+
+            glEnable(GL_TEXTURE_2D);
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
             texture.texHandle[layerId].bind();
-            glBegin(GL_QUADS);
-                glNormal3i(vp.n.x, vp.n.y, vp.n.z);
-                glTexCoord2f(texture.texLUx, texture.texLUy);
-                glVertex3f(-dataPxX * vp.v1.x - dataPxY * vp.v2.x,
-                           -dataPxX * vp.v1.y - dataPxY * vp.v2.y,
-                           -dataPxX * vp.v1.z - dataPxY * vp.v2.z);
-                glTexCoord2f(texture.texRUx, texture.texRUy);
-                glVertex3f( dataPxX * vp.v1.x - dataPxY * vp.v2.x,
-                            dataPxX * vp.v1.y - dataPxY * vp.v2.y,
-                            dataPxX * vp.v1.z - dataPxY * vp.v2.z);
-                glTexCoord2f(texture.texRLx, texture.texRLy);
-                glVertex3f( dataPxX * vp.v1.x + dataPxY * vp.v2.x,
-                            dataPxX * vp.v1.y + dataPxY * vp.v2.y,
-                            dataPxX * vp.v1.z + dataPxY * vp.v2.z);
-                glTexCoord2f(texture.texLLx, texture.texLLy);
-                glVertex3f(-dataPxX * vp.v1.x + dataPxY * vp.v2.x,
-                           -dataPxX * vp.v1.y + dataPxY * vp.v2.y,
-                           -dataPxX * vp.v1.z + dataPxY * vp.v2.z);
-            glEnd();
+            glVertexPointer(3, GL_FLOAT, 0, vertices.data());
+            glTexCoordPointer(2, GL_FLOAT, 0, texCoordComponents.data());
+
+            glDrawArrays(GL_QUADS, 0, 4);
+
             texture.texHandle[layerId].release();
+
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+            glDisableClientState(GL_VERTEX_ARRAY);
+            glDisable(GL_TEXTURE_2D);
+
+            if (breakFirst) {
+                break;
+            }
         }
     }
+    glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 boost::optional<nodeListElement &> ViewportBase::pickNode(int x, int y, int width) {
