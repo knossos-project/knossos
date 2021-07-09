@@ -220,7 +220,8 @@ public:
 
     ViewportOrtho *viewportXY, *viewportXZ, *viewportZY;
     ViewportArb *viewportArb;
-    void zoom(const float factor);
+    void zoomRelative(const float factor);
+    void zoom(const float newScreenPxXPerDataPx);
     void zoomReset();
     QTimer timer;
 
@@ -244,7 +245,7 @@ signals:
     void meshSlicingAlphaFactorChanged(float);
 public slots:
     void updateCurrentPosition();
-    bool updateDatasetMag(const int mag = 0);
+    bool updateDatasetMag(const std::size_t layerId, const boost::optional<std::size_t> mag = boost::none);
     void setPosition(const floatCoordinate & pos, UserMoveType userMoveType = USERMOVE_NEUTRAL, const Coordinate & viewportNormal = {0, 0, 0});
     void setPositionWithRecentering(const Coordinate &pos);
     void setPositionWithRecenteringAndRotation(const Coordinate &pos);
@@ -269,11 +270,9 @@ public slots:
     void reslice_notify_all(const std::size_t layerId, boost::optional<CoordOfCube> globalCoord = boost::none);
     void segmentation_changed();
     void setMovementAreaFactor(float alpha);
-    int highestMag();
-    int lowestMag();
-    float highestScreenPxXPerDataPx(const bool ofCurrentMag = true);
-    float lowestScreenPxXPerDataPx(const bool ofCurrentMag = true);
-    int calcMag(const float screenPxXPerDataPx);
+    double highestScreenPxXPerDataPx();
+    double lowestScreenPxXPerDataPx();
+    std::size_t calcMag(const std::size_t layerId, const float screenPxXPerDataPx);
     void setMagnificationLock(const bool locked);
     void setLayerVisibility(const int index, const bool enabled);
     void setMesh3dAlphaFactor(const float alpha);

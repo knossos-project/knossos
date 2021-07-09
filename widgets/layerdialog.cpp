@@ -51,7 +51,7 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
             case 1: return QString::number(layerSettings.opacity * 100.0f) + (role == Qt::EditRole ? "" : "%");
             case 2: return data.compressionString();
             case 3: return data.apiString();
-            case 4: return data.magnification;
+            case 4: return QString("mag%1").arg(data.toMag(data.magIndex));
             case 5: return data.cubeEdgeLength;
             case 6: return data.experimentname;
             case 7: return data.description;
@@ -355,7 +355,11 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         }
     });
 
-    QObject::connect(state->viewer, &Viewer::layerRenderSettingsChanged, this, &LayerDialogWidget::updateLayerProperties);
+    QObject::connect(state->viewer, &Viewer::layerRenderSettingsChanged, [this](){
+        if (const auto & currentIndex = treeView.selectionModel()->currentIndex(); currentIndex.isValid()) {
+            emit itemModel.dataChanged(currentIndex.siblingAtColumn(0), currentIndex.siblingAtColumn(itemModel.columnCount()-1));
+        }
+    });
 
     QObject::connect(treeView.selectionModel(), &QItemSelectionModel::selectionChanged, this, &LayerDialogWidget::updateLayerProperties);
     QObject::connect(&itemModel, &QAbstractItemModel::dataChanged, this, &LayerDialogWidget::updateLayerProperties);
