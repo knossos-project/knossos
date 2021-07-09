@@ -161,8 +161,14 @@ if(PythonQt_QtAll)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-    message(STATUS "using gold linker")
-    set(LINUXLINKER -fuse-ld=gold)
+    find_program(LLD lld)
+    if(LLD)
+        message(STATUS "using LLVM linker")
+        set(LINUXLINKER -fuse-ld=lld)
+    else()
+        message(STATUS "using gold linker")
+        set(LINUXLINKER -fuse-ld=gold)
+    endif()
 endif()
 
 target_link_libraries(${PROJECT_NAME}
@@ -181,7 +187,7 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 find_program(LSBRELEASE lsb_release)
-if(NOT ${LSBRELEASE} STREQUAL "LSBRELASE-NOTFOUND")
+if(LSBRELEASE)
     execute_process(COMMAND ${LSBRELEASE} -is
         OUTPUT_VARIABLE LSB_OUTPUT
         OUTPUT_STRIP_TRAILING_WHITESPACE
