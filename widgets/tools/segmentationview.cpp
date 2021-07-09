@@ -374,6 +374,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     });
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRowSelection, [this](int index){
         if (scope s{objectSelectionProtection}) {
+            QSignalBlocker blocker{objectsTable.selectionModel()};
             const auto & proxyIndex = objectProxyModelComment.mapFromSource(objectProxyModelCategory.mapFromSource(objectModel.index(index, 0)));
             //selection lookup is way cheaper than reselection (sadly)
             const bool alreadySelected = objectsTable.selectionModel()->isSelected(proxyIndex);

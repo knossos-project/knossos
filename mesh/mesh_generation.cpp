@@ -222,6 +222,7 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
 
     progress.setLabelText(progress.labelText() + QObject::tr("\nFinalizing …"));
     progress.setRange(0, 1000);
+    progress.setModal(true);
     double value{0};
 
     std::unordered_map<std::uint64_t, QVector<float>> obj2verts;

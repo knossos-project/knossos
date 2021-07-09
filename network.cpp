@@ -86,6 +86,7 @@ std::pair<int, int> Network::checkOnlineMags(const QUrl & url) {
                 lowestAvailableMagIndex = std::min(lowestAvailableMagIndex, currMagIndex);
                 highestAvailableMagIndex = std::max(highestAvailableMagIndex, currMagIndex);
             }
+            emit Network::singleton().finishedNetworkRequest();
             if (--downloadCounter == 0) {// exit event loop after last download finished
                 qDebug() << reply.errorString() << reply.readAll();
                 pause.exit();
@@ -106,7 +107,6 @@ std::pair<int, int> Network::checkOnlineMags(const QUrl & url) {
     state->viewer->suspend([&pause](){
         return pause.exec();
     });
-    emit Network::singleton().finishedNetworkRequest();
 
     if (lowestAvailableMagIndex > highestAvailableMagIndex) {
         throw std::runtime_error{"no mags detected"};

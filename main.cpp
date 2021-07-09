@@ -159,6 +159,10 @@ int main(int argc, char *argv[]) {
     qDebug() << QDateTime::currentDateTimeUtc().toString(Qt::ISODate).toUtf8().constData();
     qDebug() << KREVISION << " " << KREVISIONDATE;
 
+    qDebug() << "QSslSocket::supportsSsl" << QSslSocket::supportsSsl();
+    qDebug() << "QSslSocket::sslLibraryBuildVersionString" << QSslSocket::sslLibraryBuildVersionString();
+    qDebug() << "QSslSocket::sslLibraryVersionNumber" << QSslSocket::sslLibraryVersionNumber();
+
     stateInfo state;
     ::state = &state;
 

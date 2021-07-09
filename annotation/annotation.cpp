@@ -53,7 +53,7 @@ Annotation::Annotation() : annotationMode(AnnotationMode::Mode_Tracing) {
 
     autoSaveTimer.setTimerType(Qt::PreciseTimer);
     QObject::connect(&autoSaveTimer, &QTimer::timeout, [this]() {
-       if(unsavedChanges) {
+       if (unsavedChanges && !Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Selection)) {
            emit autoSaveSignal();
        }
     });

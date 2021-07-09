@@ -143,6 +143,8 @@ Segmentation::Object & Segmentation::createObject(Args &&... args) {
     return objects.back();
 }
 
+template Segmentation::Object & Segmentation::createObject();
+
 void Segmentation::removeObject(Object & object) {
     unselectObject(object);
     for (auto & elem : object.subobjects) {
@@ -168,6 +170,8 @@ void Segmentation::removeObject(Object & object) {
         emit changedRow(object.index);//object now references the former end
         emit changedRowSelection(object.index);//object now references the former end
         emit changedRowSelection(objects.back().index);//object now references the former end
+    } else {
+        selectedObjectIndices.erase(objects.back().index);
     }
     emit beforeRemoveRow();
     //the last element is the one which gets removed
@@ -478,6 +482,7 @@ std::vector<std::reference_wrapper<Segmentation::Object>> Segmentation::todolist
 void Segmentation::unmergeObject(Segmentation::Object & object, Segmentation::Object & other, const Coordinate & position) {
     decltype(object.subobjects) tmp;
     std::set_difference(std::begin(object.subobjects), std::end(object.subobjects), std::begin(other.subobjects), std::end(other.subobjects), std::back_inserter(tmp));
+    unselectObject(other);
     if (!tmp.empty()) {//only unmerge if subobjects remain
         auto otherId = other.id;
         if (object.immutable) {
@@ -679,10 +684,18 @@ void Segmentation::deleteSelectedObjects() {
     emit resetData();
 }
 
+#include <iostream>
+
 void Segmentation::mergeSelectedObjects() {
+    for (const auto & elem : selectedObjectIndices) {
+        std::cout << elem << ' ';
+    }
     while (selectedObjectIndices.size() > 1) {
         auto & firstObj = objects[selectedObjectIndices.front()];//front is the merge origin
         auto & secondObj = objects[selectedObjectIndices.back()];
+        const auto oid0 = firstObj.id;
+        const auto oid1 = secondObj.id;
+//        qDebug() << "merge" << oid0 << oid1;
         //objects are no longer selected when they got merged
         auto flat_deselect = [this](Object & object){
             object.selected = false;
@@ -722,17 +735,16 @@ void Segmentation::mergeSelectedObjects() {
             removeObject(secondObj);
         }
         emit todosLeftChanged();
-        emit merged(firstObj.id, secondObj.id);
+        emit merged(oid0, oid1);
     }
 }
 
 void Segmentation::unmergeSelectedObjects(const Coordinate & clickPos) {
     if (selectedObjectIndices.size() == 1) {
-        deleteSelectedObjects();
+//        deleteSelectedObjects();
     } else while (selectedObjectIndices.size() > 1) {
         auto & objectToUnmerge = objects[selectedObjectIndices.back()];
         unmergeObject(objects[selectedObjectIndices.front()], objectToUnmerge, clickPos);
-        unselectObject(objectToUnmerge);
         objectToUnmerge.todo = true;
     }
     emit todosLeftChanged();

@@ -17,7 +17,7 @@ DEBUG_FLAGS=-DCMAKE_CXX_FLAGS="-g -fno-omit-frame-pointer"
 # https://gitlab.kitware.com/cmake/cmake/-/issues/22299
 test -f /mingw64/share/cmake-3.20/Modules/ExternalProject-gitupdate.cmake.in && 
 	sed  -i 's/\^{commit}/\^0/' /mingw64/share/cmake-3.20/Modules/ExternalProject-gitupdate.cmake.in
-time cmake -G Ninja -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=RELEASE "${DEBUG_FLAGS}" ${PROJECTPATH}
+time cmake -G Ninja -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=RELEASE "${DEBUG_FLAGS}" -DOPENSSL_ROOT_DIR=/mingw64 ${PROJECTPATH}
 
 # Build
 time ninja

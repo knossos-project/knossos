@@ -22,6 +22,7 @@
 
 #include "annotation/annotation.h"
 #include "annotation/file_io.h"
+#include "brainmaps.h"
 #include "buildinfo.h"
 #include "GuiConstants.h"
 #include "gui_wrapper.h"
@@ -154,19 +155,20 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     networkProgressAbortButton.setToolTip("Abort network operation");
     cursorPositionLabel.setVisible(false);
     QObject::connect(&Network::singleton(), &Network::startedNetworkRequest, [this](QNetworkReply &
-                 #ifndef Q_OS_UNIX
+//                 #ifndef Q_OS_UNIX
                      reply
-                 #endif
+//                 #endif
                      ) {
         networkProgressBar.setVisible(true);
-    #ifndef Q_OS_UNIX // On Unix QNetworkReply::abort() crashes…
+        ++networkRequestCounter;
+//    #ifndef Q_OS_UNIX // On Unix QNetworkReply::abort() crashes…
         networkProgressAbortButton.setVisible(true);
         QObject::connect(&networkProgressAbortButton, &QPushButton::clicked, &reply, &QNetworkReply::abort);
-    #endif
+//    #endif
     });
     QObject::connect(&Network::singleton(), &Network::finishedNetworkRequest, [this]() {
         networkProgressBar.setValue(0);// prevent (visible) resets when a new max is set
-        networkProgressBar.setHidden(true);
+        networkProgressBar.setHidden(--networkRequestCounter == 0);
         networkProgressAbortButton.setHidden(true);
     });
     QObject::connect(&Network::singleton(), &Network::progressChanged, [this](int bytesFinished, int bytesTotal) {
@@ -176,6 +178,14 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     statusBar()->addWidget(&networkProgressBar);
     networkProgressBar.setMaximumWidth(networkProgressBar.sizeHint().width());
     statusBar()->addWidget(&networkProgressAbortButton);
+    statusBar()->addWidget(&meshDownloadProgressBar);
+    statusBar()->addWidget(&meshAddProgressBar);
+    for (auto * const meshProgressBar : {&meshDownloadProgressBar, &meshAddProgressBar}) {
+        meshProgressBar->setMaximumWidth(meshProgressBar->sizeHint().width());
+        meshProgressBar->setMaximum(0);
+        meshProgressBar->setValue(0);
+        meshProgressBar->hide();
+    }
     statusBar()->addWidget(&cursorPositionLabel);
 
     activityAnimation.addAnimation(new QPropertyAnimation(&activityLabel, "minimumHeight"));
@@ -226,6 +236,16 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         }
 
     });
+
+    createGlobalAction(state->mainWindow, Qt::Key_F9, []() {
+        splitMe();
+        emit state->viewer->segmentation_changed();
+    });
+    createGlobalAction(state->mainWindow, Qt::Key_F10, [] () {
+        splitMe2();
+        emit state->viewer->segmentation_changed();
+    });
+    createGlobalAction(state->mainWindow, Qt::SHIFT | Qt::Key_F10, &splitHightlightToSelection);
 
     addDockWidget(Qt::RightDockWidgetArea, &cheatsheet);
     QObject::connect(&cheatsheet, &Cheatsheet::anchorClicked, [this](const QUrl & link) {
@@ -369,12 +389,9 @@ void MainWindow::createToolbars() {
     defaultToolbar.addWidget(resetVPsButton);
     QObject::connect(resetVPsButton, &QPushButton::clicked, this, &MainWindow::resetViewports);
 
-    defaultToolbar.addWidget(new QLabel(" Loader pending: "));
-    loaderProgress = new QLabel();
-    defaultToolbar.addWidget(loaderProgress);
+    defaultToolbar.addWidget(&loaderProgress);
     loaderLastProgress = 0;
-    loaderProgress->setFixedWidth(25);
-    loaderProgress->setAlignment(Qt::AlignCenter);
+    loaderProgress.setAlignment(Qt::AlignCenter);
     QObject::connect(&Loader::Controller::singleton(), &Loader::Controller::progress, this, &MainWindow::updateLoaderProgress);
 
     // segmentation task mode toolbar
@@ -396,7 +413,7 @@ void MainWindow::createToolbars() {
 }
 
 void MainWindow::resetWorkModes() {
-    const auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
+    auto currentMode = workModeModel.at(modeCombo.currentIndex()).first;
     std::map<AnnotationMode, QString> rawModes = workModes;
     AnnotationMode defaultMode = AnnotationMode::Mode_Tracing;
     if (!Segmentation::singleton().enabled) {
@@ -405,21 +422,31 @@ void MainWindow::resetWorkModes() {
         rawModes = {{AnnotationMode::Mode_Merge, workModes[AnnotationMode::Mode_Merge]}, {AnnotationMode::Mode_Paint, workModes[AnnotationMode::Mode_Paint]}};
         defaultMode = AnnotationMode::Mode_Merge;
     }
+    if (std::any_of(std::cbegin(Dataset::datasets), std::cend(Dataset::datasets), [](const auto & layer){
+                return layer.api == Dataset::API::GoogleBrainmaps;
+            })) {
+        currentMode = AnnotationMode::Mode_Brainmaps;
+    } else {
+        rawModes.erase(AnnotationMode::Mode_Brainmaps);
+    }
     workModeModel.recreate(rawModes);
     setWorkMode((rawModes.find(currentMode) != std::end(rawModes))? currentMode : defaultMode);
 }
 
-void MainWindow::updateLoaderProgress(int refCount) {
-    if ((refCount % 5 > 0) && (loaderLastProgress > 0)) {
+void MainWindow::updateLoaderProgress(int refCount, int failed) {
+    if (refCount > 5 && (refCount % 5 > 0) && loaderLastProgress > 0) {
         return;
     }
     loaderLastProgress = refCount;
     QPalette pal;
     pal.setColor(QPalette::WindowText, Qt::black);
-    pal.setColor(loaderProgress->backgroundRole(), QColor(refCount > 0 ? Qt::red : Qt::green).lighter());
-    loaderProgress->setAutoFillBackground(true);
-    loaderProgress->setPalette(pal);
-    loaderProgress->setText(QString::number(refCount));
+    pal.setColor(loaderProgress.backgroundRole(), QColor(failed > 0  ? Qt::red : refCount > 0 ? Qt::yellow : Qt::green).lighter());
+    loaderProgress.setAutoFillBackground(true);
+    loaderProgress.setPalette(pal);
+    auto txt = " " + QString::number(refCount);
+    txt += failed <= 0 ? " " : QObject::tr("+%1 ").arg(failed);
+    loaderProgress.setText(txt);
+    loaderProgress.setToolTip(failed > 0  ? "Errors" : refCount > 0 ? "In Progress" : "Done");
 }
 
 void MainWindow::setProofReadingUI(const bool on) {
@@ -512,6 +539,7 @@ void MainWindow::updateTitlebar() {
     }
     unsavedChangesLabel.setToolTip("");
     title.append("[*]");// setWindowModified needs this
+    Annotation::singleton().unsavedChanges *= !Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Selection);
     setWindowModified(session.unsavedChanges);
     if (session.unsavedChanges) {
         auto autosave = tr("<font color='#FF573E'>(autosave: off)</font>");
@@ -647,7 +675,16 @@ void MainWindow::createMenus() {
         []() { Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() + 0.5 * Dataset::current().scales[0].x); }, Qt::SHIFT + Qt::Key_Plus);
     shrinkBrushAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Decrease Brush Size (Shift + Scroll)"), &Segmentation::singleton(),
         []() { Segmentation::singleton().brush.setRadius(Segmentation::singleton().brush.getRadius() - 0.5 * Dataset::current().scales[0].x); }, Qt::SHIFT + Qt::Key_Minus);
-
+    bmUndoAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Undo merge or split"), this, [&]() {
+        if (bmUndoable()) {
+            activityLabel.setText(tr("Undo"));
+            activityLabel.setVisible(true);
+            activityAnimation.setDirection(QAbstractAnimation::Forward);
+            activityAnimation.start();
+            bmundo();
+        }
+    }, Qt::CTRL + Qt::Key_Z);
+    bmUndoAction->setVisible(false);
     actionMenu.addSeparator();
     clearMergelistAction = actionMenu.addAction(QIcon(":/resources/icons/menubar/trash.png"), "Clear Merge List", &Segmentation::singleton(), &Segmentation::clear);
     //proof reading mode
@@ -661,9 +698,21 @@ void MainWindow::createMenus() {
 
     addApplicationShortcut(*viewMenu, QIcon(), tr("Jump to Active Node"), &Skeletonizer::singleton(), [this]() {
         boost::optional<floatCoordinate> pos;
-        auto meshPriority = !state->skeletonState->jumpToSkeletonNext || !state->skeletonState->activeNode;
+        const auto meshPriority = !state->skeletonState->jumpToSkeletonNext || !state->skeletonState->activeNode;
         const auto * const activeTree = Skeletonizer::singleton().skeletonState.activeTree;
-        if (meshPriority) {
+        if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps)) {
+            if (state->skeletonState->activeNode != nullptr && state->skeletonState->activeNode->isBranchNode) {
+                if (!state->skeletonState->activeNode->correspondingTree->selected) {
+                    retrieveMeshes(state->skeletonState->activeNode->correspondingTree->treeID);
+                    return;
+                }
+            }
+            if (state->skeletonState->meshLastClickInformation) {
+                pos = state->skeletonState->meshLastClickInformation.get().coord;
+            } else {// don’t jump to nodes
+                return;
+            }
+        } else if (meshPriority) {
             if (state->skeletonState->meshLastClickInformation && activeTree && state->skeletonState->meshLastClickInformation.get().treeId == activeTree->treeID) {
                 pos = state->skeletonState->meshLastClickInformation.get().coord;
             } else if (activeTree && activeTree->mesh && activeTree->mesh->position_buf.bind() && (activeTree->mesh->position_buf.size() > static_cast<int>(3 * sizeof(float)))) {
@@ -1038,10 +1087,13 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
     }
     modeCombo.setCurrentIndex(workModeModel.indexOf(workMode));
     auto & mode = Annotation::singleton().annotationMode;
+    if (mode.testFlag(AnnotationMode::Mode_Brainmaps) || workMode == AnnotationMode::Mode_Brainmaps) {
+        state->viewer->reslice_notify();// update vps for toggle off forced render only selected objects
+    }
     mode = workMode;
     const bool trees = mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
     const bool skeleton = mode.testFlag(AnnotationMode::Mode_Tracing) || mode.testFlag(AnnotationMode::Mode_TracingAdvanced) || mode.testFlag(AnnotationMode::Mode_MergeTracing);
-    const bool segmentation = mode.testFlag(AnnotationMode::Mode_Paint) || mode.testFlag(AnnotationMode::Mode_OverPaint) || mode.testFlag(AnnotationMode::Mode_Merge) || mode.testFlag(AnnotationMode::Mode_MergeSimple) || mode.testFlag(AnnotationMode::Mode_MergeTracing) || mode.testFlag(AnnotationMode::Mode_Selection);
+    const bool segmentation = mode.testFlag(AnnotationMode::Mode_Paint) || mode.testFlag(AnnotationMode::Mode_OverPaint) || mode.testFlag(AnnotationMode::Mode_Merge) || mode.testFlag(AnnotationMode::Mode_MergeSimple) || mode.testFlag(AnnotationMode::Mode_MergeTracing) || mode.testFlag(AnnotationMode::Mode_Selection) || mode.testFlag(AnnotationMode::Mode_Brainmaps);
     toggleSegmentsAction->setVisible(mode.testFlag(AnnotationMode::Mode_TracingAdvanced));
     segmentStateLabel.setVisible(mode.testFlag(AnnotationMode::Mode_TracingAdvanced));
     if (mode.testFlag(AnnotationMode::Mode_TracingAdvanced)) {
@@ -1052,7 +1104,7 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
     newTreeAction->setVisible(trees);
     newObjectAction->setVisible(mode.testFlag(AnnotationMode::Mode_Paint) || mode.testFlag(AnnotationMode::Mode_OverPaint));
     pushBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
-    popBranchAction->setVisible(mode.testFlag(AnnotationMode::NodeEditing));
+    popBranchAction->setVisible(mode.testFlag(AnnotationMode::BranchPointPop));
     createSynapse->setVisible(mode.testFlag(AnnotationMode::Mode_TracingAdvanced));
     swapSynapticNodes->setVisible((mode.testFlag(AnnotationMode::Mode_TracingAdvanced)));
     clearSkeletonAction->setVisible(skeleton && !mode.testFlag(AnnotationMode::Mode_MergeTracing));
@@ -1061,7 +1113,7 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
     enlargeBrushAction->setVisible(mode.testFlag(AnnotationMode::Brush));
     shrinkBrushAction->setVisible(mode.testFlag(AnnotationMode::Brush));
     clearMergelistAction->setVisible(segmentation && !mode.testFlag(AnnotationMode::Mode_MergeTracing));
-
+    bmUndoAction->setVisible(mode.testFlag(Mode_Brainmaps));
     if (mode.testFlag(AnnotationMode::Mode_MergeTracing) && state->skeletonState->activeNode != nullptr) {// sync subobject and node selection
         Skeletonizer::singleton().selectObjectForNode(*state->skeletonState->activeNode);
     }
@@ -1404,11 +1456,25 @@ void MainWindow::newTreeSlot() {
         Skeletonizer::singleton().continueSynapse(); //finish synaptic cleft
         state->viewer->window->toggleSynapseState(); //update statusbar
     }
-    Skeletonizer::singleton().addTree();
+    Skeletonizer::singleton().addTreeAndActivate();
 }
 
 void MainWindow::pushBranchNodeSlot() {
-    if(state->skeletonState->activeNode) {
+    if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps)) {
+        forEachOrthoVPDo([](ViewportOrtho & vp){
+            if (vp.hasCursor) {
+                const auto cursorPos = vp.mapFromGlobal(QCursor::pos());
+                const auto & globalCoord = getCoordinateFromOrthogonalClick(cursorPos, vp);
+                brainmapsBranchPoint(vp.pickNode(cursorPos.x(), cursorPos.y(), 20 * vp.screenPxXPerDataPx), readVoxel(globalCoord), globalCoord);
+            }
+        });
+        if (viewport3D->hasCursor) {
+            const auto cursorPos = viewport3D->mapFromGlobal(QCursor::pos());
+            if (auto pick = viewport3D->pickMesh(cursorPos)) {
+                brainmapsBranchPoint(viewport3D->pickNode(cursorPos.x(), cursorPos.y(), 10), pick->treeId, pick->coord);
+            }
+        }
+    } else if (state->skeletonState->activeNode) {
         Skeletonizer::singleton().pushBranchNode(*state->skeletonState->activeNode);
     }
 }

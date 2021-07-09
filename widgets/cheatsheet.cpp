@@ -16,6 +16,7 @@ void Cheatsheet::load(const AnnotationMode mode) {
                    (mode == AnnotationMode::Mode_OverPaint) ? "overpaintmode" :
                    (mode == AnnotationMode::Mode_Tracing) ? "tracingmode" :
                    (mode == AnnotationMode::Mode_TracingAdvanced) ? "tracingadvancedmode" :
+                   (mode == AnnotationMode::Mode_Brainmaps) ? "brainmapsmode" :
                    /*mode == AnnotationMode::Mode_Selection:*/ "reviewmode"));
     file.open(QFile::ReadOnly);
     QString page(file.readAll());

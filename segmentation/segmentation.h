@@ -56,6 +56,15 @@ Q_OBJECT
     friend class SegmentationView;
     friend class SegmentationProxy;
 
+
+    friend void fetchDCFragments(const struct Dataset &, const std::uint64_t);
+    template<bool>
+    friend void fetchFragmentsSwitch(const struct Dataset &, const std::uint64_t, class QElapsedTimer &, const int);
+    friend void retrieveMeshes();
+
+    friend class MainWindow;
+    friend class ViewportOrtho;
+
     class Object;
     class SubObject {
         friend void connectedComponent(const Coordinate & seed);
@@ -111,7 +120,7 @@ Q_OBJECT
         QString comment;
         bool selected = false;
 
-        explicit Object(std::vector<std::reference_wrapper<SubObject>> initialVolumes, const Coordinate & location, const uint64_t id = ++highestId, const bool & todo = false, const bool & immutable = false);
+        explicit Object(std::vector<std::reference_wrapper<SubObject>> initialVolumes = {}, const Coordinate & location = {}, const uint64_t id = ++highestId, const bool & todo = false, const bool & immutable = false);
         explicit Object(Object & first, Object & second);
         bool operator==(const Object & other) const;
         void addExistingSubObject(SubObject & sub);
@@ -124,12 +133,18 @@ Q_OBJECT
     hash_list<uint64_t> selectedObjectIndices;
     const QSet<QString> prefixed_categories = {"", "ecs", "mito", "myelin", "neuron", "synapse"};
     QSet<QString> categories = prefixed_categories;
+public:
     uint64_t backgroundId = 0;
+private:
     uint64_t hovered_subobject_id = 0;
     // Selection via subobjects touches all objects containing the subobject.
     uint64_t touched_subobject_id = 0;
     // For segmentation job mode
     uint64_t lastTodoObject_id = 0;
+public:
+    std::uint64_t srcSvx;// brainmaps merge/split
+    bool bmRenderOnlySelectedObjs{true};
+private:
 
     // This array holds the table for overlay coloring.
     // The colors should be "maximally different".
@@ -189,6 +204,7 @@ public:
     color_t colorOfSelectedObject() const;
     color_t colorOfSelectedObject(const SubObject & subobject) const;
     color_t colorObjectFromSubobjectId(const uint64_t subObjectID) const;
+    color_t brainmapsColor(const std::uint64_t subobjectId, const bool selected) const;
     //volume rendering
     bool volume_render_toggle = false;
     std::atomic_bool volume_update_required{false};

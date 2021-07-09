@@ -10,7 +10,7 @@ QUAZIP_VERSION=$(brew list --versions quazip | tr " " "\n" | tail -1)
 cd ${APPVEYOR_BUILD_FOLDER} && cd ..
 # Build KNOSSOS
 mkdir knossos-build && cd knossos-build
-time cmake -G Ninja ../knossos -Dpythonqt=Qt5Python${PYTHON_MAJOR}${PYTHON_MINOR} -DCMAKE_PREFIX_PATH=/usr/local/opt/qt@5/
+time cmake -G Ninja ../knossos -Dpythonqt=Qt5Python${PYTHON_MAJOR}${PYTHON_MINOR} -DCMAKE_PREFIX_PATH=/usr/local/opt/qt@5/ -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl
 time ninja
 
 # OS X housekeeping

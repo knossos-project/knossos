@@ -27,6 +27,7 @@
 #include <QOpenGLTexture>
 
 #include <QColor>
+#include <QJsonDocument>
 #include <QNetworkRequest>
 #include <QString>
 #include <QUrl>
@@ -39,7 +40,7 @@ struct Dataset {
         Heidelbrain, WebKnossos, GoogleBrainmaps, PyKnossos, OpenConnectome
     };
     enum class CubeType {
-        RAW_UNCOMPRESSED, RAW_JPG, RAW_J2K, RAW_JP2_6, RAW_PNG, SEGMENTATION_UNCOMPRESSED_16, SEGMENTATION_UNCOMPRESSED_64, SEGMENTATION_SZ_ZIP, SNAPPY
+        RAW_UNCOMPRESSED, RAW_JPG, RAW_J2K, RAW_JP2_6, RAW_PNG, SEGMENTATION_UNCOMPRESSED_16, SEGMENTATION_UNCOMPRESSED_64, SEGMENTATION_SZ, SEGMENTATION_SZ_ZIP, SNAPPY
     };
     QString compressionString() const;
     QString apiString() const;
@@ -51,7 +52,6 @@ struct Dataset {
     static bool isWebKnossos(const QUrl & url);
 
     static list_t parse(const QUrl & url, const QString &data, bool add_snappy);
-    static list_t parseGoogleJson(const QUrl & infoUrl, const QString & json_raw);
     static list_t parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw);
     static list_t parsePyKnossosConf(const QUrl & configUrl, QString config);
     static list_t parseWebKnossosJson(const QUrl &infoUrl, const QString & json_raw);
@@ -97,6 +97,12 @@ struct Dataset {
     QString fileextension;
     QUrl url;
     QString token;
+    bool useAlternativebrainmapsChangeServer{false};
+    QUrl brainmapsChangeServer;
+    QString brainmapsChangeStack;
+    QString brainmapsMeshKey{"simp"};
+    QJsonDocument brainmapsSacc;
+    std::size_t brainmapsMagSkip;
     bool allocationEnabled{true};
     bool loadingEnabled{true};
 
