@@ -42,6 +42,7 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     rangeDeltaSlider.setRange(1, 255);
     rangeDeltaSpinBox.setRange(1, 255);
 
+    createPaintObjectCheck.setToolTip(tr("If there is no Object selected, \nautomatically create a fresh Object \nwhose Subobject ID is used for painting."));
     overlayGroup.setCheckable(true);
     segmentationOverlaySpinBox.setRange(0, 255);
     segmentationOverlaySlider.setRange(0, 255);
@@ -74,6 +75,7 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     volumeLayout.addWidget(&volumeColorLabel, ++row, 0); volumeLayout.addWidget(&volumeColorButton, row, 1, Qt::AlignLeft);
     volumeGroup.setLayout(&volumeLayout);
 
+    segmentationLayout.addWidget(&createPaintObjectCheck);
     segmentationLayout.addWidget(&overlayGroup);
     segmentationLayout.addWidget(&volumeGroup);
     segmentationLayout.setAlignment(Qt::AlignTop);
@@ -114,6 +116,9 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
         state->viewer->datasetColorAdjustmentsChanged();
     });
 
+    QObject::connect(&createPaintObjectCheck, &QCheckBox::toggled, [](bool state){
+        Segmentation::singleton().createPaintObject = state;
+    });
     QObject::connect(state->viewer, &Viewer::layerVisibilityChanged, [this](const int index) {
         if (index == 1) {
             overlayGroup.setChecked(Dataset::datasets.at(1).renderSettings.visible);
@@ -195,6 +200,7 @@ void DatasetAndSegmentationTab::saveSettings() const {
     settings.setValue(DATASET_LINEAR_FILTERING, datasetLinearFilteringCheckBox.isChecked());
     settings.setValue(BIAS, biasSpinBox.value());
     settings.setValue(RANGE_DELTA, rangeDeltaSpinBox.value());
+    settings.setValue(SEGMENTATION_CREATE_PAINT_OBJECT, createPaintObjectCheck.isChecked());
     settings.setValue(SEGMENTATION_OVERLAY_ALPHA, segmentationOverlaySlider.value());
     settings.setValue(SEGMENTATITION_HIGHLIGHT_BORDER, segmentationBorderHighlight.isChecked());
     settings.setValue(DATASET_LUT_FILE, lutFilePath);
@@ -216,6 +222,7 @@ void DatasetAndSegmentationTab::loadSettings() {
     biasSpinBox.valueChanged(biasSpinBox.value());
     rangeDeltaSpinBox.setValue(settings.value(RANGE_DELTA, 255).toInt());
     rangeDeltaSpinBox.valueChanged(rangeDeltaSpinBox.value());
+    createPaintObjectCheck.setChecked(settings.value(SEGMENTATION_CREATE_PAINT_OBJECT, Segmentation::singleton().createPaintObject).toBool());
     segmentationOverlaySlider.setValue(settings.value(SEGMENTATION_OVERLAY_ALPHA, 37).toInt());
     segmentationOverlaySlider.valueChanged(segmentationOverlaySlider.value());
     segmentationBorderHighlight.setChecked(settings.value(SEGMENTATITION_HIGHLIGHT_BORDER, true).toBool());

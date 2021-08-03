@@ -168,6 +168,7 @@ public:
     bool renderOnlySelectedObjs{false};
     uint8_t alpha;
     brush_subject brush;
+    bool createPaintObject{true};
     // for mode in which edges are online highlighted for objects when selected and being hovered over by mouse
     bool hoverVersion{false};
     uint64_t mouseFocusedObjectId{0};

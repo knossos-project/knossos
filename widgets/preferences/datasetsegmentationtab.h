@@ -34,8 +34,7 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
-class DatasetAndSegmentationTab : public QWidget
-{
+class DatasetAndSegmentationTab : public QWidget {
     friend class PreferencesWidget;
     friend class TreesTab;
     Q_OBJECT
@@ -52,6 +51,7 @@ class DatasetAndSegmentationTab : public QWidget
     QSlider biasSlider{Qt::Horizontal}, rangeDeltaSlider{Qt::Horizontal};
     // segmentation overlay
     QGroupBox segmentationGroup{tr("Segmentation")};
+    QCheckBox createPaintObjectCheck{tr("Painting can create Objects")};
     QVBoxLayout segmentationLayout;
     QGroupBox overlayGroup{tr("Overlay")};
     QGridLayout overlayLayout;
@@ -76,5 +76,4 @@ public:
 
 signals:
     void volumeRenderToggled();
-public slots:
 };

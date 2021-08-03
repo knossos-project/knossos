@@ -101,7 +101,7 @@ void segmentation_brush_work(const QMouseEvent *event, ViewportOrtho & vp) {
     if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::ObjectMerge)) {
         merging(event, vp);
     } else if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint) || Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_OverPaint)) {//paint and erase
-        if (!seg.brush.isInverse() && seg.selectedObjectsCount() == 0) {
+        if (seg.createPaintObject && !seg.brush.isInverse() && seg.selectedObjectsCount() == 0) {
             seg.createAndSelectObject(coord);
         }
         if (seg.selectedObjectsCount() > 0) {

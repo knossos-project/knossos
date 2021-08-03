@@ -105,6 +105,7 @@ const QString DATASET_LINEAR_FILTERING = "dataset_linear_filtering";
 const QString DATASET_LUT_FILE = "dataset_lut_file";
 const QString DATASET_LUT_FILE_USED = "dataset_lut_file_used";
 const QString RANGE_DELTA = "range_delta";
+const QString SEGMENTATION_CREATE_PAINT_OBJECT = "segmentation_create_paint_object";
 const QString SEGMENTATION_OVERLAY_ALPHA = "segmentation_overlay_alpha";
 const QString SEGMENTATITION_HIGHLIGHT_BORDER = "segmentation_border_highlighting";
 
