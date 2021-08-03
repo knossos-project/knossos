@@ -275,5 +275,6 @@ public slots:
     void jumpToSelectedObject();
     bool placeCommentForSelectedObjects(const QString & comment);
     void restoreDefaultColorForSelectedObjects();
+    void generateColors();
     void toggleVolumeRender(const bool render);
 };

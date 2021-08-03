@@ -655,6 +655,7 @@ void MainWindow::createMenus() {
     auto changeOverlayOpacity = [](int value) {
         Segmentation::singleton().alpha = static_cast<uint8_t>(std::max(0, std::min(255, static_cast<int>(Segmentation::singleton().alpha) + value)));
     };
+    generateLUTAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Change colors"), &Segmentation::singleton(), &Segmentation::generateColors, Qt::SHIFT + Qt::Key_L);
     increaseOpacityAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Increase Overlay Opacity"), this, [&]() { changeOverlayOpacity(10); emit overlayOpacityChanged(); }, Qt::Key_Plus);
     decreaseOpacityAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Decrease Overlay Opacity"), this, [&]() { changeOverlayOpacity(-10); emit overlayOpacityChanged(); }, Qt::Key_Minus);
     enlargeBrushAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Increase Brush Size (Shift + Scroll)"), &Segmentation::singleton(),
@@ -1070,6 +1071,7 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
     createSynapse->setVisible(mode.testFlag(AnnotationMode::Mode_TracingAdvanced));
     swapSynapticNodes->setVisible((mode.testFlag(AnnotationMode::Mode_TracingAdvanced)));
     clearSkeletonAction->setVisible(skeleton && !mode.testFlag(AnnotationMode::Mode_MergeTracing));
+    generateLUTAction->setVisible(segmentation);
     increaseOpacityAction->setVisible(segmentation);
     decreaseOpacityAction->setVisible(segmentation);
     enlargeBrushAction->setVisible(mode.testFlag(AnnotationMode::Brush));

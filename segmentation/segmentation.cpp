@@ -34,6 +34,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <random>
 #include <sstream>
 #include <utility>
 
@@ -760,6 +761,15 @@ void Segmentation::restoreDefaultColorForSelectedObjects() {
         }
         emit resetData();
     }
+}
+
+void Segmentation::generateColors() {
+    std::uniform_int_distribution<uint8_t> dist;
+    std::mt19937 rng(std::random_device{}());
+    for (auto & elem : overlayColorMap) {
+        elem = std::make_tuple(dist(rng), dist(rng), dist(rng));
+    }
+    emit resetData();
 }
 
 void Segmentation::toggleVolumeRender(const bool render) {
