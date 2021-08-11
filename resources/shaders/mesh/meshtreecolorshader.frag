@@ -28,13 +28,10 @@ void main() {
 //                gl_FragColor = vec4(frag_normal.y, 0, 0, 1);
 //            }
     if (length(vp_normal) > 0.0) {
-        float dot_value = dot(frag_normal, vp_normal);
-        if (dot_value < 0.0) {// vp_normal faces towards the camera
+        if (!gl_FrontFacing) {// vp_normal faces towards the camera
             gl_FragColor = tree_color;// show
-//                    gl_FragColor = vec4(0, dot_value, 0, 1);
         } else {
             gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);// cut
-//                    gl_FragColor = vec4(1 + dot_value, 0, 0, 1);
         }
     } else {
          gl_FragColor = vec4((0.25 * fcolor             // ambient
