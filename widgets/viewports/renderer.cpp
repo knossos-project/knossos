@@ -1002,26 +1002,34 @@ void Viewport3D::renderViewport(const RenderOptions &options) {
 }
 
 void ViewportBase::renderMeshBuffer(Mesh & buf, const bool picking) {
+    const auto blendState = glIsEnabled(GL_BLEND);
     if (picking) {
         glDisable(GL_BLEND);
     }
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glTranslatef(0.5, 0.5, 0.5);
-
     // get modelview and projection matrices
     GLfloat modelview_mat[4][4];
     glGetFloatv(GL_MODELVIEW_MATRIX, &modelview_mat[0][0]);
     GLfloat projection_mat[4][4];
     glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
+    glPopMatrix();
 
     auto & meshShader = picking ? meshIdShader
                         : buf.useTreeColor ? meshTreeColorShader
                         : this->meshShader;
 
+    const auto reset = [this, blendState]{
+        if (blendState) {
+            glEnable(GL_BLEND);
+        } else {
+            glDisable(GL_BLEND);
+        }
+    };
+
     if (!meshShader.isLinked()) {
-        glPopMatrix();
-        glEnable(GL_BLEND);
+        reset();
         return;
     }
 
@@ -1079,8 +1087,7 @@ void ViewportBase::renderMeshBuffer(Mesh & buf, const bool picking) {
     meshShader.disableAttributeArray(normalLocation);
     meshShader.disableAttributeArray(vertexLocation);
     meshShader.release();
-    glPopMatrix();
-    glEnable(GL_BLEND);
+    reset();
 }
 
 static bool shouldRenderMesh(const treeListElement & tree, const ViewportType viewportType) {
