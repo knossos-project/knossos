@@ -691,6 +691,7 @@ void ViewportOrtho::renderViewportFast() {
 //    qDebug() << "render time: " << times.waitForIntervals();
 }
 
+static bool shouldRenderMesh(const treeListElement & tree, const ViewportType viewportType);
 void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glEnable(GL_MULTISAMPLE);
 
@@ -787,15 +788,19 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glMatrixMode(GL_MODELVIEW);
 
         glEnable(GL_DEPTH_TEST);
+        const auto blendState = glIsEnabled(GL_BLEND);
         glDisable(GL_BLEND);
         func();
-        glEnable(GL_BLEND);
+        if (blendState) {
+            glEnable(GL_BLEND);
+        } else {
+            glDisable(GL_BLEND);
+        }
         glDisable(GL_DEPTH_TEST);
 
         glMatrixMode(GL_PROJECTION);
         glPopMatrix();
         glMatrixMode(GL_MODELVIEW);
-
     };
     if (options.meshPicking) {
         setStateAndRenderMesh([this](){ pickMeshIdAtPosition(); });
@@ -805,38 +810,47 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
         std::array<GLint, 4> vp;
         glGetIntegerv(GL_VIEWPORT, vp.data());
-        QOpenGLFramebufferObject fbo(vp[2], vp[2], format);
-        fbo.bind();
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?!?!?!?
+        QOpenGLFramebufferObject fbo(vp[2], vp[3], format);
 
-        setStateAndRenderMesh([this](){ renderMesh(); });
-        if (auto snapshotFboPtr = snapshotFbo.lock()) {
-            snapshotFboPtr->bind();
-        } else {
-            QOpenGLFramebufferObject::bindDefault();
+        for (const auto & tree : state->skeletonState->trees) {
+            if (!shouldRenderMesh(tree, viewportType)) {
+                continue;
+            }
+            fbo.bind();
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?!?!?!?
+
+            setStateAndRenderMesh([this, &tree](){
+                renderMeshBuffer(*(tree.mesh));
+            });
+
+            if (auto snapshotFboPtr = snapshotFbo.lock()) {
+                snapshotFboPtr->bind();
+            } else {
+                QOpenGLFramebufferObject::bindDefault();
+            }
+
+            std::vector<floatCoordinate> vertices{
+                    isoCurPos - dataPxX * v1 - dataPxY * v2,
+                    isoCurPos + dataPxX * v1 - dataPxY * v2,
+                    isoCurPos + dataPxX * v1 + dataPxY * v2,
+                    isoCurPos - dataPxX * v1 + dataPxY * v2
+            };
+            std::vector<float> texCoordComponents{0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f};
+
+            glEnable(GL_TEXTURE_2D);
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+            glBindTexture(GL_TEXTURE_2D, fbo.texture());
+            glVertexPointer(3, GL_FLOAT, 0, vertices.data());
+            glTexCoordPointer(2, GL_FLOAT, 0, texCoordComponents.data());
+
+            glDrawArrays(GL_QUADS, 0, 4);
+
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+            glDisableClientState(GL_VERTEX_ARRAY);
+            glDisable(GL_TEXTURE_2D);
         }
-
-        std::vector<floatCoordinate> vertices{
-                isoCurPos - dataPxX * v1 - dataPxY * v2,
-                isoCurPos + dataPxX * v1 - dataPxY * v2,
-                isoCurPos + dataPxX * v1 + dataPxY * v2,
-                isoCurPos - dataPxX * v1 + dataPxY * v2
-        };
-        std::vector<float> texCoordComponents{0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f};
-
-        glEnable(GL_TEXTURE_2D);
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-        glBindTexture(GL_TEXTURE_2D, fbo.texture());
-        glVertexPointer(3, GL_FLOAT, 0, vertices.data());
-        glTexCoordPointer(2, GL_FLOAT, 0, texCoordComponents.data());
-
-        glDrawArrays(GL_QUADS, 0, 4);
-
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glDisable(GL_TEXTURE_2D);
     }
     if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Brush) && hasCursor) {
         glPushMatrix();

@@ -159,9 +159,8 @@ private:
     virtual void resizeGL(int width, int height) override;
     bool sphereInFrustum(floatCoordinate pos, float radius);
 
-    void renderMeshBuffer(Mesh & buf, const bool picking = false);
-
 protected:
+    void renderMeshBuffer(Mesh & buf, const bool picking = false);
     QOpenGLShaderProgram meshShader;
     QOpenGLShaderProgram meshTreeColorShader;
     QOpenGLShaderProgram meshIdShader;
