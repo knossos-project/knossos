@@ -1112,7 +1112,7 @@ void ViewportBase::renderMesh() {
                 mesh.color_buf.release();
                 return buffer < 255;
             };
-            if ((tree.mesh->useTreeColor && tree.color.alphaF() < 1.0) || (!tree.mesh->useTreeColor && hasTranslucentFirstVertexColor(*(tree.mesh)))) {
+            if (state->viewerState->meshAlphaFactor3d != 1.0 || (tree.mesh->useTreeColor && tree.color.alphaF() < 1.0) || (!tree.mesh->useTreeColor && hasTranslucentFirstVertexColor(*(tree.mesh)))) {
                 translucentMeshes.emplace_back(*(tree.mesh));
             } else {
                 renderMeshBuffer(*(tree.mesh));
