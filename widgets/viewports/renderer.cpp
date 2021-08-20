@@ -1038,10 +1038,6 @@ void ViewportBase::renderMeshBuffer(Mesh & buf, const bool picking) {
     if (!picking) {
         meshShader.setUniformValue("alpha_factor", alphaFactor);
     }
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_COLOR_ARRAY);
-
     buf.position_buf.bind();
     int vertexLocation = meshShader.attributeLocation("vertex");
     meshShader.enableAttributeArray(vertexLocation);
@@ -1082,11 +1078,6 @@ void ViewportBase::renderMeshBuffer(Mesh & buf, const bool picking) {
     }
     meshShader.disableAttributeArray(normalLocation);
     meshShader.disableAttributeArray(vertexLocation);
-
-    glDisableClientState(GL_COLOR_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisableClientState(GL_VERTEX_ARRAY);
-
     meshShader.release();
     glPopMatrix();
     glEnable(GL_BLEND);
