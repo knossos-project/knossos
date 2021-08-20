@@ -34,6 +34,8 @@
 #include <QMenu>
 #include <QMessageBox>
 
+bool ViewportBase::oglDebug = false;// init here to avoid massive recompile
+
 void ResizeButton::mouseMoveEvent(QMouseEvent * event) {
     emit vpResize(event->globalPos());
 }
