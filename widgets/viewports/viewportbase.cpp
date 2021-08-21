@@ -264,18 +264,18 @@ void ViewportBase::initializeGL() {
         oglLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
     }
     if (!meshShader.isLinked()) { // only setup shaders once, not on every vp dock/undock
-        meshShader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/mesh/meshshader.vert");
-        meshShader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/mesh/meshshader.frag");
+        meshShader.addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/mesh/meshshader.vert");
+        meshShader.addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/mesh/meshshader.frag");
         meshShader.link();
     }
     if (!meshTreeColorShader.isLinked()) {
-        meshTreeColorShader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/mesh/meshtreecolorshader.vert");
-        meshTreeColorShader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/mesh/meshtreecolorshader.frag");
+        meshTreeColorShader.addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/mesh/meshtreecolorshader.vert");
+        meshTreeColorShader.addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/mesh/meshtreecolorshader.frag");
         meshTreeColorShader.link();
     }
     if (!meshIdShader.isLinked()) {
-        auto enabled = meshIdShader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/mesh/meshidshader.vert");
-        enabled = enabled && meshIdShader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/mesh/meshidshader.frag");
+        auto enabled = meshIdShader.addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/mesh/meshidshader.vert");
+        enabled = enabled && meshIdShader.addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/mesh/meshidshader.frag");
         state->viewerState->MeshPickingEnabled = enabled && meshIdShader.link();
     }
     for (auto * shader : {&meshShader, &meshTreeColorShader, &meshIdShader}) {

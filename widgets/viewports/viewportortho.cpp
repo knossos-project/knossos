@@ -81,12 +81,12 @@ void ViewportOrtho::initializeGL() {
 
         glEnable(GL_TEXTURE_3D);
 
-        raw_data_shader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/rawdatashader.vert");
-        raw_data_shader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/rawdatashader.frag");
+        raw_data_shader.addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/rawdatashader.vert");
+        raw_data_shader.addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/rawdatashader.frag");
         raw_data_shader.link();
 
-        overlay_data_shader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/rawdatashader.vert");
-        overlay_data_shader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/overlaydatashader.frag");
+        overlay_data_shader.addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/rawdatashader.vert");
+        overlay_data_shader.addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/overlaydatashader.frag");
         overlay_data_shader.link();
 
         glDisable(GL_TEXTURE_3D);
