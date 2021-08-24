@@ -101,7 +101,7 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext &
 
 Q_DECLARE_METATYPE(std::string)
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) try {
     QtConcurrent::run([](){ QSslSocket::supportsSsl(); });// workaround until https://bugreports.qt.io/browse/QTBUG-59750
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);// explicitly enable sharing for undocked viewports
 
@@ -175,4 +175,29 @@ int main(int argc, char *argv[]) {
     std::unique_ptr<Loader::Controller> loader_deleter{&Loader::Controller::singleton()};
     std::unique_ptr<Network> network_deleter{&Network::singleton()};
     return app.exec();
+} catch (const std::exception & e) {
+    std::cerr << "catch (std::exception &)" << std::endl;
+    const auto text = QObject::tr("KNOSSOS will terminate due to a problem");
+    std::cerr << text.toStdString() << std::endl;
+    int c{1};
+    char s[]{"dummy"};
+    char * v[]{s};
+    QApplication a(c, v);
+    QMessageBox box;
+    box.setIcon(QMessageBox::Critical);
+    box.setText(QObject::tr("Unhandled Exception"));
+    box.setInformativeText(text);
+    box.setDetailedText(QString::fromStdString(e.what()));
+    box.exec();
+} catch (...) {
+    std::cerr << "catch (...)" << std::endl;
+    int c{1};
+    char s[]{"dummy"};
+    char * v[]{s};
+    QApplication a(c, v);
+    QMessageBox box;
+    box.setIcon(QMessageBox::Critical);
+    box.setText(QObject::tr("Unrecoverable Error"));
+    box.setInformativeText(QObject::tr("An unspecifiable problem occured which forced KNOSSOS to terminate."));
+    box.exec();
 }
