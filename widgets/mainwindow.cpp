@@ -837,12 +837,16 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
     auto nmlEndIt = std::stable_partition(std::begin(fileNames), std::end(fileNames), [](const QString & elem){
         return QFileInfo(elem).suffix().toLower() == "nml";
     });
-    auto swcEndIt = std::stable_partition(nmlEndIt, std::end(fileNames), [](const QString & elem){
+    auto plyEndIt = std::stable_partition(nmlEndIt, std::end(fileNames), [](const QString & elem){
+        return QFileInfo(elem).suffix().toLower() == "ply";
+    });
+    auto swcEndIt = std::stable_partition(plyEndIt, std::end(fileNames), [](const QString & elem){
         return QFileInfo(elem).suffix().toLower() == "swc";
     });
 
     auto nmls = std::vector<QString>(std::begin(fileNames), nmlEndIt);
-    auto swcs = std::vector<QString>(nmlEndIt, swcEndIt);
+    auto plys = std::vector<QString>(nmlEndIt, plyEndIt);
+    auto swcs = std::vector<QString>(plyEndIt, swcEndIt);
     auto zips = std::vector<QString>(swcEndIt, std::end(fileNames));
 
     try {
@@ -854,6 +858,11 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
             Skeletonizer::singleton().loadXmlSkeleton(file, mergeSkeleton, treeCmtOnMultiLoad);
             updateRecentFile(filename);
             mergeSkeleton |= multipleFiles;// multiple files have to be merged
+        }
+        for (const auto & filename : plys) {
+            QFile file(filename);
+            Skeletonizer::singleton().loadMesh(file, boost::none, filename);
+            updateRecentFile(filename);
         }
         for (const auto & filename : swcs) {
             parseSWC(QFile{filename});
@@ -887,7 +896,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
     Annotation::singleton().unsavedChanges = multipleFiles || mergeSkeleton || mergeSegmentation; //merge implies changes
     if (!mergeSkeleton && !mergeSegmentation) { // if an annotation was already open don't change its filename, otherwise…
         // if multiple files are loaded, let KNOSSOS generate a new filename. Otherwise either an .nml or a .k.zip was loaded
-        Annotation::singleton().annotationFilename = multipleFiles ? "" : !nmls.empty() ? nmls.front() : !swcs.empty() ? swcs.front() : zips.front();
+        Annotation::singleton().annotationFilename = multipleFiles ? "" : !nmls.empty() ? nmls.front() : !plys.empty() ? plys.front() : !swcs.empty() ? swcs.front() : zips.front();
     }
     updateTitlebar();
 
@@ -927,11 +936,11 @@ bool MainWindow::newAnnotationSlot() {
   */
 void MainWindow::openSlot() {
     const auto choices = tr("KNOSSOS annotation file(s) "
-#ifdef Q_OS_MAC
-                            "(*.zip *.nml *.nmx *.swc)");
-#else
-                            "(*.k.zip *.nml *.nmx *.swc)");
+        "(*"
+#ifndef Q_OS_MAC
+        ".k"
 #endif
+        ".zip *.nml *.nmx *.ply *.swc)");
     const QStringList fileNames = state->viewer->suspend([this, &choices]{
         return QFileDialog::getOpenFileNames(this, "Open annotation file(s)", openFileDirectory, choices);
     });
@@ -1380,7 +1389,7 @@ void MainWindow::dropEvent(QDropEvent *event) {
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
-    const std::vector<QString> validExtensions = {".k.zip", ".nml", ".nmx", ".swc", ".k.conf", "knossos.conf", "ariadne.conf", ".pyknossos.conf", ".pyk.conf"};
+    const std::vector<QString> validExtensions = {".k.zip", ".nml", ".nmx", ".ply", ".swc", ".k.conf", "knossos.conf", "ariadne.conf", ".pyknossos.conf", ".pyk.conf"};
     if(event->mimeData()->hasUrls()) {
         QList<QUrl> urls = event->mimeData()->urls();
         for (auto && url : urls) {
