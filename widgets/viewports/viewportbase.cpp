@@ -285,6 +285,18 @@ void ViewportBase::initializeGL() {
             qDebug().noquote() << shader->log();
         }
     }
+    const std::vector<float> vertices{-1,-1,0, 1,-1,0, 1,1,0, -1,1,0};
+    if (!screenVertexBuf.isCreated()) {
+        screenVertexBuf.create();
+    }
+    screenVertexBuf.bind();
+    screenVertexBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
+    screenVertexBuf.release();
+    if (!shaderTextureQuad.isLinked()) {
+        shaderTextureQuad.addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/texturequad.vert");
+        shaderTextureQuad.addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/texturequad.frag");
+        shaderTextureQuad.link();
+    }
 }
 
 void ViewportBase::resizeGL(int width, int height) {
@@ -297,6 +309,17 @@ void ViewportBase::resizeGL(int width, int height) {
 
     edgeLength = width;
     state->viewer->recalcTextureOffsets();
+
+    emptyMask.destroy();
+    emptyMask.setMagnificationFilter(QOpenGLTexture::Nearest);
+    emptyMask.setMinificationFilter(QOpenGLTexture::Nearest);
+    emptyMask.setSize(width, height);
+    emptyMask.setFormat(QOpenGLTexture::RGBA8_UNorm);
+    emptyMask.setWrapMode(QOpenGLTexture::ClampToBorder);
+    emptyMask.allocateStorage();
+    const std::vector<std::uint8_t> cdata(4 * width * height, 0);
+    emptyMask.setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, cdata.data());
+    emptyMask.release();
 }
 
 void ViewportBase::focusOutEvent(QFocusEvent * event) {

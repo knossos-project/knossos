@@ -29,6 +29,7 @@
 #include <QAction>
 #include <QDialog>
 #include <QMenu>
+#include <QOpenGLBuffer>
 #include <QOpenGLDebugLogger>
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLFunctions_1_4>
@@ -141,6 +142,8 @@ protected:
     QToolButton menuButton;
 
     QAction *zoomEndSeparator;
+    QOpenGLTexture emptyMask{QOpenGLTexture::Target2D};
+    QOpenGLBuffer screenVertexBuf{QOpenGLBuffer::VertexBuffer};
 private:
     QOpenGLDebugLogger oglLogger;
     QWidget *dockParent;
@@ -164,6 +167,7 @@ protected:
     QOpenGLShaderProgram meshShader;
     QOpenGLShaderProgram meshTreeColorShader;
     QOpenGLShaderProgram meshIdShader;
+    QOpenGLShaderProgram shaderTextureQuad;
     boost::optional<BufferSelection> pickMesh(const QPoint pos);
     void pickMeshIdAtPosition();
 

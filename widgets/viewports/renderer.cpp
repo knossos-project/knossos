@@ -695,9 +695,6 @@ static bool shouldRenderMesh(const treeListElement & tree, const ViewportType vi
 void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glEnable(GL_MULTISAMPLE);
 
-    float dataPxX = displayedIsoPx;
-    float dataPxY = displayedIsoPx;
-
     const auto scale = Dataset::current().scale.componentMul(n).length();
     const auto nears = scale * state->viewerState->depthCutOff;
     const auto fars = -scale * state->viewerState->depthCutOff;
@@ -760,6 +757,8 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glPushMatrix();
         glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
         glLineWidth(1);
+        float dataPxX = displayedIsoPx;
+        float dataPxY = displayedIsoPx;
         const auto hOffset = viewportType == VIEWPORT_ARBITRARY ? QVector3D{} : 0.5 * v1 * Dataset::current().scale;
         const auto vOffset = viewportType == VIEWPORT_ARBITRARY ? QVector3D{} : 0.5 * v2 * Dataset::current().scale;
         glBegin(GL_LINES);
@@ -771,7 +770,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
             glVertex3f(right.x(), right.y(), right.z());
 
             glColor4f(std::abs(v1.z), std::abs(v1.y), std::abs(v1.x), 0.3);
-            const auto halfHeight = dataPxX * v2;
+            const auto halfHeight = dataPxY * v2;
             const auto top = -halfHeight + hOffset;
             const auto bottom = halfHeight + hOffset;
             glVertex3f(top.x(), top.y(), top.z());
@@ -810,47 +809,54 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
         std::array<GLint, 4> vp;
         glGetIntegerv(GL_VIEWPORT, vp.data());
+        QOpenGLFramebufferObject maskfbo(vp[2], vp[3], format);
         QOpenGLFramebufferObject fbo(vp[2], vp[3], format);
+        fbo.bind();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         for (const auto & tree : state->skeletonState->trees) {
             if (!shouldRenderMesh(tree, viewportType)) {
                 continue;
             }
-            fbo.bind();
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?!?!?!?
-
-            setStateAndRenderMesh([this, &tree](){
-                renderMeshBuffer(*(tree.mesh));
-            });
-
-            if (auto snapshotFboPtr = snapshotFbo.lock()) {
-                snapshotFboPtr->bind();
-            } else {
-                QOpenGLFramebufferObject::bindDefault();
-            }
-
-            std::vector<floatCoordinate> vertices{
-                    isoCurPos - dataPxX * v1 - dataPxY * v2,
-                    isoCurPos + dataPxX * v1 - dataPxY * v2,
-                    isoCurPos + dataPxX * v1 + dataPxY * v2,
-                    isoCurPos - dataPxX * v1 + dataPxY * v2
-            };
-            std::vector<float> texCoordComponents{0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f};
-
             glEnable(GL_TEXTURE_2D);
-            glEnableClientState(GL_VERTEX_ARRAY);
-            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-            glBindTexture(GL_TEXTURE_2D, fbo.texture());
-            glVertexPointer(3, GL_FLOAT, 0, vertices.data());
-            glTexCoordPointer(2, GL_FLOAT, 0, texCoordComponents.data());
-
-            glDrawArrays(GL_QUADS, 0, 4);
-
-            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-            glDisableClientState(GL_VERTEX_ARRAY);
-            glDisable(GL_TEXTURE_2D);
+            setStateAndRenderMesh([this, &fbo, &maskfbo, &tree](){
+                maskfbo.bind();
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                emptyMask.bind();
+                renderMeshBuffer(*(tree.mesh));
+                fbo.bind();
+                glEnable(GL_CULL_FACE);
+                glCullFace(GL_FRONT);
+                glBindTexture(GL_TEXTURE_2D, maskfbo.texture());
+                renderMeshBuffer(*(tree.mesh));
+                glBindTexture(GL_TEXTURE_2D, 0);
+                glDisable(GL_CULL_FACE);
+            });
         }
+
+        if (auto snapshotFboPtr = snapshotFbo.lock()) {
+            snapshotFboPtr->bind();
+        } else {
+            QOpenGLFramebufferObject::bindDefault();
+        }
+
+        shaderTextureQuad.bind();
+
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, fbo.texture());
+
+        screenVertexBuf.bind();
+        int vertexLocation = shaderTextureQuad.attributeLocation("vertex");
+        shaderTextureQuad.enableAttributeArray(vertexLocation);
+        shaderTextureQuad.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+        screenVertexBuf.release();
+
+        glDrawArrays(GL_QUADS, 0, 4);
+
+        shaderTextureQuad.disableAttributeArray(vertexLocation);
+        shaderTextureQuad.release();
+
+        glDisable(GL_TEXTURE_2D);
     }
     if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Brush) && hasCursor) {
         glPushMatrix();
@@ -1056,10 +1062,15 @@ void ViewportBase::renderMeshBuffer(Mesh & buf, const bool picking) {
         normal = state->mainWindow->viewportOrtho(viewportType)->n;
     }
     meshShader.setUniformValue("vp_normal", normal.x, normal.y, normal.z);
+    std::array<GLint, 4> vp;
+    glGetIntegerv(GL_VIEWPORT, vp.data());
+    meshShader.setUniformValue("screen", vp[2], vp[3]);
     const float alphaFactor = isMeshSlicing ? state->viewerState->meshAlphaFactorSlicing : state->viewerState->meshAlphaFactor3d;
     if (!picking) {
         meshShader.setUniformValue("alpha_factor", alphaFactor);
     }
+    meshShader.setUniformValue("samplerColor", 0);// GL_TEXTURE0
+
     buf.position_buf.bind();
     int vertexLocation = meshShader.attributeLocation("vertex");
     meshShader.enableAttributeArray(vertexLocation);

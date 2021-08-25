@@ -4,6 +4,9 @@ uniform mat4 modelview_matrix;
 uniform mat4 projection_matrix;
 uniform vec4 tree_color;
 uniform vec3 vp_normal;
+uniform vec2 screen;
+
+uniform sampler2D samplerColor;
 
 varying vec4 frag_color;
 varying vec3 frag_normal;
@@ -29,9 +32,16 @@ void main() {
 //            }
     if (length(vp_normal) > 0.0) {
         if (!gl_FrontFacing) {// vp_normal faces towards the camera
-            gl_FragColor = tree_color;// show
+            gl_FragColor = texture2D(samplerColor, gl_FragCoord.xy / screen);// texture(…) in 130+
+            if (gl_FragColor.g != 0.0) {
+                gl_FragColor = tree_color;// show
+            } else if (gl_FragColor.r != 0.0) {
+                discard;
+            } else {
+                gl_FragColor = vec4(0.0, 0.5, 0.0, 0.0);// mark as valid
+            }
         } else {
-            gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);// cut
+            gl_FragColor = vec4(0.5, 0.0, 0.0, 0.0);// mark as to cut
         }
     } else {
          gl_FragColor = vec4((0.25 * fcolor             // ambient
