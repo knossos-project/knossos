@@ -563,6 +563,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     for (std::size_t i = 0; i < std::min(layers.size(), Dataset::datasets.size()); ++i) {
         layers[i].allocationEnabled = Dataset::datasets[i].allocationEnabled;
         layers[i].loadingEnabled = Dataset::datasets[i].loadingEnabled;
+        layers[i].renderSettings = Dataset::datasets[i].renderSettings;
         prevMag = Dataset::datasets[i].magnification;
         prevFOV = state->mainWindow->viewportXY->texture.FOV;
     }
