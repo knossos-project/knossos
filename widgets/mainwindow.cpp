@@ -676,7 +676,7 @@ void MainWindow::createMenus() {
 
     addApplicationShortcut(*viewMenu, QIcon(), tr("Jump to Active Node"), &Skeletonizer::singleton(), [this]() {
         boost::optional<floatCoordinate> pos;
-        auto meshPriority = !state->skeletonState->jumpToSkeletonNext || !state->skeletonState->activeNode;
+        auto meshPriority = !state->skeletonState->jumpToSkeletonNext;
         const auto * const activeTree = Skeletonizer::singleton().skeletonState.activeTree;
         if (meshPriority) {
             if (state->skeletonState->meshLastClickInformation && activeTree && state->skeletonState->meshLastClickInformation.get().treeId == activeTree->treeID) {
@@ -690,9 +690,11 @@ void MainWindow::createMenus() {
         }
         if (pos) {
             state->viewer->setPosition(pos.get());
-            state->skeletonState->jumpToSkeletonNext = true;
-        } else if (state->skeletonState->activeNode && state->skeletonState->activeNode->correspondingTree == activeTree) {
-            Skeletonizer::singleton().jumpToNode(*state->skeletonState->activeNode);
+            state->skeletonState->jumpToSkeletonNext = state->skeletonState->activeNode != nullptr;
+        } else {
+            if (state->skeletonState->activeNode && state->skeletonState->activeNode->correspondingTree == activeTree) {
+                Skeletonizer::singleton().jumpToNode(*state->skeletonState->activeNode);
+            }
             state->skeletonState->jumpToSkeletonNext = false;
         }
         viewport3D->refocus();
