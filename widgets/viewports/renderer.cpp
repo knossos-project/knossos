@@ -823,12 +823,12 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
                 maskfbo.bind();
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                 emptyMask.bind();
-                renderMeshBuffer(*(tree.mesh));
+                renderMeshBuffer(*(tree.mesh), meshSlicingCreateMaskShader);
                 fbo.bind();
                 glEnable(GL_CULL_FACE);
                 glCullFace(GL_FRONT);
                 glBindTexture(GL_TEXTURE_2D, maskfbo.texture());
-                renderMeshBuffer(*(tree.mesh));
+                renderMeshBuffer(*(tree.mesh), meshSlicingWithMaskShader);
                 glBindTexture(GL_TEXTURE_2D, 0);
                 glDisable(GL_CULL_FACE);
             });
@@ -1021,11 +1021,7 @@ void Viewport3D::renderViewport(const RenderOptions &options) {
     }
 }
 
-void ViewportBase::renderMeshBuffer(Mesh & buf, const bool picking) {
-    const auto blendState = glIsEnabled(GL_BLEND);
-    if (picking) {
-        glDisable(GL_BLEND);
-    }
+void ViewportBase::renderMeshBuffer(Mesh & buf, boost::optional<QOpenGLShaderProgram&> prog) {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glTranslatef(0.5, 0.5, 0.5);
@@ -1036,83 +1032,68 @@ void ViewportBase::renderMeshBuffer(Mesh & buf, const bool picking) {
     glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
     glPopMatrix();
 
-    auto & meshShader = picking ? meshIdShader
-                        : buf.useTreeColor ? meshTreeColorShader
-                        : this->meshShader;
-
-    const auto reset = [this, blendState]{
-        if (blendState) {
-            glEnable(GL_BLEND);
-        } else {
-            glDisable(GL_BLEND);
-        }
-    };
+    auto & meshShader = prog ? prog.get() : buf.useTreeColor ? meshTreeColorShader : this->meshShader;
 
     if (!meshShader.isLinked()) {
-        reset();
         return;
     }
 
     meshShader.bind();
     meshShader.setUniformValue("modelview_matrix", modelview_mat);
     meshShader.setUniformValue("projection_matrix", projection_mat);
-    floatCoordinate normal = {0, 0, 0};
-    const bool isMeshSlicing = viewportType != VIEWPORT_SKELETON;
-    if (isMeshSlicing) {
-        normal = state->mainWindow->viewportOrtho(viewportType)->n;
-    }
+    floatCoordinate normal = state->mainWindow->viewportOrtho(viewportType)->n;
     meshShader.setUniformValue("vp_normal", normal.x, normal.y, normal.z);
     std::array<GLint, 4> vp;
     glGetIntegerv(GL_VIEWPORT, vp.data());
     meshShader.setUniformValue("screen", vp[2], vp[3]);
-    const float alphaFactor = isMeshSlicing ? state->viewerState->meshAlphaFactorSlicing : state->viewerState->meshAlphaFactor3d;
-    if (!picking) {
-        meshShader.setUniformValue("alpha_factor", alphaFactor);
-    }
+    const float alphaFactor = viewportType == VIEWPORT_SKELETON ? state->viewerState->meshAlphaFactor3d : state->viewerState->meshAlphaFactorSlicing;
+    meshShader.setUniformValue("alpha_factor", alphaFactor);
     meshShader.setUniformValue("samplerColor", 0);// GL_TEXTURE0
+    QColor color = buf.correspondingTree->color;
+    if (state->viewerState->highlightActiveTree && buf.correspondingTree == state->skeletonState->activeTree) {
+        color = Qt::red;
+    }
+    color.setAlpha(color.alpha() * alphaFactor);
+    meshShader.setUniformValue("tree_color", color);
 
-    buf.position_buf.bind();
     int vertexLocation = meshShader.attributeLocation("vertex");
     meshShader.enableAttributeArray(vertexLocation);
+    buf.position_buf.bind();
     meshShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
     buf.position_buf.release();
 
-    buf.normal_buf.bind();
     int normalLocation = meshShader.attributeLocation("normal");
-    meshShader.enableAttributeArray(normalLocation);
-    meshShader.setAttributeBuffer(normalLocation, GL_FLOAT, 0, 3);
-    buf.normal_buf.release();
-    const bool disableColorLocation = picking || !buf.useTreeColor;
+    if (normalLocation != -1) {
+        meshShader.enableAttributeArray(normalLocation);
+        buf.normal_buf.bind();
+        meshShader.setAttributeBuffer(normalLocation, GL_FLOAT, 0, 3);
+        buf.normal_buf.release();
+    }
     int colorLocation = meshShader.attributeLocation("color");
-    if (disableColorLocation) {
+    if (colorLocation != -1) {
+        bool picking = meshShader.programId() == meshIdShader.programId() || meshShader.programId() == meshSlicingIdShader.programId();
         auto & correct_color_buf = picking ? buf.picking_color_buf : buf.color_buf;
-        correct_color_buf.bind();
         meshShader.enableAttributeArray(colorLocation);
+        correct_color_buf.bind();
         meshShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
         correct_color_buf.release();
     }
-    if (!picking) {
-        QColor color = buf.correspondingTree->color;
-        if (state->viewerState->highlightActiveTree && buf.correspondingTree == state->skeletonState->activeTree) {
-            color = Qt::red;
-        }
-        color.setAlpha(color.alpha() * alphaFactor);
-        meshShader.setUniformValue("tree_color", color);
-    }
-    if(buf.index_count != 0) {
+
+    if (buf.index_count != 0) {
         buf.index_buf.bind();
         glDrawElements(buf.render_mode, buf.index_count, GL_UNSIGNED_INT, 0);
         buf.index_buf.release();
     } else {
         glDrawArrays(buf.render_mode, 0, buf.vertex_count);
     }
-    if (disableColorLocation) {
+    if (colorLocation != -1) {
         meshShader.disableAttributeArray(colorLocation);
     }
-    meshShader.disableAttributeArray(normalLocation);
+    if (normalLocation != -1) {
+        meshShader.disableAttributeArray(normalLocation);
+    }
     meshShader.disableAttributeArray(vertexLocation);
     meshShader.release();
-    reset();
 }
 
 static bool shouldRenderMesh(const treeListElement & tree, const ViewportType viewportType) {
@@ -1213,6 +1194,8 @@ boost::optional<BufferSelection> ViewportBase::pickMesh(const QPoint pos) {
 
 void ViewportBase::pickMeshIdAtPosition() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//the depth thing buffer clear is the important part
+    const auto blendState = glIsEnabled(GL_BLEND);
+    glDisable(GL_BLEND);
 
     // create id map
     std::uint32_t id_counter = 1;
@@ -1236,8 +1219,14 @@ void ViewportBase::pickMeshIdAtPosition() {
         }
         tree.mesh->picking_color_buf.release();
         if (shouldRenderMesh(tree, viewportType)) {
-            renderMeshBuffer(*tree.mesh, true);
+            const bool isMeshSlicing = viewportType != VIEWPORT_SKELETON;
+            renderMeshBuffer(*tree.mesh, isMeshSlicing ? meshSlicingIdShader : meshIdShader);
         }
+    }
+    if (blendState) {
+        glEnable(GL_BLEND);
+    } else {
+        glDisable(GL_BLEND);
     }
 }
 

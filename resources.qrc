@@ -55,15 +55,21 @@
         <file>resources/icons/zoom.png</file>
         <file>resources/plugins/knossos.py</file>
         <file>resources/plugins/pluginMgr.py</file>
-        <file>resources/shaders/mesh/meshidshader.frag</file>
-        <file>resources/shaders/mesh/meshidshader.vert</file>
-        <file>resources/shaders/mesh/meshshader.frag</file>
-        <file>resources/shaders/mesh/meshshader.vert</file>
-        <file>resources/shaders/mesh/meshtreecolorshader.frag</file>
-        <file>resources/shaders/mesh/meshtreecolorshader.vert</file>
-        <file>resources/shaders/overlaydatashader.frag</file>
-        <file>resources/shaders/rawdatashader.frag</file>
-        <file>resources/shaders/rawdatashader.vert</file>
+        <file>resources/shaders/3DTexture.frag</file>
+        <file>resources/shaders/3DTexture.vert</file>
+        <file>resources/shaders/3DTextureLUT.frag</file>
+        <file>resources/shaders/color vertexcolor.frag</file>
+        <file>resources/shaders/color.vert</file>
+        <file>resources/shaders/functions/diffuse.frag</file>
+        <file>resources/shaders/functions/meshslicing.frag</file>
+        <file>resources/shaders/idcolor slicing.frag</file>
+        <file>resources/shaders/idcolor.frag</file>
+        <file>resources/shaders/idcolor.vert</file>
+        <file>resources/shaders/mvp slicingmask.frag</file>
+        <file>resources/shaders/mvp.vert</file>
+        <file>resources/shaders/normal slicingapply.frag</file>
+        <file>resources/shaders/normal treecolor.frag</file>
+        <file>resources/shaders/normal.vert</file>
         <file>resources/shaders/texturequad.frag</file>
         <file>resources/shaders/texturequad.vert</file>
         <file>resources/splash.png</file>

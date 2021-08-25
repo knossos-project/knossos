@@ -265,22 +265,33 @@ void ViewportBase::initializeGL() {
     if (oglDebug && oglLogger.initialize()) {
         oglLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
     }
-    if (!meshShader.isLinked()) { // only setup shaders once, not on every vp dock/undock
-        meshShader.addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/mesh/meshshader.vert");
-        meshShader.addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/mesh/meshshader.frag");
-        meshShader.link();
-    }
-    if (!meshTreeColorShader.isLinked()) {
-        meshTreeColorShader.addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/mesh/meshtreecolorshader.vert");
-        meshTreeColorShader.addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/mesh/meshtreecolorshader.frag");
-        meshTreeColorShader.link();
-    }
-    if (!meshIdShader.isLinked()) {
-        auto enabled = meshIdShader.addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/mesh/meshidshader.vert");
-        enabled = enabled && meshIdShader.addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/mesh/meshidshader.frag");
-        state->viewerState->MeshPickingEnabled = enabled && meshIdShader.link();
-    }
-    for (auto * shader : {&meshShader, &meshTreeColorShader, &meshIdShader}) {
+
+    const QString prefix{":/resources/shaders/"};
+    QList<QOpenGLShaderProgram*> shaders;
+    auto createShader = [&prefix, &shaders](QOpenGLShaderProgram & shader, const QStringList & vertex, const QStringList & fragment) {
+        if (shader.isLinked()) {
+            return true;
+        }
+        bool enabled{true};
+        for (const auto & name : vertex) {
+            enabled = enabled && shader.addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, prefix + name);
+        }
+        for (const auto & name : fragment) {
+            enabled = enabled && shader.addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, prefix + name);
+        }
+        shaders.append(&shader);
+        return enabled && shader.link();
+    };
+    createShader(meshShader, {"color.vert"}, {"functions/diffuse.frag", "color vertexcolor.frag"});
+    createShader(meshTreeColorShader, {"normal.vert"}, {"functions/diffuse.frag", "normal treecolor.frag"});
+    state->viewerState->MeshPickingEnabled = createShader(meshIdShader, {"idcolor.vert"}, {"functions/diffuse.frag", "idcolor.frag"});
+    createShader(meshSlicingCreateMaskShader, {"mvp.vert"}, {"mvp slicingmask.frag"});
+    createShader(meshSlicingWithMaskShader, {"normal.vert"}, {"functions/meshslicing.frag", "normal slicingapply.frag"});
+    createShader(meshSlicingIdShader, {"idcolor.vert"}, {"idcolor slicing.frag"});
+    createShader(raw_data_shader, {"3DTexture.vert"}, {"3DTexture.frag"});
+    createShader(overlay_data_shader, {"3DTexture.vert"}, {"3DTextureLUT.frag"});
+    createShader(shaderTextureQuad, {"texturequad.vert"}, {"texturequad.frag"});
+    for (auto * shader : shaders) {
         if (!shader->log().isEmpty()) {
             qDebug().noquote() << shader->log();
         }
@@ -292,11 +303,6 @@ void ViewportBase::initializeGL() {
     screenVertexBuf.bind();
     screenVertexBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
     screenVertexBuf.release();
-    if (!shaderTextureQuad.isLinked()) {
-        shaderTextureQuad.addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/resources/shaders/texturequad.vert");
-        shaderTextureQuad.addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/resources/shaders/texturequad.frag");
-        shaderTextureQuad.link();
-    }
 }
 
 void ViewportBase::resizeGL(int width, int height) {

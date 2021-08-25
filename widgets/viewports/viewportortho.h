@@ -32,9 +32,6 @@
 
 class ViewportOrtho : public ViewportBase {
     Q_OBJECT
-    QOpenGLShaderProgram raw_data_shader;
-    QOpenGLShaderProgram overlay_data_shader;
-
     QAction zoomResetAction{tr("Reset zoom"), &menuButton};
 
     floatCoordinate handleMovement(const QPoint & pos);

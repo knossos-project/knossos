@@ -3,8 +3,10 @@
 uniform mat4 model_matrix;
 uniform mat4 view_matrix;
 uniform mat4 projection_matrix;
+
 attribute vec3 vertex;
 attribute vec3 texCoordVertex;
+
 varying vec3 texCoordFrag;
 
 void main() {

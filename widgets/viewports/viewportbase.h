@@ -163,11 +163,18 @@ private:
     bool sphereInFrustum(floatCoordinate pos, float radius);
 
 protected:
-    void renderMeshBuffer(Mesh & buf, const bool picking = false);
+    void renderMeshBuffer(Mesh & buf, boost::optional<QOpenGLShaderProgram&> prog = boost::none);
     QOpenGLShaderProgram meshShader;
     QOpenGLShaderProgram meshTreeColorShader;
     QOpenGLShaderProgram meshIdShader;
+    QOpenGLShaderProgram meshSlicingCreateMaskShader;
+    QOpenGLShaderProgram meshSlicingWithMaskShader;
+    QOpenGLShaderProgram meshSlicingIdShader;
     QOpenGLShaderProgram shaderTextureQuad;
+
+    QOpenGLShaderProgram raw_data_shader;
+    QOpenGLShaderProgram overlay_data_shader;
+
     boost::optional<BufferSelection> pickMesh(const QPoint pos);
     void pickMeshIdAtPosition();
 
