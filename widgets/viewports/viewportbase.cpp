@@ -282,7 +282,7 @@ void ViewportBase::initializeGL() {
     }
     for (auto * shader : {&meshShader, &meshTreeColorShader, &meshIdShader}) {
         if (!shader->log().isEmpty()) {
-            qDebug() << shader->log();
+            qDebug().noquote() << shader->log();
         }
     }
 }
