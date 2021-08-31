@@ -783,7 +783,9 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
-        glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, -(0.5), -(-state->skeletonState->volBoundary()));
+        // since the mesh is offset the slicing/clipping plane has to be offset as well
+        const auto meshVoxelCenterOffset = 0.5 * Dataset::current().scales[0].componentMul(n).dot(floatCoordinate{1,1,1});
+        glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, -(meshVoxelCenterOffset), -(-state->skeletonState->volBoundary()));
         glMatrixMode(GL_MODELVIEW);
 
         glEnable(GL_DEPTH_TEST);
@@ -1024,7 +1026,9 @@ void Viewport3D::renderViewport(const RenderOptions &options) {
 void ViewportBase::renderMeshBuffer(Mesh & buf, boost::optional<QOpenGLShaderProgram&> prog) {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(0.5, 0.5, 0.5);
+    // align with pixel center, but 1% off in 3dvp to prevent z fighting
+    const auto meshVoxelCenterOffset = Dataset::current().scales[0] * 0.5 * (viewportType == VIEWPORT_SKELETON ? 0.99 : 1);
+    glTranslatef(meshVoxelCenterOffset.x, meshVoxelCenterOffset.y, meshVoxelCenterOffset.z);
     // get modelview and projection matrices
     GLfloat modelview_mat[4][4];
     glGetFloatv(GL_MODELVIEW_MATRIX, &modelview_mat[0][0]);
