@@ -60,12 +60,12 @@ QString annotationFileDefaultPath() {
     return QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/annotationFiles/" + annotationFileDefaultName();
 }
 
-auto loadDatasetFromAnnotation = [](auto & file){
+auto loadDatasetFromAnnotation = [](auto & file, bool needOverlay){
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         throw std::runtime_error("loadXmlSkeleton open failed");
     }
     QString experimentName, path;
-    bool overlay{Segmentation::singleton().enabled};
+    bool overlay{needOverlay || Segmentation::singleton().enabled};
     QXmlStreamReader xml(&file);
     xml.readNextStartElement();// <things>
     while (xml.readNextStartElement()) {
@@ -76,7 +76,7 @@ auto loadDatasetFromAnnotation = [](auto & file){
                     experimentName = attributes.value("name").toString();
                 } else if(xml.name() == "dataset") {
                     path = attributes.value("path").toString();
-                    overlay = attributes.value("overlay").isEmpty() ? Segmentation::singleton().enabled : static_cast<bool>(attributes.value("overlay").toInt());
+                    overlay = attributes.value("overlay").isEmpty() ? overlay : static_cast<bool>(attributes.value("overlay").toInt());
                 }
                 xml.skipCurrentElement();
             }
@@ -111,8 +111,12 @@ void annotationFileLoad(const QString & filename, bool mergeSkeleton, const QStr
                 func(file);
             }
         };
-        getSpecificFile("annotation.xml", [](auto & file){
-            loadDatasetFromAnnotation(file);
+        getSpecificFile("annotation.xml", [&archive, &cubeRegEx](auto & file){
+            const auto files = archive.getFileNameList();
+            const auto hasSnappyCubes = std::find_if(std::cbegin(files), std::cend(files), [&cubeRegEx](const auto & elem){
+                return cubeRegEx.match(elem).hasMatch();
+            }) != std::cend(files);
+            loadDatasetFromAnnotation(file, hasSnappyCubes);
         });
         for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) {
             const auto match = cubeRegEx.match(archive.getCurrentFileName());
