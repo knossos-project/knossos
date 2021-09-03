@@ -168,7 +168,10 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     biasSlider.setMaximum(255);
     optionsLayout.addWidget(&biasSliderLabel, ++row, col=0);
     optionsLayout.addWidget(&biasSlider, row, ++col);
+    rangeDeltaSlider.setMinimum(-255);
     rangeDeltaSlider.setMaximum(255);
+    rangeDeltaSlider.setTickInterval(255);
+    rangeDeltaSlider.setTickPosition(QSlider::TicksBothSides);
     optionsLayout.addWidget(&rangeDeltaSliderLabel, ++row, col=0);
     optionsLayout.addWidget(&rangeDeltaSlider, row, ++col);
     combineSlicesType.addItems({"min", "max"});
