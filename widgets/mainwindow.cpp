@@ -222,7 +222,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     });
 
     createGlobalAction(state->mainWindow, Qt::Key_F8, [](){
-        const auto cpos = state->viewerState->currentPosition.cube(128, Dataset::current().scaleFactor) - state->M/2;
+        const auto cpos = state->viewerState->currentPosition.cube(Dataset::datasets[Segmentation::singleton().layerId].cubeEdgeLength, Dataset::current().scaleFactor) - state->M/2;
         for (int z = cpos.z; z < cpos.z + state->M; ++z)
         for (int y = cpos.y; y < cpos.y + state->M; ++y)
         for (int x = cpos.x; x < cpos.x + state->M; ++x) {
@@ -269,7 +269,7 @@ void MainWindow::resetTextureProperties() {
         orthoVP.texture.size = state->viewerState->texEdgeLength;
         orthoVP.texture.texUnitsPerDataPx = (1.0 / orthoVP.texture.size) / Dataset::current().magnification;
         orthoVP.texture.FOV = 1;
-        orthoVP.texture.usedSizeInCubePixels = (state->M - 1) * Dataset::current().cubeEdgeLength;
+        orthoVP.texture.usedSizeInCubePixels = (state->M - 1) * Dataset::current().cubeEdgeLength.componentMul(orthoVP.v1).length();
         if (orthoVP.viewportType == VIEWPORT_ARBITRARY) {
             orthoVP.texture.usedSizeInCubePixels /= std::sqrt(2);
         }

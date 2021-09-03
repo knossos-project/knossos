@@ -192,6 +192,6 @@ signals:
     void datasetChanged();
     void datasetSwitchZoomDefaults();
 public slots:
-    void adaptMemoryConsumption();
+    void adaptMemoryConsumption(boost::optional<Coordinate> cubeShape = boost::none);
     void processButtonClicked();
 };

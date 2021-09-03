@@ -66,9 +66,6 @@ public:
     // Bytes in one datacube: 2^3N
     std::size_t cubeBytes;
 
-    // Area of a cube slice in pixels;
-    int cubeSliceArea;
-
     // Supercube edge length in datacubes.
     int M;
     std::size_t cubeSetElements;

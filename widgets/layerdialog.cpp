@@ -52,7 +52,7 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
             case 2: return data.compressionString();
             case 3: return data.apiString();
             case 4: return data.magnification;
-            case 5: return data.cubeEdgeLength;
+            case 5: return QString{"%1, %2, %3"}.arg(data.cubeEdgeLength.x).arg(data.cubeEdgeLength.y).arg(data.cubeEdgeLength.z);
             case 6: return data.experimentname;
             case 7: return data.description;
             case 8: return layerSettings.color;
@@ -218,7 +218,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
                     ++state->viewerState->layerOrder[i];
                 }
             }
-            state->viewer->resizeTexEdgeLength(Dataset::current().cubeEdgeLength, state->M, Dataset::datasets.size());// update layerRenderSettings and textures
+            state->viewer->resizeTexEdgeLength(Dataset::current().cubeEdgeLength.x, state->M, Dataset::datasets.size());// update layerRenderSettings and textures//FIXME
             if (Segmentation::singleton().layerId >= layeri) {
                 ++Segmentation::singleton().layerId;
             }
@@ -239,7 +239,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
                     --state->viewerState->layerOrder[i];
                 }
             }
-            state->viewer->resizeTexEdgeLength(Dataset::current().cubeEdgeLength, state->M, Dataset::datasets.size());// update layerRenderSettings and textures
+            state->viewer->resizeTexEdgeLength(Dataset::current().cubeEdgeLength.x, state->M, Dataset::datasets.size());// update layerRenderSettings and textures//FIXME
             if (Segmentation::singleton().layerId >= layeri) {
                 --Segmentation::singleton().layerId;
             }
@@ -407,7 +407,7 @@ void LayerDialogWidget::updateLayerProperties() {
         combineSlicesXyOnlyCheck.setEnabled(layerSettings.combineSlicesEnabled);
 
         combineSlicesType.setCurrentIndex(layerSettings.combineSlicesType);
-        combineSlicesSpin.setRange(0, Dataset::datasets[ordered_index].cubeEdgeLength * 0.5 * (state->M - 1));
+        combineSlicesSpin.setRange(0, Dataset::datasets[ordered_index].cubeEdgeLength.x * 0.5 * (state->M - 1));//FIXME
         combineSlicesSpin.setValue(layerSettings.combineSlices);
         combineSlicesXyOnlyCheck.setChecked(layerSettings.combineSlicesXyOnly);
     }
