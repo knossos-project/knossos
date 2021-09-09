@@ -1888,13 +1888,13 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
         glBuffers.lineVertBuffer.emplace_back(isoTop, arrayFromQColor(color));
         const auto rbase = Dataset::current().scales[0] * Skeletonizer::singleton().radius(segment.source) * state->viewerState->segRadiusToNodeRadius * 0.5;
         const auto rtop  = Dataset::current().scales[0] * Skeletonizer::singleton().radius(segment.target) * state->viewerState->segRadiusToNodeRadius * 0.5;
-        glBuffers.lineVertBuffer2.emplace_back(isoBase - rbase, arrayFromQColor(color));
-        glBuffers.lineVertBuffer2.emplace_back(isoBase + rbase, arrayFromQColor(color));
-        glBuffers.lineVertBuffer2.emplace_back(isoTop + rtop, arrayFromQColor(color));
-        glBuffers.lineVertBuffer2.emplace_back(isoTop - rtop, arrayFromQColor(color));
-        glBuffers.lineVertBufferRef.emplace_back(isoBase, arrayFromQColor(color));
-        glBuffers.lineVertBufferRef.emplace_back(isoBase, arrayFromQColor(color));
+        glBuffers.lineVertBuffer2.emplace_back(isoBase, arrayFromQColor(color));
+        glBuffers.lineVertBuffer2.emplace_back(isoTop, arrayFromQColor(color));
+        glBuffers.lineVertBuffer2.emplace_back(isoTop, arrayFromQColor(color));
+        glBuffers.lineVertBuffer2.emplace_back(isoBase, arrayFromQColor(color));
         glBuffers.lineVertBufferRef.emplace_back(isoTop, arrayFromQColor(color));
+        glBuffers.lineVertBufferRef.emplace_back(isoBase, arrayFromQColor(color));
+        glBuffers.lineVertBufferRef.emplace_back(isoBase, arrayFromQColor(color));
         glBuffers.lineVertBufferRef.emplace_back(isoTop, arrayFromQColor(color));
     };
 
