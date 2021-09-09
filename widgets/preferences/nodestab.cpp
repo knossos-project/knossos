@@ -128,13 +128,27 @@ NodesTab::NodesTab(QWidget *parent) : QWidget(parent) {
     QObject::connect(&idCombo, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [](const int index) {
         state->viewerState->idDisplay = index == 2 ? IdDisplay::AllNodes : index == 1 ? IdDisplay::ActiveNode : IdDisplay::None;
     });
-    QObject::connect(&overrideNodeRadiusSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value ) { state->viewerState->overrideNodeRadiusVal = value; });
+    QObject::connect(&overrideNodeRadiusSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value ) {
+        state->viewerState->overrideNodeRadiusVal = value;
+
+        state->viewerState->AllTreesBuffers.regenVertBuffer = true;
+        state->viewerState->selectedTreesBuffers.regenVertBuffer = true;
+    });
     QObject::connect(&nodeCommentsCheck, &QCheckBox::clicked, [](const bool checked) { ViewportOrtho::showNodeComments = checked; });
     QObject::connect(&overrideNodeRadiusCheck, &QCheckBox::clicked, [this](const bool on) {
         state->viewerState->overrideNodeRadiusBool = on;
+
+        state->viewerState->AllTreesBuffers.regenVertBuffer = true;
+        state->viewerState->selectedTreesBuffers.regenVertBuffer = true;
+
         overrideNodeRadiusSpin.setEnabled(on);
     });
-    QObject::connect(&edgeNodeRatioSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value) { state->viewerState->segRadiusToNodeRadius = value; });
+    QObject::connect(&edgeNodeRatioSpin, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](const double value) {
+        state->viewerState->segRadiusToNodeRadius = value;
+
+        state->viewerState->AllTreesBuffers.regenVertBuffer = true;
+        state->viewerState->selectedTreesBuffers.regenVertBuffer = true;
+    });
     // properties
     static auto propertyConversionCheck = [](auto index, auto property, auto & combo){
         if (index > Skeletonizer::singleton().getNumberProperties().size()) {
