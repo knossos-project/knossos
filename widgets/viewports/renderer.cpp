@@ -1892,14 +1892,26 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
         glBuffers.lineVertBuffer2.emplace_back(isoTop, arrayFromQColor(color));
         glBuffers.lineVertBuffer2.emplace_back(isoTop, arrayFromQColor(color));
         glBuffers.lineVertBuffer2.emplace_back(isoBase, arrayFromQColor(color));
+        glBuffers.lineVertBuffer2.emplace_back(isoTop, arrayFromQColor(color));
+        glBuffers.lineVertBuffer2.emplace_back(isoBase, arrayFromQColor(color));
+        glBuffers.lineVertBuffer2.emplace_back(isoBase, arrayFromQColor(color));
+        glBuffers.lineVertBuffer2.emplace_back(isoTop, arrayFromQColor(color));
         glBuffers.lineVertBufferRef.emplace_back(isoTop, arrayFromQColor(color));
         glBuffers.lineVertBufferRef.emplace_back(isoBase, arrayFromQColor(color));
         glBuffers.lineVertBufferRef.emplace_back(isoBase, arrayFromQColor(color));
         glBuffers.lineVertBufferRef.emplace_back(isoTop, arrayFromQColor(color));
+        glBuffers.lineVertBufferRef.emplace_back(isoBase, arrayFromQColor(color));
+        glBuffers.lineVertBufferRef.emplace_back(isoTop, arrayFromQColor(color));
+        glBuffers.lineVertBufferRef.emplace_back(isoTop, arrayFromQColor(color));
+        glBuffers.lineVertBufferRef.emplace_back(isoBase, arrayFromQColor(color));
         cradii.emplace_back(rbase);
         cradii.emplace_back(rtop);
         cradii.emplace_back(rtop);
         cradii.emplace_back(rbase);
+        cradii.emplace_back(rtop);
+        cradii.emplace_back(rbase);
+        cradii.emplace_back(rbase);
+        cradii.emplace_back(rtop);
     };
 
     auto addNode = [arrayFromQColor, options, &glBuffers, &radii](const nodeListElement & node) {

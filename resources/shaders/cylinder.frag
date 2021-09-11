@@ -1,7 +1,7 @@
 #version 110
 
-varying vec4 frag_color;
+varying float dist;
 
 void main() {
-    gl_FragColor = frag_color;
+    gl_FragColor = vec4(sqrt(1.0-pow(dist,2.0)),0,0,1);
 }
