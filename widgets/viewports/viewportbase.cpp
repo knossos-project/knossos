@@ -302,6 +302,9 @@ void ViewportBase::initializeGL() {
         if (!shader->log().isEmpty() && viewportType == VIEWPORT_SKELETON) {
             qDebug().noquote() << shader->log();
         }
+        if (!shader->isLinked() && (oglDebug || qApp->arguments().contains("exit"))) {
+            throw std::runtime_error("shader link failed");
+        }
     }
     const std::vector<float> vertices{-1,-1,0, 1,-1,0, 1,1,0, -1,1,0};
     if (!screenVertexBuf.isCreated()) {
