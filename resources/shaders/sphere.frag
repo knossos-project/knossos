@@ -24,5 +24,9 @@ void main() {
         float intensity = max(0.0, dot(frag_normal, flight_normal));// spot
         gl_FragColor = fcolor * (gl_LightModel.ambient
                                      + intensity * gl_LightSource[0].diffuse + gl_LightSource[0].ambient);
+
+        float projectionDepthRange = (-2.0 / gl_ProjectionMatrix[2].z);
+        gl_FragDepth = gl_FragCoord.z + dist_edge * fradius * (gl_DepthRange.diff / projectionDepthRange);
+        gl_FragDepth = clamp(gl_FragDepth, gl_DepthRange.near, gl_DepthRange.far);
     }
 }

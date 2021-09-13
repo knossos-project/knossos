@@ -695,13 +695,13 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glEnable(GL_MULTISAMPLE);
 
     const auto scale = Dataset::current().scale.componentMul(n).length();
-    const auto nears = scale * state->viewerState->depthCutOff;
-    const auto fars = -scale * state->viewerState->depthCutOff;
+    const auto nears = -scale * state->viewerState->depthCutOff;
+    const auto fars = scale * state->viewerState->depthCutOff;
     const auto nearVal = -nears;
     const auto farVal = -fars;
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, nearVal, farVal);// gluLookAt relies on an unaltered cartesian Projection
+    glOrtho(-displayedIsoPx, +displayedIsoPx, +displayedIsoPx, -displayedIsoPx, nearVal, farVal);// gluLookAt relies on an unaltered cartesian Projection
 
     const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
     auto view = [&](){
@@ -711,11 +711,12 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         // offset center with n at the same magnitude as the current position
         // gluLookAt only uses it to calculate the focal direction via center - camera
         // which suffers heavy loss of precision if the magnitudes differ substantially
-        const auto center =  Coord<double>(isoCurPos) - Coord<double>(n) * std::max(1., static_cast<double>(isoCurPos.length()));
+        // n points to where the vp is »looking«, so we have to _add_ to place center in that direction
+        const auto center =  Coord<double>(isoCurPos) + Coord<double>(n) * std::max(1., static_cast<double>(isoCurPos.length()));
         const auto v2 = Coord<double>(this->v2);
         gluLookAt(eye.x, eye.y, eye.z
                   , center.x, center.y, center.z
-                  , v2.x, v2.y, v2.z);// negative up vectors, because origin is at the top
+                  , -v2.x, -v2.y, -v2.z);// negative up vectors, because origin is at the top
     };
     glMatrixMode(GL_MODELVIEW);
     view();
@@ -784,7 +785,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glLoadIdentity();
         // since the mesh is offset the slicing/clipping plane has to be offset as well
         const auto meshVoxelCenterOffset = 0.5 * Dataset::current().scales[0].componentMul(n).dot(floatCoordinate{1,1,1});
-        glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, -(meshVoxelCenterOffset), -(-state->skeletonState->volBoundary()));
+        glOrtho(-displayedIsoPx, +displayedIsoPx, +displayedIsoPx, -displayedIsoPx, (meshVoxelCenterOffset), (-state->skeletonState->volBoundary()));
         glMatrixMode(GL_MODELVIEW);
 
         glEnable(GL_DEPTH_TEST);
