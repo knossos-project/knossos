@@ -1439,7 +1439,7 @@ void MainWindow::dropEvent(QDropEvent *event) {
     QStringList files;
     for (auto && url : event->mimeData()->urls()) {
         const auto localPath = url.toLocalFile();
-        if (localPath.endsWith(".conf")) {
+        if (localPath.endsWith(".conf") || localPath.endsWith(".k.toml")) {
             emit datasetDropped(url);
         } else {
             files.append(localPath);
@@ -1452,7 +1452,7 @@ void MainWindow::dropEvent(QDropEvent *event) {
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
-    const std::vector<QString> validExtensions = {".k.zip", ".nml", ".nmx", ".ply", ".swc", ".k.conf", "knossos.conf", "ariadne.conf", ".pyknossos.conf", ".pyk.conf", ".pyk.auth.conf"};
+    const std::vector<QString> validExtensions = {".k.zip", ".nml", ".nmx", ".ply", ".swc", ".k.conf", "knossos.conf", "ariadne.conf", ".pyknossos.conf", ".pyk.conf", ".pyk.auth.conf", ".k.toml"};
     if(event->mimeData()->hasUrls()) {
         QList<QUrl> urls = event->mimeData()->urls();
         for (auto && url : urls) {
