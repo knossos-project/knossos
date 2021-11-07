@@ -354,7 +354,7 @@ void DatasetLoadWidget::updateDatasetInfo(const Dataset::list_t & datas) {
     if (!datasetinfo.url.isLocalFile()) {
         infotext = infotext.arg("Remote").arg("URL: <a href=\"%1\">%1</a><br />").arg(datasetinfo.url.toString());
     } else {
-        infotext = infotext.arg("Local").arg("");
+        infotext = infotext.arg("Local").arg("URL: <a href=\"%1\">%1</a><br />").arg(datasetinfo.url.toString());
     }
     infotext += QString("Name: %1<br/>Boundary (x y z): %2 %3 %4<br />Compression: %5<br/>cubeEdgeLength: %6<br/>Magnification: %7<br/>Scale (x y z): %8 %9 %10<br/>Description: %11")
         .arg(datasetinfo.experimentname)

@@ -91,6 +91,13 @@ find_package(${pythonqt} REQUIRED)
 find_package(Snappy REQUIRED)
 find_package(QuaZip 0.6.2 REQUIRED)
 
+include(FetchContent)
+FetchContent_Declare(toml11 GIT_REPOSITORY https://github.com/ToruNiina/toml11.git)
+FetchContent_Populate(toml11)
+
+add_library(toml11::toml11 INTERFACE IMPORTED)
+target_include_directories(toml11::toml11 INTERFACE "${toml11_SOURCE_DIR}")
+
 #platform dependent resources
 if(WIN32)
     set(SRC_LIST "${SRC_LIST}" "${CMAKE_CURRENT_SOURCE_DIR}/resources/knossos.rc")# add windows icon and manifest
@@ -183,6 +190,7 @@ target_link_libraries(${PROJECT_NAME}
     ${pythonqt}
     QuaZip::QuaZip
     Snappy::Snappy
+    toml11::toml11
     ${LINUXLINKER}
     $<$<AND:$<PLATFORM_ID:Windows>,$<NOT:$<CONFIG:Debug>>>:-Wl,--dynamicbase># use ASLR, required by the »Windows security features test« for »Windows Desktop App Certification«
 )
@@ -205,6 +213,7 @@ endif(APPLE)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 
+#target_compile_options(${PROJECT_NAME} PRIVATE "-ftime-report")
 target_compile_options(${PROJECT_NAME} PRIVATE "-pedantic-errors")
 target_compile_options(${PROJECT_NAME} PRIVATE "-Wall" "-Wextra")
 

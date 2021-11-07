@@ -40,6 +40,7 @@
 #include <boost/assign.hpp>
 #include <boost/bimap.hpp>
 
+
 Dataset::list_t Dataset::datasets;
 
 static boost::bimap<QString, Dataset::CubeType> typeMap = boost::assign::list_of<decltype(typeMap)::relation>
@@ -87,7 +88,7 @@ bool Dataset::isGoogleBrainmaps(const QUrl & url) {
 }
 
 bool Dataset::isHeidelbrain(const QUrl & url) {
-    return !isGoogleBrainmaps(url) && !isNeuroDataStore(url) && !isPyKnossos(url) && !isWebKnossos(url);
+    return !isGoogleBrainmaps(url) && !isNeuroDataStore(url) && !isPyKnossos(url) && !isWebKnossos(url) && !isToml(url);
 }
 
 bool Dataset::isNeuroDataStore(const QUrl & url) {
@@ -96,6 +97,10 @@ bool Dataset::isNeuroDataStore(const QUrl & url) {
 
 bool Dataset::isPyKnossos(const QUrl & url) {
     return url.path().endsWith("ariadne.conf") || url.path().endsWith(".pyknossos.conf") || url.path().endsWith(".pyk.conf") || url.path().endsWith(".pyk.auth.conf");
+}
+
+bool Dataset::isToml(const QUrl & url) {
+    return url.path().endsWith(".k.toml");
 }
 
 bool Dataset::isWebKnossos(const QUrl & url) {
@@ -112,6 +117,8 @@ Dataset::list_t Dataset::parse(const QUrl & url, const QString & data, bool add_
         infos = Dataset::parseNeuroDataStoreJson(url, data);
     } else if (Dataset::isPyKnossos(url)) {
         infos = Dataset::parsePyKnossosConf(url, data);
+    } else if (Dataset::isToml(url)) {
+        infos = Dataset::parseToml(url, data);
     } else {
         infos = Dataset::fromLegacyConf(url, data);
     }
@@ -266,6 +273,65 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         }
     }
 
+    for (auto && info : infos) {
+        if (info.scales.empty()) {
+            return {};
+        }
+        if (info.url.isEmpty()) {
+            info.url = QUrl::fromLocalFile(QFileInfo(configUrl.toLocalFile()).absoluteDir().absolutePath());
+        }
+        if (&info != &infos.front() && !info.renderSettings.visibleSetExplicitly && !info.isOverlay()) {// disable all non-seg layers expect the first TODO multi layer
+            info.allocationEnabled = info.loadingEnabled = info.renderSettings.visible = false;
+        }
+    }
+    return infos;
+}
+
+#include <iostream>
+
+#include <QTemporaryFile>
+
+#include <toml.hpp>
+
+extern toml::value toml_parse(const std::string & filename);
+
+Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
+    const auto data = configData.toStdString();
+    QTemporaryFile file;
+    file.open();
+    file.write(configData.toUtf8());
+    file.close();
+//    auto config = toml::parse(file.fileName().toStdString());
+    auto config = toml_parse(file.fileName().toStdString());
+    Dataset::list_t infos;
+    for (auto && vit : toml::find(config, "Layer").as_array()) {
+        Dataset info;
+        const auto & value = toml::find_or(vit, "ServerFormat", std::string{});
+        info.api = value == "knossos" ? API::Heidelbrain : value == "1" ? API::OpenConnectome : API::PyKnossos;
+        info.url = QString::fromStdString(toml::find_or(vit, "URL", std::string{}));
+        info.experimentname = QString::fromStdString(toml::find(vit, "Name").as_string());
+        const auto extent = toml::find(vit, "Extent_px").as_array();
+        info.boundary = Coordinate(extent.at(0).as_integer(), extent.at(1).as_integer(), extent.at(2).as_integer());
+        const auto cube_shape = toml::find(vit, "CubeShape_px").as_array();
+        info.cubeEdgeLength = cube_shape.at(0).as_integer();
+        const auto scales = toml::find(vit, "VoxelSize_nm").as_array();
+        for (const auto & scaleit : scales) {
+            const auto scale = scaleit.as_array();
+            const auto x = (scale.at(0).is_floating()) ? scale.at(0).as_floating() : scale.at(0).as_integer();
+            const auto y = (scale.at(1).is_floating()) ? scale.at(1).as_floating() : scale.at(1).as_integer();
+            const auto z = (scale.at(2).is_floating()) ? scale.at(2).as_floating() : scale.at(2).as_integer();
+            info.scales.emplace_back(x, y, z);
+        }
+        info.scale = info.scales.front();
+        info.magnification = info.lowestAvailableMag = 1;
+        info.highestAvailableMag = std::pow(2, scales.size() - 1);
+        info.description = QString::fromStdString(toml::find(vit, "Description").as_string());
+        for (const auto & ext : toml::find(vit, "FileExtension").as_array()) {
+            info.fileextension = QString::fromStdString(ext.as_string());
+            info.type = typeMap.left.at(info.fileextension);
+            infos.emplace_back(info);
+        }
+    }
     for (auto && info : infos) {
         if (info.scales.empty()) {
             return {};
