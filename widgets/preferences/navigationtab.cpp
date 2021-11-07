@@ -78,9 +78,7 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
         spins.zSpin.setEnabled(!checked);
     });
 
-    cubeCoordinateBox.setToolTip("Displays cube coordinates of cursor position in the status bar.");
     penModeCheckBox.setToolTip("Swap mouse buttons in the viewports for a more comfortable use of a pen device.");
-    generalLayout.addRow(&cubeCoordinateBox);
     generalLayout.addRow(&penModeCheckBox);
     generalGroup.setLayout(&generalLayout);
 
@@ -128,10 +126,6 @@ NavigationTab::NavigationTab(QWidget *parent) : QWidget(parent) {
     mainLayout.addLayout(&upperLayout);
     mainLayout.addWidget(&advancedGroup);
     setLayout(&mainLayout);
-
-    QObject::connect(&cubeCoordinateBox, &QCheckBox::stateChanged, [this]() {
-        state->viewerState->showCubeCoordinates = cubeCoordinateBox.isChecked();
-    });
 
     QObject::connect(&penModeCheckBox, &QCheckBox::clicked, [this]() {
         state->viewerState->penmode = penModeCheckBox.isChecked();
@@ -194,7 +188,6 @@ void NavigationTab::updateMovementArea() {
 void NavigationTab::loadSettings(const QSettings & settings) {
     Annotation::singleton().resetMovementArea();
 
-    cubeCoordinateBox.setChecked(settings.value(SHOW_CUBE_COORDS, false).toBool());
     autoGroup.button(settings.value(LOCKED_BUTTON, -3).toInt())->setChecked(true);// size locked by default
     const auto visibility = settings.value(OUTSIDE_AREA_VISIBILITY, 80).toInt();
     outVisibilitySlider.setValue(visibility);
@@ -209,7 +202,6 @@ void NavigationTab::loadSettings(const QSettings & settings) {
 }
 
 void NavigationTab::saveSettings(QSettings & settings) {
-    settings.setValue(SHOW_CUBE_COORDS, cubeCoordinateBox.isChecked());
     settings.setValue(LOCKED_BUTTON, autoGroup.checkedId());
     settings.setValue(OUTSIDE_AREA_VISIBILITY, outVisibilitySlider.value());
     settings.setValue(MOVEMENT_SPEED, movementSpeedSpinBox.value());

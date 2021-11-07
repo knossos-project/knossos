@@ -173,6 +173,7 @@ class MainWindow : public QMainWindow {
     // status bar
     QLabel annotationTimeLabel;
     QLabel cursorPositionLabel;
+    QLabel cubePositionLabel;
     QLabel GUIModeLabel{""};
     QLabel nodeLockingLabel;
     QLabel segmentStateLabel;

@@ -54,7 +54,6 @@ class NavigationTab : public QWidget {
     QGroupBox generalGroup{"General"};
     QFormLayout generalLayout;
     QCheckBox penModeCheckBox{"Pen mode"};
-    QCheckBox cubeCoordinateBox{"Show Cube coordinates"};
     QGroupBox movementAreaGroup{"Movement area"};
     QVBoxLayout movementAreaLayout;
     QHBoxLayout minAreaHeadLayout;

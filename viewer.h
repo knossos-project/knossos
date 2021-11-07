@@ -128,7 +128,6 @@ struct ViewerState {
 
     //In pennmode right and left click are switched
     bool penmode = false;
-    bool showCubeCoordinates{false};
     float outsideMovementAreaFactor{80.f};
 
     // dataset & segmentation rendering options

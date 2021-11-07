@@ -153,6 +153,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     networkProgressAbortButton.setVisible(false);
     networkProgressAbortButton.setToolTip("Abort network operation");
     cursorPositionLabel.setVisible(false);
+    cubePositionLabel.setVisible(false);
     QObject::connect(&Network::singleton(), &Network::startedNetworkRequest, [this](QNetworkReply &
                  #ifndef Q_OS_UNIX
                      reply
@@ -177,6 +178,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     networkProgressBar.setMaximumWidth(networkProgressBar.sizeHint().width());
     statusBar()->addWidget(&networkProgressAbortButton);
     statusBar()->addWidget(&cursorPositionLabel);
+    statusBar()->addWidget(&cubePositionLabel);
 
     activityAnimation.addAnimation(new QPropertyAnimation(&activityLabel, "minimumHeight"));
     activityAnimation.addAnimation(new QPropertyAnimation(&activityLabel, "maximumHeight"));
@@ -252,13 +254,11 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
 
 void MainWindow::updateCursorLabel(const Coordinate & position, const ViewportType vpType) {
     cursorPositionLabel.setHidden(vpType == VIEWPORT_SKELETON || vpType == VIEWPORT_UNDEFINED);
+    cubePositionLabel.setHidden(vpType == VIEWPORT_SKELETON || vpType == VIEWPORT_UNDEFINED);
     const auto inc{state->skeletonState->displayMatlabCoordinates};
-    QString cubePosText = "";
-    if (state->viewerState->showCubeCoordinates) {
-        auto cubePos = Dataset::current().global2cube(position);
-        cubePosText = QString(" | %1 %2 %3 (mag %4)").arg(cubePos.x).arg(cubePos.y).arg(cubePos.z).arg(Dataset::current().magnification);
-    }
-    cursorPositionLabel.setText(QString("%1 %2 %3%4").arg(position.x + inc).arg(position.y + inc).arg(position.z + inc).arg(cubePosText));
+    cursorPositionLabel.setText(QString("%1 %2 %3").arg(position.x + inc).arg(position.y + inc).arg(position.z + inc));
+    auto cubePos = Dataset::current().global2cube(position);
+    cubePositionLabel.setText(QString("cube %4 %5 %6 (mag%7)").arg(cubePos.x).arg(cubePos.y).arg(cubePos.z).arg(Dataset::current().magnification));
 }
 
 void MainWindow::resetTextureProperties() {
