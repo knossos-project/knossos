@@ -317,7 +317,10 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         const auto scales = toml::find(vit, "VoxelSize_nm").as_array();
         for (const auto & scaleit : scales) {
             const auto scale = scaleit.as_array();
-            info.scales.emplace_back(scale.at(0).as_floating(), scale.at(1).as_floating(), scale.at(2).as_floating());
+            const auto x = (scale.at(0).is_floating()) ? scale.at(0).as_floating() : scale.at(0).as_integer();
+            const auto y = (scale.at(1).is_floating()) ? scale.at(1).as_floating() : scale.at(1).as_integer();
+            const auto z = (scale.at(2).is_floating()) ? scale.at(2).as_floating() : scale.at(2).as_integer();
+            info.scales.emplace_back(x, y, z);
         }
         info.scale = info.scales.front();
         info.magnification = info.lowestAvailableMag = 1;
