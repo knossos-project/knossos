@@ -174,6 +174,7 @@ class MainWindow : public QMainWindow {
     QLabel annotationTimeLabel;
     QLabel cursorPositionLabel;
     QLabel cubePositionLabel;
+    QLabel hoverLabel;
     QLabel GUIModeLabel{""};
     QLabel nodeLockingLabel;
     QLabel segmentStateLabel;

@@ -24,7 +24,9 @@
 
 #include "coordinate.h"
 
+#include <boost/multi_array.hpp>
 #include <cstdint>
+#include <optional>
 #include <unordered_set>
 #include <unordered_map>
 
@@ -35,7 +37,11 @@ using subobjectRetrievalMap = std::unordered_map<uint64_t, Coordinate>;
 bool isInsideSphere(const double xi, const double yi, const double zi, const double radius);
 
 void coordCubesMarkChanged(const CubeCoordSet & cubeChangeSet);
-uint64_t readVoxel(const Coordinate & pos);
+template<typename T = std::uint64_t>
+boost::multi_array_ref<T, 3> getCubeRef(void * const rawcube);
+template<typename T = std::uint64_t>
+std::optional<T> readLayerVoxel(const Coordinate & pos, const std::optional<std::size_t> layerIdx = std::nullopt);
+std::uint64_t readVoxel(const Coordinate & pos);
 subobjectRetrievalMap readVoxels(const Coordinate & centerPos, const brush_t &);
 void assignNewIdInMovementArea(const std::uint64_t newId);
 bool writeVoxel(const Coordinate & pos, const uint64_t value, bool isMarkChanged = true);

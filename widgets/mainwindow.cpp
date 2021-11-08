@@ -154,6 +154,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     networkProgressAbortButton.setToolTip("Abort network operation");
     cursorPositionLabel.setVisible(false);
     cubePositionLabel.setVisible(false);
+    hoverLabel.setVisible(false);
     QObject::connect(&Network::singleton(), &Network::startedNetworkRequest, [this](QNetworkReply &
                  #ifndef Q_OS_UNIX
                      reply
@@ -179,6 +180,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     statusBar()->addWidget(&networkProgressAbortButton);
     statusBar()->addWidget(&cursorPositionLabel);
     statusBar()->addWidget(&cubePositionLabel);
+    statusBar()->addWidget(&hoverLabel);
 
     activityAnimation.addAnimation(new QPropertyAnimation(&activityLabel, "minimumHeight"));
     activityAnimation.addAnimation(new QPropertyAnimation(&activityLabel, "maximumHeight"));
@@ -293,8 +295,25 @@ void MainWindow::createViewports() {
     resetTextureProperties();
     forEachVPDo([this](ViewportBase & vp) {
         QObject::connect(&vp, &ViewportBase::cursorPositionChanged, this, &MainWindow::updateCursorLabel);
-        QObject::connect(&vp, &ViewportBase::cursorPositionChanged, this, [](const Coordinate & coord){
-            Segmentation::singleton().hoverSubObject(readVoxel(coord));
+        QObject::connect(&vp, &ViewportBase::cursorPositionChanged, this, [this](const Coordinate & coord, const ViewportType vpType){
+            hoverLabel.setHidden(vpType == VIEWPORT_SKELETON || vpType == VIEWPORT_UNDEFINED || Dataset::datasets.empty());
+            QString hoverText = "Hovered ";
+            std::optional<std::uint64_t> segVoxel{std::nullopt};
+            for (std::size_t layerIdx = 0; layerIdx < Dataset::datasets.size(); layerIdx++) {
+                if (!Dataset::datasets[layerIdx].renderSettings.visible) {
+                    hoverText += QString("off | ");
+                } else if (layerIdx == Segmentation::singleton().layerId) {
+                    segVoxel = readLayerVoxel(coord, layerIdx);
+                    hoverText += segVoxel ? QString("%1 | ").arg(segVoxel.value()) : "n/a | ";
+                } else {
+                    const auto voxel = readLayerVoxel<std::uint8_t>(coord, layerIdx);
+                    hoverText += voxel ? QString("%1 | ").arg(voxel.value()) : "n/a | ";
+                }
+                hoverLabel.setText(hoverText.chopped(3));
+            }
+            if (segVoxel) {
+                Segmentation::singleton().hoverSubObject(segVoxel.value());
+            }
         });
         QObject::connect(&vp, &ViewportBase::pasteCoordinateSignal, [this]() { currentPosSpins.pasteButton.click(); });
         QObject::connect(&vp, &ViewportBase::updateZoomWidget, &widgetContainer.zoomWidget, &ZoomWidget::update);
