@@ -302,7 +302,7 @@ void MainWindow::createViewports() {
             for (std::size_t layerIdx = 0; layerIdx < Dataset::datasets.size(); layerIdx++) {
                 if (!Dataset::datasets[layerIdx].renderSettings.visible) {
                     hoverText += QString("off | ");
-                } else if (layerIdx == Segmentation::singleton().layerId) {
+                } else if (Segmentation::singleton().enabled && layerIdx == Segmentation::singleton().layerId) {
                     segVoxel = readLayerVoxel(coord, layerIdx);
                     hoverText += segVoxel ? QString("%1 | ").arg(segVoxel.value()) : "n/a | ";
                 } else {
