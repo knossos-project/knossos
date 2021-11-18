@@ -341,7 +341,7 @@ void nmlExport(const QString & filename) {
     This method is actually only needed for the save or save as slots, if incrementFileName is selected
 */
 QString updatedFileName(QString fileName) {
-    QRegularExpression versionRegEx{R"regex((\.)(?P<version>[0-9]+)(\.))regex"};
+    QRegularExpression versionRegEx{R"regex((\.)(?P<version>[0-9]+)(\.k.zip))regex"};
     const auto match = versionRegEx.match(fileName);
     if (match.hasMatch()) {
         const auto incrementedVersion = match.capturedRef("version").toInt() + 1;
