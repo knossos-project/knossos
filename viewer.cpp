@@ -37,6 +37,7 @@
 #include <QDebug>
 #include <QDesktopWidget>
 #include <QFutureSynchronizer>
+#include <QMetaObject>
 #include <QtConcurrentRun>
 #include <QVector3D>
 
@@ -857,7 +858,7 @@ void Viewer::run() {
     // start the timer before the rendering, else render interval and actual rendering time would accumulate
     if (timer.isActive()) {
         timer.stop();
-        timer.start(QApplication::activeWindow() != nullptr ? 10 : 1000);// only update once per second if K isn’t the active application
+        timer.start(500);// rerun occasionally in case an explicit update is missing somewhere
     }
 
     if (viewerState.keyRepeat) {
@@ -1018,6 +1019,7 @@ void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, 
     }
 
     emit coordinateChangedSignal(viewerState.currentPosition);
+    run();
 }
 
 void Viewer::userMove(const floatCoordinate & floatStep, UserMoveType userMoveType, const floatCoordinate & viewportNormal) {
@@ -1089,6 +1091,7 @@ void Viewer::reslice_notify_all(const std::size_t layerId, boost::optional<Coord
         // if anything has changed, update the volume texture data
         Segmentation::singleton().volume_update_required = true;
     }
+    QMetaObject::invokeMethod(this, &Viewer::run);// multi thread support
 }
 
 void Viewer::segmentation_changed() {

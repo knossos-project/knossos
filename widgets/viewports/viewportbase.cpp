@@ -362,6 +362,7 @@ void ViewportBase::keyPressEvent(QKeyEvent *event) {
         setCursor(Qt::CrossCursor);
     }
     handleKeyPress(event);
+    state->viewer->run();
 }
 
 void ViewportBase::tabletEvent(QTabletEvent *event) {
@@ -374,6 +375,7 @@ void ViewportBase::tabletEvent(QTabletEvent *event) {
         Segmentation::singleton().brush.setInverse(false);
     }
     QWidget::tabletEvent(event);
+    state->viewer->run();
 }
 
 void ViewportBase::mouseMoveEvent(QMouseEvent *event) {
@@ -398,6 +400,7 @@ void ViewportBase::mouseMoveEvent(QMouseEvent *event) {
     handleMouseHover(event);
 
     prevMouseMove = event->pos();
+    state->viewer->run();
 }
 
 void ViewportBase::mousePressEvent(QMouseEvent *event) {
@@ -419,6 +422,7 @@ void ViewportBase::mousePressEvent(QMouseEvent *event) {
     } else if((penmode && event->button() == Qt::LeftButton) || (!penmode && event->button() == Qt::RightButton)) {
         handleMouseButtonRight(event);
     }
+    state->viewer->run();
 }
 
 void ViewportBase::mouseReleaseEvent(QMouseEvent *event) {
@@ -445,6 +449,7 @@ void ViewportBase::mouseReleaseEvent(QMouseEvent *event) {
     if(event->button() == Qt::MiddleButton) {
         handleMouseReleaseMiddle(event);
     }
+    state->viewer->run();
 }
 
 void ViewportBase::keyReleaseEvent(QKeyEvent *event) {
@@ -476,6 +481,7 @@ void ViewportBase::keyReleaseEvent(QKeyEvent *event) {
         state->viewerState->notFirstKeyRepeat = false;
     }
     handleKeyRelease(event);
+    state->viewer->run();
 }
 
 void ViewportBase::takeSnapshotVpSize(SnapshotOptions o) {

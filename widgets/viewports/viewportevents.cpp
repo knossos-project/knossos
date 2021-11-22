@@ -467,6 +467,7 @@ void ViewportBase::handleWheelEvent(const QWheelEvent *event) {
         // brush radius delta factor (float), as a function of current radius
         seg.brush.setRadius(curRadius + scroll / 120. * 0.1 * curRadius);
     }
+    state->viewer->run();
 }
 
 void ViewportBase::applyZoom(const QWheelEvent *event, float direction) {
