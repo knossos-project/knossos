@@ -23,11 +23,15 @@
 #include "annotation.h"
 
 #include "dataset.h"
+#include "loader.h"
 #include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
 
 #include <QApplication>
+
+#include <boost/fusion/algorithm/iteration/for_each.hpp>
+#include <boost/fusion/container/generation/make_vector.hpp>
 
 class Annotation::ActivityEventFilter : public QObject {
     bool & timeSliceActivity;
@@ -52,15 +56,45 @@ Annotation::Annotation() : annotationMode(AnnotationMode::Mode_Tracing) {
     lastTimeSlice.start();
 
     autoSaveTimer.setTimerType(Qt::PreciseTimer);
-    QObject::connect(&autoSaveTimer, &QTimer::timeout, [this]() {
-       if(unsavedChanges) {
+    QObject::connect(&autoSaveTimer, &QTimer::timeout, this, [this]() {
+       if (unsavedChanges) {
            emit autoSaveSignal();
        }
     });
+    boost::fusion::for_each(boost::fusion::make_vector(
+                                &Skeletonizer::nodeAddedSignal
+                                , &Skeletonizer::nodeChangedSignal
+                                , &Skeletonizer::nodeRemovedSignal
+                                , &Skeletonizer::segmentAdded
+                                , &Skeletonizer::segmentRemoved
+                                , &Skeletonizer::treeAddedSignal
+                                , &Skeletonizer::treeChangedSignal
+                                , &Skeletonizer::treeRemovedSignal
+                                , &Skeletonizer::nodeSelectionChangedSignal
+                                , &Skeletonizer::treeSelectionChangedSignal
+                                , &Skeletonizer::branchPushedSignal
+                                , &Skeletonizer::branchPoppedSignal
+                                , &Skeletonizer::resetData)
+    , [this](const auto & func){
+        QObject::connect(&Skeletonizer::singleton(), func, this, [this](){ setUnsavedChanges(); });
+    });
+
+    QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, [this](){ setUnsavedChanges(); });
+    QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, [this](){ setUnsavedChanges(); });
+    QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, [this](){ setUnsavedChanges(); });
+    QObject::connect(&Loader::Controller::singleton(), &Loader::Controller::markCubeAsModifiedSignal, this, [this](){ setUnsavedChanges(); });
+}
+
+void Annotation::setUnsavedChanges(bool hasChanges) {
+    const auto notify = unsavedChanges != hasChanges;
+    unsavedChanges = hasChanges;
+    if (notify) {
+        emit unsavedChangesChanged();
+    }
 }
 
 bool Annotation::isEmpty() const {
-    return annotationFilename.isEmpty() && !Annotation::singleton().unsavedChanges;
+    return annotationFilename.isEmpty() && !unsavedChanges;
 }
 
 void Annotation::clearAnnotation() {
@@ -71,8 +105,8 @@ void Annotation::clearAnnotation() {
     annotationFilename = "";
     magLock.reset();
     extraFiles.clear();
+    setUnsavedChanges(false);
     emit clearedAnnotation();
-    unsavedChanges = false;
 }
 
 bool Annotation::outsideMovementArea(const Coordinate & pos) {

@@ -131,9 +131,6 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::snapshotVpSizeRequest, [this](SnapshotOptions & o) { viewport(o.vp)->takeSnapshotVpSize(o); });
     QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::snapshotDatasetSizeRequest, [this](SnapshotOptions & o) { dynamic_cast<ViewportOrtho &>(*viewport(o.vp)).takeSnapshotDatasetSize(o); });
     QObject::connect(&widgetContainer.snapshotWidget, &SnapshotWidget::snapshotRequest, [this](const SnapshotOptions & o) { viewport(o.vp)->takeSnapshot(o); });
-    QObject::connect(&Segmentation::singleton(), &Segmentation::appendedRow, this, &MainWindow::notifyUnsavedChanges);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::changedRow, this, &MainWindow::notifyUnsavedChanges);
-    QObject::connect(&Segmentation::singleton(), &Segmentation::removedRow, this, &MainWindow::notifyUnsavedChanges);
 
     QObject::connect(&Annotation::singleton(), &Annotation::autoSaveSignal, [this](){ save(); });
 
@@ -216,6 +213,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     statusBar()->addPermanentWidget(&annotationTimeLabel);
 
     QObject::connect(&Annotation::singleton(), &Annotation::annotationTimeChanged, &annotationTimeLabel, &QLabel::setText);
+    QObject::connect(&Annotation::singleton(), &Annotation::unsavedChangesChanged, this, &MainWindow::updateTitlebar);
 
     createGlobalAction(state->mainWindow, Qt::Key_F7, [](){
         state->viewer->gpuRendering = !state->viewer->gpuRendering;
@@ -529,11 +527,6 @@ void MainWindow::updateTodosLeft() {
     }
 }
 
-void MainWindow::notifyUnsavedChanges() {
-    Annotation::singleton().unsavedChanges = true;
-    updateTitlebar();
-}
-
 void MainWindow::updateTitlebar() {
     const auto & session = Annotation::singleton();
     QString title = QString("%1 %2 • ").arg(qApp->applicationDisplayName()).arg(KREVISION);
@@ -567,7 +560,7 @@ void MainWindow::updateTitlebar() {
         annotationTimeLabel.show();
     }
 
-    if(session.autoSaveTimer.isActive() == false) {
+    if (session.autoSaveTimer.isActive() == false) {
         title.append(" • Autosave: OFF");
     }
 
@@ -914,7 +907,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
     }
     Skeletonizer::singleton().resetData();
 
-    Annotation::singleton().unsavedChanges = multipleFiles || mergeSkeleton || mergeSegmentation; //merge implies changes
+    Annotation::singleton().setUnsavedChanges(multipleFiles || mergeSkeleton || mergeSegmentation);// merge implies changes
     if (!mergeSkeleton && !mergeSegmentation) { // if an annotation was already open don't change its filename, otherwise…
         // if multiple files are loaded, let KNOSSOS generate a new filename. Otherwise either an .nml or a .k.zip was loaded
         Annotation::singleton().annotationFilename = multipleFiles ? "" : !nmls.empty() ? nmls.front() : !plys.empty() ? plys.front() : !swcs.empty() ? swcs.front() : zips.front();
@@ -1187,7 +1180,7 @@ void MainWindow::toggleSynapseState() {
 }
 
 void MainWindow::clearSkeletonSlot() {
-    if(Annotation::singleton().unsavedChanges || !state->skeletonState->trees.empty()) {
+    if (Annotation::singleton().unsavedChanges || !state->skeletonState->trees.empty()) {
         QMessageBox question{QApplication::activeWindow()};
         question.setIcon(QMessageBox::Question);
         question.setText(tr("Do you really want to clear the skeleton?"));

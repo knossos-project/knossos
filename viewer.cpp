@@ -906,7 +906,6 @@ void Viewer::run() {
         vp.update();
     });
     window->viewport3D->update();
-    window->updateTitlebar(); //display changes after filename
 }
 
 void Viewer::applyTextureFilterSetting(const QOpenGLTexture::Filter texFiltering) {

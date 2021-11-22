@@ -102,7 +102,6 @@ void Loader::Controller::unloadCurrentMagnification() {
 
 void Loader::Controller::markCubeAsModified(const std::size_t layerId, const CoordOfCube &cubeCoord, const int magnification) {
     emit markCubeAsModifiedSignal(layerId, cubeCoord, magnification);
-    state->viewer->window->notifyUnsavedChanges();
     state->viewer->reslice_notify_all(layerId, cubeCoord);
 }
 

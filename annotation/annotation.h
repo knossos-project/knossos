@@ -114,6 +114,7 @@ public:
         static Annotation session;
         return session;
     }
+    void setUnsavedChanges(bool hasChanges = true);
     bool isEmpty() const;
     void clearAnnotation();
     decltype(annotationTimeMilliseconds) getAnnotationTime() const;
@@ -125,4 +126,5 @@ signals:
     void autoSaveSignal();
     void clearedAnnotation();
     void movementAreaChanged();
+    void unsavedChangesChanged();
 };

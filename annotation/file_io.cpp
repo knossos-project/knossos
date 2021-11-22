@@ -323,7 +323,7 @@ void annotationFileSave(const QString & filename, const bool onlySelectedTrees, 
         throw std::runtime_error(QObject::tr("opening %1 for writing failed").arg(filename).toStdString());
     }
 
-    Annotation::singleton().unsavedChanges = false;
+    Annotation::singleton().setUnsavedChanges(false);
     qDebug() << "save" << time.restart();
 }
 

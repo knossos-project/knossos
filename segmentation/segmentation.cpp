@@ -541,7 +541,7 @@ void Segmentation::mergelistSave(QIODevice & file) const {
 }
 
 void Segmentation::mergelistClear() {
-    Annotation::singleton().unsavedChanges |= hasSegData();
+    Annotation::singleton().setUnsavedChanges(Annotation::singleton().unsavedChanges | hasSegData());// clearing will be a change
 
     selectedObjectIndices.clear();
     objects.clear();

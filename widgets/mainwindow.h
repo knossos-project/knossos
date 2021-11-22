@@ -233,7 +233,6 @@ public:
     ViewportBase *viewport(const ViewportType vpType);
     ViewportOrtho *viewportOrtho(const ViewportType vpType);
     virtual void closeEvent(QCloseEvent *event) override;
-    void notifyUnsavedChanges();
     void updateTitlebar();
 
     SegmentState segmentState{SegmentState::On};

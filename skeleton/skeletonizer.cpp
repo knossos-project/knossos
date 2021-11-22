@@ -952,7 +952,6 @@ bool Skeletonizer::delSegment(std::list<segmentListElement>::iterator segToDelIt
 
     updateCircRadius(&source);
     updateCircRadius(&target);
-    Annotation::singleton().unsavedChanges = true;
     emit segmentRemoved(source.nodeID, target.nodeID);
     return true;
 }
@@ -1029,8 +1028,6 @@ bool Skeletonizer::delNode(std::uint64_t nodeID, nodeListElement *nodeToDel) {
         setActiveNode(newActiveNode);
     }
 
-    Annotation::singleton().unsavedChanges = true;
-
     return true;
 }
 
@@ -1084,7 +1081,6 @@ bool Skeletonizer::delTree(decltype(treeListElement::treeID) treeID) {
         setActiveTreeByID(skeletonState.trees.front().treeID);
     }
 
-    Annotation::singleton().unsavedChanges = true;
     return true;
 }
 
@@ -1148,8 +1144,6 @@ bool Skeletonizer::setActiveTreeByID(decltype(treeListElement::treeID) treeID) {
         setActiveNode(&currentTree->nodes.front());
     }
 
-    Annotation::singleton().unsavedChanges = true;
-
     return true;
 }
 
@@ -1179,7 +1173,6 @@ bool Skeletonizer::setActiveNode(nodeListElement *node) {
     }
 
     skeletonState.jumpToSkeletonNext = true;
-    Annotation::singleton().unsavedChanges = true;
 
     return true;
 }
@@ -1256,7 +1249,6 @@ boost::optional<nodeListElement &> Skeletonizer::addNode(boost::optional<std::ui
     if (nodeID == skeletonState.nextAvailableNodeID) {
         skeletonState.nextAvailableNodeID = findNextAvailableID(skeletonState.nextAvailableNodeID, skeletonState.nodesByNodeID);
     }
-    Annotation::singleton().unsavedChanges = true;
 
     emit nodeAddedSignal(tempNode);
 
@@ -1287,7 +1279,6 @@ bool Skeletonizer::addSegment(nodeListElement & sourceNode, nodeListElement & ta
     updateCircRadius(&sourceNode);
     updateCircRadius(&targetNode);
 
-    Annotation::singleton().unsavedChanges = true;
     emit segmentAdded(sourceNode.nodeID, targetNode.nodeID);
     return true;
 }
@@ -1485,8 +1476,6 @@ treeListElement & Skeletonizer::addTree(boost::optional<decltype(treeListElement
         skeletonState.nextAvailableTreeID = findNextAvailableID(skeletonState.nextAvailableTreeID, skeletonState.treesByID);
     }
 
-    Annotation::singleton().unsavedChanges = true;
-
     emit treeAddedSignal(newTree);
 
     setActiveTreeByID(newTree.treeID);
@@ -1536,7 +1525,6 @@ treeListElement * Skeletonizer::getTreeWithNextID(treeListElement * currentTree)
 void Skeletonizer::setColor(treeListElement & tree, const QColor & color) {
     tree.color = color;
     tree.colorSetManually = true;
-    Annotation::singleton().unsavedChanges = true;
     emit treeChangedSignal(tree);
 }
 
@@ -1560,7 +1548,6 @@ std::list<segmentListElement>::iterator Skeletonizer::findSegmentBetween(nodeLis
 void Skeletonizer::setRadius(nodeListElement & node, const float radius) {
     node.radius = radius;
     updateCircRadius(&node);
-    Annotation::singleton().unsavedChanges = true;
     emit nodeChangedSignal(node);
 }
 
@@ -1569,7 +1556,6 @@ void Skeletonizer::setPosition(nodeListElement & node, const Coordinate & positi
     node.position = position.capped({0, 0, 0}, Dataset::current().boundary);
     const quint64 newSubobjectId = readVoxel(position);
     Skeletonizer::singleton().movedHybridNode(node, newSubobjectId, oldPos);
-    Annotation::singleton().unsavedChanges = true;
     emit nodeChangedSignal(node);
 }
 
@@ -1618,8 +1604,8 @@ bool Skeletonizer::extractConnectedComponent(std::uint64_t nodeID) {
         newTree.nodes.splice(std::end(newTree.nodes), nodeIt->correspondingTree->nodes, nodeIt->iterator);
         nodeIt->correspondingTree = &newTree;
     }
-    Annotation::singleton().unsavedChanges = true;
     setActiveTreeByID(newTree.treeID);//the empty tree had no active node
+    emit resetData();
 
     return true;
 }
@@ -1654,7 +1640,6 @@ void Skeletonizer::setComment(T & elem, const QString & newContent) {
     } else {
         elem.setComment(newContent);
     }
-    Annotation::singleton().unsavedChanges = true;
     notifyChanged(elem);
 }
 template void Skeletonizer::setComment(treeListElement &, const QString & newContent);// explicit instantiation for other TUs
@@ -1759,7 +1744,6 @@ nodeListElement * Skeletonizer::popBranchNode() {
     state->viewer->userMove(branchNode->position - state->viewerState->currentPosition, USERMOVE_NEUTRAL);
 
     emit branchPoppedSignal();
-    Annotation::singleton().unsavedChanges = true;
     return branchNode;
 }
 
@@ -1769,7 +1753,6 @@ void Skeletonizer::pushBranchNode(nodeListElement & branchNode) {
         branchNode.isBranchNode = true;
         qDebug() << "Branch point" << branchNode.nodeID << "added.";
         emit branchPushedSignal();
-        Annotation::singleton().unsavedChanges = true;
     } else {
         qDebug() << "Active node is already a branch point";
     }
@@ -1786,7 +1769,6 @@ void Skeletonizer::restoreDefaultTreeColor(treeListElement & tree) {
                        , std::get<1>(state->viewerState->treeColors[index])
                        , std::get<2>(state->viewerState->treeColors[index]));
     tree.colorSetManually = false;
-    Annotation::singleton().unsavedChanges = true;
     emit treeChangedSignal(tree);
 }
 
@@ -2193,7 +2175,7 @@ void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeI
 
     std::swap(tree->mesh, mesh);
 
-    Annotation::singleton().unsavedChanges = true;
+    emit treeChangedSignal(*tree);
 }
 
 void Skeletonizer::deleteMeshOfTree(treeListElement & tree) {

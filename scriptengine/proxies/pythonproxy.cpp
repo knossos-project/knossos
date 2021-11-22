@@ -47,7 +47,7 @@ void PythonProxy::annotation_save(const QString & filename) {
 
 void PythonProxy::annotation_add_file(const QString & name, const QByteArray & content) {
     Annotation::singleton().extraFiles[name] = content;
-    Annotation::singleton().unsavedChanges = true;
+    Annotation::singleton().setUnsavedChanges();
 }
 
 QByteArray PythonProxy::annotation_get_file(const QString & name) {
