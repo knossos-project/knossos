@@ -28,6 +28,7 @@
 #include <QVector3D>
 #include <QMetaType>
 
+#include <cmath>
 #include <cstddef>
 
 #include <boost/functional/hash.hpp>
@@ -222,7 +223,7 @@ public:
 };
 
 constexpr CoordOfCube Coordinate::cube(const int size, const floatCoordinate scale) const {
-    return CoordOfCube(x / size / scale.x, y / size / scale.y, z / size / scale.z);
+    return CoordOfCube(std::floor(x / scale.x / size), std::floor(y / scale.y / size), std::floor(z / scale.z / size));
 }
 constexpr CoordInCube Coordinate::insideCube(const int size, const floatCoordinate scale) const {
     return CoordInCube(static_cast<int>(x / scale.x) % size, static_cast<int>(y / scale.y) % size, static_cast<int>(z / scale.z) % size);
