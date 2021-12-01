@@ -116,6 +116,7 @@ void ViewportOrtho::handleMouseHover(const QMouseEvent *event) {
     emit cursorPositionChanged(coord, viewportType);
     auto subObjectId = readVoxel(coord);
     EmitOnCtorDtor eocd(&SignalRelay::Signal_EventModel_handleMouseHover, state->signalRelay, coord, subObjectId, viewportType, event);
+    repaint();// brush
     ViewportBase::handleMouseHover(event);
 }
 
@@ -303,6 +304,7 @@ void Viewport3D::handleMouseMotionLeftHold(const QMouseEvent *event) {
             translateX += -xrel(event->x()) / screenPxXPerDataPx;
             translateY += -yrel(event->y()) / screenPxXPerDataPx;
         }
+        repaint();
     }
     ViewportBase::handleMouseMotionLeftHold(event);
 }
@@ -318,6 +320,7 @@ void Viewport3D::handleMouseMotionRightHold(const QMouseEvent *event) {
     if (event->modifiers() == Qt::NoModifier && state->skeletonState->rotationcounter == 0) {
         state->skeletonState->rotdx += 90.0 * xrel(event->x()) / width();
         state->skeletonState->rotdy += 90.0 * yrel(event->y()) / height();
+        repaint();
     }
     ViewportBase::handleMouseMotionRightHold(event);
 }

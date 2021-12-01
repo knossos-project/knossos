@@ -400,7 +400,6 @@ void ViewportBase::mouseMoveEvent(QMouseEvent *event) {
     handleMouseHover(event);
 
     prevMouseMove = event->pos();
-    state->viewer->run();
 }
 
 void ViewportBase::mousePressEvent(QMouseEvent *event) {
