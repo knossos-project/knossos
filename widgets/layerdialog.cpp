@@ -80,6 +80,9 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
 }
 
 void reloadLayers() {
+    Segmentation::singleton().enabled = std::count_if(std::begin(Dataset::datasets), std::end(Dataset::datasets), [](const auto & dataset){
+        return dataset.loadingEnabled && dataset.isOverlay();
+    });
     state->viewer->loader_notify();
     emit state->mainWindow->widgetContainer.datasetLoadWidget.datasetChanged();// HACK
 }
@@ -100,10 +103,7 @@ bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, in
             if(index.column() == 0) {
                 auto & layer = Dataset::datasets[ordered_i(index.row())];
                 layer.allocationEnabled = layer.loadingEnabled = layerSettings.visible = value.toBool();
-                Segmentation::singleton().enabled = std::count_if(std::begin(Dataset::datasets), std::end(Dataset::datasets), [](const auto & dataset){
-                    return dataset.loadingEnabled && dataset.isOverlay();
-                });
-                state->viewer->loader_notify();
+                reloadLayers();
             } else if (index.column() == 2 && value.toBool()) {
                 const auto beginIt = std::cbegin(state->viewerState->layerOrder);
                 const auto segi = std::distance(beginIt, std::find(beginIt, std::cend(state->viewerState->layerOrder), Segmentation::singleton().layerId));
@@ -113,6 +113,7 @@ bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, in
                 state->viewer->reslice_notify(prevSegLayerId);
                 state->viewer->reslice_notify(Segmentation::singleton().layerId);
                 emit dataChanged(prevSegLayerModelIndex, prevSegLayerModelIndex, QVector<int>(role));
+                reloadLayers();
             }
         }
     }
