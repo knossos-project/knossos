@@ -681,6 +681,9 @@ void MainWindow::createMenus() {
     modeSwitchSeparator = actionMenu.addSeparator();
     setMergeModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch to Segmentation Merge Mode"), this, [this]() { setWorkMode(AnnotationMode::Mode_Merge); }, Qt::Key_1);
     setPaintModeAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Switch to Paint Mode"), this, [this]() { setWorkMode(AnnotationMode::Mode_Paint); }, Qt::Key_2);
+    modeSwitchSeparator->setVisible(false);
+    setMergeModeAction->setVisible(false);
+    setPaintModeAction->setVisible(false);
 
     menuBar()->addMenu(&actionMenu);
 
