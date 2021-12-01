@@ -28,6 +28,10 @@
 #include "stateInfo.h"
 #include "viewer.h"
 
+#include <QMetaObject>
+
+#include <tuple>
+
 Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBase(parent, viewportType) {
     wiggleButton.setCheckable(true);
     wiggleButton.setToolTip("Wiggle stereoscopy (Hold W)");
@@ -57,46 +61,31 @@ Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBas
         vpHeadLayout.insertWidget(0, button);
     }
 
-    connect(&xyButton, &QPushButton::clicked, []() {
-        if(state->skeletonState->rotationcounter == 0) {
-            state->skeletonState->definedSkeletonVpView = SKELVP_XY_VIEW;
-        }
-    });
-    connect(&xzButton, &QPushButton::clicked, []() {
-        if(state->skeletonState->rotationcounter == 0) {
-            state->skeletonState->definedSkeletonVpView = SKELVP_XZ_VIEW;
-        }
-    });
-    connect(&zyButton, &QPushButton::clicked, []() {
-        if(state->skeletonState->rotationcounter == 0) {
-            state->skeletonState->definedSkeletonVpView = SKELVP_ZY_VIEW;
-        }
-    });
-    connect(&r90Button, &QPushButton::clicked, []() {
-        if(state->skeletonState->rotationcounter == 0) {
-            state->skeletonState->definedSkeletonVpView = SKELVP_R90;
-        }
-    });
-    connect(&r180Button, &QPushButton::clicked, []() {
-        if(state->skeletonState->rotationcounter == 0) {
-            state->skeletonState->definedSkeletonVpView = SKELVP_R180;
-        }
-    });
-    QObject::connect(&wiggleButton, &QPushButton::clicked, [this](bool checked){
-        if (checked) {
-            wiggletimer.start();
+    timerThread.start();
+    rotationTimer.moveToThread(&timerThread);// gets stuck behind GUI events otherwise
+    rotationTimer.setInterval(10);
+    rotationTimer.callOnTimeout(this, [this]{
+        if (state->skeletonState->definedSkeletonVpView != SKELVP_CUSTOM || state->skeletonState->rotationcounter != 0) {
+            repaint();
         } else {
-            resetWiggle();
+            QMetaObject::invokeMethod(&rotationTimer, &QTimer::stop);
         }
-    });
-    connect(&resetButton, &QPushButton::clicked, []() {
-        if(state->skeletonState->rotationcounter == 0) {
-            state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
-        }
-    });
+    }, Qt::BlockingQueuedConnection);
+    for (const auto & [button,view] : {std::tuple(&r180Button,SKELVP_R180), {&r90Button,SKELVP_R90}, {&resetButton,SKELVP_RESET}, {&zyButton,SKELVP_ZY_VIEW}, {&xzButton,SKELVP_XZ_VIEW}, {&xyButton,SKELVP_XY_VIEW}}) {
+        QObject::connect(button, &QPushButton::clicked, this, [this, view=view]{
+            if (state->skeletonState->rotationcounter == 0) {
+                state->skeletonState->definedSkeletonVpView = view;
+                repaint();
+                if (view == SKELVP_R180 || view == SKELVP_R90) {
+                    QMetaObject::invokeMethod(&rotationTimer, qOverload<>(&QTimer::start));
+                }
+            }
+        });
+    }
 
+    wiggletimer.moveToThread(&timerThread);// gets stuck behind GUI events otherwise
     wiggletimer.setInterval(30);
-    QObject::connect(&wiggletimer, &QTimer::timeout, [this](){
+    wiggletimer.callOnTimeout(this, [this]{
         const auto inc = wiggleDirection ? 1 : -1;
         state->skeletonState->rotdx += inc;
         state->skeletonState->rotdy += inc;
@@ -104,10 +93,21 @@ Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBas
         if (wiggle == -2 || wiggle == 2) {
             wiggleDirection = !wiggleDirection;
         }
+        update();
+    }, Qt::BlockingQueuedConnection);
+    QObject::connect(&wiggleButton, &QPushButton::clicked, this, [this](bool checked){
+        if (checked) {
+            QMetaObject::invokeMethod(&wiggletimer, qOverload<>(&QTimer::start));
+            setFocus();// for focusOutEvent resetWiggle to work
+        } else {
+            resetWiggle();
+        }
     });
 }
 
 Viewport3D::~Viewport3D() {
+    timerThread.exit();
+    timerThread.wait();
     makeCurrent();
     if (Segmentation::singleton().volume_tex_id != 0) {
         glDeleteTextures(1, &Segmentation::singleton().volume_tex_id);

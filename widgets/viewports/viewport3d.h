@@ -25,10 +25,12 @@
 #include "viewportbase.h"
 
 #include <QMatrix4x4>
+#include <QThread>
 #include <QTimer>
 
 class Viewport3D : public ViewportBase {
     Q_OBJECT
+    QThread timerThread;
     QPushButton wiggleButton{"w"}, xyButton{"xy"}, xzButton{"xz"}, zyButton{"zy"}, r90Button{"r90"}, r180Button{"r180"}, resetButton{"reset"};
     QAction resetAction{nullptr};
     QAction showVolumeAction{tr("Show volume"), &menuButton};
@@ -38,7 +40,7 @@ class Viewport3D : public ViewportBase {
     virtual void paintGL() override;
     bool wiggleDirection{true};
     int wiggle{0};
-    QTimer wiggletimer;
+    QTimer wiggletimer, rotationTimer;
     void renderVolumeVP();
     void renderSkeletonVP(const RenderOptions & options = RenderOptions());
     virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
