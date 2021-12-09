@@ -28,45 +28,44 @@
 #include "segmentationsplit.h"
 #include "stateInfo.h"
 
+#include <QMutex>
+
+#include <boost/multi_array.hpp>
+
+#include <cstdint>
+
 std::pair<bool, void *> getRawCube(const Coordinate & pos, const std::size_t layerIdx = Segmentation::singleton().layerId) {
-    if (!Dataset::datasets[layerIdx].renderSettings.visible) {
-        return {false, nullptr};
-    }
-    const auto posDc = Dataset::current().global2cube(pos);
-
-    state->protectCube2Pointer.lock();
-    auto * rawcube = cubeQuery(state->cube2Pointer, layerIdx, Dataset::current().magIndex, posDc);
-    state->protectCube2Pointer.unlock();
-
+    QMutexLocker locker(&state->protectCube2Pointer);
+    auto * rawcube = cubeQuery(state->cube2Pointer, layerIdx, Dataset::datasets[layerIdx].magIndex, Dataset::datasets[layerIdx].global2cube(pos));
     return std::make_pair(rawcube != nullptr, rawcube);
 }
 
-template<typename T>
-boost::multi_array_ref<T, 3> getCubeRef(void * const rawcube) {
-    const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
+template<typename T = std::uint64_t>
+boost::multi_array_ref<T, 3> getCubeRef(void * const rawcube, const std::size_t layerIdx = Segmentation::singleton().layerId) {
+    const auto cubeEdgeLen = Dataset::datasets[layerIdx].cubeEdgeLength;
     const auto dims = boost::extents[cubeEdgeLen][cubeEdgeLen][cubeEdgeLen];
     return boost::multi_array_ref<T, 3>(reinterpret_cast<T *>(rawcube), dims);
 }
-template boost::multi_array_ref<std::uint8_t, 3> getCubeRef(void * const rawcube);
-template boost::multi_array_ref<std::uint64_t, 3> getCubeRef(void * const rawcube);
 
-template<typename T>
-std::optional<T> readLayerVoxel(const Coordinate & pos, const std::optional<std::size_t> layerIdx) {
-    const auto layer = layerIdx.value_or(Segmentation::singleton().layerId);
-    auto cubeIt = getRawCube(pos, layer);
-    if (!cubeIt.first || (layer == Segmentation::singleton().layerId && Annotation::singleton().outsideMovementArea(pos))) {
+// can hold ids as well as raw data
+std::optional<std::uint64_t> readLayerVoxel(const Coordinate & pos, const std::size_t layerIdx) {
+    auto cubeIt = getRawCube(pos, layerIdx);
+    if (!cubeIt.first || (Dataset::datasets[layerIdx].isOverlay() && Annotation::singleton().outsideMovementArea(pos))) {
         return std::nullopt;
     }
-    const auto inCube = pos.insideCube(Dataset::current().cubeEdgeLength, Dataset::current().scaleFactor);
-    return getCubeRef<T>(cubeIt.second)[inCube.z][inCube.y][inCube.x];
+    const auto inCube = pos.insideCube(Dataset::datasets[layerIdx].cubeEdgeLength, Dataset::datasets[layerIdx].scaleFactor);
+    const auto access = [&](auto arg){
+        return getCubeRef<decltype(arg)>(cubeIt.second, layerIdx)[inCube.z][inCube.y][inCube.x];
+    };
+    return Dataset::datasets[layerIdx].isOverlay() ? access(std::uint64_t{}) : access(std::uint8_t{});
 }
-template std::optional<std::uint8_t> readLayerVoxel(const Coordinate & pos, const std::optional<std::size_t> layerIdx);
-template std::optional<std::uint64_t> readLayerVoxel(const Coordinate & pos, const std::optional<std::size_t> layerIdx);
 
 std::uint64_t readVoxel(const Coordinate & pos) {
+    if (!Segmentation::singleton().enabled) {
+        return Segmentation::singleton().getBackgroundId();
+    }
     return readLayerVoxel(pos, Segmentation::singleton().layerId).value_or(Segmentation::singleton().getBackgroundId());
 }
-
 
 bool writeVoxel(const Coordinate & pos, const uint64_t value, bool isMarkChanged) {
     auto cubeIt = getRawCube(pos);

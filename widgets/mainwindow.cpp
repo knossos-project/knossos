@@ -300,11 +300,8 @@ void MainWindow::createViewports() {
                 // NOTE range check only required because of potentially outdated layerOrder
                 if (layerIdx >= Dataset::datasets.size() || !Dataset::datasets[layerIdx].renderSettings.visible) {
                     hoverText += QString("off | ");
-                } else if (Segmentation::singleton().enabled && layerIdx == Segmentation::singleton().layerId) {
-                    segVoxel = readLayerVoxel(coord, layerIdx);
-                    hoverText += segVoxel ? QString("%1 | ").arg(segVoxel.value()) : "n/a | ";
                 } else {
-                    const auto voxel = readLayerVoxel<std::uint8_t>(coord, layerIdx);
+                    const auto voxel = readLayerVoxel(coord, layerIdx);
                     hoverText += voxel ? QString("%1 | ").arg(voxel.value()) : "n/a | ";
                 }
             }
