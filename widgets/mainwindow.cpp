@@ -296,9 +296,9 @@ void MainWindow::createViewports() {
         QObject::connect(&vp, &ViewportBase::cursorPositionChanged, this, [this](const Coordinate & coord, const ViewportType vpType){
             hoverLabel.setHidden(vpType == VIEWPORT_SKELETON || vpType == VIEWPORT_UNDEFINED || Dataset::datasets.empty());
             QString hoverText = "Hovered ";
-            std::optional<std::uint64_t> segVoxel{std::nullopt};
-            for (std::size_t layerIdx = 0; layerIdx < Dataset::datasets.size(); layerIdx++) {
-                if (!Dataset::datasets[layerIdx].renderSettings.visible) {
+            for (const auto layerIdx : state->viewerState->layerOrder) {
+                // NOTE range check only required because of potentially outdated layerOrder
+                if (layerIdx >= Dataset::datasets.size() || !Dataset::datasets[layerIdx].renderSettings.visible) {
                     hoverText += QString("off | ");
                 } else if (Segmentation::singleton().enabled && layerIdx == Segmentation::singleton().layerId) {
                     segVoxel = readLayerVoxel(coord, layerIdx);
@@ -307,10 +307,10 @@ void MainWindow::createViewports() {
                     const auto voxel = readLayerVoxel<std::uint8_t>(coord, layerIdx);
                     hoverText += voxel ? QString("%1 | ").arg(voxel.value()) : "n/a | ";
                 }
-                hoverLabel.setText(hoverText.chopped(3));
             }
-            if (segVoxel) {
-                Segmentation::singleton().hoverSubObject(segVoxel.value());
+            hoverLabel.setText(hoverText.chopped(3));
+            if (Segmentation::singleton().enabled) {
+                Segmentation::singleton().hoverSubObject(readVoxel(coord));
             }
         });
         QObject::connect(&vp, &ViewportBase::pasteCoordinateSignal, [this]() { currentPosSpins.pasteButton.click(); });
