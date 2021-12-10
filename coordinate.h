@@ -41,26 +41,27 @@ public:
     ComponentType z = 0;
 
     constexpr CoordinateBase() = default;
-    constexpr CoordinateBase(QList<ComponentType> l) {
+    CoordinateBase(QList<ComponentType> l) {
         if (l.size() != 3) {
             throw std::runtime_error("QList too short for coordinate");
         }
         std::tie(x, y, z) = std::make_tuple(l[0], l[1], l[2]);
     }
-    constexpr CoordinateBase(QVector<ComponentType> l) {
+    CoordinateBase(QVector<ComponentType> l) {
         if (l.size() != 3) {
             throw std::runtime_error("QVector too short for coordinate");
         }
-        std::tie(x, y, z) = std::make_tuple(l[0], l[1], l[2]);}
+        std::tie(x, y, z) = std::make_tuple(l[0], l[1], l[2]);
+    }
     constexpr CoordinateBase(ComponentType x, ComponentType y, ComponentType z) : x(x), y(y), z(z) {}
 
     constexpr ComponentType sum() const {
         return x+y+z;
     }
-    constexpr QList<ComponentType> list() const {
+    QList<ComponentType> list() const {
         return {x, y, z};
     }
-    constexpr QVector<ComponentType> vector() const {
+    QVector<ComponentType> vector() const {
         return {x, y, z};
     }
     constexpr bool operator==(const CoordinateDerived & rhs) const {
@@ -80,7 +81,7 @@ public:
         return CoordinateDerived(x + scalar, y + scalar, z + scalar);
     }
     template<typename T>
-    CoordinateDerived_if_valid_t<T> & operator+=(const T & rhs) {
+    constexpr CoordinateDerived_if_valid_t<T> & operator+=(const T & rhs) {
         return static_cast<CoordinateDerived&>(*this = *this + rhs);
     }
 
@@ -91,7 +92,7 @@ public:
         return CoordinateDerived(x - scalar, y - scalar, z - scalar);
     }
     template<typename T>
-    CoordinateDerived_if_valid_t<T> & operator-=(const T & rhs) {
+    constexpr CoordinateDerived_if_valid_t<T> & operator-=(const T & rhs) {
         return static_cast<CoordinateDerived&>(*this = *this - rhs);
     }
 
@@ -112,7 +113,7 @@ public:
         return CoordinateDerived(x * scalar, y * scalar, z * scalar);
     }
     template<typename T>
-    CoordinateDerived_if_valid_t<T> & operator*=(const T & rhs) {
+    constexpr CoordinateDerived_if_valid_t<T> & operator*=(const T & rhs) {
         return static_cast<CoordinateDerived&>(*this = *this * rhs);
     }
 
@@ -123,19 +124,19 @@ public:
         return CoordinateDerived(x / scalar, y / scalar, z / scalar);
     }
     template<typename T>
-    CoordinateDerived_if_valid_t<T> & operator/=(const T & rhs) {
+    constexpr CoordinateDerived_if_valid_t<T> & operator/=(const T & rhs) {
         return static_cast<CoordinateDerived&>(*this = *this / rhs);
     }
 
-    constexpr float length() const {
+    float length() const {
         return std::sqrt(x*x + y*y + z*z);
     }
 
-    constexpr float angleRad(CoordinateDerived & other) const {
+    float angleRad(CoordinateDerived & other) const {
         return std::acos(static_cast<float>(this->dot(other)) / (this->length() * other.length()));
     }
 
-    bool normalize() {
+    constexpr bool normalize() {
         const ComponentType norm = length();
         if (norm != 0) {
             *this /= norm;
@@ -179,7 +180,7 @@ public:
     template<typename T>
     constexpr Coord(const Coord<T, tag> & rhs) : CoordinateBase<ComponentType, Coord<ComponentType, tag>>(rhs.x, rhs.y, rhs.z) {}
     template<typename T>
-    constexpr operator Coord<T, tag>() const {
+    operator Coord<T, tag>() const {
         return Coord<T, tag>(std::round(this->x), std::round(this->y), std::round(this->z));
     }
     constexpr operator QVector3D() const {
@@ -197,7 +198,7 @@ template<>
 class Coord<int, 0> : public CoordinateBase<int, Coordinate> {
 public:
     using CoordinateBase<int, Coordinate>::CoordinateBase;
-    constexpr CoordOfCube cube(const int size, const floatCoordinate scale) const;
+    inline CoordOfCube cube(const int size, const floatCoordinate scale) const;
     constexpr CoordInCube insideCube(const int size, const floatCoordinate scale) const;
 };
 
@@ -212,7 +213,7 @@ template<>
 class Coord<int, 2> : public CoordinateBase<int, CoordInCube> {
 public:
     using CoordinateBase<int, CoordInCube>::CoordinateBase;
-    constexpr Coordinate insideCube2Global(const CoordOfCube & cube, const int cubeEdgeLength, const floatCoordinate scale) const;
+    inline Coordinate insideCube2Global(const CoordOfCube & cube, const int cubeEdgeLength, const floatCoordinate scale) const;
 };
 
 template<>
@@ -222,7 +223,7 @@ public:
     constexpr Coordinate cube2Global(const int cubeEdgeLength, const floatCoordinate scale) const;
 };
 
-constexpr CoordOfCube Coordinate::cube(const int size, const floatCoordinate scale) const {
+inline CoordOfCube Coordinate::cube(const int size, const floatCoordinate scale) const {
     return CoordOfCube(std::floor(x / scale.x / size), std::floor(y / scale.y / size), std::floor(z / scale.z / size));
 }
 constexpr CoordInCube Coordinate::insideCube(const int size, const floatCoordinate scale) const {
@@ -237,7 +238,7 @@ constexpr Coordinate CoordOfGPUCube::cube2Global(const int size, const floatCoor
     return Coordinate(x * size * scale.x, y * size * scale.y, z * size * scale.z);
 }
 
-constexpr Coordinate CoordInCube::insideCube2Global(const CoordOfCube & cube, const int size, const floatCoordinate scale) const {
+inline Coordinate CoordInCube::insideCube2Global(const CoordOfCube & cube, const int size, const floatCoordinate scale) const {
     return cube.cube2Global(size, scale) + scale.componentMul(Coordinate{x, y, z});
 }
 
