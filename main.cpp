@@ -178,7 +178,7 @@ int main(int argc, char *argv[]) try {
 } catch (const std::exception & e) {
     std::cerr << "catch (std::exception &)" << std::endl;
     const auto text = QObject::tr("KNOSSOS will terminate due to a problem");
-    std::cerr << text.toStdString() << std::endl;
+    std::cerr << text.toStdString() << std::endl << e.what() << std::endl;
     int c{1};
     char s[]{"dummy"};
     char * v[]{s};
