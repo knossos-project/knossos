@@ -41,9 +41,11 @@
 #include <QtConcurrentRun>
 #include <QTimer>
 
+#include <exception>
 #include <iostream>
 #include <fstream>
 #include <memory>
+#include <stdexcept>
 
 // obsolete with CMAKE_AUTOSTATICPLUGINS in msys2
 //#if defined(Q_OS_WIN) && defined(QT_STATIC)
@@ -125,6 +127,13 @@ int main(int argc, char *argv[]) try {
     }) != end;
 #endif
     QApplication app(argc, argv);
+    if (argc == 2 && std::string(argv[1]) == "exit") {
+        QTimer::singleShot(5000, &app, [](){
+            Loader::Controller::singleton().suspendLoader();
+            Loader::Controller::singleton().worker.reset();// have to make really sure loader is done
+            QCoreApplication::quit();
+        });
+    }
 
     QFile file(":/resources/style.qss");
     file.open(QFile::ReadOnly);
@@ -170,9 +179,11 @@ int main(int argc, char *argv[]) try {
         state.mainWindow->loadSettings();// load settings after viewer and window are accessible through state and viewer
         state.mainWindow->widgetContainer.datasetLoadWidget.loadDataset();// load last used dataset or show
         viewer.timer.start(0);
+        if (!(argc == 2 && std::string(argv[1]) == "exit")) {
 #ifdef NDEBUG
-        splash.finish(state.mainWindow);
+            splash.finish(state.mainWindow);
 #endif
+        }
     });
     // ensure killed QNAM’s before QNetwork deinitializes
     std::unique_ptr<Loader::Controller> loader_deleter{&Loader::Controller::singleton()};
@@ -191,7 +202,9 @@ int main(int argc, char *argv[]) try {
     box.setText(QObject::tr("Unhandled Exception"));
     box.setInformativeText(text);
     box.setDetailedText(QString::fromStdString(e.what()));
-    box.exec();
+    if (argc != 2 || std::string(argv[1]) != "exit") {
+        box.exec();
+    }
 } catch (...) {
     std::cerr << "catch (...)" << std::endl;
     int c{1};
@@ -202,5 +215,7 @@ int main(int argc, char *argv[]) try {
     box.setIcon(QMessageBox::Critical);
     box.setText(QObject::tr("Unrecoverable Error"));
     box.setInformativeText(QObject::tr("An unspecifiable problem occured which forced KNOSSOS to terminate."));
-    box.exec();
+    if (argc != 2 || std::string(argv[1]) != "exit") {
+        box.exec();
+    }
 }

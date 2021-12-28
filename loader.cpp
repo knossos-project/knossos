@@ -71,7 +71,9 @@ void Loader::Controller::suspendLoader() {
     ++loadingNr;
     workerThread.quit();
     workerThread.wait();
-    worker->abortDownloadsFinishDecompression();
+    if (worker) {
+        worker->abortDownloadsFinishDecompression();
+    }
 }
 
 Loader::Controller::Controller() {
@@ -97,7 +99,7 @@ void Loader::Controller::unloadCurrentMagnification() {
     // and loader is suspended when updateDatasetMag tries to load a new dataset
     if (workerThread.isRunning()) {
         emit unloadCurrentMagnificationSignal();
-    } else {
+    } else if (worker) {
         worker->unloadCurrentMagnification();
     }
 }
@@ -511,9 +513,9 @@ void Loader::Worker::cleanup(const Coordinate center) {
 }
 
 void Loader::Controller::startLoading(const Coordinate & center, const UserMoveType userMoveType, const floatCoordinate & direction) {
-    worker->isFinished = false;
-    workerThread.start();
-    if (!Dataset::datasets.empty()) {
+    if (worker && !Dataset::datasets.empty()) {
+        worker->isFinished = false;
+        workerThread.start();
         emit loadSignal(++loadingNr, center, userMoveType, direction, Dataset::datasets, state->M);
     }
 }
