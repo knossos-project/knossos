@@ -127,6 +127,10 @@ void Scripting::initialize() {
     }
     PythonQt::self()->createModuleFromFile(SCRIPTING_KNOSSOS_MODULE, ":/resources/plugins/knossos.py");
     evalScript(QString("import %1").arg(SCRIPTING_KNOSSOS_MODULE));
+    if (!evalScript(QString("'%1' in sys.modules").arg(SCRIPTING_KNOSSOS_MODULE), Py_eval_input).toBool()) {
+        qWarning() << tr("Python integration disabled because the knossos module couldn’t be imported.").toUtf8().constData();
+        return;
+    }
     evalScript(QString("%1.%2 = {}").arg(SCRIPTING_KNOSSOS_MODULE).arg(SCRIPTING_PLUGIN_CONTAINER));
 
     addObject("signal_relay", state->signalRelay);
