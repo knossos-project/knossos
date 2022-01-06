@@ -292,7 +292,7 @@ void ViewportBase::initializeGL() {
     createShader(overlay_data_shader, {"3DTexture.vert"}, {"3DTextureLUT.frag"});
     createShader(shaderTextureQuad, {"texturequad.vert"}, {"texturequad.frag"});
     for (auto * shader : shaders) {
-        if (!shader->log().isEmpty()) {
+        if (!shader->log().isEmpty() && viewportType == VIEWPORT_SKELETON) {
             qDebug().noquote() << shader->log();
         }
     }
