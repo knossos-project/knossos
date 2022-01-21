@@ -36,6 +36,7 @@
 
 #include <snappy.h>
 
+#include <QBuffer>
 #include <QFile>
 #include <QFuture>
 #include <QImage>
@@ -49,6 +50,7 @@
 #include <cmath>
 #include <fstream>
 #include <stdexcept>
+#include <type_traits>
 
 //generalizing this needs polymorphic lambdas or return type deduction
 auto currentlyVisibleWrap = [](const Coordinate & center, const Dataset & dataset){
@@ -398,9 +400,14 @@ decltype(Loader::Worker::slotDecompression)::value_type::iterator Loader::Worker
 template<typename Func>
 void Loader::Worker::abortDownloadsFinishDecompression(std::size_t layerId, Func keep) {
     for (auto & elem : slotOpen[layerId]) {
+        elem.second->blockSignals(true);
         elem.second->cancel();
-        elem.second->waitForFinished();
     }
+    for (auto & elem : slotOpen[layerId]) {
+        solitaryConfinement.emplace_back(std::move(elem.second));
+    }
+    solitaryConfinement.erase(std::remove_if(std::begin(solitaryConfinement), std::end(solitaryConfinement),
+        [](const auto & val){ return val->isFinished(); }), std::end(solitaryConfinement));
     slotOpen[layerId].clear();
     broadcastProgress();
     abortDownloads(slotDownload[layerId], keep);
@@ -686,7 +693,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     payload = QString{R"json([{"position":[%1,%2,%3],"zoomStep":%4,"cubeSize":%5,"fourBit":false}])json"}.arg(globalCoord.x).arg(globalCoord.y).arg(globalCoord.z).arg(static_cast<std::size_t>(std::log2(dataset.magnification))).arg(dataset.cubeEdgeLength).toUtf8();
                 }
                 if (dataset.url.scheme() == "file") {
-                    return *new QFile(request.url().toLocalFile());
+                    return *new QBuffer{};
                 }
                 if (dataset.api == Dataset::API::WebKnossos || dataset.api == Dataset::API::GoogleBrainmaps) {
                     return *qnam.post(request, payload);
@@ -749,20 +756,45 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 opens[cubeCoord] = std::make_unique<OpenWatcher>();
                 auto & watcher = *opens[cubeCoord];
                 io.setParent(&watcher);// reparent, so it gets destroyed upon cleanup
-                QObject::connect(&watcher, &QFutureWatcher<bool>::finished, this, [this, &watcher, processDownload, &opens, cubeCoord](){
+                const auto path = request.url().toLocalFile();
+                QObject::connect(&watcher, &std::remove_reference_t<decltype(watcher)>::finished, this, [this, &watcher, processDownload, &opens, cubeCoord, path](){
                     if (auto res = watcher.result()) {// skip aborted open
-                        processDownload(res.get());
+                        processDownload(res.get() || QFile{path}.exists());
                     }
                     opens.erase(cubeCoord);
                     broadcastProgress();
                 });
-                watcher.setFuture(QtConcurrent::run(&localPool, [loadingNr, &io]() -> boost::optional<bool> {
+                localPool.setMaxThreadCount(1024);
+                watcher.setFuture(QtConcurrent::run(&localPool, [loadingNr, &io, path]() -> boost::optional<bool> {
                     // immediately exit unstarted thread from the previous loadSignal
                     if (loadingNr != Loader::Controller::singleton().loadingNr) {
                         return boost::none;
                     }
-                    io.open(QIODevice::ReadOnly);
-                    return dynamic_cast<QFile&>(io).exists();
+                    QFile file(path);
+                    file.open(QIODevice::ReadOnly | QIODevice::Unbuffered);
+                    io.open(QIODevice::WriteOnly | QIODevice::Unbuffered);
+                    const int size = file.size();
+                    auto * fmap = file.map(0, size);
+                    if (fmap == nullptr) {
+                        qWarning() << "mmap not used for" << path;
+                    }
+                    const int chunksize = 32*1024;
+                    for (int offset{}; offset < size; offset += chunksize) {
+                        if (loadingNr != Loader::Controller::singleton().loadingNr) {
+                            return boost::none;
+                        }
+                        if (fmap != nullptr) {
+                            io.write(reinterpret_cast<const char *>(fmap) + offset, std::min(chunksize, size - offset));
+                        } else {
+                            io.write(file.read(chunksize));
+                        }
+                        if (loadingNr != Loader::Controller::singleton().loadingNr) {
+                            return boost::none;
+                        }
+                    }
+                    io.close();
+                    io.open(QIODevice::ReadOnly | QIODevice::Unbuffered);
+                    return size != 0;
                 }));
             }
             broadcastProgress(true);

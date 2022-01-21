@@ -42,6 +42,7 @@
 #include <QWaitCondition>
 
 #include <boost/multi_array.hpp>
+#include <boost/optional/optional.hpp>
 
 #include <atomic>
 #include <list>
@@ -84,6 +85,7 @@ private:
     using DecompressionOperationPtr = ptr<QFutureWatcher<DecompressionResult>>;
     using OpenWatcher = QFutureWatcher<boost::optional<bool>>;
     std::vector<std::unordered_map<CoordOfCube, ptr<OpenWatcher>>> slotOpen;
+    std::vector<ptr<OpenWatcher>> solitaryConfinement;// disconnected worker threads that wait for IO
     std::vector<std::unordered_map<CoordOfCube, QNetworkReply*>> slotDownload;
     std::vector<std::unordered_map<CoordOfCube, DecompressionOperationPtr>> slotDecompression;
     std::vector<std::list<std::vector<std::uint8_t>>> slotChunk;// slot ownership
