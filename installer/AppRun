@@ -1,5 +1,51 @@
-#!/bin/bash
-HERE="$(dirname "$(readlink -f "${0}")")"
-export LD_LIBRARY_PATH=${HERE}/glibc/usr/lib/:${HERE}/lib/:$LD_LIBRARY_PATH
-cd ${HERE}
-./knossos "$@" || (export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${HERE}/lib/supplemental && ./knossos "$@")
+#! /usr/bin/env bash
+
+#set -e
+#trap 'exit' ERR
+
+appdir=$(readlink -f ${APPDIR:-$(dirname "$0")})
+
+source "${appdir}"/apprun-hooks/"linuxdeploy-plugin-qt-hook.sh"
+
+libs=$("${appdir}"/glibc/usr/bin/ldconfig -p)
+# check for existing libraries
+for lib_filename in $(ls "${appdir}"/usr/lib/supplemental/); do
+  if ! echo "${libs}" | grep "${lib_filename}" | grep 'x86-64'; then
+    echo "using bundled »${lib_filename}«"
+    export LD_LIBRARY_PATH_USER="${appdir}"/usr/lib/supplemental/"${lib_filename}"/:${LD_LIBRARY_PATH_USER}
+  fi
+done
+# check if existing libraries are new enough
+for lib_tuple in libstdc++.so.6:'^GLIBCXX_[0-9]\.[0-9]' libgcc_s.so.1:'^GCC_[0-9]\.[0-9]'; do
+  lib_filename=$(echo "$lib_tuple" | cut -d: -f1)
+  version_prefix=$(echo "$lib_tuple" | cut -d: -f2)
+  lib_dir="$appdir"/usr/lib/versioned/"$lib_filename"/
+  lib_path="$lib_dir"/"$lib_filename"
+  if [ -e "$lib_path" ]; then
+    lib=$(echo "${libs}" | grep "$lib_filename" | awk 'NR==1 {print $NF}')
+    sym_sys=$(tr '\0' '\n' < "$lib" | grep -e "$version_prefix" | sort --version-sort | tail -n1)
+    sym_app=$(tr '\0' '\n' < "$lib_path" | grep -e "$version_prefix" | sort --version-sort | tail -n1)
+    if [ z$(printf "${sym_sys}\n${sym_app}" | sort -V | tail -1) != z"$sym_sys" ]; then
+      echo "using bundled »${lib_filename}«"
+      export LD_LIBRARY_PATH_USER="$lib_dir"/:"$LD_LIBRARY_PATH_USER"
+    fi
+  fi
+done
+
+cd "${appdir}"
+# environment variable reset library
+export LD_PRELOAD="$appdir"/usr/optional/exec.so:"$LD_PRELOAD"
+# add required and unproplematic libs
+export LD_LIBRARY_PATH_USER="${appdir}/usr/lib/:${LD_LIBRARY_PATH_USER}"
+
+FAILURE_RUNTIME=5
+
+echo '→ trying system glibc'
+binary="$appdir"/usr/bin/knossos
+env LD_LIBRARY_PATH="$LD_LIBRARY_PATH_USER:$LD_LIBRARY_PATH" "$binary" "$@"
+test $? -eq 0 || test $SECONDS -gt $FAILURE_RUNTIME && exit 0
+
+echo '→ using bundled glibc'
+binary="$appdir"/usr/bin/knossos-custom-glibc
+export LD_LIBRARY_PATH_USER="${appdir}/glibc/usr/lib/:${LD_LIBRARY_PATH_USER}"
+env LD_LIBRARY_PATH="$LD_LIBRARY_PATH_USER:$LD_LIBRARY_PATH" "$binary" "$@"
