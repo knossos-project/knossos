@@ -1,22 +1,39 @@
 version: 5.1-{branch}+{build}
 
-image: 
-  - Visual Studio 2019
-  - macos-bigsur
-  - Ubuntu
-
-environment:
-  MSYSTEM: MINGW64
+image:
+  - Visual Studio 2022 # Windows Server 2019
+  - Visual Studio 2017 # Windows Server 2016
+  - Visual Studio 2015 # Windows Server 2012 R2
+  - macos-bigsur # 11
+  - macos # 10.15
+  - macos-mojave # 10.14
+  - Ubuntu2004
+  - Ubuntu1804
+  - Ubuntu1604
 
 for:
 -
   matrix:
     only:
-      - image: Ubuntu
+      - image: Ubuntu2004
   services:
     - docker
   install:
     - docker pull knossostool/knossos
+  build_script:
+    - docker run --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${APPVEYOR_BUILD_FOLDER}:/root/knossos -e APPVEYOR_REPO_BRANCH knossostool/knossos bash -c '/root/knossos/ci/build_linux.sh'
+  artifacts:
+    - path: '*nightly.*'
+-
+  matrix:
+    only:
+      - image: Ubuntu1804
+      - image: Ubuntu1604
+  build: off
+  before_test:
+    - curl -C - -LO https://github.com/knossos-project/knossos/releases/download/nightly-dev/linux.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.AppImage
+    - chmod +x linux.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.AppImage
+  deploy: off
 -
   matrix:
     only:
@@ -30,14 +47,47 @@ for:
     - sh ci/build_macos_PythonQt.sh
   build_script:
     - sh ci/build_macos.sh
+  test_script:
+    - ../knossos-build/KNOSSOS.app/Contents/MacOS/knossos exit
+  artifacts:
+    - path: '*nightly.*'
+-
+  matrix:
+    only:
+      - image: macos
+      - image: macos-mojave
+  before_test:
+    - curl -C - -LO https://github.com/knossos-project/knossos/releases/download/nightly-dev/macos.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.app.zip
+    - unzip -q macos.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.app.zip
+  build: off
+  test_script:
+    - KNOSSOS.app/Contents/MacOS/knossos exit
+  deploy: off
+-
+  matrix:
+    only:
+      - image: Visual Studio 2022
+  environment:
+    MSYSTEM: MINGW64
+  build_script:
+    - cmd: C:\msys64\usr\bin\bash -lc "pacman -Syuu --noconfirm"
+    - cmd: C:\msys64\usr\bin\bash -lc "$(cygpath ${APPVEYOR_BUILD_FOLDER})/ci/build_windows.sh"
+  artifacts:
+    - path: '*nightly.*'
+-
+  matrix:
+    only:
+      - image: Visual Studio 2017
+      - image: Visual Studio 2015
+  build: off
+  before_test:
+    - curl -C - -LO https://github.com/knossos-project/knossos/releases/download/nightly-dev/win.%APPVEYOR_REPO_BRANCH%-KNOSSOS.nightly.exe
+  deploy: off
 
-build_script:
-  - cmd: C:\msys64\usr\bin\bash -lc "pacman -Syuu --noconfirm"
-  - cmd: C:\msys64\usr\bin\bash -lc "$(cygpath ${APPVEYOR_BUILD_FOLDER})/ci/build_windows.sh"
-  - sh: docker run --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${APPVEYOR_BUILD_FOLDER}:/root/knossos -e APPVEYOR_REPO_BRANCH knossostool/knossos bash -c '/root/knossos/ci/build_linux.sh'
-
-artifacts:
-  - path: '*nightly.*'
+test_script:
+  - cmd: win.%APPVEYOR_REPO_BRANCH%-KNOSSOS.nightly.exe exit
+  # custom screen specification is required for 1604, because the default used to be only 8 bit
+  - sh: time xvfb-run -e /dev/stdout --auto-servernum -s '-screen 0 1024x768x24' ./linux.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.AppImage exit
 
 deploy:
   - provider: GitHub
