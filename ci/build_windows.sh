@@ -1,29 +1,30 @@
 #!/bin/bash
 set -euxo pipefail
 
-pacman -R mingw-w64-{i686,x86_64}-gcc-{ada,objc} --noconfirm # https://github.com/msys2/MINGW-packages/issues/5434
-time pacman -Syuu --needed --noconfirm ${MINGW_PACKAGE_PREFIX}-{boost,cmake,jasper,ninja,python2,qt5-static,snappy,toolchain}
+# don’t, because slow and unnecessary
+sed -i 's/CheckSpace/#CheckSpace/' /etc/pacman.conf
+# no need wasting time updating msys and 32 bits
+sed -i "s?#IgnorePkg   =?IgnorePkg   = $(pacman -Slq msys mingw32 | xargs pacman -Qq 2>/dev/null | tr '\n' ' ') ?" /etc/pacman.conf
 
-# Download and install static PythonQt and QuaZIP
-time curl -JLO https://github.com/knossos-project/knossos/releases/download/nightly-dev/${MINGW_PACKAGE_PREFIX}-pythonqt-static.pkg.tar.xz
-time curl -JLO https://github.com/knossos-project/knossos/releases/download/nightly-dev/${MINGW_PACKAGE_PREFIX}-quazip-static.pkg.tar.xz
-time pacman -U --noconfirm ${MINGW_PACKAGE_PREFIX}-{pythonqt,quazip}-static.pkg.tar.xz
+# don’t verify twice, only during install
+sed -i 's/Required/Never/' /etc/pacman.conf
+time pacman --noconfirm --needed -Syuuw ${MINGW_PACKAGE_PREFIX}-{boost,cmake,jasper,ninja,python2,qt5-static,snappy,toolchain}
+# Download and install static PythonQt and QuaZIP, also only directly works like this with disabled signature checking
+time pacman --noconfirm -U https://github.com/knossos-project/knossos/releases/download/nightly-dev/mingw-w64-x86_64-{pythonqt,quazip}-static.pkg.tar.xz
+sed -i 's/Never/Required/' /etc/pacman.conf
+time pacman --noconfirm --needed -Syuu ${MINGW_PACKAGE_PREFIX}-{boost,cmake,jasper,ninja,python2,qt5-static,snappy,toolchain}
 
 PROJECTPATH=$(cygpath ${APPVEYOR_BUILD_FOLDER})
 
 mkdir knossos-build
 cd knossos-build
 DEBUG_FLAGS=-DCMAKE_CXX_FLAGS="-g -fno-omit-frame-pointer"
-# https://gitlab.kitware.com/cmake/cmake/-/issues/22299
-test -f /mingw64/share/cmake-3.20/Modules/ExternalProject-gitupdate.cmake.in && 
-	sed  -i 's/\^{commit}/\^0/' /mingw64/share/cmake-3.20/Modules/ExternalProject-gitupdate.cmake.in
 time cmake -G Ninja -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=RELEASE "${DEBUG_FLAGS}" ${PROJECTPATH}
 
 # Build
 time ninja
 
 # Deploy
-BRANCH_PREFIX=${APPVEYOR_REPO_BRANCH}-
-cp knossos.exe $PROJECTPATH/win.${BRANCH_PREFIX}KNOSSOS.nightly.exe
+cp -v knossos.exe $PROJECTPATH/win.${APPVEYOR_REPO_BRANCH}-KNOSSOS.nightly.exe
 strip -v knossos.exe
-mv knossos.exe $PROJECTPATH/win.KNOSSOS.nightly.exe
+mv -v knossos.exe $PROJECTPATH/win.KNOSSOS.nightly.exe
