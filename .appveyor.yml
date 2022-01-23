@@ -2,7 +2,7 @@ version: 5.1-{branch}+{build}
 
 image: 
   - Visual Studio 2019
-  - macos-mojave
+  - macos-bigsur
   - Ubuntu
 
 environment:
@@ -20,9 +20,9 @@ for:
 -
   matrix:
     only:
-      - image: macos-mojave
+      - image: macos-bigsur
   environment:
-    MACOSX_DEPLOYMENT_TARGET: 10.13
+    MACOSX_DEPLOYMENT_TARGET: 10.14 # mojave
   install:
     - time brew update && time brew upgrade
     - time brew remove qt6 || true
