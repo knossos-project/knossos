@@ -39,6 +39,7 @@
 #include <QStandardPaths>
 #include <QStyleFactory>
 #include <QtConcurrentRun>
+#include <QTimer>
 
 #include <iostream>
 #include <fstream>
@@ -165,12 +166,14 @@ int main(int argc, char *argv[]) try {
     SignalRelay signalRelay;
     Scripting scripts;
     Viewer viewer;
-    state.mainWindow->loadSettings();// load settings after viewer and window are accessible through state and viewer
-    state.mainWindow->widgetContainer.datasetLoadWidget.loadDataset();// load last used dataset or show
-    viewer.timer.start(0);
+    QTimer::singleShot(0, [&](){// get into the event loop first
+        state.mainWindow->loadSettings();// load settings after viewer and window are accessible through state and viewer
+        state.mainWindow->widgetContainer.datasetLoadWidget.loadDataset();// load last used dataset or show
+        viewer.timer.start(0);
 #ifdef NDEBUG
-    splash.finish(state.mainWindow);
+        splash.finish(state.mainWindow);
 #endif
+    });
     // ensure killed QNAM’s before QNetwork deinitializes
     std::unique_ptr<Loader::Controller> loader_deleter{&Loader::Controller::singleton()};
     std::unique_ptr<Network> network_deleter{&Network::singleton()};
