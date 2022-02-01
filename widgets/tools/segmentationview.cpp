@@ -464,18 +464,16 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         });
         QObject::connect(contextMenu.addAction("Assign new data id"), &QAction::triggered, [](){
             state->viewer->suspend([](){
+                const auto defaultValue = QString::number(Segmentation::singleton().highestSubobjectId()+1);
                 bool ok;
-                const auto newid = QInputDialog::getInt(QApplication::activeWindow(), "", "", Segmentation::singleton().highestSubobjectId()+1, 0, std::numeric_limits<int>::max(), 1, &ok);
-                if (!ok) {
-                    return qDebug();
+                const auto newid = QInputDialog::getText(QApplication::activeWindow(), "", "", QLineEdit::Normal, defaultValue).toULongLong(&ok);
+                if (ok) {
+                    QElapsedTimer time;
+                    time.start();
+                    assignNewIdInMovementArea(newid);
+                    qDebug() << "id assign" << time.nsecsElapsed() / 1e9;
                 }
-
-                QElapsedTimer time;
-                time.start();
-
-                assignNewIdInMovementArea(newid);
-
-                return qDebug() << "id assign" << time.nsecsElapsed() / 1e9;
+                return nullptr;
             });
         });
         QObject::connect(contextMenu.addAction("Restore default color"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::restoreDefaultColorForSelectedObjects);
