@@ -777,8 +777,8 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     io.open(QIODevice::WriteOnly | QIODevice::Unbuffered);
                     const int size = file.size();
                     auto * fmap = file.map(0, size);
-                    if (fmap == nullptr) {
-                        qWarning() << "mmap not used for" << path;
+                    if (fmap == nullptr && QFile{path}.exists()) {
+                        qWarning() << "mmap not used, but file exists, for" << path << size;
                     }
                     const int chunksize = 32*1024;
                     for (int offset{}; offset < size; offset += chunksize) {
