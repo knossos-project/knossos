@@ -95,7 +95,7 @@ bool Dataset::isNeuroDataStore(const QUrl & url) {
 }
 
 bool Dataset::isPyKnossos(const QUrl & url) {
-    return url.path().endsWith("ariadne.conf") || url.path().endsWith(".pyknossos.conf") || url.path().endsWith(".pyk.conf");
+    return url.path().endsWith("ariadne.conf") || url.path().endsWith(".pyknossos.conf") || url.path().endsWith(".pyk.conf") || url.path().endsWith(".pyk.auth.conf");
 }
 
 bool Dataset::isWebKnossos(const QUrl & url) {

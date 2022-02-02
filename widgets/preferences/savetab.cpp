@@ -28,6 +28,7 @@
 #include "viewer.h"
 #include "widgets/GuiConstants.h"
 #include "widgets/mainwindow.h"
+#include "widgets/datasetloadwidget.h"
 
 #include <QDesktopServices>
 #include <QDir>
@@ -95,6 +96,9 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent) {
     });
     QObject::connect(&customSaveButton, &QPushButton::clicked, [this](const bool) {
         state->viewer->window->saveAsSlot(false, saveTimeButton.isChecked(), saveDatasetPathButton.isChecked());
+    });
+    QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this]() {
+       saveDatasetPathButton.setDisabled(Annotation::singleton().authenticatedByConf);
     });
 }
 

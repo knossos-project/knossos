@@ -1403,7 +1403,7 @@ void MainWindow::dropEvent(QDropEvent *event) {
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
-    const std::vector<QString> validExtensions = {".k.zip", ".nml", ".nmx", ".ply", ".swc", ".k.conf", "knossos.conf", "ariadne.conf", ".pyknossos.conf", ".pyk.conf"};
+    const std::vector<QString> validExtensions = {".k.zip", ".nml", ".nmx", ".ply", ".swc", ".k.conf", "knossos.conf", "ariadne.conf", ".pyknossos.conf", ".pyk.conf", ".pyk.auth.conf"};
     if(event->mimeData()->hasUrls()) {
         QList<QUrl> urls = event->mimeData()->urls();
         for (auto && url : urls) {

@@ -265,7 +265,7 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     xml.writeAttribute("mode", (Annotation::singleton().guiMode == GUIMode::ProofReading) ? "proof reading" : "none");
     xml.writeEndElement();
     xml.writeStartElement("dataset");
-    xml.writeAttribute("path", saveDatasetPath? state->viewer->window->widgetContainer.datasetLoadWidget.datasetUrl.toString() : "");
+    xml.writeAttribute("path", (saveDatasetPath && !Annotation::singleton().authenticatedByConf)? state->viewer->window->widgetContainer.datasetLoadWidget.datasetUrl.toString() : "");
     xml.writeAttribute("overlay", QString::number(static_cast<int>(Segmentation::singleton().enabled)));
     xml.writeEndElement();
     const auto & task = Annotation::singleton().fileTask;
