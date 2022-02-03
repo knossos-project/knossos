@@ -493,7 +493,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     {
         addDisabledSeparator(objectsContextMenu);
         auto & newAction = *objectsContextMenu.addAction("Create new object");
-        QObject::connect(&newAction, &QAction::triggered, []() { Segmentation::singleton().createAndSelectObject(state->viewerState->currentPosition); });
+        QObject::connect(&newAction, &QAction::triggered, this, &SegmentationView::userCreateObject);
     }
     createContextMenu(touchedObjsContextMenu, touchedObjsTable);
     static auto showContextMenu = [](auto & contextMenu, const QTreeView & table, const QPoint & pos){
@@ -624,4 +624,13 @@ uint64_t SegmentationView::indexFromRow(const SegmentationObjectModel &, const Q
 }
 uint64_t SegmentationView::indexFromRow(const TouchedObjectModel & model, const QModelIndex index) const {
     return model.objectCache[index.row()].get().index;
+}
+
+void SegmentationView::userCreateObject() {
+    QString category;
+    if (Segmentation::singleton().selectedObjectsCount() == 1) {
+        category = Segmentation::singleton().objects[Segmentation::singleton().selectedObjectIndices.front()].category;
+    }
+    Segmentation::singleton().createAndSelectObject(state->viewerState->currentPosition, category);
+    filter();
 }

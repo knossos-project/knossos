@@ -120,9 +120,10 @@ bool Segmentation::hasObjects() const {
     return !this->objects.empty();
 }
 
-void Segmentation::createAndSelectObject(const Coordinate & position) {
+void Segmentation::createAndSelectObject(const Coordinate & position, const QString & category) {
     clearObjectSelection();
     auto & newObject = createObjectFromSubobjectId(SubObject::highestId + 1, position);
+    newObject.category = category;
     selectObject(newObject);
 }
 

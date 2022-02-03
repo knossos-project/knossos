@@ -155,6 +155,7 @@ public:
     void updateBrushEditRange(const double minSize, const double maxSize);
     uint64_t indexFromRow(const SegmentationObjectModel & model, const QModelIndex index) const;
     uint64_t indexFromRow(const TouchedObjectModel & model, const QModelIndex index) const;
+    void userCreateObject();
 public slots:
     void filter();
 };

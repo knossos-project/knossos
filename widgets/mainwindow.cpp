@@ -658,8 +658,8 @@ void MainWindow::createMenus() {
     clearSkeletonAction = actionMenu.addAction(QIcon(":/resources/icons/menubar/trash.png"), "Clear Skeleton", this, &MainWindow::clearSkeletonSlot);
     actionMenu.addSeparator();
     //segmentation
-    newObjectAction = &addApplicationShortcut(actionMenu, QIcon(), tr("New segmentation object"), this, []() {
-        Segmentation::singleton().createAndSelectObject(state->viewerState->currentPosition);
+    newObjectAction = &addApplicationShortcut(actionMenu, QIcon(), tr("New segmentation object"), this, [this]() {
+        widgetContainer.annotationWidget.segmentationTab.userCreateObject();
     }, Qt::Key_C);
     auto changeOverlayOpacity = [](int value) {
         Segmentation::singleton().alpha = static_cast<uint8_t>(std::max(0, std::min(255, static_cast<int>(Segmentation::singleton().alpha) + value)));

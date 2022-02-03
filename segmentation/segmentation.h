@@ -209,7 +209,7 @@ public:
         return SubObject::highestId;
     }
     //data access
-    void createAndSelectObject(const Coordinate & position);
+    void createAndSelectObject(const Coordinate & position, const QString & category = "");
     SubObject & subobjectFromId(const uint64_t & subobjectId, const Coordinate & location);
     uint64_t subobjectIdOfFirstSelectedObject(const Coordinate & newLocation);
     bool objectOrder(const uint64_t &lhsIndex, const uint64_t &rhsIndex) const;
