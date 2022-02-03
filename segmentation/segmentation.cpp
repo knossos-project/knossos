@@ -595,6 +595,7 @@ void Segmentation::mergelistLoad(QTextStream & stream) {
     {
         QSignalBlocker blocker{this};
         std::size_t line_i{0};
+        categories.clear();
         while (!(line = stream.readLine()).isNull()) {
             std::istringstream lineStream(line.toStdString());
             std::istringstream coordColorLineStream(stream.readLine().toStdString());
@@ -632,7 +633,13 @@ void Segmentation::mergelistLoad(QTextStream & stream) {
             }
             line_i += 4 + customColorValid;
         }
+        if (categories.isEmpty()) {
+            categories = prefixed_categories;
+        } else {
+            categories.insert(QString());
+        }
     }// QSignalBlocker
+    emit categoriesChanged();
     emit resetData();
 }
 
