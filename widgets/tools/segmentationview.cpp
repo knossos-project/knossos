@@ -265,7 +265,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     categoryModel.recreate();
     categoryFilter.setModel(&categoryModel);
     categoryFilter.setEditable(true);
-    categoryFilter.lineEdit()->setPlaceholderText("Category");
+    categoryFilter.lineEdit()->setPlaceholderText("Class");
     commentFilter.setPlaceholderText("Filter for comment...");
     showOnlySelectedChck.setChecked(Segmentation::singleton().renderOnlySelectedObjs);
 

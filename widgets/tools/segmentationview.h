@@ -65,7 +65,7 @@ class SegmentationObjectModel : public QAbstractListModel {
 Q_OBJECT
     friend class SegmentationView;//selection
 protected:
-    const std::vector<QString> header{""/*color*/, "Object ID", "Lock", "Category", "Comment", "#", "Subobject IDs"};
+    const std::vector<QString> header{""/*color*/, "Object ID", "Lock", "Class", "Comment", "#", "Subobject IDs"};
     const std::size_t MAX_SHOWN_SUBOBJECTS = 10;
 public:
     virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
