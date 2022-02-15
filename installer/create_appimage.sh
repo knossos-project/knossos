@@ -55,7 +55,7 @@ patchelf --add-needed libpthread.so.0 usr/bin/knossos
 patchelf --add-needed libQt5XcbQpa.so.5 usr/bin/knossos
 patchelf --add-needed libdl.so.2 usr/bin/knossos
 cp -v usr/bin/knossos usr/bin/knossos-custom-glibc
-patchelf --set-interpreter glibc/usr/lib/ld-*.so usr/bin/knossos-custom-glibc
+patchelf --set-interpreter glibc/usr/lib/ld-linux-x86-64.so.* usr/bin/knossos-custom-glibc
 #patchelf --force-rpath --set-rpath "$(patchelf --print-rpath usr/bin/knossos)" usr/bin/knossos # may be needed with newer patchelf versions
 set +x
 
