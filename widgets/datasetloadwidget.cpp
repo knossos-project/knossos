@@ -269,6 +269,13 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
             tableWidget.scrollTo(currentlySelected);
         }
     });
+    QObject::connect(&searchField, &QLineEdit::returnPressed, [this] () {
+        if (sortAndFilterProxy.rowCount() == 0) {
+            datasetModel.add(searchField.text());
+            sortAndFilterProxy.setFilterFixedStringWrap(searchField.text());
+            tableWidget.selectionModel()->select(sortAndFilterProxy.index(0, 0), QItemSelectionModel::ClearAndSelect);
+        }
+    });
     QObject::connect(&datasetModel, &DatasetModel::dataChanged, this, &DatasetLoadWidget::datasetCellChanged);
     QObject::connect(tableWidget.selectionModel(), &QItemSelectionModel::selectionChanged, [this]() {
         WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
