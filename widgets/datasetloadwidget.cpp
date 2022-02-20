@@ -107,6 +107,11 @@ void DatasetModel::clear() {
     endResetModel();
 }
 
+void SortFilterProxy::setFilterFixedStringWrap(const QString & pattern) {
+    setFilterFixedString(pattern);
+    emit filterStringChanged();
+}
+
 bool SortFilterProxy::lessThan(const QModelIndex & source_left, const QModelIndex & source_right) const {
     if (source_left.row() == sourceModel()->rowCount() - 1) {
         return sortOrder() != Qt::AscendingOrder;
@@ -134,6 +139,7 @@ ButtonListView::ButtonListView(DatasetModel & datasetModel, SortFilterProxy & pr
         deleteButton.hide();
     });
     QObject::connect(&listHeader, &ButtonHeaderView::mouseEntered, this, &ButtonListView::mouseLeft);
+    QObject::connect(&proxy,  &SortFilterProxy::filterStringChanged, this, &ButtonListView::mouseLeft);
     QObject::connect(&listHeader, &ButtonHeaderView::sortIndicatorChanged, threeWaySorting(*this, sortIndex));
 
     QObject::connect(&fileDialogButton, &QPushButton::clicked, [this]() {
@@ -164,7 +170,7 @@ void ButtonListView::addDatasetUrls(QDropEvent * e) {
             datasetModel->add(url.url());
         }
     }
-    proxy->setFilterFixedString(filterString); // force update filter
+    proxy->setFilterFixedStringWrap(filterString); // force update filter
     auto lastIndex = proxy->mapFromSource(datasetModel->index(datasetModel->rowCount() - 2, 0));
     selectionModel()->select(lastIndex, QItemSelectionModel::ClearAndSelect);
     scrollTo(lastIndex);
@@ -255,7 +261,7 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     QObject::connect(&searchField, &QLineEdit::textChanged, [this](const QString & text) {
         tableWidget.filterString = text;
         const QPersistentModelIndex previouslySelected((tableWidget.selectionModel()->selectedIndexes().isEmpty())? QModelIndex() : tableWidget.selectionModel()->selectedIndexes()[0]);
-        sortAndFilterProxy.setFilterFixedString(text);
+        sortAndFilterProxy.setFilterFixedStringWrap(text);
         auto currentlySelected = (tableWidget.selectionModel()->selectedIndexes().isEmpty())? QModelIndex() : tableWidget.selectionModel()->selectedIndexes()[0];
         if (previouslySelected != currentlySelected) {
             tableWidget.selectionModel()->select(currentlySelected, QItemSelectionModel::Deselect);

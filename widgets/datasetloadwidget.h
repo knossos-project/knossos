@@ -62,8 +62,13 @@ public:
 };
 
 class SortFilterProxy : public QSortFilterProxyModel {
+Q_OBJECT
 protected:
     virtual bool lessThan(const QModelIndex & source_left, const QModelIndex & source_right) const override;
+public:
+    void setFilterFixedStringWrap(const QString & pattern);
+signals:
+    void filterStringChanged();
 };
 
 class ButtonHeaderView : public QHeaderView {
