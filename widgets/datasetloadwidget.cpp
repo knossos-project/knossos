@@ -60,6 +60,8 @@ QVariant DatasetModel::data(const QModelIndex & index, int role) const {
 
 bool DatasetModel::setData(const QModelIndex & index, const QVariant & value, int role) {
     if (index.isValid()) {
+        QUrl url{value.toString()};
+        url.setScheme(url.scheme().isEmpty() && !url.url().isEmpty()? "file" : url.scheme());
         datasets[index.row()] = value.toString();
         if (index.row() == rowCount() - 1 && !index.data().toString().isEmpty()) {
             beginInsertRows({}, datasets.size(), datasets.size());
