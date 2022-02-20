@@ -190,6 +190,10 @@ void ButtonDelegate::paint(QPainter * painter, const QStyleOptionViewItem & opti
         auto * buttonView = qobject_cast<ButtonListView *>(parent());
         auto xOffset = buttonView->visualRect(index).right() - option.rect.height();
         for (auto * button : {&buttonView->fileDialogButton, &buttonView->deleteButton}) {
+            // don’t trigger button if return is pressed while hovering over a row.
+            button->setDefault(false);
+            button->setAutoDefault(false);
+
             button->setGeometry(QRect(xOffset, option.rect.top() + buttonView->header()->height(),
                                       option.rect.height(), option.rect.height())); // quadratic button
             auto row = buttonView->proxy->mapToSource(index).row();
