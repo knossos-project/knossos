@@ -476,6 +476,15 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
                 return nullptr;
             });
         });
+        QObject::connect(contextMenu.addAction("Set category"), &QAction::triggered, []() {
+            bool ok;
+            const auto newCategory = QInputDialog::getText(QApplication::activeWindow(), "", "", QLineEdit::Normal, "", &ok);
+            if (ok) {
+                for (const auto idx : Segmentation::singleton().selectedObjectIndices) {
+                    Segmentation::singleton().changeCategory(Segmentation::singleton().objects[idx], newCategory);
+                }
+            }
+        });
         QObject::connect(contextMenu.addAction("Restore default color"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::restoreDefaultColorForSelectedObjects);
         deleteAction(contextMenu, table, "Delete", &Segmentation::singleton(), &Segmentation::deleteSelectedObjects);
         contextMenu.setDefaultAction(contextMenu.actions().front());
@@ -498,6 +507,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
                                              .arg(Segmentation::singleton().selectedObjectsCount() > 0 ? "selected objects" : "all subobjects"));
         contextMenu.actions().at(i++)->setEnabled(true);// generate meshes
         contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// assign new id
+        contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// set category
         contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// restoreColorAction
         contextMenu.actions().at(deleteActionIndex = i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// deleteAction
         ++i;// separator
