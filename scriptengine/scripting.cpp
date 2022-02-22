@@ -55,7 +55,20 @@ SignalRelay::SignalRelay() {
      state->signalRelay = this;
 }
 
+#include <delayimp.h>
+
 void PythonQtInit() {
+    __pfnDliFailureHook2 = [](unsigned int dliNotify, PDelayLoadInfo info){
+        if (dliNotify == dliFailLoadLib) {
+            const auto msg = std::string("no ") + info->szDll;
+            std::cerr << msg << std::endl;
+            throw std::runtime_error(msg);
+        }
+        return static_cast<FARPROC>(0);
+    };
+
+    Py_IsInitialized();// trigger a delay load to make the module available to GetModuleHandle in LoadPythonSymbol
+
     PythonQt::init();
 #ifdef QtAll
     PythonQt_QtAll::init();
@@ -90,7 +103,13 @@ const QString SCRIPTING_IMPORT_KEY = "import";
 const QString SCRIPTING_INSTANCE_KEY = "instance";
 
 Scripting::Scripting() {
-    PythonQtInit();
+    try {
+        PythonQtInit();
+    } catch (...) {
+        qWarning() << "nono scripting";
+        return;
+    }
+
     state->scripting = this;
 }
 
