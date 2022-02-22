@@ -41,7 +41,9 @@ for:
   environment:
     MACOSX_DEPLOYMENT_TARGET: 10.14 # mojave
   install:
-    - time brew update && time brew upgrade
+    - brew pin appveyor-build-agent # https://github.com/appveyor/ci/issues/3763#issuecomment-1003168277
+    - time brew update
+    - time brew upgrade || true # skipped upgrades for pinned packages don’t return cleanly
     - time brew remove qt6 || true
     - time brew install boost ninja python qt5 quazip snappy
     - sh ci/build_macos_PythonQt.sh
