@@ -88,7 +88,7 @@ bool Dataset::isGoogleBrainmaps(const QUrl & url) {
 }
 
 bool Dataset::isHeidelbrain(const QUrl & url) {
-    return !isGoogleBrainmaps(url) && !isNeuroDataStore(url) && !isPyKnossos(url) && !isWebKnossos(url);
+    return !isGoogleBrainmaps(url) && !isNeuroDataStore(url) && !isPyKnossos(url) && !isWebKnossos(url) && !isToml(url);
 }
 
 bool Dataset::isNeuroDataStore(const QUrl & url) {
