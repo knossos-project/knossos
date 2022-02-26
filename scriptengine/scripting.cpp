@@ -64,6 +64,7 @@ void PythonQtInit() {
     __pfnDliFailureHook2 = [](unsigned int dliNotify, PDelayLoadInfo info){
         if (dliNotify == dliFailLoadLib) {
             const auto msg = std::string("no ") + info->szDll;
+            Scripting::initError = info->szDll;
             std::cerr << msg << std::endl;
             throw std::runtime_error(msg);
         }

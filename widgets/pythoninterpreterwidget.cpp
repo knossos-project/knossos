@@ -33,6 +33,10 @@ PythonInterpreterWidget::PythonInterpreterWidget(QWidget * parent) : DialogVisib
     setWindowIcon(QIcon(":/resources/icons/python.png"));
     setWindowTitle("Python Interpreter");
 
+    label.setAlignment(Qt::AlignCenter);
+    label.setText(tr("%1 not available").arg(Scripting::initError));
+
+    mainLayout.addWidget(&label);
     setLayout(&mainLayout);
     resize({800, 480});
 }
@@ -54,6 +58,7 @@ void PythonInterpreterWidget::startConsole() {
     static PythonQtScriptingConsole * console = nullptr;
     console = console != nullptr ? console : new PythonQtScriptingConsole(this, PythonQt::self()->getMainModule());
     state->scripting->addObject("knossos_global_interpreter_console", console);
+    label.hide();
     mainLayout.addWidget(console);
 #endif
 }
