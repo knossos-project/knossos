@@ -33,6 +33,10 @@ PythonInterpreterWidget::PythonInterpreterWidget(QWidget * parent) : DialogVisib
     setWindowIcon(QIcon(":/resources/icons/python.png"));
     setWindowTitle("Python Interpreter");
 
+    label.setAlignment(Qt::AlignCenter);
+    label.setText(tr("%1 not available").arg(Scripting::initError));
+
+    mainLayout.addWidget(&label);
     setLayout(&mainLayout);
     resize({800, 480});
 }

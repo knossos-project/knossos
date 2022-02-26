@@ -25,11 +25,13 @@
 #include "widgets/DialogVisibilityNotify.h"
 
 #include <QDialog>
+#include <QLabel>
 #include <QVBoxLayout>
 
 class PythonInterpreterWidget : public DialogVisibilityNotify {
     Q_OBJECT
     QVBoxLayout mainLayout;
+    QLabel label;
 public:
     explicit PythonInterpreterWidget(QWidget * parent = nullptr);
     void loadSettings();

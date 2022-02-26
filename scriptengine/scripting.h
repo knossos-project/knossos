@@ -102,6 +102,7 @@ class Scripting : public QObject {
     Q_OBJECT
     friend class PythonPropertyWidget;
 public:
+    inline static QString initError;
     explicit Scripting();
     void runFile(const QString & filepath, bool runExistingFirst = false);
     void runFile(QIODevice & pyFile, const QString &filename, bool runExistingFirst = false);
