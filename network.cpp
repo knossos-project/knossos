@@ -117,16 +117,16 @@ std::pair<int, int> Network::checkOnlineMags(const QUrl & url) {
 
 QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply) {
     QEventLoop pause;
-    QObject::connect(&reply, &QNetworkReply::finished, [&pause]() {
-        pause.exit();
-    });
+    QObject::connect(&reply, &QNetworkReply::finished, &pause, &QEventLoop::quit);
     emit Network::singleton().startedNetworkRequest(reply);
     QObject::connect(&reply, &QNetworkReply::downloadProgress, &Network::singleton(), &Network::progressChanged);
     QObject::connect(&reply, &QNetworkReply::uploadProgress, &Network::singleton(), &Network::progressChanged);
 
-    state->viewer->suspend([&pause](){
-        return pause.exec();
-    });
+    if (!reply.isFinished()) {// workaround for replies that don’t notify their completion
+        state->viewer->suspend([&pause](){
+            return pause.exec();
+        });
+    }
 
     if (reply.error() != QNetworkReply::NoError) {
         qDebug() << reply.attribute(QNetworkRequest::HttpStatusCodeAttribute) << reply.error() << reply.errorString();
