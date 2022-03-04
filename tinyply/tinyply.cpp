@@ -6,6 +6,8 @@
 
 #include "tinyply.h"
 
+#include <stdexcept>
+
 using namespace tinyply;
 
 //////////////////
@@ -244,7 +246,7 @@ void PlyFile::write_ascii(QTextStream & os) {
 void PlyFile::write_header(QIODevice & device) {
     QTextStream tmpStream(&device);
     tmpStream.setLocale(QLocale::C);
-    
+
     tmpStream << "ply\n";
     if (isBinary) {
         tmpStream << ((isBigEndian) ? "format binary_big_endian 1.0\n" : "format binary_little_endian 1.0\n");
@@ -254,7 +256,7 @@ void PlyFile::write_header(QIODevice & device) {
     for (const auto & comment : comments) {
         tmpStream << "comment " << comment << "\n";
     }
-    
+
     for (auto & e : elements) {
         tmpStream << "element " << e.name << " " << e.size << "\n";
         for (const auto & p : e.properties) {
@@ -288,6 +290,9 @@ void PlyFile::read_internal(T & is) {
                             std::size_t listSize = 0;
                             std::size_t dummyCount = 0;
                             read_property(element.properties[pi].listType, &listSize, dummyCount, is);
+                            if (listSize != 3) {// skeletonizer explicitly sets 3 and the unused resize_vector function doesn’t know the correct types
+                                throw std::runtime_error(QObject::tr("encountered face with %1 elements\nbut only triangle faces are supported").arg(listSize).toStdString());
+                            }
                             for (std::size_t i = 0; i < listSize; ++i) {
                                 read_property(element.properties[pi].propertyType, (cursor.data + cursor.offset), cursor.offset, is);
                             }
