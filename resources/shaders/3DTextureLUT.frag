@@ -11,8 +11,8 @@ uniform float textureOpacity;
 in vec3 texCoordFrag;
 
 void main() {
-    float index = texture3D(indexTexture, texCoordFrag).r;
+    float index = texture(indexTexture, texCoordFrag).r;
     index *= factor;
-    gl_FragColor = texture1D(textureLUT, (index + 0.5) / lutSize);
+    gl_FragColor = texture(textureLUT, (index + 0.5) / lutSize);
     gl_FragColor.a = textureOpacity;
 }
