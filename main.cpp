@@ -105,6 +105,12 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext &
 Q_DECLARE_METATYPE(std::string)
 
 int main(int argc, char *argv[]) try {
+#ifdef _GLIBCXX_DEBUG
+    std::cerr << "_GLIBCXX_DEBUG set → debug stdlib in use, which might result in crashes from mismatching ABI" << std::endl;
+#endif
+#ifdef _GLIBCXX_DEBUG_PEDANTIC
+    std::cerr << "_GLIBCXX_DEBUG_PEDANTIC set" << std::endl;
+#endif
     QtConcurrent::run([](){ QSslSocket::supportsSsl(); });// workaround until https://bugreports.qt.io/browse/QTBUG-59750
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);// explicitly enable sharing for undocked viewports
 
