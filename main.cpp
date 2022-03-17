@@ -92,9 +92,9 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext &
         outFile << txt.toStdString() << std::endl;
     }
     if (type == QtWarningMsg || type == QtCriticalMsg || type == QtFatalMsg) {
-        std::cerr << txt.toLocal8Bit().constData() << std::endl;
+        std::cerr << txt.toStdString() << std::endl;
     } else {
-        std::cout << txt.toLocal8Bit().constData() << std::endl;
+        std::cout << txt.toStdString() << std::endl;
     }
 
     if (type == QtFatalMsg) {
