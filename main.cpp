@@ -65,6 +65,31 @@ public:
     }
 };
 
+struct MessageHermit {
+    const QString title, info, detail{};
+    QString formattedOutput{};
+    QDebug formatter{QDebug(&formattedOutput) << "qApp:" << qApp};
+    int fake_argc{0};
+    char * fake_argv[1]{};
+    const QApplication & a{qApp ? *qApp : static_cast<const QApplication&>(QApplication{fake_argc, fake_argv})};
+    QMessageBox box{nullptr};
+    void run(bool exec = true) {
+        std::cerr << title.toStdString() << std::endl;
+        std::cerr << info.toStdString() << std::endl;
+        std::cerr << detail.toStdString() << std::endl;
+        formatter << "→ app:" << &a << "→ qApp:" << qApp;
+        std::cerr << formattedOutput.toStdString() << std::endl;
+        if (!exec) {
+            return;
+        }
+        box.setIcon(QMessageBox::Critical);
+        box.setText(title);
+        box.setInformativeText(info);
+        box.setDetailedText(detail);
+        box.exec();
+    }
+};
+
 void debugMessageHandler(QtMsgType type, const QMessageLogContext &
 #ifdef QT_MESSAGELOGCONTEXT
     context
@@ -100,6 +125,7 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext &
     }
 
     if (type == QtFatalMsg) {
+        MessageHermit{"EXTERMINATE!!!", "got a QtFatalMsg", txt}.run();
         std::abort();
     }
 }
@@ -200,30 +226,11 @@ int main(int argc, char *argv[]) try {
 } catch (const std::exception & e) {
     std::cerr << "catch (std::exception &)" << std::endl;
     const auto text = QObject::tr("KNOSSOS will terminate due to a problem");
-    std::cerr << text.toStdString() << std::endl << e.what() << std::endl;
-    int c{1};
-    char s[]{"dummy"};
-    char * v[]{s};
-    QApplication a(c, v);
-    QMessageBox box;
-    box.setIcon(QMessageBox::Critical);
-    box.setText(QObject::tr("Unhandled Exception"));
-    box.setInformativeText(text);
-    box.setDetailedText(QString::fromStdString(e.what()));
-    if (argc != 2 || std::string(argv[1]) != "exit") {
-        box.exec();
-    }
+    MessageHermit{QObject::tr("Unhandled Exception"), text, QString::fromStdString(e.what())}
+            .run(argc != 2 || std::string(argv[1]) != "exit");
 } catch (...) {
     std::cerr << "catch (...)" << std::endl;
-    int c{1};
-    char s[]{"dummy"};
-    char * v[]{s};
-    QApplication a(c, v);
-    QMessageBox box;
-    box.setIcon(QMessageBox::Critical);
-    box.setText(QObject::tr("Unrecoverable Error"));
-    box.setInformativeText(QObject::tr("An unspecifiable problem occured which forced KNOSSOS to terminate."));
-    if (argc != 2 || std::string(argv[1]) != "exit") {
-        box.exec();
-    }
+    const auto text = QObject::tr("An unspecifiable problem occured which forced KNOSSOS to terminate.");
+    MessageHermit{QObject::tr("Unrecoverable Error"), text}
+            .run(argc != 2 || std::string(argv[1]) != "exit");
 }
