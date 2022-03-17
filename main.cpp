@@ -83,7 +83,9 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext &
     }
     auto txt = QString("%4%5").arg(intro).arg(msg);
 #ifdef QT_MESSAGELOGCONTEXT
-    txt.prepend(QString("[%1:%2] \t").arg(QFileInfo(context.file).fileName()).arg(context.line));
+    if (context.file && context.line) {
+        txt.prepend(QString("[%1:%2] \t").arg(QFileInfo(context.file).fileName()).arg(context.line));
+    }
 #endif
     // open the file once
     static std::ofstream outFile(QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+"/log.txt", std::ios_base::app);
