@@ -1603,10 +1603,3 @@ void MainWindow::pythonPluginMgrSlot() {
 void MainWindow::updateCompressionRatioDisplay() {
     compressionToggleAction->setText(tr("Toggle dataset compression: %1 ").arg(Dataset::current().compressionString()));
 }
-
-bool MainWindow::event(QEvent *event) {
-    if (event->type() == QEvent::WindowActivate) {
-        state->viewer->run();
-    }
-    return QMainWindow::event(event);
-}
