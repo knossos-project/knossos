@@ -344,7 +344,7 @@ void ViewportBase::initializeGL() {
 void ViewportBase::resizeGL(int width, int height) {
 //    glMatrixMode(GL_PROJECTION);
 //    glLoadIdentity();
-    GLfloat x = (GLfloat)width / height;
+//    GLfloat x = (GLfloat)width / height;
 
     p.setToIdentity();
     mv.setToIdentity();

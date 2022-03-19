@@ -147,7 +147,7 @@ protected:
 
     QAction *zoomEndSeparator;
     QOpenGLTexture emptyMask{QOpenGLTexture::Target2D};
-    QOpenGLBuffer screenVertexBuf{QOpenGLBuffer::VertexBuffer};
+    QOpenGLBuffer screenVertexBuf{QOpenGLBuffer::VertexBuffer}, orthoVBuf{QOpenGLBuffer::VertexBuffer}, texPosBuf{QOpenGLBuffer::VertexBuffer};
 private:
     QOpenGLDebugLogger oglLogger;
     QWidget *dockParent;

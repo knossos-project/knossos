@@ -106,7 +106,7 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext &
     case QtCriticalMsg: intro = QString("Critical: "); break;
     case QtFatalMsg:    intro = QString("Fatal: ");    break;
     }
-    auto txt = QString("%4%5").arg(intro).arg(msg);
+    auto txt = QString("%4%5").arg(intro, msg);
 #ifdef QT_MESSAGELOGCONTEXT
     if (context.file && context.line) {
         txt.prepend(QString("[%1:%2] \t").arg(QFileInfo(context.file).fileName()).arg(context.line));
@@ -166,6 +166,7 @@ int main(int argc, char *argv[]) try {
         QTimer::singleShot(5000, &app, [](){
             Loader::Controller::singleton().suspendLoader();
             Loader::Controller::singleton().worker.reset();// have to make really sure loader is done
+//            throw std::runtime_error("sldkjgn");
             QCoreApplication::quit();
         });
     }
@@ -209,7 +210,7 @@ int main(int argc, char *argv[]) try {
     SignalRelay signalRelay;
     Scripting scripts;
     Viewer viewer;
-    QTimer::singleShot(0, [&](){// get into the event loop first
+    QTimer::singleShot(0, state.mainWindow, [&](){// get into the event loop first
         state.mainWindow->loadSettings();// load settings after viewer and window are accessible through state and viewer
         state.mainWindow->widgetContainer.datasetLoadWidget.loadDataset();// load last used dataset or show
         viewer.timer.start(0);
@@ -218,6 +219,7 @@ int main(int argc, char *argv[]) try {
             splash.finish(state.mainWindow);
 #endif
         }
+//        qFatal("asdf");
     });
     // ensure killed QNAM’s before QNetwork deinitializes
     std::unique_ptr<Loader::Controller> loader_deleter{&Loader::Controller::singleton()};

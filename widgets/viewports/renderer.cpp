@@ -693,6 +693,7 @@ void ViewportOrtho::renderViewportFast() {
 
 static bool shouldRenderMesh(const treeListElement & tree, const ViewportType viewportType);
 void ViewportOrtho::renderViewport(const RenderOptions &options) {
+    QOpenGLVertexArrayObject::Binder vao(&meshVao);
     glEnable(GL_MULTISAMPLE);
 
     const auto scale = Dataset::current().scale.componentMul(n).length();
@@ -700,15 +701,15 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     const auto fars = scale * state->viewerState->depthCutOff;
     const auto nearVal = -nears;
     const auto farVal = -fars;
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(-displayedIsoPx, +displayedIsoPx, +displayedIsoPx, -displayedIsoPx, nearVal, farVal);// gluLookAt relies on an unaltered cartesian Projection
+//    glMatrixMode(GL_PROJECTION);
+//    glLoadIdentity();
+//    glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, nearVal, farVal);// gluLookAt relies on an unaltered cartesian Projection
     p = QMatrix4x4{};
     p.ortho(-displayedIsoPx, +displayedIsoPx, +displayedIsoPx, -displayedIsoPx, nearVal, farVal);
 
     const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
     auto view = [&](){
-        glLoadIdentity();
+//        glLoadIdentity();
         // place eye at the center so the depth cutoff is applied correctly
         const auto eye = Coord<double>(isoCurPos);
         // offset center with n at the same magnitude as the current position
@@ -717,19 +718,19 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         // n points to where the vp is »looking«, so we have to _add_ to place center in that direction
         const auto center =  Coord<double>(isoCurPos) + Coord<double>(n) * std::max(1., static_cast<double>(isoCurPos.length()));
         const auto v2 = Coord<double>(this->v2);
-        gluLookAt(eye.x, eye.y, eye.z
-                  , center.x, center.y, center.z
-                  , -v2.x, -v2.y, -v2.z);// negative up vectors, because origin is at the top
+//        gluLookAt(eye.x, eye.y, eye.z
+//                  , center.x, center.y, center.z
+//                  , v2.x, v2.y, v2.z);// negative up vectors, because origin is at the top
         mv = QMatrix4x4{};
         mv.lookAt(QVector3D(eye.x, eye.y, eye.z)
                   , QVector3D(center.x, center.y, center.z)
                   , QVector3D(-v2.x, -v2.y, -v2.z));
     };
-    glMatrixMode(GL_MODELVIEW);
+//    glMatrixMode(GL_MODELVIEW);
     view();
-    updateFrustumClippingPlanes();
+//    updateFrustumClippingPlanes();
 
-    glPolygonMode(GL_FRONT, GL_FILL);
+//    glPolygonMode(GL_FRONT, GL_FILL);
     glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     glDisable(GL_DEPTH_TEST);// don’t clip the skeleton
@@ -741,54 +742,53 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
 
-    glColor4f(1, 1, 1, 1);
+//    glColor4f(1, 1, 1, 1);
     if (options.drawSkeleton && state->viewerState->skeletonDisplayVPOrtho.testFlag(TreeDisplay::ShowInOrthoVPs)) {
-        glPushMatrix();
+//        glPushMatrix();
         const auto halfPixelOffset = 0.5 * (v1 - v2) * Dataset::current().scale;
         if (viewportType != VIEWPORT_ARBITRARY) {// arb already is at the pixel center
-            glTranslatef(halfPixelOffset.x(), halfPixelOffset.y(), halfPixelOffset.z());
             mv.translate(halfPixelOffset);
         }
         renderSkeleton(options);
         if (viewportType != VIEWPORT_ARBITRARY) {
             mv.translate(-halfPixelOffset);
         }
-        glPopMatrix();
+//        glPopMatrix();
     }
 
     if (!options.nodePicking) {
         renderArbitrarySlicePane(options, mv, p, 0.6);
     }
 
-    glColor4f(1, 1, 1, 1);
+//    glColor4f(1, 1, 1, 1);
     glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     glDisable(GL_DEPTH_TEST);// don’t render skeleton above crosshairs
     if (options.drawCrosshairs) {
-        glPushMatrix();
-        glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
-        glLineWidth(1);
-        float dataPxX = displayedIsoPx;
-        float dataPxY = displayedIsoPx;
-        const auto hOffset = viewportType == VIEWPORT_ARBITRARY ? QVector3D{} : 0.5 * v1 * Dataset::current().scale;
-        const auto vOffset = viewportType == VIEWPORT_ARBITRARY ? QVector3D{} : 0.5 * v2 * Dataset::current().scale;
-        glBegin(GL_LINES);
-            glColor4f(std::abs(v2.z), std::abs(v2.y), std::abs(v2.x), 0.3);
-            const auto halfLength = dataPxX * v1;
-            const auto left = -halfLength - vOffset;
-            const auto right = halfLength - vOffset;
-            glVertex3f(left.x(), left.y(), left.z());
-            glVertex3f(right.x(), right.y(), right.z());
+//        glPushMatrix();
+//        glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
+//        glLineWidth(1);
+//        float dataPxX = displayedIsoPx;
+//        float dataPxY = displayedIsoPx;
+//        const auto hOffset = viewportType == VIEWPORT_ARBITRARY ? QVector3D{} : 0.5 * v1 * Dataset::current().scale;
+//        const auto vOffset = viewportType == VIEWPORT_ARBITRARY ? QVector3D{} : 0.5 * v2 * Dataset::current().scale;
+//        glBegin(GL_LINES);
+//            glColor4f(std::abs(v2.z), std::abs(v2.y), std::abs(v2.x), 0.3);
+//            const auto halfLength = dataPxX * v1;
+//            const auto left = -halfLength - vOffset;
+//            const auto right = halfLength - vOffset;
+//            glVertex3f(left.x(), left.y(), left.z());
+//            glVertex3f(right.x(), right.y(), right.z());
 
-            glColor4f(std::abs(v1.z), std::abs(v1.y), std::abs(v1.x), 0.3);
-            const auto halfHeight = dataPxY * v2;
-            const auto top = -halfHeight + hOffset;
-            const auto bottom = halfHeight + hOffset;
-            glVertex3f(top.x(), top.y(), top.z());
-            glVertex3f(bottom.x(), bottom.y(), bottom.z());
-        glEnd();
-        glPopMatrix();
-        glColor4f(1, 1, 1, 1);
+//            glColor4f(std::abs(v1.z), std::abs(v1.y), std::abs(v1.x), 0.3);
+//            const auto halfHeight = dataPxY * v2;
+//            const auto top = -halfHeight + hOffset;
+//            const auto bottom = halfHeight + hOffset;
+//            glVertex3f(top.x(), top.y(), top.z());
+//            glVertex3f(bottom.x(), bottom.y(), bottom.z());
+//        glEnd();
+//        glPopMatrix();
+//        glColor4f(1, 1, 1, 1);
     }
     p = QMatrix4x4{};
     p.ortho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, -(0.5), -(-state->skeletonState->volBoundary()));
@@ -815,6 +815,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glDisable(GL_DEPTH_TEST);
     };
     if (state->viewerState->meshDisplay.testFlag(TreeDisplay::ShowInOrthoVPs) && options.drawMesh) {
+        QOpenGLVertexArrayObject::Binder vao(&meshVao);
         QOpenGLFramebufferObjectFormat format;
         format.setSamples(0);//state->viewerState->sampleBuffers
         format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
@@ -829,7 +830,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
             if (!shouldRenderMesh(tree, viewportType)) {
                 continue;
             }
-            glEnable(GL_TEXTURE_2D);
+//            glEnable(GL_TEXTURE_2D);
             setStateAndRenderMesh([this, &fbo, &maskfbo, &tree](){
                 maskfbo.bind();
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -853,28 +854,28 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
 
         shaderTextureQuad.bind();
 
-        glEnable(GL_TEXTURE_2D);
+//        glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, fbo.texture());
 
-        screenVertexBuf.bind();
-        int vertexLocation = shaderTextureQuad.attributeLocation("vertex");
+        const int vertexLocation = shaderTextureQuad.attributeLocation("vertex");
         shaderTextureQuad.enableAttributeArray(vertexLocation);
-        shaderTextureQuad.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+        screenVertexBuf.bind();
+        shaderTextureQuad.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);//
         screenVertexBuf.release();
 
-        glDrawArrays(GL_QUADS, 0, 4);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
         shaderTextureQuad.disableAttributeArray(vertexLocation);
         shaderTextureQuad.release();
 
-        glDisable(GL_TEXTURE_2D);
+//        glDisable(GL_TEXTURE_2D);
     }
-    if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Brush) && hasCursor) {
-        glPushMatrix();
-        view();
-        renderBrush(getMouseCoordinate());
-        glPopMatrix();
-    }
+//    if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Brush) && hasCursor) {
+//        glPushMatrix();
+//        view();
+//        renderBrush(getMouseCoordinate());
+//        glPopMatrix();
+//    }
 }
 
 void Viewport3D::renderVolumeVP() {
@@ -1018,6 +1019,7 @@ void Viewport3D::renderVolumeVP() {
 }
 
 void Viewport3D::renderViewport(const RenderOptions &options) {
+    QOpenGLVertexArrayObject::Binder vao(&meshVao);
     auto& seg = Segmentation::singleton();
     if (seg.volume_render_toggle) {
         if (!options.nodePicking) {
@@ -1033,7 +1035,6 @@ void Viewport3D::renderViewport(const RenderOptions &options) {
 }
 
 void ViewportBase::renderMeshBuffer(Mesh & buf, boost::optional<QOpenGLShaderProgram&> prog) {
-    meshVao.bind();
     auto & meshShader = prog ? prog.get() : buf.useTreeColor ? meshTreeColorShader : this->meshShader;
 
     if (!meshShader.isLinked()) {
@@ -1096,7 +1097,6 @@ void ViewportBase::renderMeshBuffer(Mesh & buf, boost::optional<QOpenGLShaderPro
     }
     meshShader.disableAttributeArray(vertexLocation);
     meshShader.release();
-    meshVao.release();
 }
 
 static bool shouldRenderMesh(const treeListElement & tree, const ViewportType viewportType) {
@@ -1758,12 +1758,18 @@ void ViewportOrtho::renderArbitrarySlicePane(const RenderOptions & options,  QMa
             };
             std::vector<float> texCoordComponents{texture.texLUx, texture.texLUy, texture.texRUx, texture.texRUy, texture.texRLx, texture.texRLy, texture.texLLx, texture.texLLy};
 
-            int vertexLocation = shaderTextureQuad2.attributeLocation("vertex");
+            const int vertexLocation = shaderTextureQuad2.attributeLocation("vertex");
             shaderTextureQuad2.enableAttributeArray(vertexLocation);
-            shaderTextureQuad2.setAttributeArray(vertexLocation, GL_FLOAT, vertices.data(), 3);
-            int texLocation = shaderTextureQuad2.attributeLocation("tex");
+            orthoVBuf.bind();
+            orthoVBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
+            shaderTextureQuad2.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+            orthoVBuf.release();
+            const int texLocation = shaderTextureQuad2.attributeLocation("tex");
             shaderTextureQuad2.enableAttributeArray(texLocation);
-            shaderTextureQuad2.setAttributeArray(texLocation, GL_FLOAT, texCoordComponents.data(), 2);
+            texPosBuf.bind();
+            texPosBuf.allocate(texCoordComponents.data(), texCoordComponents.size() * sizeof(texCoordComponents.front()));
+            shaderTextureQuad2.setAttributeBuffer(texLocation, GL_FLOAT, 0, 2);
+            texPosBuf.release();
 
             shaderTextureQuad2.bind();
             shaderTextureQuad2.setUniformValue("color_factor", color);
