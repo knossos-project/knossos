@@ -2112,6 +2112,11 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     // lighting isn’t really applicable to lines and points
     glDisable(GL_LIGHTING);
     glDisable(GL_COLOR_MATERIAL);
+    if (viewportType != ViewportType::VIEWPORT_SKELETON) {
+        // without shader lines and points have no thickness and therefore need an offset to appear above the (see-through) slices
+        const auto offset = state->viewerState->onlyLinesAndPoints * Dataset::current().scale * static_cast<ViewportOrtho&>(*this).n * 0.25;
+        glTranslatef(offset.x(), offset.y(), offset.z());
+    }
     const auto alwaysLinesAndPoints = state->viewerState->cumDistRenderThres > 19.f && options.enableLoddingAndLinesAndPoints;
     // higher render qualities only use lines and points if node < smallestVisibleSize
     glLineWidth(alwaysLinesAndPoints ? lineSize(width()/displayedlengthInNmX) : smallestVisibleNodeSize());
