@@ -84,6 +84,7 @@ struct GLBuffers {
         }
     } lineVertBuffer, lineVertBuffer2, lineVertBufferRef, pointVertBuffer;
     QOpenGLBuffer radius_buffer{QOpenGLBuffer::VertexBuffer};
+    QOpenGLBuffer cylinder_radius_buffer{QOpenGLBuffer::VertexBuffer};
     std::vector<std::array<std::uint8_t, 4>> colorPickingBuffer24, colorPickingBuffer48, colorPickingBuffer64;
 };
 

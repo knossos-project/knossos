@@ -1874,20 +1874,20 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
     glBuffers.colorPickingBuffer24.clear();
     glBuffers.colorPickingBuffer48.clear();
     glBuffers.colorPickingBuffer64.clear();
-    std::vector<float> radii;
+    std::vector<float> radii, cradii;
 
     auto arrayFromQColor = [](QColor color){
         return decltype(glBuffers.lineVertBuffer.colors)::value_type{{static_cast<std::uint8_t>(color.red()), static_cast<std::uint8_t>(color.green()), static_cast<std::uint8_t>(color.blue()), static_cast<std::uint8_t>(color.alpha())}};
     };
 
-    auto addSegment = [arrayFromQColor, &glBuffers](const segmentListElement & segment, const QColor & color) {
+    auto addSegment = [arrayFromQColor, &cradii, &glBuffers](const segmentListElement & segment, const QColor & color) {
         const auto isoBase = Dataset::current().scales[0].componentMul(segment.source.position);
         const auto isoTop = Dataset::current().scales[0].componentMul(segment.target.position);
 
         glBuffers.lineVertBuffer.emplace_back(isoBase, arrayFromQColor(color));
         glBuffers.lineVertBuffer.emplace_back(isoTop, arrayFromQColor(color));
-        const auto rbase = Dataset::current().scales[0] * Skeletonizer::singleton().radius(segment.source) * state->viewerState->segRadiusToNodeRadius * 0.5;
-        const auto rtop  = Dataset::current().scales[0] * Skeletonizer::singleton().radius(segment.target) * state->viewerState->segRadiusToNodeRadius * 0.5;
+        const auto rbase = Dataset::current().scales[0].x * Skeletonizer::singleton().radius(segment.source) * state->viewerState->segRadiusToNodeRadius;
+        const auto rtop  = Dataset::current().scales[0].x * Skeletonizer::singleton().radius(segment.target) * state->viewerState->segRadiusToNodeRadius;
         glBuffers.lineVertBuffer2.emplace_back(isoBase, arrayFromQColor(color));
         glBuffers.lineVertBuffer2.emplace_back(isoTop, arrayFromQColor(color));
         glBuffers.lineVertBuffer2.emplace_back(isoTop, arrayFromQColor(color));
@@ -1896,6 +1896,10 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
         glBuffers.lineVertBufferRef.emplace_back(isoBase, arrayFromQColor(color));
         glBuffers.lineVertBufferRef.emplace_back(isoBase, arrayFromQColor(color));
         glBuffers.lineVertBufferRef.emplace_back(isoTop, arrayFromQColor(color));
+        cradii.emplace_back(rbase);
+        cradii.emplace_back(rtop);
+        cradii.emplace_back(rtop);
+        cradii.emplace_back(rbase);
     };
 
     auto addNode = [arrayFromQColor, options, &glBuffers, &radii](const nodeListElement & node) {
@@ -1966,6 +1970,7 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
     uploadVertexData(glBuffers.lineVertBuffer2.color_buffer, glBuffers.lineVertBuffer2.colors);
     uploadVertexData(glBuffers.lineVertBuffer2.vertex_buffer, glBuffers.lineVertBuffer2.vertices);
     uploadVertexData(glBuffers.lineVertBufferRef.vertex_buffer, glBuffers.lineVertBufferRef.vertices);
+    uploadVertexData(glBuffers.cylinder_radius_buffer, cradii);
 }
 
 /*
@@ -2153,6 +2158,12 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
             cylinderShader.setAttributeBuffer(refLocation, GL_FLOAT, 0, 3);
             glBuffers.lineVertBufferRef.vertex_buffer.release();
 
+            glBuffers.cylinder_radius_buffer.bind();
+            const int radiusLocation = cylinderShader.attributeLocation("radius");
+            cylinderShader.enableAttributeArray(radiusLocation);
+            cylinderShader.setAttributeBuffer(radiusLocation, GL_FLOAT, 0, 1);
+            glBuffers.cylinder_radius_buffer.release();
+
             glBuffers.lineVertBuffer2.color_buffer.bind();
             const int colorLocation = cylinderShader.attributeLocation("color");
             cylinderShader.enableAttributeArray(colorLocation);
@@ -2164,6 +2175,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
             cylinderShader.disableAttributeArray(vertexLocation);
             cylinderShader.disableAttributeArray(refLocation);
+            cylinderShader.disableAttributeArray(radiusLocation);
             cylinderShader.disableAttributeArray(colorLocation);
             cylinderShader.release();
         }
