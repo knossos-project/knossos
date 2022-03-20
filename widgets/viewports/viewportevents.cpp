@@ -291,6 +291,7 @@ void ViewportBase::handleMouseMotionLeftHold(const QMouseEvent *event) {
     if (state->viewerState->nodeSelectSquareData.first != -1) {
         state->viewerState->nodeSelectionSquare.second.x = event->pos().x();
         state->viewerState->nodeSelectionSquare.second.y = event->pos().y();
+        repaint();
     }
 }
 
