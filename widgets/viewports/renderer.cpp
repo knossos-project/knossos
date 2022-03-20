@@ -2144,7 +2144,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     }
     glLineWidth(2.f);
 
-    glPointSize(alwaysLinesAndPoints ? pointSize(width()/displayedlengthInNmX) : smallestVisibleNodeSize());
+    glPointSize(alwaysLinesAndPoints || options.nodePicking ? pointSize(width()/displayedlengthInNmX) : smallestVisibleNodeSize());
     /* Render point geometry batch if it contains data */
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
@@ -2163,7 +2163,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         glColorPointer(4, GL_UNSIGNED_BYTE, 0, nullptr);
         glBuffers.pointVertBuffer.color_buffer.release();
     }
-    if (state->viewerState->cumDistRenderThres == 7.f) {
+    if (!options.nodePicking && state->viewerState->cumDistRenderThres == 7.f) {
         glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);// GL_PROGRAM_POINT_SIZE gl3+
         glEnable(GL_POINT_SPRITE);// only gl2
         glBuffers.pointVertBuffer.vertex_buffer.bind();
@@ -2205,13 +2205,12 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         sphereShader.release();
         glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
     }
-    if (alwaysLinesAndPoints || state->viewerState->lightOnOff) {
+    if (alwaysLinesAndPoints || state->viewerState->lightOnOff || options.nodePicking) {
         glBuffers.pointVertBuffer.vertex_buffer.bind();
         glVertexPointer(3, GL_FLOAT, 0, nullptr);
         glBuffers.pointVertBuffer.vertex_buffer.release();
         glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.pointVertBuffer.vertices.size()));
     }
-
 
     glDisableClientState(GL_COLOR_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
