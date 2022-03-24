@@ -301,8 +301,8 @@ void Viewport3D::handleMouseMotionLeftHold(const QMouseEvent *event) {
             seg.volume_mouse_move_x -= xrel(event->x());
             seg.volume_mouse_move_y -= yrel(event->y());
         } else {
-            translateX += -xrel(event->x()) / screenPxXPerDataPx;
-            translateY += -yrel(event->y()) / screenPxXPerDataPx;
+            translateX += -xrel(event->x()) / screenPxXPerDataPx * Dataset::current().scales[0].x;
+            translateY += -yrel(event->y()) / screenPxXPerDataPx * Dataset::current().scales[0].x;
         }
         repaint();
     }

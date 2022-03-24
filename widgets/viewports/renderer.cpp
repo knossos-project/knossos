@@ -1322,7 +1322,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     glGetIntegerv(GL_VIEWPORT, vp.data());
     edgeLength = vp[2]/devicePixelRatio(); // retrieve adjusted size for snapshot
     displayedlengthInNmX = 2.0 * zoomedHalfBoundary;
-    screenPxXPerDataPx = edgeLength / displayedlengthInNmX;
+    screenPxXPerDataPx = edgeLength / (displayedlengthInNmX / Dataset::current().scales[0].x);
     const auto left = translateX - zoomedHalfBoundary;
     const auto right = translateX + zoomedHalfBoundary;
     const auto bottom = translateY + zoomedHalfBoundary;
