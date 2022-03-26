@@ -702,6 +702,8 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(-displayedIsoPx, +displayedIsoPx, +displayedIsoPx, -displayedIsoPx, nearVal, farVal);// gluLookAt relies on an unaltered cartesian Projection
+    p = QMatrix4x4{};
+    p.ortho(-displayedIsoPx, +displayedIsoPx, +displayedIsoPx, -displayedIsoPx, nearVal, farVal);
 
     const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
     auto view = [&](){
@@ -717,6 +719,10 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         gluLookAt(eye.x, eye.y, eye.z
                   , center.x, center.y, center.z
                   , -v2.x, -v2.y, -v2.z);// negative up vectors, because origin is at the top
+        mv = QMatrix4x4{};
+        mv.lookAt(QVector3D(eye.x, eye.y, eye.z)
+                  , QVector3D(center.x, center.y, center.z)
+                  , QVector3D(-v2.x, -v2.y, -v2.z));
     };
     glMatrixMode(GL_MODELVIEW);
     view();
@@ -737,11 +743,15 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glColor4f(1, 1, 1, 1);
     if (options.drawSkeleton && state->viewerState->skeletonDisplayVPOrtho.testFlag(TreeDisplay::ShowInOrthoVPs)) {
         glPushMatrix();
+        const auto halfPixelOffset = 0.5 * (v1 - v2) * Dataset::current().scale;
         if (viewportType != VIEWPORT_ARBITRARY) {// arb already is at the pixel center
-            const auto halfPixelOffset = 0.5 * (v1 - v2) * Dataset::current().scale;
             glTranslatef(halfPixelOffset.x(), halfPixelOffset.y(), halfPixelOffset.z());
+            mv.translate(halfPixelOffset);
         }
         renderSkeleton(options);
+        if (viewportType != VIEWPORT_ARBITRARY) {
+            mv.translate(-halfPixelOffset);
+        }
         glPopMatrix();
     }
 
@@ -786,6 +796,8 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         // since the mesh is offset the slicing/clipping plane has to be offset as well
         const auto meshVoxelCenterOffset = 0.5 * Dataset::current().scales[0].componentMul(n).dot(floatCoordinate{1,1,1});
         glOrtho(-displayedIsoPx, +displayedIsoPx, +displayedIsoPx, -displayedIsoPx, (meshVoxelCenterOffset), (-state->skeletonState->volBoundary()));
+        p = QMatrix4x4{};
+        p.ortho(-displayedIsoPx, +displayedIsoPx, +displayedIsoPx, -displayedIsoPx, (meshVoxelCenterOffset), (-state->skeletonState->volBoundary()));
         glMatrixMode(GL_MODELVIEW);
 
         glEnable(GL_DEPTH_TEST);
@@ -1258,12 +1270,19 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         singleRotation.rotate(y, {0, 1, 0});
         singleRotation.rotate(x, {1, 0, 0});
         std::array<float, 16> rotationState;
-        (rotation *= singleRotation).copyDataTo(rotationState.data()); // transforms to row-major matrix
+        (rotation * singleRotation).copyDataTo(rotationState.data()); // transforms to row-major matrix
         // apply complete rotation
         glMultMatrixf(rotationState.data());
         glTranslatef(-rotationCenter.x, -rotationCenter.y, -rotationCenter.z);
         // save the modified basic model view matrix
         glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
+
+        mv.translate(rotationCenter.x, rotationCenter.y, rotationCenter.z);
+        mv *= rotation.inverted().transposed();
+        mv *= (rotation * singleRotation).transposed();
+        mv.translate(-rotationCenter.x, -rotationCenter.y, -rotationCenter.z);
+
+        rotation *= singleRotation;
     };
 
     // perform user defined coordinate system rotations. use single matrix multiplication as opt.! TDitem
@@ -1279,6 +1298,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         state->skeletonState->definedSkeletonVpView = SKELVP_CUSTOM;
 
         rotation.setToIdentity();
+        mv.setToIdentity();
         QMatrix4x4{}.copyDataTo(state->skeletonState->skeletonVpModelView);
         const auto previousRotation = state->viewerState->rotationCenter;
         state->viewerState->rotationCenter = RotationCenter::CurrentPosition;
@@ -1305,6 +1325,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         emit updateZoomWidget();
 
         rotation.setToIdentity();
+        mv.setToIdentity();
         QMatrix4x4{}.copyDataTo(state->skeletonState->skeletonVpModelView);
         const auto previousRotationCenter = state->viewerState->rotationCenter;
         state->viewerState->rotationCenter = RotationCenter::DatasetCenter;
@@ -1334,6 +1355,8 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(left, right, bottom, top, nearVal, farVal);
+    p = QMatrix4x4{};
+    p.ortho(left, right, bottom, top, nearVal, farVal);
 
     // Now we set up the view on the skeleton and draw some very basic VP stuff like the gray background
     glEnable(GL_DEPTH_TEST);
@@ -2183,6 +2206,8 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
             glBuffers.lineVertBuffer2.color_buffer.release();
 
             cylinderShader.bind();
+            cylinderShader.setUniformValue("modelview_matrix", mv);
+            cylinderShader.setUniformValue("projection_matrix", p);
             glDrawArrays(GL_QUADS, 0, static_cast<GLsizei>(glBuffers.lineVertBuffer2.vertices.size()));
 
             cylinderShader.disableAttributeArray(vertexLocation);
@@ -2252,6 +2277,8 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         sphereShader.setAttributeBuffer(radiusLocation, GL_FLOAT, 0, 1);
         glBuffers.radius_buffer.release();
         sphereShader.bind();
+        sphereShader.setUniformValue("modelview_matrix", mv);
+        sphereShader.setUniformValue("projection_matrix", p);
         GLfloat mviewport[4];
         glGetFloatv(GL_VIEWPORT, &mviewport[0]);
         QVector4D tmp(mviewport[0], mviewport[1], mviewport[2], mviewport[3]);

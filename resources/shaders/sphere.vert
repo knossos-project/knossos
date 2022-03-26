@@ -1,5 +1,8 @@
 #version 120
 
+uniform mat4 modelview_matrix;
+uniform mat4 projection_matrix;
+
 attribute vec3 vertex;
 attribute vec4 color;
 attribute float radius;
@@ -11,10 +14,10 @@ varying vec4 fcolor;
 varying vec3 flight_normal;
 
 void main() {
-    gl_Position = gl_ModelViewProjectionMatrix * vec4(vertex, 1.0);
+    gl_Position = projection_matrix * modelview_matrix * vec4(vertex, 1.0);
 
     gl_PointSize = zoom * 2.0 * radius;
-    flight_normal = normalize((gl_ModelViewMatrix * vec4(vertex, 1.0)).xyz * gl_LightSource[0].position.w - gl_LightSource[0].position.xyz);
+    flight_normal = normalize((modelview_matrix * vec4(vertex, 1.0)).xyz * gl_LightSource[0].position.w - gl_LightSource[0].position.xyz);
 
     fradius = radius;
     fcolor = color;

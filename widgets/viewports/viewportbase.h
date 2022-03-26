@@ -177,6 +177,8 @@ protected:
     QOpenGLShaderProgram raw_data_shader;
     QOpenGLShaderProgram overlay_data_shader;
 
+    QMatrix4x4 p, mv;
+
     boost::optional<BufferSelection> pickMesh(const QPoint pos);
     void pickMeshIdAtPosition();
 

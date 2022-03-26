@@ -1,5 +1,7 @@
 #version 120
 
+uniform mat4 projection_matrix;
+
 varying float fradius;
 varying vec4 fcolor;
 varying vec3 flight_normal;
@@ -17,7 +19,7 @@ void main() {
         gl_FragColor = fcolor * (gl_LightModel.ambient
                                      + intensity * gl_LightSource[0].diffuse + gl_LightSource[0].ambient);
 
-        float projectionDepthRange = (-2.0 / gl_ProjectionMatrix[2].z);
+        float projectionDepthRange = (-2.0 / projection_matrix[2].z);
         gl_FragDepth = gl_FragCoord.z + dist_edge * fradius * (gl_DepthRange.diff / projectionDepthRange);
         gl_FragDepth = clamp(gl_FragDepth, gl_DepthRange.near, gl_DepthRange.far);
     }
