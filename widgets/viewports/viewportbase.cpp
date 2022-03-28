@@ -290,6 +290,7 @@ void ViewportBase::initializeGL() {
         return enabled && shader.link();
     };
     createShader(sphereShader, {"sphere.vert"}, {"sphere.frag"});
+    createShader(cylinderShader, {"cylinder.vert"}, {"cylinder.frag"});
     createShader(meshShader, {"color.vert"}, {"functions/diffuse.frag", "color vertexcolor.frag"});
     createShader(meshTreeColorShader, {"normal.vert"}, {"functions/diffuse.frag", "normal treecolor.frag"});
     state->viewerState->MeshPickingEnabled = createShader(meshIdShader, {"idcolor.vert"}, {"functions/diffuse.frag", "idcolor.frag"});

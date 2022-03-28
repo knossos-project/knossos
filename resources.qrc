@@ -60,6 +60,8 @@
         <file>resources/shaders/3DTextureLUT.frag</file>
         <file>resources/shaders/color vertexcolor.frag</file>
         <file>resources/shaders/color.vert</file>
+        <file>resources/shaders/cylinder.frag</file>
+        <file>resources/shaders/cylinder.vert</file>
         <file>resources/shaders/functions/diffuse.frag</file>
         <file>resources/shaders/functions/meshslicing.frag</file>
         <file>resources/shaders/idcolor slicing.frag</file>

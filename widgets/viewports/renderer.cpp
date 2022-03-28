@@ -1868,6 +1868,8 @@ void synapseLoop(Func func, const ViewportType vpType){
 void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &options, const ViewportType viewportType) {
     glBuffers.regenVertBuffer = false;
     glBuffers.lineVertBuffer.clear();
+    glBuffers.lineVertBuffer2.clear();
+    glBuffers.lineVertBufferRef.clear();
     glBuffers.pointVertBuffer.clear();
     glBuffers.colorPickingBuffer24.clear();
     glBuffers.colorPickingBuffer48.clear();
@@ -1884,6 +1886,16 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
 
         glBuffers.lineVertBuffer.emplace_back(isoBase, arrayFromQColor(color));
         glBuffers.lineVertBuffer.emplace_back(isoTop, arrayFromQColor(color));
+        const auto rbase = Dataset::current().scales[0] * Skeletonizer::singleton().radius(segment.source) * state->viewerState->segRadiusToNodeRadius * 0.5;
+        const auto rtop  = Dataset::current().scales[0] * Skeletonizer::singleton().radius(segment.target) * state->viewerState->segRadiusToNodeRadius * 0.5;
+        glBuffers.lineVertBuffer2.emplace_back(isoBase - rbase, arrayFromQColor(color));
+        glBuffers.lineVertBuffer2.emplace_back(isoBase + rbase, arrayFromQColor(color));
+        glBuffers.lineVertBuffer2.emplace_back(isoTop + rtop, arrayFromQColor(color));
+        glBuffers.lineVertBuffer2.emplace_back(isoTop - rtop, arrayFromQColor(color));
+        glBuffers.lineVertBufferRef.emplace_back(isoBase, arrayFromQColor(color));
+        glBuffers.lineVertBufferRef.emplace_back(isoBase, arrayFromQColor(color));
+        glBuffers.lineVertBufferRef.emplace_back(isoTop, arrayFromQColor(color));
+        glBuffers.lineVertBufferRef.emplace_back(isoTop, arrayFromQColor(color));
     };
 
     auto addNode = [arrayFromQColor, options, &glBuffers, &radii](const nodeListElement & node) {
@@ -1951,6 +1963,9 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
 
     uploadVertexData(glBuffers.lineVertBuffer.color_buffer, glBuffers.lineVertBuffer.colors);
     uploadVertexData(glBuffers.lineVertBuffer.vertex_buffer, glBuffers.lineVertBuffer.vertices);
+    uploadVertexData(glBuffers.lineVertBuffer2.color_buffer, glBuffers.lineVertBuffer2.colors);
+    uploadVertexData(glBuffers.lineVertBuffer2.vertex_buffer, glBuffers.lineVertBuffer2.vertices);
+    uploadVertexData(glBuffers.lineVertBufferRef.vertex_buffer, glBuffers.lineVertBufferRef.vertices);
 }
 
 /*
@@ -2125,22 +2140,51 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     glLineWidth(alwaysLinesAndPoints ? lineSize(width()/displayedlengthInNmX) : smallestVisibleNodeSize());
     /* Render line geometry batch if it contains data and we don’t pick nodes */
     if (!options.nodePicking) {
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_COLOR_ARRAY);
+        if (state->viewerState->cumDistRenderThres == 7.f && !glBuffers.lineVertBuffer2.vertices.empty()) {
+            glBuffers.lineVertBuffer2.vertex_buffer.bind();
+            const int vertexLocation = cylinderShader.attributeLocation("vertex");
+            cylinderShader.enableAttributeArray(vertexLocation);
+            cylinderShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+            glBuffers.lineVertBuffer2.vertex_buffer.release();
 
-        /* draw all segments */
-        glBuffers.lineVertBuffer.vertex_buffer.bind();
-        glVertexPointer(3, GL_FLOAT, 0, nullptr);
-        glBuffers.lineVertBuffer.vertex_buffer.release();
+            glBuffers.lineVertBufferRef.vertex_buffer.bind();
+            const int refLocation = cylinderShader.attributeLocation("ref");
+            cylinderShader.enableAttributeArray(refLocation);
+            cylinderShader.setAttributeBuffer(refLocation, GL_FLOAT, 0, 3);
+            glBuffers.lineVertBufferRef.vertex_buffer.release();
 
-        glBuffers.lineVertBuffer.color_buffer.bind();
-        glColorPointer(4, GL_UNSIGNED_BYTE, 0, nullptr);
-        glBuffers.lineVertBuffer.color_buffer.release();
+            glBuffers.lineVertBuffer2.color_buffer.bind();
+            const int colorLocation = cylinderShader.attributeLocation("color");
+            cylinderShader.enableAttributeArray(colorLocation);
+            cylinderShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
+            glBuffers.lineVertBuffer2.color_buffer.release();
 
-        glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(glBuffers.lineVertBuffer.vertices.size()));
+            cylinderShader.bind();
+            glDrawArrays(GL_QUADS, 0, static_cast<GLsizei>(glBuffers.lineVertBuffer2.vertices.size()));
 
-        glDisableClientState(GL_COLOR_ARRAY);
-        glDisableClientState(GL_VERTEX_ARRAY);
+            cylinderShader.disableAttributeArray(vertexLocation);
+            cylinderShader.disableAttributeArray(refLocation);
+            cylinderShader.disableAttributeArray(colorLocation);
+            cylinderShader.release();
+        }
+        if (alwaysLinesAndPoints || state->viewerState->lightOnOff) {
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glEnableClientState(GL_COLOR_ARRAY);
+
+            /* draw all segments */
+            glBuffers.lineVertBuffer.vertex_buffer.bind();
+            glVertexPointer(3, GL_FLOAT, 0, nullptr);
+            glBuffers.lineVertBuffer.vertex_buffer.release();
+
+            glBuffers.lineVertBuffer.color_buffer.bind();
+            glColorPointer(4, GL_UNSIGNED_BYTE, 0, nullptr);
+            glBuffers.lineVertBuffer.color_buffer.release();
+
+            glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(glBuffers.lineVertBuffer.vertices.size()));
+
+            glDisableClientState(GL_COLOR_ARRAY);
+            glDisableClientState(GL_VERTEX_ARRAY);
+        }
     }
     glLineWidth(2.f);
 
