@@ -44,6 +44,7 @@
 #include <QPainter>
 #include <QQuaternion>
 #include <QVector3D>
+#include <QVector4D>
 
 #ifdef Q_OS_MAC
     #include <glu.h>
@@ -2020,20 +2021,20 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
  * Ugly code, not nice to read, should be simplified...
  */
 void ViewportBase::renderSkeleton(const RenderOptions &options) {
+    QVector4D global_ambient{0, 0, 0, 1};
+    QVector4D ambientLight{0.5, 0.5, 0.5, 0.8};
+    QVector4D diffuseLight{1, 1, 1, 1};
+    QVector4D lightPos{0, Dataset::current().boundary.y * Dataset::current().scales[0].y, 0, 1.};
     if (!options.nodePicking && state->viewerState->lightOnOff) {
         // Configure light
         glEnable(GL_LIGHTING);
-        GLfloat ambientLight[] = {0.5, 0.5, 0.5, 0.8};
-        GLfloat diffuseLight[] = {1., 1., 1., 1.};
-        GLfloat lightPos[] = {0, Dataset::current().boundary.y * Dataset::current().scales[0].y, 0, 1.};
 
-        glLightfv(GL_LIGHT0,GL_AMBIENT,ambientLight);
-        glLightfv(GL_LIGHT0,GL_DIFFUSE,diffuseLight);
-        glLightfv(GL_LIGHT0,GL_POSITION,lightPos);
+        glLightfv(GL_LIGHT0,GL_AMBIENT, &ambientLight[0]);
+        glLightfv(GL_LIGHT0,GL_DIFFUSE, &diffuseLight[0]);
+        glLightfv(GL_LIGHT0,GL_POSITION, &lightPos[0]);
         glEnable(GL_LIGHT0);
 
-        GLfloat global_ambient[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_ambient);
+        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, &global_ambient[0]);
 
         // Enable materials with automatic color tracking
         glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
@@ -2208,6 +2209,10 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
             cylinderShader.bind();
             cylinderShader.setUniformValue("modelview_matrix", mv);
             cylinderShader.setUniformValue("projection_matrix", p);
+            cylinderShader.setUniformValue("light_bg", global_ambient);
+            cylinderShader.setUniformValue("light_pos", lightPos);
+            cylinderShader.setUniformValue("light_front", diffuseLight);
+            cylinderShader.setUniformValue("light_back", ambientLight);
             glDrawArrays(GL_QUADS, 0, static_cast<GLsizei>(glBuffers.lineVertBuffer2.vertices.size()));
 
             cylinderShader.disableAttributeArray(vertexLocation);
@@ -2279,6 +2284,10 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         sphereShader.bind();
         sphereShader.setUniformValue("modelview_matrix", mv);
         sphereShader.setUniformValue("projection_matrix", p);
+        sphereShader.setUniformValue("light_bg", global_ambient);
+        sphereShader.setUniformValue("light_pos", lightPos);
+        sphereShader.setUniformValue("light_front", diffuseLight);
+        sphereShader.setUniformValue("light_back", ambientLight);
         GLfloat mviewport[4];
         glGetFloatv(GL_VIEWPORT, &mviewport[0]);
         QVector4D tmp(mviewport[0], mviewport[1], mviewport[2], mviewport[3]);

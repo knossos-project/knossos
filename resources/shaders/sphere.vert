@@ -2,6 +2,7 @@
 
 uniform mat4 modelview_matrix;
 uniform mat4 projection_matrix;
+uniform vec4 light_pos;
 
 attribute vec3 vertex;
 attribute vec4 color;
@@ -17,7 +18,7 @@ void main() {
     gl_Position = projection_matrix * modelview_matrix * vec4(vertex, 1.0);
 
     gl_PointSize = zoom * 2.0 * radius;
-    flight_normal = normalize((modelview_matrix * vec4(vertex, 1.0)).xyz * gl_LightSource[0].position.w - gl_LightSource[0].position.xyz);
+    flight_normal = normalize((modelview_matrix * vec4(vertex, 1.0)).xyz * light_pos.w - (modelview_matrix * light_pos).xyz);
 
     fradius = radius;
     fcolor = color;

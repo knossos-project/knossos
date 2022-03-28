@@ -7,8 +7,9 @@ attribute vec4 color;
 
 uniform mat4 modelview_matrix;
 uniform mat4 projection_matrix;
+uniform vec4 light_pos;
 
-varying vec4 frag_color;
+varying vec4 fcolor;
 varying float fradius;
 varying vec3 fdist;
 varying vec3 fvpn;
@@ -27,9 +28,9 @@ void main() {
     pos += (1-0.5*(1+sign(comma2))) * normalize(cross(vertex-ref, side)) * radius;
 
     gl_Position = projection_matrix * modelview_matrix * vec4(pos, 1.0);
-    frag_color = color;
+    fcolor = color;
     fradius = radius;
     fdist = dist;
     fvpn = cross(vertex-ref, side);
-    fln = normalize((modelview_matrix * vec4(vertex, 1.0)).xyz * gl_LightSource[0].position.w - gl_LightSource[0].position.xyz);
+    fln = normalize((modelview_matrix * vec4(vertex, 1.0)).xyz * light_pos.w - (modelview_matrix * light_pos).xyz);
 }
