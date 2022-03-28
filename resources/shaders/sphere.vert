@@ -6,6 +6,8 @@ attribute float radius;
 
 uniform float zoom;
 
+varying vec2 node_center_ndc;
+varying float fradius;
 varying vec4 fcolor;
 
 void main() {
@@ -13,5 +15,7 @@ void main() {
 
     gl_PointSize = zoom * 2.0 * radius;
 
+    node_center_ndc = gl_Position.xy;
+    fradius = radius;
     fcolor = color;
 }
