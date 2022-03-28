@@ -2021,9 +2021,9 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
  * Ugly code, not nice to read, should be simplified...
  */
 void ViewportBase::renderSkeleton(const RenderOptions &options) {
-    QVector4D global_ambient{0, 0, 0, 1};
-    QVector4D ambientLight{0.5, 0.5, 0.5, 0.8};
-    QVector4D diffuseLight{1, 1, 1, 1};
+    QVector4D global_ambient{0.3, 0.3, 0.3, 1};
+    QVector4D ambientLight{0.2, 0.2, 0.2, 1};
+    QVector4D diffuseLight{0.5, 0.5, 0.5, 1};
     QVector4D lightPos{0, Dataset::current().boundary.y * Dataset::current().scales[0].y, 0, 1.};
     if (!options.nodePicking && state->viewerState->lightOnOff) {
         // Configure light
