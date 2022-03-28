@@ -1375,7 +1375,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     if (options.drawViewportPlanes) { // Draw the slice planes for orientation inside the data stack
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         if (state->viewerState->showVpPlanes) {
-//            glPushMatrix();
+            glPushMatrix();
             if (state->viewerState->showXYplane && state->viewer->window->viewportXY->isVisible()) {
                 state->viewer->window->viewportXY->renderArbitrarySlicePane(options, mv, p);
             }
@@ -1388,7 +1388,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             if (state->viewerState->showArbplane && state->viewer->window->viewportArb->isVisible()) {
                 state->viewer->window->viewportArb->renderArbitrarySlicePane(options, mv, p);
             }
-//            glPopMatrix();
+            glPopMatrix();
         }
         glPushMatrix();
 
@@ -1751,16 +1751,15 @@ void ViewportOrtho::renderArbitrarySlicePane(const RenderOptions & options,  QMa
             state->viewer->vpGenerateTexture(*this, layerId);// update texture before use
             // raw slice image
             glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+            QColor color = layerSettings.color;
+            color.setAlphaF(layerSettings.opacity);
             if (!Dataset::datasets[layerId].isOverlay()) {
                 if (first) {// first raw layer rendered can be semi transparent with orthoFactor, letting the skeleton show through (blending) in one direction
-                    glColor4f(layerSettings.color.redF(), layerSettings.color.greenF(), layerSettings.color.blueF(), orthoFactor * layerSettings.opacity);
-                    first = false;
+                    color.setAlphaF(orthoFactor * layerSettings.opacity);
                 } else {
-                    glColor4f(layerSettings.color.redF() * layerSettings.opacity, layerSettings.color.greenF() * layerSettings.opacity, layerSettings.color.blueF() * layerSettings.opacity, layerSettings.opacity);
+                    color = color.darker(1.0 / layerSettings.opacity);
                     glBlendFunc(GL_ONE, GL_ONE);// mix all non overlay channels
                 }
-            } else {
-                glColor4f(layerSettings.color.redF(), layerSettings.color.greenF(), layerSettings.color.blueF(), layerSettings.opacity);
             }
 
             const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
@@ -1782,6 +1781,7 @@ void ViewportOrtho::renderArbitrarySlicePane(const RenderOptions & options,  QMa
             shaderTextureQuad2.setAttributeArray(texLocation, GL_FLOAT, texCoordComponents.data(), 2);
 
             shaderTextureQuad2.bind();
+            shaderTextureQuad2.setUniformValue("color_factor", color);
             shaderTextureQuad2.setUniformValue("modelview_matrix", mv);
             shaderTextureQuad2.setUniformValue("projection_matrix", p);
 
@@ -1798,6 +1798,7 @@ void ViewportOrtho::renderArbitrarySlicePane(const RenderOptions & options,  QMa
             if (breakFirst) {
                 break;
             }
+            first = false;
         }
     }
     glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
