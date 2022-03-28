@@ -2168,17 +2168,11 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
-    GLfloat modelview_mat[4][4];
-    glGetFloatv(GL_MODELVIEW_MATRIX, &modelview_mat[0][0]);
-    GLfloat projection_mat[4][4];
-    glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
     GLfloat mviewport[4];
     glGetFloatv(GL_VIEWPORT, &mviewport[0]);
     QVector4D tmp(mviewport[0], mviewport[1], mviewport[2], mviewport[3]);
 
     sphereShader.bind();
-    sphereShader.setUniformValue("modelview_matrix", modelview_mat);
-    sphereShader.setUniformValue("projection_matrix", projection_mat);
     sphereShader.setUniformValue("viewport", tmp);
 
     glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.pointVertBuffer.vertices.size()));
