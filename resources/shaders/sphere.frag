@@ -19,5 +19,6 @@ void main() {
         discard;
     } else {
         gl_FragColor = fcolor;
+        gl_FragDepth = gl_FragCoord.z + gl_DepthRange.diff / 2.0 * gl_ProjectionMatrix[2].z;
     }
 }
