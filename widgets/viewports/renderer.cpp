@@ -1774,21 +1774,31 @@ void ViewportOrtho::renderArbitrarySlicePane(const RenderOptions & options, floa
             };
             std::vector<float> texCoordComponents{texture.texLUx, texture.texLUy, texture.texRUx, texture.texRUy, texture.texRLx, texture.texRLy, texture.texLLx, texture.texLLy};
 
+            int vertexLocation = shaderTextureQuad2.attributeLocation("vertex");
+            shaderTextureQuad2.enableAttributeArray(vertexLocation);
+            shaderTextureQuad2.setAttributeArray(vertexLocation, GL_FLOAT, vertices.data(), 3);
+            int texLocation = shaderTextureQuad2.attributeLocation("tex");
+            shaderTextureQuad2.enableAttributeArray(texLocation);
+            shaderTextureQuad2.setAttributeArray(texLocation, GL_FLOAT, texCoordComponents.data(), 2);
+
+            GLfloat modelview_mat[4][4];
+            glGetFloatv(GL_MODELVIEW_MATRIX, &modelview_mat[0][0]);
+            GLfloat projection_mat[4][4];
+            glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
+//            qDebug() << mv << QMatrix4x4{&modelview_mat[0][0]}.transposed();
+            shaderTextureQuad2.setUniformValue("modelview_matrix", mv);
+            shaderTextureQuad2.setUniformValue("projection_matrix", p);
+
             glEnable(GL_TEXTURE_2D);
-            glEnableClientState(GL_VERTEX_ARRAY);
-            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
             texture.texHandle[layerId].bind();
-            glVertexPointer(3, GL_FLOAT, 0, vertices.data());
-            glTexCoordPointer(2, GL_FLOAT, 0, texCoordComponents.data());
-
+            shaderTextureQuad2.bind();
             glDrawArrays(GL_QUADS, 0, 4);
-
+            shaderTextureQuad2.release();
             texture.texHandle[layerId].release();
-
-            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-            glDisableClientState(GL_VERTEX_ARRAY);
             glDisable(GL_TEXTURE_2D);
+
+            shaderTextureQuad2.disableAttributeArray(texLocation);
+            shaderTextureQuad2.disableAttributeArray(vertexLocation);
 
             if (breakFirst) {
                 break;

@@ -172,7 +172,7 @@ protected:
     QOpenGLShaderProgram meshSlicingCreateMaskShader;
     QOpenGLShaderProgram meshSlicingWithMaskShader;
     QOpenGLShaderProgram meshSlicingIdShader;
-    QOpenGLShaderProgram shaderTextureQuad;
+    QOpenGLShaderProgram shaderTextureQuad, shaderTextureQuad2;
 
     QOpenGLShaderProgram raw_data_shader;
     QOpenGLShaderProgram overlay_data_shader;
