@@ -9,8 +9,10 @@ uniform float zoom;
 varying vec2 node_center_ndc;
 varying float fradius;
 varying vec4 fcolor;
+varying vec3 fvertex;
 
 void main() {
+    fvertex = vertex;
     gl_Position = gl_ModelViewProjectionMatrix * vec4(vertex, 1.0);
 
     gl_PointSize = zoom * 2.0 * radius;

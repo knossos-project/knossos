@@ -6,6 +6,7 @@ uniform float zoom;
 varying vec2 node_center_ndc;
 varying float fradius;
 varying vec4 fcolor;
+varying vec3 fvertex;
 
 void main() {
     vec2 vp_center = 0.5 * viewport.zw;
@@ -20,7 +21,7 @@ void main() {
     } else {
         float dist_edge = sqrt(1.0 - min(1.0, dist_squared));
         vec3 frag_normal = normalize(vec3(pos.x, -pos.y, -dist_edge));
-        vec3 light_normal = normalize(gl_LightSource[0].position.xyz);
+        vec3 light_normal = normalize(gl_ModelViewMatrix * vec4((gl_ModelViewMatrixInverse * gl_LightSource[0].position).xyz - fvertex,0.0)).xyz;
         float intensity = max(0.0, dot(frag_normal, light_normal));// spot
         gl_FragColor = fcolor * (gl_LightModel.ambient
                                      + intensity * gl_LightSource[0].diffuse + gl_LightSource[0].ambient);
