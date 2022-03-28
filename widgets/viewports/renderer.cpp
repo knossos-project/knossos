@@ -2164,7 +2164,8 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         glBuffers.pointVertBuffer.color_buffer.release();
     }
     if (state->viewerState->cumDistRenderThres == 7.f) {
-        glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+        glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);// GL_PROGRAM_POINT_SIZE gl3+
+        glEnable(GL_POINT_SPRITE);// only gl2
         glBuffers.pointVertBuffer.vertex_buffer.bind();
         const int vertexLocation = sphereShader.attributeLocation("vertex");
         sphereShader.enableAttributeArray(vertexLocation);
