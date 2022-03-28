@@ -30,6 +30,8 @@
 #include <atomic>
 #include <unordered_set>
 
+#include <QMatrix4x4>
+
 class ViewportOrtho : public ViewportBase {
     Q_OBJECT
     QAction zoomResetAction{tr("Reset zoom"), &menuButton};
@@ -93,7 +95,7 @@ public:
     float screenPxXPerDataPxForZoomFactor(const float zoomFactor) const { return edgeLength / (displayedEdgeLenghtXForZoomFactor(zoomFactor) / texture.texUnitsPerDataPx); }
     virtual float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const;
 
-    void renderArbitrarySlicePane(const RenderOptions & options, float orthoFactor = 1, bool breakFirst = false);
+    void renderArbitrarySlicePane(const RenderOptions & options, QMatrix4x4 mv, QMatrix4x4 p, float orthoFactor = 1, bool breakFirst = false);
 
 public slots:
     void takeSnapshotDatasetSize(SnapshotOptions o);

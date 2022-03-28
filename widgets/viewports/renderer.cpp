@@ -735,7 +735,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glDisable(GL_DEPTH_TEST);// don’t clip the skeleton
     if (!options.nodePicking) {
         // data that’s visible through the skeleton (e.g. halo)
-        renderArbitrarySlicePane(options, 1.0, true);
+        renderArbitrarySlicePane(options, mv, p, 1.0, true);
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -757,7 +757,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     }
 
     if (!options.nodePicking) {
-        renderArbitrarySlicePane(options, 0.6);
+        renderArbitrarySlicePane(options, mv, p, 0.6);
     }
 
     glColor4f(1, 1, 1, 1);
@@ -1375,20 +1375,20 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     if (options.drawViewportPlanes) { // Draw the slice planes for orientation inside the data stack
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         if (state->viewerState->showVpPlanes) {
-            glPushMatrix();
+//            glPushMatrix();
             if (state->viewerState->showXYplane && state->viewer->window->viewportXY->isVisible()) {
-                state->viewer->window->viewportXY->renderArbitrarySlicePane(options);
+                state->viewer->window->viewportXY->renderArbitrarySlicePane(options, mv, p);
             }
             if (state->viewerState->showXZplane && state->viewer->window->viewportXZ->isVisible()) {
-                state->viewer->window->viewportXZ->renderArbitrarySlicePane(options);
+                state->viewer->window->viewportXZ->renderArbitrarySlicePane(options, mv, p);
             }
             if (state->viewerState->showZYplane && state->viewer->window->viewportZY->isVisible()) {
-                state->viewer->window->viewportZY->renderArbitrarySlicePane(options);
+                state->viewer->window->viewportZY->renderArbitrarySlicePane(options, mv, p);
             }
             if (state->viewerState->showArbplane && state->viewer->window->viewportArb->isVisible()) {
-                state->viewer->window->viewportArb->renderArbitrarySlicePane(options);
+                state->viewer->window->viewportArb->renderArbitrarySlicePane(options, mv, p);
             }
-            glPopMatrix();
+//            glPopMatrix();
         }
         glPushMatrix();
 
@@ -1742,7 +1742,7 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
     glPopMatrix();
 }
 
-void ViewportOrtho::renderArbitrarySlicePane(const RenderOptions & options, float orthoFactor, bool breakFirst) {
+void ViewportOrtho::renderArbitrarySlicePane(const RenderOptions & options,  QMatrix4x4 mv, QMatrix4x4 p, float orthoFactor, bool breakFirst) {
     bool first{true};
     for (std::size_t i{0}; i < Dataset::datasets.size(); ++i) {
         const auto layerId = state->viewerState->layerOrder[i];
@@ -1785,13 +1785,13 @@ void ViewportOrtho::renderArbitrarySlicePane(const RenderOptions & options, floa
             glGetFloatv(GL_MODELVIEW_MATRIX, &modelview_mat[0][0]);
             GLfloat projection_mat[4][4];
             glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
+            shaderTextureQuad2.bind();
 //            qDebug() << mv << QMatrix4x4{&modelview_mat[0][0]}.transposed();
             shaderTextureQuad2.setUniformValue("modelview_matrix", mv);
             shaderTextureQuad2.setUniformValue("projection_matrix", p);
 
             glEnable(GL_TEXTURE_2D);
             texture.texHandle[layerId].bind();
-            shaderTextureQuad2.bind();
             glDrawArrays(GL_QUADS, 0, 4);
             shaderTextureQuad2.release();
             texture.texHandle[layerId].release();
