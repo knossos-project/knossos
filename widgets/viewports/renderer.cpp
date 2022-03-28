@@ -1997,7 +1997,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     if(glBuffers.regenVertBuffer) {
         generateSkeletonGeometry(glBuffers, options, viewportType);
     }
-    if(!state->viewerState->onlyLinesAndPoints) {
+    if (!state->viewerState->onlyLinesAndPoints && state->viewerState->cumDistRenderThres < 7.f) {
         for (auto & currentTree : Skeletonizer::singleton().skeletonState.trees) {
             // focus on synapses, darken rest of skeleton
             bool darken, hide;
@@ -2149,24 +2149,6 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     glEnableClientState(GL_COLOR_ARRAY);
 
     /* draw all nodes */
-    glBuffers.pointVertBuffer.vertex_buffer.bind();
-    const int vertexLocation = sphereShader.attributeLocation("vertex");
-    sphereShader.enableAttributeArray(vertexLocation);
-    sphereShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
-    glBuffers.pointVertBuffer.vertex_buffer.release();
-
-    glBuffers.pointVertBuffer.color_buffer.bind();
-    const int colorLocation = sphereShader.attributeLocation("color");
-    sphereShader.enableAttributeArray(colorLocation);
-    sphereShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
-    glBuffers.pointVertBuffer.color_buffer.release();
-
-    glBuffers.radius_buffer.bind();
-    const int radiusLocation = sphereShader.attributeLocation("radius");
-    sphereShader.enableAttributeArray(radiusLocation);
-    sphereShader.setAttributeBuffer(radiusLocation, GL_FLOAT, 0, 1);
-    glBuffers.radius_buffer.release();
-
     if(options.nodePicking) {
         if(options.selectionPass == RenderOptions::SelectionPass::NodeID0_24Bits) {
             glColorPointer(4, GL_UNSIGNED_BYTE, 0, glBuffers.colorPickingBuffer24.data());
@@ -2176,36 +2158,58 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
             glColorPointer(4, GL_UNSIGNED_BYTE, 0, glBuffers.colorPickingBuffer64.data());
         }
     } else {
-//        glBuffers.pointVertBuffer.color_buffer.bind();
-//        glColorPointer(4, GL_UNSIGNED_BYTE, 0, nullptr);
-//        glBuffers.pointVertBuffer.color_buffer.release();
+        glBuffers.pointVertBuffer.color_buffer.bind();
+        glColorPointer(4, GL_UNSIGNED_BYTE, 0, nullptr);
+        glBuffers.pointVertBuffer.color_buffer.release();
     }
+    if (state->viewerState->cumDistRenderThres == 7.f) {
+        glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+        glBuffers.pointVertBuffer.vertex_buffer.bind();
+        const int vertexLocation = sphereShader.attributeLocation("vertex");
+        sphereShader.enableAttributeArray(vertexLocation);
+        sphereShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+        glBuffers.pointVertBuffer.vertex_buffer.release();
 
-    glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+        glBuffers.pointVertBuffer.color_buffer.bind();
+        const int colorLocation = sphereShader.attributeLocation("color");
+        sphereShader.enableAttributeArray(colorLocation);
+        sphereShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
+        glBuffers.pointVertBuffer.color_buffer.release();
 
-    GLfloat mviewport[4];
-    glGetFloatv(GL_VIEWPORT, &mviewport[0]);
-    QVector4D tmp(mviewport[0], mviewport[1], mviewport[2], mviewport[3]);
-
-    sphereShader.bind();
-    sphereShader.setUniformValue("viewport", tmp);
-    float zoom = screenPxXPerDataPx;
-    if (viewportType != VIEWPORT_SKELETON) {
+        glBuffers.radius_buffer.bind();
+        const int radiusLocation = sphereShader.attributeLocation("radius");
+        sphereShader.enableAttributeArray(radiusLocation);
+        sphereShader.setAttributeBuffer(radiusLocation, GL_FLOAT, 0, 1);
+        glBuffers.radius_buffer.release();
+        sphereShader.bind();
+        GLfloat mviewport[4];
+        glGetFloatv(GL_VIEWPORT, &mviewport[0]);
+        QVector4D tmp(mviewport[0], mviewport[1], mviewport[2], mviewport[3]);
+        sphereShader.setUniformValue("viewport", tmp);
+        float zoom = screenPxXPerDataPx;
+        if (viewportType != VIEWPORT_SKELETON) {
         zoom /= Dataset::current().scales[0].componentMul(static_cast<ViewportOrtho&>(*this).v1).length();
-    } else {
-        zoom /= Dataset::current().scales[0].x;
+        } else {
+            zoom /= Dataset::current().scales[0].x;
+        }
+        sphereShader.setUniformValue("zoom", zoom);
+
+        glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.pointVertBuffer.vertices.size()));
+
+        sphereShader.disableAttributeArray(vertexLocation);
+        sphereShader.disableAttributeArray(colorLocation);
+        sphereShader.disableAttributeArray(radiusLocation);
+
+        sphereShader.release();
+        glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
     }
-    sphereShader.setUniformValue("zoom", zoom);
+    if (alwaysLinesAndPoints || state->viewerState->lightOnOff) {
+        glBuffers.pointVertBuffer.vertex_buffer.bind();
+        glVertexPointer(3, GL_FLOAT, 0, nullptr);
+        glBuffers.pointVertBuffer.vertex_buffer.release();
+        glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.pointVertBuffer.vertices.size()));
+    }
 
-    glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.pointVertBuffer.vertices.size()));
-
-    sphereShader.disableAttributeArray(vertexLocation);
-    sphereShader.disableAttributeArray(colorLocation);
-    sphereShader.disableAttributeArray(radiusLocation);
-
-    sphereShader.release();
-
-    glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
     glDisableClientState(GL_COLOR_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
