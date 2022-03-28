@@ -18,7 +18,11 @@ void main() {
     if (dist_squared > 1.0) {
         discard;
     } else {
-        gl_FragColor = fcolor;
-        gl_FragDepth = gl_FragCoord.z + gl_DepthRange.diff / 2.0 * gl_ProjectionMatrix[2].z;
+        float dist_edge = sqrt(1.0 - min(1.0, dist_squared));
+        vec3 frag_normal = normalize(vec3(pos.x, -pos.y, -dist_edge));
+        vec3 light_normal = normalize(gl_LightSource[0].position.xyz);
+        float intensity = max(0.0, dot(frag_normal, light_normal));// spot
+        gl_FragColor = fcolor * (gl_LightModel.ambient
+                                     + intensity * gl_LightSource[0].diffuse + gl_LightSource[0].ambient);
     }
 }
