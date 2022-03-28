@@ -1781,12 +1781,7 @@ void ViewportOrtho::renderArbitrarySlicePane(const RenderOptions & options,  QMa
             shaderTextureQuad2.enableAttributeArray(texLocation);
             shaderTextureQuad2.setAttributeArray(texLocation, GL_FLOAT, texCoordComponents.data(), 2);
 
-            GLfloat modelview_mat[4][4];
-            glGetFloatv(GL_MODELVIEW_MATRIX, &modelview_mat[0][0]);
-            GLfloat projection_mat[4][4];
-            glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
             shaderTextureQuad2.bind();
-//            qDebug() << mv << QMatrix4x4{&modelview_mat[0][0]}.transposed();
             shaderTextureQuad2.setUniformValue("modelview_matrix", mv);
             shaderTextureQuad2.setUniformValue("projection_matrix", p);
 
