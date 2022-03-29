@@ -1,4 +1,4 @@
-#version 120
+#version 150
 
 uniform mat4 projection_matrix;
 uniform vec4 light_bg;

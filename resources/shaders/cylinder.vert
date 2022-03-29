@@ -1,4 +1,4 @@
-#version 130
+#version 150
 
 attribute vec3 vertex;
 attribute vec3 ref;

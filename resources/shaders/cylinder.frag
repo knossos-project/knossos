@@ -1,4 +1,4 @@
-#version 110
+#version 150
 
 uniform mat4 modelview_matrix;
 uniform vec4 light_bg;

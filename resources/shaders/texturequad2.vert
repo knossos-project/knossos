@@ -1,4 +1,4 @@
-#version 110
+#version 150
 
 in vec3 vertex;
 in vec2 tex;

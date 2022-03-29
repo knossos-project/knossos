@@ -1,3 +1,5 @@
+#version 150
+
 vec4 diffuse(vec3 normal, vec4 color) {
     vec3 specular_color = vec3(1.0, 1.0, 1.0);
     float specular_exp = 3.0;
