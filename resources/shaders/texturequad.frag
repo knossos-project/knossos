@@ -8,6 +8,6 @@ in vec2 ftex;
 out vec4 fragOut;
 
 void main() {
-    vec4 val = color_factor * texture2D(sampler, ftex);// texture(…) in 130+
+    vec4 val = color_factor * texture(sampler, ftex);// texture(…) in 130+
     fragOut = val;
 }
