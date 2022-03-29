@@ -1,7 +1,7 @@
 #version 110
 
-attribute vec3 vertex;
-attribute vec2 tex;
+in vec3 vertex;
+in vec2 tex;
 
 uniform mat4 modelview_matrix;
 uniform mat4 projection_matrix;

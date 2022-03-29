@@ -339,6 +339,9 @@ void ViewportBase::initializeGL() {
     screenVertexBuf.bind();
     screenVertexBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
     screenVertexBuf.release();
+
+    orthoVBuf.create();
+    texPosBuf.create();
 }
 
 void ViewportBase::resizeGL(int width, int height) {

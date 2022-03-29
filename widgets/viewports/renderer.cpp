@@ -1362,7 +1362,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     if (options.drawViewportPlanes) { // Draw the slice planes for orientation inside the data stack
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         if (state->viewerState->showVpPlanes) {
-            glPushMatrix();
+//            glPushMatrix();
             if (state->viewerState->showXYplane && state->viewer->window->viewportXY->isVisible()) {
                 state->viewer->window->viewportXY->renderArbitrarySlicePane(options, mv, p);
             }
@@ -1375,9 +1375,9 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             if (state->viewerState->showArbplane && state->viewer->window->viewportArb->isVisible()) {
                 state->viewer->window->viewportArb->renderArbitrarySlicePane(options, mv, p);
             }
-            glPopMatrix();
+//            glPopMatrix();
         }
-        glPushMatrix();
+//        glPushMatrix();
 
         const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
         glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
