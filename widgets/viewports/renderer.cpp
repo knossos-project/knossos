@@ -1761,13 +1761,23 @@ void ViewportOrtho::renderArbitrarySlicePane(const RenderOptions & options,  QMa
             const int vertexLocation = shaderTextureQuad2.attributeLocation("vertex");
             shaderTextureQuad2.enableAttributeArray(vertexLocation);
             orthoVBuf.bind();
-            orthoVBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
+            if (orthoVBuf.size() == 0) {
+                qDebug() << viewportType << "orthoVBuf" << orthoVBuf.size();
+                orthoVBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
+            } else {
+                glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
+            }
             shaderTextureQuad2.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
             orthoVBuf.release();
             const int texLocation = shaderTextureQuad2.attributeLocation("tex");
             shaderTextureQuad2.enableAttributeArray(texLocation);
             texPosBuf.bind();
-            texPosBuf.allocate(texCoordComponents.data(), texCoordComponents.size() * sizeof(texCoordComponents.front()));
+            if (texPosBuf.size() == 0) {
+                qDebug() << viewportType << "texPosBuf" << texPosBuf.size();
+                texPosBuf.allocate(texCoordComponents.data(), texCoordComponents.size() * sizeof(texCoordComponents.front()));
+            } else {
+                glBufferSubData(GL_ARRAY_BUFFER, 0, texCoordComponents.size() * sizeof(texCoordComponents.front()), texCoordComponents.data());
+            }
             shaderTextureQuad2.setAttributeBuffer(texLocation, GL_FLOAT, 0, 2);
             texPosBuf.release();
 
