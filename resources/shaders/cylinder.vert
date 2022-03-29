@@ -1,19 +1,19 @@
 #version 150
 
-attribute vec3 vertex;
-attribute vec3 ref;
-attribute float radius;
-attribute vec4 color;
+in vec3 vertex;
+in vec3 ref;
+in float radius;
+in vec4 color;
 
 uniform mat4 modelview_matrix;
 uniform mat4 projection_matrix;
 uniform vec4 light_pos;
 
-varying vec4 fcolor;
-varying float fradius;
-varying vec3 fdist;
-varying vec3 fvpn;
-varying vec3 fln;
+out vec4 fcolor;
+out float fradius;
+out vec3 fdist;
+out vec3 fvpn;
+out vec3 fln;
 
 void main() {
     float comma = (float(gl_VertexID)/4.0-floor(float(gl_VertexID)/4.0))-0.2;

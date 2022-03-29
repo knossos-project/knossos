@@ -4,15 +4,15 @@ uniform mat4 modelview_matrix;
 uniform mat4 projection_matrix;
 uniform vec4 light_pos;
 
-attribute vec3 vertex;
-attribute vec4 color;
-attribute float radius;
+in vec3 vertex;
+in vec4 color;
+in float radius;
 
 uniform float zoom;
 
-varying float fradius;
-varying vec4 fcolor;
-varying vec3 flight_normal;
+out float fradius;
+out vec4 fcolor;
+out vec3 flight_normal;
 
 void main() {
     gl_Position = projection_matrix * modelview_matrix * vec4(vertex, 1.0);

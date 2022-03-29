@@ -5,9 +5,9 @@ uniform vec4 light_bg;
 uniform vec4 light_front;
 uniform vec4 light_back;
 
-varying float fradius;
-varying vec4 fcolor;
-varying vec3 flight_normal;
+in float fradius;
+in vec4 fcolor;
+in vec3 flight_normal;
 
 void main() {
     vec2 pos = (2.0 * vec2(gl_PointCoord.s, gl_PointCoord.t) - 1.0) * vec2(-1,-1);

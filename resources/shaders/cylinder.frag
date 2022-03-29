@@ -5,11 +5,11 @@ uniform vec4 light_bg;
 uniform vec4 light_front;
 uniform vec4 light_back;
 
-varying vec4 fcolor;
-varying float fradius;
-varying vec3 fdist;
-varying vec3 fvpn;
-varying vec3 fln;
+in vec4 fcolor;
+in float fradius;
+in vec3 fdist;
+in vec3 fvpn;
+in vec3 fln;
 
 void main() {
     float thick = fradius*sqrt(1.0 - pow(length(fdist)/fradius,2.0));
