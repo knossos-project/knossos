@@ -9,6 +9,8 @@ in float fradius;
 in vec4 fcolor;
 in vec3 flight_normal;
 
+out vec4 fragColor;
+
 void main() {
     vec2 pos = (2.0 * vec2(gl_PointCoord.s, gl_PointCoord.t) - 1.0) * vec2(-1,-1);
     float dist_squared = dot(pos, pos);
@@ -19,7 +21,7 @@ void main() {
         float dist_edge = sqrt(1.0 - min(1.0, dist_squared));
         vec3 frag_normal = normalize(vec3(pos.x, pos.y, dist_edge));
         float intensity = max(0.0, dot(frag_normal, flight_normal));// spot
-        gl_FragColor = fcolor * vec4(light_bg.rgb + intensity * light_front.rgb + light_back.rgb, 1);
+        fragColor = fcolor * vec4(light_bg.rgb + intensity * light_front.rgb + light_back.rgb, 1);
 
         float projectionDepthRange = (-2.0 / projection_matrix[2].z);
         gl_FragDepth = gl_FragCoord.z + dist_edge * fradius * (gl_DepthRange.diff / projectionDepthRange);
