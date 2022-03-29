@@ -147,7 +147,7 @@ protected:
 
     QAction *zoomEndSeparator;
     QOpenGLTexture emptyMask{QOpenGLTexture::Target2D};
-    QOpenGLBuffer screenVertexBuf{QOpenGLBuffer::VertexBuffer}, orthoVBuf{QOpenGLBuffer::VertexBuffer}, texPosBuf{QOpenGLBuffer::VertexBuffer};
+    QOpenGLBuffer screenVertexBuf{QOpenGLBuffer::VertexBuffer}, orthoVBuf{QOpenGLBuffer::VertexBuffer}, texPosBuf{QOpenGLBuffer::VertexBuffer}, boundaryBuf{QOpenGLBuffer::VertexBuffer};
 private:
     QOpenGLDebugLogger oglLogger;
     QWidget *dockParent;
@@ -168,6 +168,7 @@ private:
 
 protected:
     void renderMeshBuffer(Mesh & buf, boost::optional<QOpenGLShaderProgram&> prog = boost::none);
+    QOpenGLShaderProgram lineShader;
     QOpenGLShaderProgram sphereShader;
     QOpenGLShaderProgram cylinderShader;
     QOpenGLShaderProgram meshShader;

@@ -304,6 +304,7 @@ void ViewportBase::initializeGL() {
         shaders.append(&shader);
         return enabled && shader.link();
     };
+    createShader(lineShader, {"line.vert"}, {"line.frag"});
     createShader(sphereShader, {"sphere.vert"}, {"sphere.frag"});
     createShader(cylinderShader, {"cylinder.vert"}, {"cylinder.frag"});
     createShader(meshShader, {"color.vert"}, {"functions/diffuse.frag", "color vertexcolor.frag"});
@@ -342,6 +343,7 @@ void ViewportBase::initializeGL() {
 
     orthoVBuf.create();
     texPosBuf.create();
+    boundaryBuf.create();
 }
 
 void ViewportBase::resizeGL(int width, int height) {

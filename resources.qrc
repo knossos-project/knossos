@@ -67,6 +67,8 @@
         <file>resources/shaders/idcolor slicing.frag</file>
         <file>resources/shaders/idcolor.frag</file>
         <file>resources/shaders/idcolor.vert</file>
+        <file>resources/shaders/line.vert</file>
+        <file>resources/shaders/line.frag</file>
         <file>resources/shaders/mvp slicingmask.frag</file>
         <file>resources/shaders/mvp.vert</file>
         <file>resources/shaders/normal slicingapply.frag</file>

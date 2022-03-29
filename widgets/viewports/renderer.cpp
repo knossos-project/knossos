@@ -1432,61 +1432,49 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 //        glPopMatrix();
     }
 
-    if (false) {//options.drawBoundaryBox || options.drawBoundaryAxes) {
-        // Now we draw the dataset corresponding stuff (volume box of right size, axis descriptions...)
-        if(options.drawBoundaryBox) {
-            glPushMatrix();
-            glScalef(scaledBoundary.x, scaledBoundary.y, scaledBoundary.z);
-
-            glColor4f(0.8, 0.8, 0.8, 1.0);
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glBegin(GL_QUADS);
-                glNormal3i(0, 0, 1);// low z
-                glVertex3i(0, 0, 0);
-                glVertex3i(1, 0, 0);
-
-                glVertex3i(1, 1, 0);
-                glVertex3i(0, 1, 0);
-
-                glNormal3i(0, 0, 1);// high z
-                glVertex3i(0, 0, 1);
-                glVertex3i(1, 0, 1);
-
-                glVertex3i(1, 1, 1);
-                glVertex3i(0, 1, 1);
-
-                glNormal3i(0, 1, 0);// low y
-                glVertex3i(0, 0, 0);
-                glVertex3i(0, 0, 1);
-
-                glVertex3i(1, 0, 1);
-                glVertex3i(1, 0, 0);
-
-                glNormal3i(0, 1, 0);// high y
-                glVertex3i(0, 1, 0);
-                glVertex3i(0, 1, 1);
-
-                glVertex3i(1, 1, 1);
-                glVertex3i(1, 1, 0);
-
-                glNormal3i(1, 0, 0);// low x
-                glVertex3i(0, 0, 0);
-                glVertex3i(0, 0, 1);
-
-                glVertex3i(0, 1, 1);
-                glVertex3i(0, 1, 0);
-
-                glNormal3i(1, 0, 0);// high x
-                glVertex3i(1, 0, 0);
-                glVertex3i(1, 0, 1);
-
-                glVertex3i(1, 1, 1);
-                glVertex3i(1, 1, 0);
-            glEnd();
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-            glPopMatrix();
+    if(options.drawBoundaryBox) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        std::vector<floatCoordinate> vertices{
+            floatCoordinate(0, scaledBoundary.y,  0),
+            floatCoordinate(0, 0, 0),
+            floatCoordinate(scaledBoundary.x,  0, 0),
+            floatCoordinate(scaledBoundary.x,  scaledBoundary.y,  0),
+            floatCoordinate(scaledBoundary.x,  scaledBoundary.y, scaledBoundary.z),
+            floatCoordinate(scaledBoundary.x, 0,  scaledBoundary.z),
+            floatCoordinate(0, 0, scaledBoundary.z),
+            floatCoordinate(0, scaledBoundary.y, scaledBoundary.z),
+            floatCoordinate(0, scaledBoundary.y, 0),
+            floatCoordinate(scaledBoundary.x, scaledBoundary.y, 0),
+            floatCoordinate(scaledBoundary.x,  scaledBoundary.y,  scaledBoundary.z),
+            floatCoordinate(0, scaledBoundary.y, scaledBoundary.z),
+            floatCoordinate(0, 0,  scaledBoundary.z),
+            floatCoordinate(0, 0,  0),
+            floatCoordinate(scaledBoundary.x, 0,  0),
+            floatCoordinate(scaledBoundary.x, 0,  scaledBoundary.z)
+        };
+        const int vertexLocation = lineShader.attributeLocation("vertex");
+        lineShader.enableAttributeArray(vertexLocation);
+        boundaryBuf.bind();
+        if (boundaryBuf.size() == 0) {
+            qDebug() << viewportType << "lineBuf" << boundaryBuf.size();
+            boundaryBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
+        } else {
+            glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
         }
+        lineShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+        boundaryBuf.release();
+
+        lineShader.bind();
+        lineShader.setUniformValue("modelview_matrix", mv);
+        lineShader.setUniformValue("projection_matrix", p);
+
+        glDrawArrays(GL_LINE_STRIP, 0, vertices.size());
+        lineShader.release();
+        lineShader.disableAttributeArray(vertexLocation);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+    if (false && (options.drawBoundaryBox || options.drawBoundaryAxes)) {
+        // Now we draw the dataset corresponding stuff (volume box of right size, axis descriptions...)
 
         // draw ground grid
         if(options.drawBoundaryBox) {
