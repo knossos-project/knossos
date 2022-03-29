@@ -344,6 +344,7 @@ void ViewportBase::initializeGL() {
     orthoVBuf.create();
     texPosBuf.create();
     boundaryBuf.create();
+    boundaryGridBuf.create();
     crosshairBuf.create();
     vpBorderBuf.create();
     brushBuf.create();

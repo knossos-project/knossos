@@ -1463,54 +1463,52 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 //        glPopMatrix();
     }
 
-    if(options.drawBoundaryBox) {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        std::vector<floatCoordinate> vertices{
-            floatCoordinate(0, scaledBoundary.y,  0),
-            floatCoordinate(0, 0, 0),
-            floatCoordinate(scaledBoundary.x,  0, 0),
-            floatCoordinate(scaledBoundary.x,  scaledBoundary.y,  0),
-            floatCoordinate(scaledBoundary.x,  scaledBoundary.y, scaledBoundary.z),
-            floatCoordinate(scaledBoundary.x, 0,  scaledBoundary.z),
-            floatCoordinate(0, 0, scaledBoundary.z),
-            floatCoordinate(0, scaledBoundary.y, scaledBoundary.z),
-            floatCoordinate(0, scaledBoundary.y, 0),
-            floatCoordinate(scaledBoundary.x, scaledBoundary.y, 0),
-            floatCoordinate(scaledBoundary.x,  scaledBoundary.y,  scaledBoundary.z),
-            floatCoordinate(0, scaledBoundary.y, scaledBoundary.z),
-            floatCoordinate(0, 0,  scaledBoundary.z),
-            floatCoordinate(0, 0,  0),
-            floatCoordinate(scaledBoundary.x, 0,  0),
-            floatCoordinate(scaledBoundary.x, 0,  scaledBoundary.z)
-        };
-        const int vertexLocation = lineShader.attributeLocation("vertex");
-        lineShader.enableAttributeArray(vertexLocation);
-        boundaryBuf.bind();
-        if (boundaryBuf.size() == 0) {
-            qDebug() << viewportType << "lineBuf" << boundaryBuf.size();
-            boundaryBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
-        } else {
-            glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
-        }
-        lineShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
-        boundaryBuf.release();
-
-        lineShader.bind();
-        QVector4D color{0.8, 0.8, 0.8, 1};
-        lineShader.setUniformValue("color", color);
-        lineShader.setUniformValue("modelview_matrix", mv);
-        lineShader.setUniformValue("projection_matrix", p);
-
-        glDrawArrays(GL_LINE_STRIP, 0, vertices.size());
-        lineShader.release();
-        lineShader.disableAttributeArray(vertexLocation);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
-    if (false && (options.drawBoundaryBox || options.drawBoundaryAxes)) {
+    if (options.drawBoundaryBox || options.drawBoundaryAxes) {
         // Now we draw the dataset corresponding stuff (volume box of right size, axis descriptions...)
 
-        // draw ground grid
-        if(deprecatedFunctions && options.drawBoundaryBox) {
+        if(options.drawBoundaryBox) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            std::vector<floatCoordinate> vertices{
+                floatCoordinate(0, scaledBoundary.y,  0),
+                floatCoordinate(0, 0, 0),
+                floatCoordinate(scaledBoundary.x,  0, 0),
+                floatCoordinate(scaledBoundary.x,  scaledBoundary.y,  0),
+                floatCoordinate(scaledBoundary.x,  scaledBoundary.y, scaledBoundary.z),
+                floatCoordinate(scaledBoundary.x, 0,  scaledBoundary.z),
+                floatCoordinate(0, 0, scaledBoundary.z),
+                floatCoordinate(0, scaledBoundary.y, scaledBoundary.z),
+                floatCoordinate(0, scaledBoundary.y, 0),
+                floatCoordinate(scaledBoundary.x, scaledBoundary.y, 0),
+                floatCoordinate(scaledBoundary.x,  scaledBoundary.y,  scaledBoundary.z),
+                floatCoordinate(0, scaledBoundary.y, scaledBoundary.z),
+                floatCoordinate(0, 0,  scaledBoundary.z),
+                floatCoordinate(0, 0,  0),
+                floatCoordinate(scaledBoundary.x, 0,  0),
+                floatCoordinate(scaledBoundary.x, 0,  scaledBoundary.z)
+            };
+            int vertexLocation = lineShader.attributeLocation("vertex");
+            lineShader.enableAttributeArray(vertexLocation);
+            boundaryBuf.bind();
+            if (boundaryBuf.size() == 0) {
+                qDebug() << viewportType << "lineBuf" << boundaryBuf.size();
+                boundaryBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
+            } else {
+                glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
+            }
+            lineShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+            boundaryBuf.release();
+
+            lineShader.bind();
+            QVector4D color{0.8, 0.8, 0.8, 1};
+            lineShader.setUniformValue("color", color);
+            lineShader.setUniformValue("modelview_matrix", mv);
+            lineShader.setUniformValue("projection_matrix", p);
+
+            glDrawArrays(GL_LINE_STRIP, 0, vertices.size());
+            lineShader.release();
+            lineShader.disableAttributeArray(vertexLocation);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            // draw ground grid
             auto scalebarLenNm = std::get<1>(getScaleBarLabelNmAndPx(displayedlengthInNmX, edgeLength));
             if (scalebarLenNm == 0.0) {
                 scalebarLenNm = Dataset::current().boundary.x * Dataset::current().scales[0].x / 10.0;
@@ -1519,75 +1517,85 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             const auto grid_spacing_x = scalebarLenNm;
             const auto grid_max_y = Dataset::current().boundary.y * Dataset::current().scales[0].y;
             const auto grid_spacing_y = scalebarLenNm;
-
-            glPushMatrix();
-            glScalef(scaledBoundary.x, scaledBoundary.y, scaledBoundary.z);
-
-            glColor4d(0.85, 0.85, 0.85, 1.0);
-
             glLineWidth(1.0f);
-            glBegin(GL_LINES);
-                glNormal3i(0, 0, 1);// high z
-                for(float i = 0; i < grid_max_x; i += grid_spacing_x) {
-                    glVertex3f(i / grid_max_x, 0, 1);
-                    glVertex3f(i / grid_max_x, 1, 1);
-                }
+            std::vector<floatCoordinate> gridVertices;
+            for(float i = 0; i < grid_max_x; i += grid_spacing_x) {
+                gridVertices.emplace_back(i / grid_max_x * scaledBoundary.x, 0, scaledBoundary.z);
+                gridVertices.emplace_back(i / grid_max_x * scaledBoundary.x, scaledBoundary.y, scaledBoundary.z);
+            }
+            for(float i = 0; i < grid_max_y; i += grid_spacing_y) {
+                gridVertices.emplace_back(0, i / grid_max_y * scaledBoundary.y, scaledBoundary.z);
+                gridVertices.emplace_back(scaledBoundary.x, i / grid_max_y * scaledBoundary.y, scaledBoundary.z);
+            }
+            vertexLocation = lineShader.attributeLocation("vertex");
+            lineShader.enableAttributeArray(vertexLocation);
+            boundaryGridBuf.bind();
+            if (boundaryGridBuf.size() == 0) {
+                qDebug() << viewportType << "lineBuf" << boundaryGridBuf.size();
+                boundaryGridBuf.allocate(gridVertices.data(), gridVertices.size() * sizeof(gridVertices.front()));
+            } else {
+                glBufferSubData(GL_ARRAY_BUFFER, 0, gridVertices.size() * sizeof(gridVertices.front()), gridVertices.data());
+            }
+            lineShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+            boundaryGridBuf.release();
 
-                for(float i = 0; i < grid_max_y; i += grid_spacing_y) {
-                    glVertex3f(0, i / grid_max_y, 1);
-                    glVertex3f(1, i / grid_max_y, 1);
-                }
-            glEnd();
+            lineShader.bind();
+            QVector4D gridColor{0.85, 0.85, 0.85, 1.0};
+            lineShader.setUniformValue("color", color);
+            lineShader.setUniformValue("modelview_matrix", mv);
+            lineShader.setUniformValue("projection_matrix", p);
 
-            glPopMatrix();
+            glDrawArrays(GL_LINES, 0, vertices.size());
+            lineShader.release();
+            lineShader.disableAttributeArray(vertexLocation);
         }
 
         // draw axes
         auto renderAxis = [this, options](const floatCoordinate & targetView, const QString label) {
-            glPushMatrix();
+//            glPushMatrix();
 
-            floatCoordinate currentView = {0, 0, 1};
-            const auto angle = std::acos(currentView.dot(targetView));
-            auto axis = currentView.cross(targetView);
-            if (axis.normalize()) {
-                glRotatef(angle * 180/boost::math::constants::pi<float>(), axis.x, axis.y, axis.z);
-            }
-            const auto diameter = (state->skeletonState->volBoundary() / zoomFactor) * 5e-3;
-            const auto coneDiameter = 3 * diameter;
-            const auto coneLength = 6 * diameter;
-            const auto length = targetView.length() - coneLength;
-            // axis cylinder lid
-            GLUquadricObj * gluFloorObj = gluNewQuadric();
-            gluQuadricNormals(gluFloorObj, GLU_SMOOTH);
-            gluDisk(gluFloorObj, 0, diameter, 10, 1);
-            gluDeleteQuadric(gluFloorObj);
-            // axis cylinder
-            GLUquadricObj * gluCylObj = gluNewQuadric();
-            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-            gluCylinder(gluCylObj, diameter, diameter, length, 10, 1);
-            gluDeleteQuadric(gluCylObj);
+//            floatCoordinate currentView = {0, 0, 1};
+//            const auto angle = std::acos(currentView.dot(targetView));
+//            auto axis = currentView.cross(targetView);
+//            if (axis.normalize()) {
+//                glRotatef(angle * 180/boost::math::constants::pi<float>(), axis.x, axis.y, axis.z);
+//            }
+//            const auto diameter = (state->skeletonState->volBoundary() / zoomFactor) * 5e-3;
+//            const auto coneDiameter = 3 * diameter;
+//            const auto coneLength = 6 * diameter;
+//            const auto length = targetView.length() - coneLength;
+//            // axis cylinder lid
+//            GLUquadricObj * gluFloorObj = gluNewQuadric();
+//            gluQuadricNormals(gluFloorObj, GLU_SMOOTH);
+//            gluDisk(gluFloorObj, 0, diameter, 10, 1);
+//            gluDeleteQuadric(gluFloorObj);
+//            // axis cylinder
+//            GLUquadricObj * gluCylObj = gluNewQuadric();
+//            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+//            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+//            gluCylinder(gluCylObj, diameter, diameter, length, 10, 1);
+//            gluDeleteQuadric(gluCylObj);
 
-            glTranslatef(0, 0, length);
-            // cone lid
-            GLUquadricObj * gluLidObj = gluNewQuadric();
-            gluQuadricNormals(gluLidObj, GLU_SMOOTH);
-            gluDisk(gluLidObj, 0, coneDiameter, 10, 1);
-            gluDeleteQuadric(gluLidObj);
-            // cone
-            gluCylObj = gluNewQuadric();
-            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-            gluCylinder(gluCylObj, coneDiameter, 0., coneLength, 10, 5);
-            gluDeleteQuadric(gluCylObj);
+//            glTranslatef(0, 0, length);
+//            // cone lid
+//            GLUquadricObj * gluLidObj = gluNewQuadric();
+//            gluQuadricNormals(gluLidObj, GLU_SMOOTH);
+//            gluDisk(gluLidObj, 0, coneDiameter, 10, 1);
+//            gluDeleteQuadric(gluLidObj);
+//            // cone
+//            gluCylObj = gluNewQuadric();
+//            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+//            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+//            gluCylinder(gluCylObj, coneDiameter, 0., coneLength, 10, 5);
+//            gluDeleteQuadric(gluCylObj);
 
-            glPopMatrix();
+//            glPopMatrix();
 
-            const auto offset = targetView + std::ceil(3 * diameter);
-            renderText(offset, label, options.enableTextScaling);
+//            const auto offset = targetView + std::ceil(3 * diameter);
+//            renderText(offset, label, options.enableTextScaling);
         };
-        glColor4f(0, 0, 0, 1);
-        if (options.drawBoundaryAxes) {
+        if (format().profile() !=  QSurfaceFormat::CoreProfile && options.drawBoundaryAxes) {
+            glColor4f(0, 0, 0, 1);
             if (Viewport3D::showBoundariesInUm) {
                 renderAxis(floatCoordinate(scaledBoundary.x, 0, 0), QString("x: %1 µm").arg(scaledBoundary.x * 1e-3));
                 renderAxis(floatCoordinate(0, scaledBoundary.y, 0), QString("y: %1 µm").arg(scaledBoundary.y * 1e-3));
