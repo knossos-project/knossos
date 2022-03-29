@@ -445,22 +445,22 @@ void ViewportOrtho::renderViewportFrontFace() {
 }
 
 void Viewport3D::renderViewportFrontFace() {
-    ViewportBase::renderViewportFrontFace();
-    glColor4f(0, 0, 0, 1.);
-    glLineWidth(2.);
-    glBegin(GL_LINES);
-        glVertex3d(1, 1, -1);
-        glVertex3d(edgeLength - 1, 1, -1);
-        glVertex3d(edgeLength - 1, 1, -1);
-        glVertex3d(edgeLength - 1, edgeLength - 1, -1);
-        glVertex3d(edgeLength - 1, edgeLength - 1, -1);
-        glVertex3d(1, edgeLength - 1, -1);
-        glVertex3d(1, edgeLength - 1, -1);
-        glVertex3d(1, 1, -1);
-    glEnd();
-    if (Segmentation::singleton().volume_render_toggle == false && state->viewerState->showScalebar) {
-        renderScaleBar();
-    }
+//    ViewportBase::renderViewportFrontFace();
+//    glColor4f(0, 0, 0, 1.);
+//    glLineWidth(2.);
+//    glBegin(GL_LINES);
+//        glVertex3d(1, 1, -1);
+//        glVertex3d(edgeLength - 1, 1, -1);
+//        glVertex3d(edgeLength - 1, 1, -1);
+//        glVertex3d(edgeLength - 1, edgeLength - 1, -1);
+//        glVertex3d(edgeLength - 1, edgeLength - 1, -1);
+//        glVertex3d(1, edgeLength - 1, -1);
+//        glVertex3d(1, edgeLength - 1, -1);
+//        glVertex3d(1, 1, -1);
+//    glEnd();
+//    if (Segmentation::singleton().volume_render_toggle == false && state->viewerState->showScalebar) {
+//        renderScaleBar();
+//    }
 }
 
 auto getScaleBarLabelNmAndPx(double vpLenNm, int edgeLength) {
@@ -793,15 +793,15 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     p = QMatrix4x4{};
     p.ortho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, -(0.5), -(-state->skeletonState->volBoundary()));
     auto setStateAndRenderMesh = [this](auto func){
-        glMatrixMode(GL_PROJECTION);
-        glPushMatrix();
-        glLoadIdentity();
+//        glMatrixMode(GL_PROJECTION);
+//        glPushMatrix();
+//        glLoadIdentity();
         // since the mesh is offset the slicing/clipping plane has to be offset as well
         const auto meshVoxelCenterOffset = 0.5 * Dataset::current().scales[0].componentMul(n).dot(floatCoordinate{1,1,1});
-        glOrtho(-displayedIsoPx, +displayedIsoPx, +displayedIsoPx, -displayedIsoPx, (meshVoxelCenterOffset), (-state->skeletonState->volBoundary()));
+//        glOrtho(-displayedIsoPx, +displayedIsoPx, +displayedIsoPx, -displayedIsoPx, (meshVoxelCenterOffset), (-state->skeletonState->volBoundary()));
         p = QMatrix4x4{};
         p.ortho(-displayedIsoPx, +displayedIsoPx, +displayedIsoPx, -displayedIsoPx, (meshVoxelCenterOffset), (-state->skeletonState->volBoundary()));
-        glMatrixMode(GL_MODELVIEW);
+//        glMatrixMode(GL_MODELVIEW);
 
         glEnable(GL_DEPTH_TEST);
         const auto blendState = glIsEnabled(GL_BLEND);
@@ -1379,57 +1379,57 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         }
 //        glPushMatrix();
 
-        const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
-        glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
-        glColor4f(1., 1., 1., 1.);
-        // colored slice boundaries
-        if (options.vp3dSliceBoundaries) {
-            state->viewer->window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
-                if (orthoVP.isVisible()) {
-                    const float dataPxX = orthoVP.displayedIsoPx;
-                    const float dataPxY = orthoVP.displayedIsoPx;
-                    glColor4f(0.7 * std::abs(orthoVP.n.z), 0.7 * std::abs(orthoVP.n.y), 0.7 * std::abs(orthoVP.n.x), 1.);
-                    glBegin(GL_LINE_LOOP);
-                        glVertex3f(-dataPxX * orthoVP.v1.x - dataPxY * orthoVP.v2.x,
-                                   -dataPxX * orthoVP.v1.y - dataPxY * orthoVP.v2.y,
-                                   -dataPxX * orthoVP.v1.z - dataPxY * orthoVP.v2.z);
-                        glVertex3f( dataPxX * orthoVP.v1.x - dataPxY * orthoVP.v2.x,
-                                    dataPxX * orthoVP.v1.y - dataPxY * orthoVP.v2.y,
-                                    dataPxX * orthoVP.v1.z - dataPxY * orthoVP.v2.z);
-                        glVertex3f( dataPxX * orthoVP.v1.x + dataPxY * orthoVP.v2.x,
-                                    dataPxX * orthoVP.v1.y + dataPxY * orthoVP.v2.y,
-                                    dataPxX * orthoVP.v1.z + dataPxY * orthoVP.v2.z);
-                        glVertex3f(-dataPxX * orthoVP.v1.x + dataPxY * orthoVP.v2.x,
-                                   -dataPxX * orthoVP.v1.y + dataPxY * orthoVP.v2.y,
-                                   -dataPxX * orthoVP.v1.z + dataPxY * orthoVP.v2.z);
-                    glEnd();
-                }
-            });
-        }
-        // intersection lines
-        if (options.vp3dSliceIntersections) {
-            const auto size = state->viewer->window->viewportXY->displayedIsoPx;
-            glColor4f(0., 0., 0., 1.);
-            if (!state->viewerState->showXYplane || !state->viewerState->showXZplane) {
-                glBegin(GL_LINES);
-                    glVertex3f(-size, 0, 0);
-                    glVertex3f( size, 0, 0);
-                glEnd();
-            }
-            if (!state->viewerState->showXYplane || !state->viewerState->showZYplane) {
-                glBegin(GL_LINES);
-                    glVertex3f(0, -size, 0);
-                    glVertex3f(0,  size, 0);
-                glEnd();
-            }
-            if (!state->viewerState->showXZplane || !state->viewerState->showZYplane) {
-                glBegin(GL_LINES);
-                    glVertex3f(0, 0, -size);
-                    glVertex3f(0, 0,  size);
-                glEnd();
-            }
-        }
-        glPopMatrix();
+//        const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
+//        glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
+//        glColor4f(1., 1., 1., 1.);
+//        // colored slice boundaries
+//        if (options.vp3dSliceBoundaries) {
+//            state->viewer->window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
+//                if (orthoVP.isVisible()) {
+//                    const float dataPxX = orthoVP.displayedIsoPx;
+//                    const float dataPxY = orthoVP.displayedIsoPx;
+//                    glColor4f(0.7 * std::abs(orthoVP.n.z), 0.7 * std::abs(orthoVP.n.y), 0.7 * std::abs(orthoVP.n.x), 1.);
+//                    glBegin(GL_LINE_LOOP);
+//                        glVertex3f(-dataPxX * orthoVP.v1.x - dataPxY * orthoVP.v2.x,
+//                                   -dataPxX * orthoVP.v1.y - dataPxY * orthoVP.v2.y,
+//                                   -dataPxX * orthoVP.v1.z - dataPxY * orthoVP.v2.z);
+//                        glVertex3f( dataPxX * orthoVP.v1.x - dataPxY * orthoVP.v2.x,
+//                                    dataPxX * orthoVP.v1.y - dataPxY * orthoVP.v2.y,
+//                                    dataPxX * orthoVP.v1.z - dataPxY * orthoVP.v2.z);
+//                        glVertex3f( dataPxX * orthoVP.v1.x + dataPxY * orthoVP.v2.x,
+//                                    dataPxX * orthoVP.v1.y + dataPxY * orthoVP.v2.y,
+//                                    dataPxX * orthoVP.v1.z + dataPxY * orthoVP.v2.z);
+//                        glVertex3f(-dataPxX * orthoVP.v1.x + dataPxY * orthoVP.v2.x,
+//                                   -dataPxX * orthoVP.v1.y + dataPxY * orthoVP.v2.y,
+//                                   -dataPxX * orthoVP.v1.z + dataPxY * orthoVP.v2.z);
+//                    glEnd();
+//                }
+//            });
+//        }
+//        // intersection lines
+//        if (options.vp3dSliceIntersections) {
+//            const auto size = state->viewer->window->viewportXY->displayedIsoPx;
+//            glColor4f(0., 0., 0., 1.);
+//            if (!state->viewerState->showXYplane || !state->viewerState->showXZplane) {
+//                glBegin(GL_LINES);
+//                    glVertex3f(-size, 0, 0);
+//                    glVertex3f( size, 0, 0);
+//                glEnd();
+//            }
+//            if (!state->viewerState->showXYplane || !state->viewerState->showZYplane) {
+//                glBegin(GL_LINES);
+//                    glVertex3f(0, -size, 0);
+//                    glVertex3f(0,  size, 0);
+//                glEnd();
+//            }
+//            if (!state->viewerState->showXZplane || !state->viewerState->showZYplane) {
+//                glBegin(GL_LINES);
+//                    glVertex3f(0, 0, -size);
+//                    glVertex3f(0, 0,  size);
+//                glEnd();
+//            }
+//        }
+//        glPopMatrix();
     }
 
     if (false) {//options.drawBoundaryBox || options.drawBoundaryAxes) {
@@ -1580,10 +1580,10 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     }
 
     if (options.drawSkeleton && state->viewerState->skeletonDisplayVP3D.testFlag(TreeDisplay::ShowIn3DVP)) {
-        glPushMatrix();
-        updateFrustumClippingPlanes();// should update on vp view translate, rotate or scale
+//        glPushMatrix();
+//        updateFrustumClippingPlanes();// should update on vp view translate, rotate or scale
         renderSkeleton(options);
-        glPopMatrix();
+//        glPopMatrix();
     }
 
     if (state->viewerState->meshDisplay.testFlag(TreeDisplay::ShowIn3DVP) && options.drawMesh) {
@@ -1776,12 +1776,12 @@ void ViewportOrtho::renderArbitrarySlicePane(const RenderOptions & options,  QMa
             shaderTextureQuad2.setUniformValue("modelview_matrix", mv);
             shaderTextureQuad2.setUniformValue("projection_matrix", p);
 
-            glEnable(GL_TEXTURE_2D);
+//            glEnable(GL_TEXTURE_2D);
             texture.texHandle[layerId].bind();
-            glDrawArrays(GL_QUADS, 0, 4);
+            glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
             shaderTextureQuad2.release();
             texture.texHandle[layerId].release();
-            glDisable(GL_TEXTURE_2D);
+//            glDisable(GL_TEXTURE_2D);
 
             shaderTextureQuad2.disableAttributeArray(texLocation);
             shaderTextureQuad2.disableAttributeArray(vertexLocation);
@@ -2038,14 +2038,14 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         glEnable(GL_COLOR_MATERIAL);
         glShadeModel(GL_SMOOTH);
     } else {
-        glDisable(GL_LIGHTING);
-        glDisable(GL_COLOR_MATERIAL);
+//        glDisable(GL_LIGHTING);
+//        glDisable(GL_COLOR_MATERIAL);
     }
 
     //tdItem: test culling under different conditions!
     //if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
 
-    glPushMatrix();
+//    glPushMatrix();
     const auto displayFlag = (viewportType == VIEWPORT_SKELETON) ? state->viewerState->skeletonDisplayVP3D : state->viewerState->skeletonDisplayVPOrtho;
     auto & glBuffers = displayFlag.testFlag(TreeDisplay::OnlySelected) ? state->viewerState->selectedTreesBuffers : state->viewerState->AllTreesBuffers;
     if(glBuffers.regenVertBuffer) {
@@ -2166,12 +2166,12 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     }
 
     // lighting isn’t really applicable to lines and points
-    glDisable(GL_LIGHTING);
-    glDisable(GL_COLOR_MATERIAL);
+//    glDisable(GL_LIGHTING);
+//    glDisable(GL_COLOR_MATERIAL);
     if (viewportType != ViewportType::VIEWPORT_SKELETON) {
         // without shader lines and points have no thickness and therefore need an offset to appear above the (see-through) slices
         const auto offset = state->viewerState->onlyLinesAndPoints * Dataset::current().scale * static_cast<ViewportOrtho&>(*this).n * 0.25;
-        glTranslatef(offset.x(), offset.y(), offset.z());
+//        glTranslatef(offset.x(), offset.y(), offset.z());
     }
     const auto alwaysLinesAndPoints = state->viewerState->cumDistRenderThres > 19.f && options.enableLoddingAndLinesAndPoints;
     // higher render qualities only use lines and points if node < smallestVisibleSize
@@ -2210,7 +2210,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
             cylinderShader.setUniformValue("light_pos", lightPos);
             cylinderShader.setUniformValue("light_front", diffuseLight);
             cylinderShader.setUniformValue("light_back", ambientLight);
-            glDrawArrays(GL_QUADS, 0, static_cast<GLsizei>(glBuffers.lineVertBuffer2.vertices.size()));
+//            glDrawArrays(GL_TRIANGLE_FAN, 0, static_cast<GLsizei>(glBuffers.lineVertBuffer2.vertices.size()));
 
             cylinderShader.disableAttributeArray(vertexLocation);
             cylinderShader.disableAttributeArray(refLocation);
@@ -2219,30 +2219,30 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
             cylinderShader.release();
         }
         if (alwaysLinesAndPoints || state->viewerState->lightOnOff) {
-            glEnableClientState(GL_VERTEX_ARRAY);
-            glEnableClientState(GL_COLOR_ARRAY);
+//            glEnableClientState(GL_VERTEX_ARRAY);
+//            glEnableClientState(GL_COLOR_ARRAY);
 
-            /* draw all segments */
-            glBuffers.lineVertBuffer.vertex_buffer.bind();
-            glVertexPointer(3, GL_FLOAT, 0, nullptr);
-            glBuffers.lineVertBuffer.vertex_buffer.release();
+//            /* draw all segments */
+//            glBuffers.lineVertBuffer.vertex_buffer.bind();
+//            glVertexPointer(3, GL_FLOAT, 0, nullptr);
+//            glBuffers.lineVertBuffer.vertex_buffer.release();
 
-            glBuffers.lineVertBuffer.color_buffer.bind();
-            glColorPointer(4, GL_UNSIGNED_BYTE, 0, nullptr);
-            glBuffers.lineVertBuffer.color_buffer.release();
+//            glBuffers.lineVertBuffer.color_buffer.bind();
+//            glColorPointer(4, GL_UNSIGNED_BYTE, 0, nullptr);
+//            glBuffers.lineVertBuffer.color_buffer.release();
 
-            glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(glBuffers.lineVertBuffer.vertices.size()));
+//            glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(glBuffers.lineVertBuffer.vertices.size()));
 
-            glDisableClientState(GL_COLOR_ARRAY);
-            glDisableClientState(GL_VERTEX_ARRAY);
+//            glDisableClientState(GL_COLOR_ARRAY);
+//            glDisableClientState(GL_VERTEX_ARRAY);
         }
     }
     glLineWidth(2.f);
 
     glPointSize(alwaysLinesAndPoints || options.nodePicking ? pointSize(width()/displayedlengthInNmX) : smallestVisibleNodeSize());
     /* Render point geometry batch if it contains data */
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_COLOR_ARRAY);
+//    glEnableClientState(GL_VERTEX_ARRAY);
+//    glEnableClientState(GL_COLOR_ARRAY);
 
     /* draw all nodes */
     if(options.nodePicking) {
@@ -2254,13 +2254,13 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
             glColorPointer(4, GL_UNSIGNED_BYTE, 0, glBuffers.colorPickingBuffer64.data());
         }
     } else {
-        glBuffers.pointVertBuffer.color_buffer.bind();
-        glColorPointer(4, GL_UNSIGNED_BYTE, 0, nullptr);
-        glBuffers.pointVertBuffer.color_buffer.release();
+//        glBuffers.pointVertBuffer.color_buffer.bind();
+//        glColorPointer(4, GL_UNSIGNED_BYTE, 0, nullptr);
+//        glBuffers.pointVertBuffer.color_buffer.release();
     }
     if (!options.nodePicking && state->viewerState->cumDistRenderThres == 7.f) {
         glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);// GL_PROGRAM_POINT_SIZE gl3+
-        glEnable(GL_POINT_SPRITE);// only gl2
+//        glEnable(GL_POINT_SPRITE);// only gl2
         glBuffers.pointVertBuffer.vertex_buffer.bind();
         const int vertexLocation = sphereShader.attributeLocation("vertex");
         sphereShader.enableAttributeArray(vertexLocation);
@@ -2313,12 +2313,12 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.pointVertBuffer.vertices.size()));
     }
 
-    glDisableClientState(GL_COLOR_ARRAY);
-    glDisableClientState(GL_VERTEX_ARRAY);
+//    glDisableClientState(GL_COLOR_ARRAY);
+//    glDisableClientState(GL_VERTEX_ARRAY);
 
     glPointSize(1.f);
 
-    glPopMatrix(); // Restore modelview matrix
+//    glPopMatrix(); // Restore modelview matrix
 }
 
 bool ViewportBase::updateFrustumClippingPlanes() {
