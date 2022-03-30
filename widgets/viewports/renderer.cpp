@@ -2373,10 +2373,10 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
     }
     if (alwaysLinesAndPoints || state->viewerState->lightOnOff || options.nodePicking) {
-        glBuffers.pointVertBuffer.vertex_buffer.bind();
-        glVertexPointer(3, GL_FLOAT, 0, nullptr);
-        glBuffers.pointVertBuffer.vertex_buffer.release();
-        glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.pointVertBuffer.vertices.size()));
+//        glBuffers.pointVertBuffer.vertex_buffer.bind();
+//        glVertexPointer(3, GL_FLOAT, 0, nullptr);
+//        glBuffers.pointVertBuffer.vertex_buffer.release();
+//        glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.pointVertBuffer.vertices.size()));
     }
 
 //    glDisableClientState(GL_COLOR_ARRAY);
