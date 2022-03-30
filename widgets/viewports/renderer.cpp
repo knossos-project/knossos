@@ -1511,11 +1511,11 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             // draw ground grid
             auto scalebarLenNm = std::get<1>(getScaleBarLabelNmAndPx(displayedlengthInNmX, edgeLength));
             if (scalebarLenNm == 0.0) {
-                scalebarLenNm = Dataset::current().boundary.x * Dataset::current().scales[0].x / 10.0;
+                scalebarLenNm = scaledBoundary.x / 10.0;
             }
-            const auto grid_max_x = Dataset::current().boundary.x * Dataset::current().scales[0].x;
+            const auto grid_max_x = scaledBoundary.x;
             const auto grid_spacing_x = scalebarLenNm;
-            const auto grid_max_y = Dataset::current().boundary.y * Dataset::current().scales[0].y;
+            const auto grid_max_y = scaledBoundary.y;
             const auto grid_spacing_y = scalebarLenNm;
             glLineWidth(1.0f);
             std::vector<floatCoordinate> gridVertices;
@@ -1540,8 +1540,8 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             boundaryGridBuf.release();
 
             lineShader.bind();
-            QVector4D gridColor{0.85, 0.85, 0.85, 1.0};
-            lineShader.setUniformValue("color", color);
+            const auto gridColor = QColor::fromRgbF(0.85, 0.85, 0.85, 1.0);
+            lineShader.setUniformValue("color", gridColor);
             lineShader.setUniformValue("modelview_matrix", mv);
             lineShader.setUniformValue("projection_matrix", p);
 
