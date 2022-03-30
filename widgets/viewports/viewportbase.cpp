@@ -316,7 +316,7 @@ void ViewportBase::initializeGL() {
     createShader(raw_data_shader, {"3DTexture.vert"}, {"3DTexture.frag"});
     createShader(overlay_data_shader, {"3DTexture.vert"}, {"3DTextureLUT.frag"});
     createShader(shaderTextureQuad, {"texturequad.vert"}, {"texturequad.frag"});
-	createShader(shaderTextureQuad2, {"texturequad2.vert"}, {"texturequad.frag"});
+    createShader(shaderTextureQuad2, {"texturequad2.vert"}, {"texturequad.frag"});
     static bool printed2 = false;
     if (!printed2) {
         const auto glversion  = reinterpret_cast<const char*>(::glGetString(GL_VERSION));
@@ -341,13 +341,10 @@ void ViewportBase::initializeGL() {
     screenVertexBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
     screenVertexBuf.release();
 
-    orthoVBuf.create();
-    texPosBuf.create();
-    boundaryBuf.create();
-    boundaryGridBuf.create();
-    crosshairBuf.create();
-    vpBorderBuf.create();
-    brushBuf.create();
+    for (auto * buf : {&orthoVBuf, &texPosBuf, &boundaryBuf, &boundaryGridBuf, &crosshairBuf, &vpBorderBuf, &brushBuf}) {
+        buf->create();
+        buf->setUsagePattern(QOpenGLBuffer::DynamicDraw);
+    }
 }
 
 void ViewportBase::resizeGL(int width, int height) {

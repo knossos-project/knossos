@@ -425,7 +425,6 @@ void ViewportOrtho::renderViewportFrontFace() {
     lineShader.enableAttributeArray(vertexLocation);
     vpBorderBuf.bind();
     if (vpBorderBuf.size() == 0) {
-        qDebug() << viewportType << "vpBorderBuf" << vpBorderBuf.size();
         vpBorderBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
     } else {
         glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
@@ -803,7 +802,6 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         lineShader.enableAttributeArray(vertexLocation);
         crosshairBuf.bind();
         if (crosshairBuf.size() == 0) {
-            qDebug() << viewportType << "crosshairBuf" << crosshairBuf.size();
             crosshairBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
         } else {
             glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
@@ -1490,7 +1488,6 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             lineShader.enableAttributeArray(vertexLocation);
             boundaryBuf.bind();
             if (boundaryBuf.size() == 0) {
-                qDebug() << viewportType << "lineBuf" << boundaryBuf.size();
                 boundaryBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
             } else {
                 glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
@@ -1530,8 +1527,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             vertexLocation = lineShader.attributeLocation("vertex");
             lineShader.enableAttributeArray(vertexLocation);
             boundaryGridBuf.bind();
-            if (boundaryGridBuf.size() == 0) {
-                qDebug() << viewportType << "lineBuf" << boundaryGridBuf.size();
+            if (boundaryGridBuf.size() != gridVertices.size() * sizeof(gridVertices.front())) {
                 boundaryGridBuf.allocate(gridVertices.data(), gridVertices.size() * sizeof(gridVertices.front()));
             } else {
                 glBufferSubData(GL_ARRAY_BUFFER, 0, gridVertices.size() * sizeof(gridVertices.front()), gridVertices.data());
@@ -1637,7 +1633,6 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
         const auto zsize = bradius / Dataset::current().scales[0].z;
 
         //move from center to cursor
-        qDebug() << "RENDER BRUSH" << ysize << Dataset::current().scales[0];
         mv.translate(Dataset::current().scales[0].x * coord.x, Dataset::current().scales[0].y * coord.y, Dataset::current().scales[0].z * coord.z);
         if (viewportType == VIEWPORT_XZ && bview == brush_t::view_t::xz) {
             mv.translate(0, 0, Dataset::current().scale.z / Dataset::current().scaleFactor.z);
@@ -1733,8 +1728,7 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
         const int vertexLocation = lineShader.attributeLocation("vertex");
         lineShader.enableAttributeArray(vertexLocation);
         brushBuf.bind();
-        if (brushBuf.size() == 0) {
-            qDebug() << viewportType << "brushBuf" << brushBuf.size();
+        if (brushBuf.size() != vertices.size() * sizeof(vertices.front())) {
             brushBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
         } else {
             glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
@@ -1813,7 +1807,6 @@ void ViewportOrtho::renderArbitrarySlicePane(const RenderOptions & options,  QMa
             shaderTextureQuad2.enableAttributeArray(vertexLocation);
             orthoVBuf.bind();
             if (orthoVBuf.size() == 0) {
-                qDebug() << viewportType << "orthoVBuf" << orthoVBuf.size();
                 orthoVBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
             } else {
                 glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
@@ -1824,7 +1817,6 @@ void ViewportOrtho::renderArbitrarySlicePane(const RenderOptions & options,  QMa
             shaderTextureQuad2.enableAttributeArray(texLocation);
             texPosBuf.bind();
             if (texPosBuf.size() == 0) {
-                qDebug() << viewportType << "texPosBuf" << texPosBuf.size();
                 texPosBuf.allocate(texCoordComponents.data(), texCoordComponents.size() * sizeof(texCoordComponents.front()));
             } else {
                 glBufferSubData(GL_ARRAY_BUFFER, 0, texCoordComponents.size() * sizeof(texCoordComponents.front()), texCoordComponents.data());
@@ -2235,6 +2227,19 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 //        glTranslatef(offset.x(), offset.y(), offset.z());
     }
     const auto alwaysLinesAndPoints = state->viewerState->cumDistRenderThres > 19.f && options.enableLoddingAndLinesAndPoints;
+
+
+    QVector<float> v;
+    for (auto arg : {GL_LINE_WIDTH, GL_ALIASED_LINE_WIDTH_RANGE, GL_SMOOTH_LINE_WIDTH_RANGE, GL_SMOOTH_LINE_WIDTH_GRANULARITY}) {
+        v.push_front(-1);
+        v.push_front(-1);
+        glGetFloatv(arg, &v.front());
+    }
+//    qDebug() << v << glIsEnabled(GL_LINE_SMOOTH);
+    glEnable(GL_LINE_SMOOTH);
+//    qDebug() << alwaysLinesAndPoints << lineSize(width()/displayedlengthInNmX) << smallestVisibleNodeSize();
+
+
     // higher render qualities only use lines and points if node < smallestVisibleSize
     glLineWidth(alwaysLinesAndPoints ? lineSize(width()/displayedlengthInNmX) : smallestVisibleNodeSize());
     /* Render line geometry batch if it contains data and we don’t pick nodes */
