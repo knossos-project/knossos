@@ -2075,7 +2075,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     QVector4D ambientLight{0.2, 0.2, 0.2, 1};
     QVector4D diffuseLight{0.5, 0.5, 0.5, 1};
     QVector4D lightPos{0, Dataset::current().boundary.y * Dataset::current().scales[0].y, 0, 1.};
-    if (!options.nodePicking && state->viewerState->lightOnOff) {
+    if (false && !options.nodePicking && state->viewerState->lightOnOff) {
         // Configure light
         glEnable(GL_LIGHTING);
 
