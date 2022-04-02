@@ -252,7 +252,9 @@ void ViewportBase::initializeGL() {
         msgBox.setText(tr("Insufficient OpenGL version.\nKNOSSOS requires at least OpenGL version 1.4"));
         msgBox.setInformativeText(tr("Please update drivers, or graphics hardware."));
         msgBox.setDetailedText(QString("GL_VERSION:\t%1\nGL_VENDOR:\t%2\nGL_RENDERER:\t%3").arg(glversion).arg(glvendor).arg(glrenderer));
-        msgBox.exec();
+        if (!qApp->arguments().contains("exit")) {
+            msgBox.exec();
+        }
         throw std::runtime_error("initializeOpenGLFunctions failed");
     }
     QObject::connect(&oglLogger, &QOpenGLDebugLogger::messageLogged, [](const QOpenGLDebugMessage & msg){

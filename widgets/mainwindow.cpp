@@ -1367,7 +1367,9 @@ void MainWindow::loadSettings() {
             QObject::connect(msgBox.checkBox(), &QCheckBox::clicked, [this](const bool checked) { widgetContainer.preferencesWidget.meshesTab.warnDisabledPickingCheck.setChecked(!checked); });
             msgBox.setIcon(QMessageBox::Warning);
             msgBox.setText(warningDisabledFeaturesLabel.toolTip());
-            msgBox.exec();
+            if (!qApp->arguments().contains("exit")) {
+                msgBox.exec();
+            }
         }
     }
 }
