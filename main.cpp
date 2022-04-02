@@ -228,9 +228,11 @@ int main(int argc, char *argv[]) try {
     const auto text = QObject::tr("KNOSSOS will terminate due to a problem");
     MessageHermit{QObject::tr("Unhandled Exception"), text, QString::fromStdString(e.what())}
             .run(argc != 2 || std::string(argv[1]) != "exit");
+    throw;
 } catch (...) {
     std::cerr << "catch (...)" << std::endl;
     const auto text = QObject::tr("An unspecifiable problem occured which forced KNOSSOS to terminate.");
     MessageHermit{QObject::tr("Unrecoverable Error"), text}
             .run(argc != 2 || std::string(argv[1]) != "exit");
+    throw;
 }
