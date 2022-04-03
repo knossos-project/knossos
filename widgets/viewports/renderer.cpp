@@ -815,6 +815,8 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         lineShader.setUniformValue("modelview_matrix", mv);
         lineShader.setUniformValue("projection_matrix", p);
 
+        glLineWidth(1);
+
         glDrawArrays(GL_LINES, 0, 2);
         color = {std::abs(v1.z), std::abs(v1.y), std::abs(v1.x), 0.3};
         lineShader.setUniformValue("color", color);
