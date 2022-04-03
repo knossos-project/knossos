@@ -144,12 +144,12 @@ int main(int argc, char *argv[]) try {
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);// explicitly enable sharing for undocked viewports
 
     QSurfaceFormat format{QSurfaceFormat::defaultFormat()};
-    format.setVersion(2, 0);
+    format.setVersion(3, 2);
     format.setDepthBufferSize(24);
     format.setSamples(8);// set it here to the most common value (the default) so it doesn’t complain unnecessarily later
 //    format.setSwapInterval(0);
 //    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
-    format.setProfile(QSurfaceFormat::CompatibilityProfile);
+    format.setProfile(QSurfaceFormat::CoreProfile);
     format.setOption(QSurfaceFormat::DeprecatedFunctions);
     if (ViewportBase::oglDebug) {
         format.setOption(QSurfaceFormat::DebugContext);

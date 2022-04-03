@@ -274,14 +274,13 @@ void ViewportBase::initializeGL() {
     }
     meshVao.create();
 
-    auto format = meshPickingSurface.format();
-    if (this->format().version() < QPair(3, 0) || this->format().version() >= QPair(3, 2)) {
-        format.setMajorVersion(3);
-        format.setMinorVersion(2);
-        format.setProfile(QSurfaceFormat::CoreProfile);
-        format.setOption(QSurfaceFormat::DeprecatedFunctions, false);
-    }
-    meshPickingSurface.setFormat(format);
+//    auto format = meshPickingSurface.format();
+//    if (this->format().version() < QPair(3, 0) || this->format().version() >= QPair(3, 2)) {
+//        format.setVersion(3, 2);
+//        format.setProfile(QSurfaceFormat::CoreProfile);
+//        format.setOption(QSurfaceFormat::DeprecatedFunctions, false);
+//    }
+//    meshPickingSurface.setFormat(format);
     meshPickingSurface.create();
     meshPickingCtx.setFormat(meshPickingSurface.format());
     meshPickingCtx.setShareContext(context());
