@@ -151,6 +151,7 @@ int main(int argc, char *argv[]) try {
 //    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
     format.setProfile(QSurfaceFormat::CoreProfile);
     format.setOption(QSurfaceFormat::DeprecatedFunctions);
+    format.setOption(QSurfaceFormat::ResetNotification);
     if (ViewportBase::oglDebug) {
         format.setOption(QSurfaceFormat::DebugContext);
     }
