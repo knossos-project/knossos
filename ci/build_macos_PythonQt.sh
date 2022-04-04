@@ -9,5 +9,5 @@ git reset --hard
 cd ..
 mkdir -p PythonQt-build && cd PythonQt-build
 rm -fv CMakeCache.txt
-time cmake -G Ninja ../PythonQt -DCMAKE_PREFIX_PATH=/usr/local/opt/qt@5/
+time cmake -G Ninja ../PythonQt -DCMAKE_PREFIX_PATH=/usr/local/opt/qt@5/ -DCMAKE_CXX_FLAGS='-Wno-deprecated-declarations -Wno-register'
 time ninja install
