@@ -1408,59 +1408,87 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             }
 //            glPopMatrix();
         }
-//        glPushMatrix();
+        if (options.vp3dSliceBoundaries) {
+            const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
+            mv.translate(isoCurPos);
+            std::vector<floatCoordinate> vertices;
+            state->viewer->window->forEachOrthoVPDo([this, &vertices](ViewportOrtho & orthoVP) {
+                const float dataPxX = orthoVP.displayedIsoPx;
+                const float dataPxY = orthoVP.displayedIsoPx;
+                std::vector<floatCoordinate> this_vertices = {
+                        floatCoordinate(-dataPxX * orthoVP.v1.x - dataPxY * orthoVP.v2.x,
+                                        -dataPxX * orthoVP.v1.y - dataPxY * orthoVP.v2.y,
+                                        -dataPxX * orthoVP.v1.z - dataPxY * orthoVP.v2.z),
+                        floatCoordinate( dataPxX * orthoVP.v1.x - dataPxY * orthoVP.v2.x,
+                                        dataPxX * orthoVP.v1.y - dataPxY * orthoVP.v2.y,
+                                        dataPxX * orthoVP.v1.z - dataPxY * orthoVP.v2.z),
+                        floatCoordinate( dataPxX * orthoVP.v1.x + dataPxY * orthoVP.v2.x,
+                                        dataPxX * orthoVP.v1.y + dataPxY * orthoVP.v2.y,
+                                        dataPxX * orthoVP.v1.z + dataPxY * orthoVP.v2.z),
+                        floatCoordinate(-dataPxX * orthoVP.v1.x + dataPxY * orthoVP.v2.x,
+                                        -dataPxX * orthoVP.v1.y + dataPxY * orthoVP.v2.y,
+                                        -dataPxX * orthoVP.v1.z + dataPxY * orthoVP.v2.z)
+                };
+                vertices.insert(vertices.end(), this_vertices.begin(), this_vertices.end());
+            });
+            const int vertexLocation = lineShader.attributeLocation("vertex");
+            lineShader.enableAttributeArray(vertexLocation);
+            vpBorderBuf.bind();
+            if (vpBorderBuf.size() == 0) {
+                vpBorderBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
+            } else {
+                glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
+            }
+            lineShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+            vpBorderBuf.release();
 
-//        const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
-//        glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
-//        glColor4f(1., 1., 1., 1.);
-//        // colored slice boundaries
-//        if (options.vp3dSliceBoundaries) {
-//            state->viewer->window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
-//                if (orthoVP.isVisible()) {
-//                    const float dataPxX = orthoVP.displayedIsoPx;
-//                    const float dataPxY = orthoVP.displayedIsoPx;
-//                    glColor4f(0.7 * std::abs(orthoVP.n.z), 0.7 * std::abs(orthoVP.n.y), 0.7 * std::abs(orthoVP.n.x), 1.);
-//                    glBegin(GL_LINE_LOOP);
-//                        glVertex3f(-dataPxX * orthoVP.v1.x - dataPxY * orthoVP.v2.x,
-//                                   -dataPxX * orthoVP.v1.y - dataPxY * orthoVP.v2.y,
-//                                   -dataPxX * orthoVP.v1.z - dataPxY * orthoVP.v2.z);
-//                        glVertex3f( dataPxX * orthoVP.v1.x - dataPxY * orthoVP.v2.x,
-//                                    dataPxX * orthoVP.v1.y - dataPxY * orthoVP.v2.y,
-//                                    dataPxX * orthoVP.v1.z - dataPxY * orthoVP.v2.z);
-//                        glVertex3f( dataPxX * orthoVP.v1.x + dataPxY * orthoVP.v2.x,
-//                                    dataPxX * orthoVP.v1.y + dataPxY * orthoVP.v2.y,
-//                                    dataPxX * orthoVP.v1.z + dataPxY * orthoVP.v2.z);
-//                        glVertex3f(-dataPxX * orthoVP.v1.x + dataPxY * orthoVP.v2.x,
-//                                   -dataPxX * orthoVP.v1.y + dataPxY * orthoVP.v2.y,
-//                                   -dataPxX * orthoVP.v1.z + dataPxY * orthoVP.v2.z);
-//                    glEnd();
-//                }
-//            });
-//        }
-//        // intersection lines
-//        if (options.vp3dSliceIntersections) {
-//            const auto size = state->viewer->window->viewportXY->displayedIsoPx;
-//            glColor4f(0., 0., 0., 1.);
-//            if (!state->viewerState->showXYplane || !state->viewerState->showXZplane) {
-//                glBegin(GL_LINES);
-//                    glVertex3f(-size, 0, 0);
-//                    glVertex3f( size, 0, 0);
-//                glEnd();
-//            }
-//            if (!state->viewerState->showXYplane || !state->viewerState->showZYplane) {
-//                glBegin(GL_LINES);
-//                    glVertex3f(0, -size, 0);
-//                    glVertex3f(0,  size, 0);
-//                glEnd();
-//            }
-//            if (!state->viewerState->showXZplane || !state->viewerState->showZYplane) {
-//                glBegin(GL_LINES);
-//                    glVertex3f(0, 0, -size);
-//                    glVertex3f(0, 0,  size);
-//                glEnd();
-//            }
-//        }
-//        glPopMatrix();
+            lineShader.bind();
+            lineShader.setUniformValue("modelview_matrix", mv);
+            lineShader.setUniformValue("projection_matrix", p);
+            state->viewer->window->forEachOrthoVPDo([this, &options](ViewportOrtho & orthoVP) {
+                if (orthoVP.isVisible()) {
+                    QVector4D color{0.7f * std::abs(orthoVP.n.z), 0.7f * std::abs(orthoVP.n.y), 0.7f * std::abs(orthoVP.n.x), 1.f};
+                    lineShader.setUniformValue("color", color);
+                    const int idx = static_cast<int>(orthoVP.viewportType);
+                    glDrawArrays(GL_LINE_LOOP, idx*4, 4);
+                }
+            });
+            if (options.vp3dSliceIntersections) {
+                 const auto size = state->viewer->window->viewportXY->displayedIsoPx;
+                 std::vector<floatCoordinate> vertices = {
+                    floatCoordinate(-size, 0, 0),
+                    floatCoordinate( size, 0, 0),
+                    floatCoordinate(0, -size, 0),
+                    floatCoordinate(0,  size, 0),
+                    floatCoordinate(0, 0, -size),
+                    floatCoordinate(0, 0,  size)
+                };
+
+                 crosshairBuf.bind();
+                 if (crosshairBuf.size() == 0) {
+                     qDebug() << viewportType << "crosshairBuf" << crosshairBuf.size();
+                     crosshairBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
+                 } else {
+                     glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
+                 }
+                 lineShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+                 crosshairBuf.release();
+                 QVector4D color{0, 0, 0, 1};
+                 lineShader.setUniformValue("color", color);
+                 if (!state->viewerState->showXYplane || !state->viewerState->showXZplane) {
+                    glDrawArrays(GL_LINES, 0, 2);
+                 }
+                 if (!state->viewerState->showXYplane || !state->viewerState->showZYplane) {
+                    glDrawArrays(GL_LINES, 2, 2);
+                 }
+                 if (!state->viewerState->showXZplane || !state->viewerState->showZYplane) {
+                    glDrawArrays(GL_LINES, 4, 2);
+                 }
+            }
+            lineShader.release();
+            lineShader.disableAttributeArray(vertexLocation);
+            mv.translate(-isoCurPos);
+        }
     }
 
     if (options.drawBoundaryBox || options.drawBoundaryAxes) {
