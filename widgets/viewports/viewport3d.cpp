@@ -128,13 +128,10 @@ void Viewport3D::refocus(const boost::optional<Coordinate> position) {
     const auto scaledPos = Dataset::current().scales[0].componentMul(pos);
     translateX = scaledPos.x;
     translateY = scaledPos.y;
-    glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf(QMatrix4x4().data());
-    glTranslatef(scaledPos.x, scaledPos.y, scaledPos.z);
-    std::array<float, 16> rotationState;
-    rotation.copyDataTo(rotationState.data()); // transforms to row-major matrix
-    glMultMatrixf(rotationState.data());
-    glTranslatef(-scaledPos.x, -scaledPos.y, -scaledPos.z);
+    mv = QMatrix4x4{};
+    mv.translate(scaledPos);
+    mv *= rotation.transposed();
+    mv.translate(-scaledPos);
     glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
 }
 
