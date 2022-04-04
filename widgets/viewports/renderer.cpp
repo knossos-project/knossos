@@ -1230,6 +1230,8 @@ void ViewportBase::pickMeshIdAtPosition() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//the depth thing buffer clear is the important part
     const auto blendState = glIsEnabled(GL_BLEND);
     glDisable(GL_BLEND);
+    bool depthTesting = glIsEnabled(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
 
     // create id map
     std::uint32_t id_counter = 1;
@@ -1261,6 +1263,9 @@ void ViewportBase::pickMeshIdAtPosition() {
         glEnable(GL_BLEND);
     } else {
         glDisable(GL_BLEND);
+    }
+    if (!depthTesting) {
+        glDisable(GL_DEPTH_TEST);
     }
 }
 
