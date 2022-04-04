@@ -4,9 +4,10 @@ image:
   - Visual Studio 2022 # Windows Server 2019
   - Visual Studio 2017 # Windows Server 2016
   - Visual Studio 2015 # Windows Server 2012 R2
-  - macos-bigsur # 11
-  - macos # 10.15
-  - macos-mojave # 10.14
+  - macos-bigsur   # 11.6.4
+  - macos-monterey # 12.2.1
+  - macos-catalina # 10.15.7
+  - macos-mojave   # 10.14
   - Ubuntu2004
   - Ubuntu1804
   - Ubuntu1604
@@ -56,7 +57,8 @@ for:
 -
   matrix:
     only:
-      - image: macos
+      - image: macos-monterey
+      - image: macos-catalina
       - image: macos-mojave
   before_test:
     - curl -C - -LO https://github.com/knossos-project/knossos/releases/download/nightly-dev/macos.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.app.zip
