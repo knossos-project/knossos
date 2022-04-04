@@ -23,6 +23,9 @@
 #include "viewportbase.h"
 
 #include "dataset.h"
+#include "qdebug.h"
+#include "qopenglcontext.h"
+#include "qsurfaceformat.h"
 #include "scriptengine/scripting.h"
 #include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
@@ -250,7 +253,35 @@ void ViewportBase::initializeGL() {
     if (!printed) {
         qDebug() << QString("%1, %2, %3").arg(glversion).arg(glvendor).arg(glrenderer);
         printed = true;
+
+        QSurfaceFormat f;
+        auto f2 = QSurfaceFormat::defaultFormat();
+        QOpenGLContext ctx;
+        auto f3 = ctx.format();
+        qDebug() << f.version() << f.profile() << f.options() << "QSurfaceFormat{}";
+        qDebug() << f.version() << f.profile() << f.options() << "QSurfaceFormat::defaultFormat()";
+        qDebug() << f.version() << f.profile() << f.options() << "ctx.format()";
+
+        QSurfaceFormat::FormatOptions o, dep{QSurfaceFormat::DeprecatedFunctions};
+        for (auto o : {o,dep})
+        for (auto [ma, mi] : {std::tuple{0,0}, {1,0}, {2,0}, {3,0}, {3,1}, {3,2}, {3,3}}) {
+            QOpenGLContext ctx;
+            f = ctx.format();
+            f.setVersion(ma, mi);
+            f.setOptions(o);
+            ctx.setFormat(f);
+            ctx.create();
+            std::array<const char *,3> a;
+            a[QSurfaceFormat::NoProfile] = "  none";
+            a[QSurfaceFormat::CoreProfile] = "  core";
+            a[QSurfaceFormat::CompatibilityProfile] = "compat";
+            auto x = [](auto f){ return f.options().testFlag(QSurfaceFormat::DeprecatedFunctions) ? "+ dep" : "     "; };
+            qDebug() << f.version() << a[f.profile()] << x(f) << ";;;"
+                     << ctx.format().version() << a[ctx.format().profile()] << x(ctx.format());
+        }
     }
+
+
     if (!initializeOpenGLFunctions()) {
         QMessageBox msgBox{QApplication::activeWindow()}; //use property based api
         msgBox.setIcon(QMessageBox::Critical);
