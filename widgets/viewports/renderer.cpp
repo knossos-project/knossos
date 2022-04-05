@@ -780,7 +780,8 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
 
     glDisable(GL_DEPTH_TEST);// don’t render skeleton above crosshairs
     if (options.drawCrosshairs) {
-        mv.translate(isoCurPos.x, isoCurPos.y, isoCurPos.z);
+        auto mv2 = mv;
+        mv2.translate(isoCurPos.x, isoCurPos.y, isoCurPos.z);
         float dataPxX = displayedIsoPx;
         float dataPxY = displayedIsoPx;
         const auto halfLength = dataPxX * v1;
@@ -812,7 +813,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         lineShader.bind();
         QVector4D color{std::abs(v2.z), std::abs(v2.y), std::abs(v2.x), 0.3};
         lineShader.setUniformValue("color", color);
-        lineShader.setUniformValue("modelview_matrix", mv);
+        lineShader.setUniformValue("modelview_matrix", mv2);
         lineShader.setUniformValue("projection_matrix", p);
 
         glLineWidth(1);
@@ -821,8 +822,8 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         color = {std::abs(v1.z), std::abs(v1.y), std::abs(v1.x), 0.3};
         lineShader.setUniformValue("color", color);
         glDrawArrays(GL_LINES, 2, 2);
-        lineShader.release();
         lineShader.disableAttributeArray(vertexLocation);
+        lineShader.release();
     }
 
     auto setStateAndRenderMesh = [this](auto func){
