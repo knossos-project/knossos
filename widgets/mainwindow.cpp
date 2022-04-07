@@ -72,6 +72,7 @@
 #include <QStatusBar>
 #include <QStringList>
 #include <QToolButton>
+#include <QUrl>
 
 #include <boost/optional.hpp>
 
@@ -775,6 +776,13 @@ void MainWindow::createMenus() {
     QObject::connect(&cheatsheet, &QDockWidget::visibilityChanged, [this](const bool visible) { cheatsheetAction->setChecked(visible); });
 
     addApplicationShortcut(helpMenu, QIcon(), tr("Documentation … "), this, []() { QDesktopServices::openUrl({MainWindow::docUrl}); }, Qt::Key_F1);
+    helpMenu.addSeparator();
+    helpMenu.addAction("Copy Log to Clipboard", this, []() {
+        auto *  mimeData = new QMimeData;
+        mimeData->setUrls({QUrl::fromLocalFile(QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/log.txt")});
+        QApplication::clipboard()->setMimeData(mimeData);
+    });
+    helpMenu.addSeparator();
     helpMenu.addAction(QIcon(":/resources/icons/menubar/about.png"), "About", &widgetContainer.aboutDialog, &AboutDialog::show);
 }
 
