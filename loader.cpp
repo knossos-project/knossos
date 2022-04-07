@@ -228,6 +228,14 @@ Loader::Worker::Worker() {
 Loader::Worker::~Worker() {
     abortDownloadsFinishDecompression();
 
+    qDebug() << "solitaryConfinement waiting for" << solitaryConfinement.size();
+    QElapsedTimer timer;
+    timer.start();
+    for (auto & elem : solitaryConfinement) {
+        elem->waitForFinished();
+    }
+    qDebug() << "solitaryConfinement" << timer.nsecsElapsed()/1e6 << "ms";
+
     if (state->quitSignal) {
         return;//state is dead already
     }
