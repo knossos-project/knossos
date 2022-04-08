@@ -25,8 +25,12 @@
 #include "dataset.h"
 #include "loader.h"
 #include "network.h"
+#include "qelapsedtimer.h"
+#include "qurl.h"
 #include "scriptengine/scripting.h"
+#include "segmentation/segmentationsplit.h"
 #include "stateInfo.h"
+#include "usermove.h"
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 #include "widgets/viewports/viewportbase.h"
@@ -46,6 +50,7 @@
 #include <fstream>
 #include <memory>
 #include <stdexcept>
+#include <unistd.h>
 
 // obsolete with CMAKE_AUTOSTATICPLUGINS in msys2
 //#if defined(Q_OS_WIN) && defined(QT_STATIC)
@@ -132,7 +137,12 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext &
 
 Q_DECLARE_METATYPE(std::string)
 
+#include "segmentation/cubeloader.h"
+#include "mesh/mesh_generation.h"
+
 int main(int argc, char *argv[]) try {
+    QElapsedTimer t;
+    t.start();
 #ifdef _GLIBCXX_DEBUG
     std::cerr << "_GLIBCXX_DEBUG set → debug stdlib in use, which might result in crashes from mismatching ABI" << std::endl;
 #endif
@@ -164,10 +174,35 @@ int main(int argc, char *argv[]) try {
     QApplication app(argc, argv);
     if (argc == 2 && std::string(argv[1]) == "exit") {
         QTimer::singleShot(5000, &app, [](){
-            Loader::Controller::singleton().suspendLoader();
-            Loader::Controller::singleton().worker.reset();// have to make really sure loader is done
-//            throw std::runtime_error("sldkjgn");
-            QCoreApplication::quit();
+            Dataset::current().url = QUrl::fromLocalFile("/asdf");
+            Dataset::datasets = {Dataset::current(), Dataset::current()};
+            Dataset::datasets[1].type = Dataset::CubeType::SNAPPY;
+            Segmentation::singleton().enabled = true;
+            Segmentation::singleton().layerId = 1;
+            ::state->viewer->resizeTexEdgeLength(128, 3, Dataset::datasets.size());// resets textures
+            ::state->mainWindow->widgetContainer.datasetLoadWidget.applyGeometrySettings();
+            emit ::state->mainWindow->widgetContainer.datasetLoadWidget.datasetChanged();
+
+            const auto coord = Dataset::current().boundary / 2;
+            ::state->viewer->setPosition(coord);
+            ::state->viewer->updateDatasetMag();// clear vps and notify loader
+
+            ::state->mainWindow->setWorkMode(AnnotationMode::Mode_Paint);
+            auto & seg = Segmentation::singleton();
+            seg.createAndSelectObject(coord);
+            uint64_t soid = seg.subobjectIdOfFirstSelectedObject(coord);
+            QTimer::singleShot(500, ::state->mainWindow, [coord, soid](){
+                writeVoxels(coord, soid, brush_t{});
+                QTimer::singleShot(500, ::state->mainWindow, [](){
+                    generateMeshesForSubobjectsOfSelectedObjects();
+                    QTimer::singleShot(500, ::state->mainWindow, [](){
+                        Loader::Controller::singleton().suspendLoader();
+                        Loader::Controller::singleton().worker.reset();// have to make really sure loader is done
+            //            throw std::runtime_error("sldkjgn");
+                        QCoreApplication::quit();
+                    });
+                });
+            });
         });
     }
 
@@ -220,6 +255,7 @@ int main(int argc, char *argv[]) try {
 #endif
         }
 //        qFatal("asdf");
+        qDebug() << t.nsecsElapsed()/1e9;
     });
     // ensure killed QNAM’s before QNetwork deinitializes
     std::unique_ptr<Loader::Controller> loader_deleter{&Loader::Controller::singleton()};
