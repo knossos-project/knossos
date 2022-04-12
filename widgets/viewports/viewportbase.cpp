@@ -310,7 +310,7 @@ void ViewportBase::initializeGL() {
     createShader(meshTreeColorShader, {"normal.vert"}, {"functions/diffuse.frag", "normal treecolor.frag"});
     state->viewerState->MeshPickingEnabled = !meshPickingVao.isCreated() && meshPickingVao.create() && createShader(meshIdShader, {"idcolor.vert"}, {"functions/diffuse.frag", "idcolor.frag"});
     createShader(meshSlicingCreateMaskShader, {"mvp.vert"}, {"mvp slicingmask.frag"});
-    createShader(meshSlicingWithMaskShader, {"normal.vert"}, {"functions/meshslicing.frag", "normal slicingapply.frag"});
+    createShader(meshSlicingWithMaskShader, {"mvp.vert"}, {"mvp slicingapply.frag"});
     createShader(meshSlicingIdShader, {"idcolor.vert"}, {"idcolor slicing.frag"});
     createShader(raw_data_shader, {"3DTexture.vert"}, {"3DTexture.frag"});
     createShader(overlay_data_shader, {"3DTexture.vert"}, {"3DTextureLUT.frag"});
