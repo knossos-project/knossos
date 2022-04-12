@@ -1073,8 +1073,13 @@ void ViewportBase::renderMeshBuffer(Mesh & buf, boost::optional<QOpenGLShaderPro
         return;
     }
 
+    auto mv2 = mv;
+    if (viewportType != VIEWPORT_SKELETON) {
+        mv2.translate(0.5 * Dataset::current().scale);
+    }
+
     meshShader.bind();
-    meshShader.setUniformValue("modelview_matrix", mv);
+    meshShader.setUniformValue("modelview_matrix", mv2);
     meshShader.setUniformValue("projection_matrix", p);
     floatCoordinate normal = state->mainWindow->viewportOrtho(viewportType)->n;
     meshShader.setUniformValue("vp_normal", normal.x, normal.y, normal.z);
@@ -1401,13 +1406,22 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         if (state->viewerState->showVpPlanes) {
 //            glPushMatrix();
             if (state->viewerState->showXYplane && state->viewer->window->viewportXY->isVisible()) {
-                state->viewer->window->viewportXY->renderArbitrarySlicePane(options, mv, p);
+                auto mv2 = mv;
+                const auto & vp = *state->viewer->window->viewportXY;
+                mv2.translate(0.5 * Dataset::current().scale.componentMul(vp.v2 - vp.v1));
+                state->viewer->window->viewportXY->renderArbitrarySlicePane(options, mv2, p);
             }
             if (state->viewerState->showXZplane && state->viewer->window->viewportXZ->isVisible()) {
-                state->viewer->window->viewportXZ->renderArbitrarySlicePane(options, mv, p);
+                auto mv2 = mv;
+                const auto & vp = *state->viewer->window->viewportXZ;
+                mv2.translate(0.5 * (vp.v2 - vp.v1) * Dataset::current().scale);
+                state->viewer->window->viewportXZ->renderArbitrarySlicePane(options, mv2, p);
             }
             if (state->viewerState->showZYplane && state->viewer->window->viewportZY->isVisible()) {
-                state->viewer->window->viewportZY->renderArbitrarySlicePane(options, mv, p);
+                auto mv2 = mv;
+                const auto & vp = *state->viewer->window->viewportZY;
+                mv2.translate(0.5 * (vp.v2 - vp.v1) * Dataset::current().scale);
+                state->viewer->window->viewportZY->renderArbitrarySlicePane(options, mv2, p);
             }
             if (state->viewerState->showArbplane && state->viewer->window->viewportArb->isVisible()) {
                 state->viewer->window->viewportArb->renderArbitrarySlicePane(options, mv, p);
@@ -1449,10 +1463,12 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             vpBorderBuf.release();
 
             lineShader.bind();
-            lineShader.setUniformValue("modelview_matrix", mv);
             lineShader.setUniformValue("projection_matrix", p);
             state->viewer->window->forEachOrthoVPDo([this, &options](ViewportOrtho & orthoVP) {
                 if (orthoVP.isVisible()) {
+                    auto mv2 = mv;
+                    mv2.translate(0.5 * Dataset::current().scale.componentMul(orthoVP.v2 - orthoVP.v1));
+                    lineShader.setUniformValue("modelview_matrix", mv2);
                     QVector4D color{0.7f * std::abs(orthoVP.n.z), 0.7f * std::abs(orthoVP.n.y), 0.7f * std::abs(orthoVP.n.x), 1.f};
                     lineShader.setUniformValue("color", color);
                     const int idx = static_cast<int>(orthoVP.viewportType);
