@@ -40,6 +40,7 @@
 #include "viewer.h"
 #include "viewports/viewportbase.h"
 #include "widgetcontainer.h"
+#include "widgets/coordinateimportwidget.h"
 
 #include <QAction>
 #include <QApplication>
@@ -589,6 +590,16 @@ void MainWindow::createMenus() {
     menuBar()->addMenu(&fileMenu);
     fileMenu.addAction(QIcon(":/resources/icons/menubar/choose-dataset.png"), tr("Choose Dataset …"), &widgetContainer.datasetLoadWidget, &DatasetLoadWidget::show);
     fileMenu.addSeparator();
+    fileMenu.addAction(QIcon(":/resources/icons/open-annotation.png"), "Import Coordinates", [this] {
+        const QString filename = QFileDialog::getOpenFileName(this, tr("Import coordinate list"), QDir::homePath(), tr("Text files (*.txt *.csv *.tsv)"));
+        if (!filename.isNull()) {
+            QFile file(filename);
+            if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                throw std::runtime_error("Failed to open file for import");
+            }
+            CoordinateImportWidget{QTextStream{&file}, this}.exec();
+        }
+    });
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/menubar/create-annotation.png"), tr("Create New Annotation"), this, &MainWindow::newAnnotationSlot, QKeySequence::New);
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/menubar/open-annotation.png"), tr("Open Annotation …"), this, &MainWindow::openSlot, QKeySequence::Open);
     auto & recentfileMenu = *fileMenu.addMenu(QIcon(":/resources/icons/menubar/open-recent.png"), tr("Recent Annotation File(s)"));
