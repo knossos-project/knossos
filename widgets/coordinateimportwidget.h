@@ -6,7 +6,7 @@
 #include <QRadioButton>
 #include <QRegularExpression>
 #include <QSpinBox>
-#include <QTextStream>
+#include <QStringList>
 #include <QVBoxLayout>
 #include <QDialog>
 
@@ -14,7 +14,7 @@ class CoordinateImportWidget : public QDialog {
     Q_OBJECT
     QRegularExpression expression{R"regex((?<number>(?:\d+\.)?\d+)(?:\s|,|\t|$))regex"};
     int xIdx, yIdx, zIdx;
-    QTextStream * stream;
+    QStringList filenames;
     QVBoxLayout mainLayout;
     QHBoxLayout radioLayout;
     QHBoxLayout coordSpinLayout;
@@ -26,9 +26,9 @@ class CoordinateImportWidget : public QDialog {
     void updateDimensions();
     void validateIndices();
 public:
-    explicit CoordinateImportWidget(QTextStream && coordStream, QWidget * parent = nullptr);
+    explicit CoordinateImportWidget(const QStringList & filenames, QWidget * parent = nullptr);
 signals:
-    void importDone(const int addedNodes, const int ms);
+    void importDone(const int addedNodes, const int ms, const QStringList & failedFilenames = {});
 };
 
 #endif // COORDINATEIMPORTWIDGET_H

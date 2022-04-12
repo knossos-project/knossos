@@ -591,13 +591,9 @@ void MainWindow::createMenus() {
     fileMenu.addAction(QIcon(":/resources/icons/menubar/choose-dataset.png"), tr("Choose Dataset …"), &widgetContainer.datasetLoadWidget, &DatasetLoadWidget::show);
     fileMenu.addSeparator();
     fileMenu.addAction(QIcon(":/resources/icons/open-annotation.png"), "Import Coordinates", [this] {
-        const QString filename = QFileDialog::getOpenFileName(this, tr("Import coordinate list"), QDir::homePath(), tr("Text files (*.txt *.csv *.tsv)"));
-        if (!filename.isNull()) {
-            QFile file(filename);
-            if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-                throw std::runtime_error("Failed to open file for import");
-            }
-            CoordinateImportWidget{QTextStream{&file}, this}.exec();
+        const auto filenames = QFileDialog::getOpenFileNames(this, tr("Import coordinate list"), QDir::homePath(), tr("Text files (*.txt *.csv *.tsv)"));
+        if (!filenames.isEmpty()) {
+            CoordinateImportWidget{filenames, this}.exec();
         }
     });
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/menubar/create-annotation.png"), tr("Create New Annotation"), this, &MainWindow::newAnnotationSlot, QKeySequence::New);
