@@ -379,9 +379,9 @@ void ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segmen
 }
 
 void ViewportBase::setFrontFacePerspective() {
-    p = QMatrix4x4{};
+    p.setToIdentity();
     p.ortho(0, edgeLength, edgeLength, 0, 25, -25);
-    mv = QMatrix4x4{};
+    mv.setToIdentity();
 }
 
 void ViewportBase::renderViewportFrontFace() {
@@ -1430,9 +1430,10 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         }
         if (options.vp3dSliceBoundaries) {
             const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
-            mv.translate(isoCurPos);
+            auto mv2 = mv;
+            mv2.translate(isoCurPos);
             std::vector<floatCoordinate> vertices;
-            state->viewer->window->forEachOrthoVPDo([this, &vertices](ViewportOrtho & orthoVP) {
+            state->viewer->window->forEachOrthoVPDo([&vertices](ViewportOrtho & orthoVP) {
                 const float dataPxX = orthoVP.displayedIsoPx;
                 const float dataPxY = orthoVP.displayedIsoPx;
                 std::vector<floatCoordinate> this_vertices = {
@@ -1464,13 +1465,13 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
             lineShader.bind();
             lineShader.setUniformValue("projection_matrix", p);
-            state->viewer->window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
+            state->viewer->window->forEachOrthoVPDo([this, mv2](ViewportOrtho & orthoVP) {
                 if (orthoVP.isVisible()) {
-                    auto mv2 = mv;
+                    auto mv3 = mv2;
                     if (orthoVP.viewportType != VIEWPORT_ARBITRARY) {
-                        mv2.translate(0.5 * Dataset::current().scale.componentMul(orthoVP.v2 - orthoVP.v1));
+                        mv3.translate(0.5 * Dataset::current().scale.componentMul(orthoVP.v2 - orthoVP.v1));
                     }
-                    lineShader.setUniformValue("modelview_matrix", mv2);
+                    lineShader.setUniformValue("modelview_matrix", mv3);
                     QVector4D color{0.7f * std::abs(orthoVP.n.z), 0.7f * std::abs(orthoVP.n.y), 0.7f * std::abs(orthoVP.n.x), 1.f};
                     lineShader.setUniformValue("color", color);
                     const int idx = static_cast<int>(orthoVP.viewportType);
@@ -1498,7 +1499,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
                  lineShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
                  crosshairBuf.release();
                  QVector4D color{0, 0, 0, 1};
-                 lineShader.setUniformValue("modelview_matrix", mv);
+                 lineShader.setUniformValue("modelview_matrix", mv2);
                  lineShader.setUniformValue("color", color);
                  if (!state->viewerState->showXYplane || !state->viewerState->showXZplane) {
                     glDrawArrays(GL_LINES, 0, 2);
@@ -1512,7 +1513,6 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             }
             lineShader.release();
             lineShader.disableAttributeArray(vertexLocation);
-            mv.translate(-isoCurPos);
         }
     }
 

@@ -128,7 +128,7 @@ void Viewport3D::refocus(const boost::optional<Coordinate> position) {
     const auto scaledPos = Dataset::current().scales[0].componentMul(pos);
     translateX = scaledPos.x;
     translateY = scaledPos.y;
-    mv = QMatrix4x4{};
+    mv.setToIdentity();
     mv.translate(scaledPos);
     mv *= rotation.transposed();
     mv.translate(-scaledPos);

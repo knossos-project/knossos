@@ -383,7 +383,6 @@ void ViewportBase::resizeGL(int width, int height) {
 //    GLfloat x = (GLfloat)width / height;
 
     p.setToIdentity();
-    mv.setToIdentity();
 
 //    glFrustum(-x, +x, -1.0, + 1.0, 0.1, 10.0);
 //    glMatrixMode(GL_MODELVIEW);
