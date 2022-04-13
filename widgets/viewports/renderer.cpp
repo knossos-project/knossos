@@ -1464,10 +1464,12 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
             lineShader.bind();
             lineShader.setUniformValue("projection_matrix", p);
-            state->viewer->window->forEachOrthoVPDo([this, &options](ViewportOrtho & orthoVP) {
+            state->viewer->window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
                 if (orthoVP.isVisible()) {
                     auto mv2 = mv;
-                    mv2.translate(0.5 * Dataset::current().scale.componentMul(orthoVP.v2 - orthoVP.v1));
+                    if (orthoVP.viewportType != VIEWPORT_ARBITRARY) {
+                        mv2.translate(0.5 * Dataset::current().scale.componentMul(orthoVP.v2 - orthoVP.v1));
+                    }
                     lineShader.setUniformValue("modelview_matrix", mv2);
                     QVector4D color{0.7f * std::abs(orthoVP.n.z), 0.7f * std::abs(orthoVP.n.y), 0.7f * std::abs(orthoVP.n.x), 1.f};
                     lineShader.setUniformValue("color", color);
