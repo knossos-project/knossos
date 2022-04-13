@@ -302,7 +302,7 @@ void ViewportBase::initializeGL() {
         if (!shader->log().isEmpty() && viewportType == VIEWPORT_SKELETON) {
             qDebug().noquote() << shader->log();
         }
-        if (!shader->isLinked() && (oglDebug || qApp->arguments().contains("exit"))) {
+        if (!shader->isLinked() && (oglDebug || (qApp->arguments().contains("exit") && shader != &meshIdShader && shader != &meshSlicingIdShader))) {
             throw std::runtime_error("shader link failed");
         }
     }
