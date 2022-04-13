@@ -641,6 +641,7 @@ void Viewport3D::resetWiggle() {
     wiggleDirection = true;
     wiggle = 0;
     wiggleButton.setChecked(false);
+    update();
 }
 
 void Viewport3D::handleKeyRelease(const QKeyEvent *event) {
