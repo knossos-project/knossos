@@ -1477,13 +1477,14 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             });
             if (options.vp3dSliceIntersections) {
                  const auto size = state->viewer->window->viewportXY->displayedIsoPx;
+                 const auto offset = Dataset::current().scale * 0.5;
                  std::vector<floatCoordinate> vertices = {
-                    floatCoordinate(-size, 0, 0),
-                    floatCoordinate( size, 0, 0),
-                    floatCoordinate(0, -size, 0),
-                    floatCoordinate(0,  size, 0),
-                    floatCoordinate(0, 0, -size),
-                    floatCoordinate(0, 0,  size)
+                    floatCoordinate(-size - offset.x, 0, 0),
+                    floatCoordinate( size - offset.x, 0, 0),
+                    floatCoordinate(0, -size - offset.y, 0),
+                    floatCoordinate(0,  size - offset.y, 0),
+                    floatCoordinate(0, 0, -size - offset.z),
+                    floatCoordinate(0, 0,  size - offset.z)
                 };
 
                  crosshairBuf.bind();
@@ -1496,6 +1497,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
                  lineShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
                  crosshairBuf.release();
                  QVector4D color{0, 0, 0, 1};
+                 lineShader.setUniformValue("modelview_matrix", mv);
                  lineShader.setUniformValue("color", color);
                  if (!state->viewerState->showXYplane || !state->viewerState->showXZplane) {
                     glDrawArrays(GL_LINES, 0, 2);
