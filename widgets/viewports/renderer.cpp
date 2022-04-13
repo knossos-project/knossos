@@ -233,44 +233,17 @@ void Viewport3D::renderNode(const nodeListElement & node, const RenderOptions & 
     }
 }
 
-static void backup_gl_state() {
-    glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
-    glPushAttrib(GL_ALL_ATTRIB_BITS | GL_MULTISAMPLE_BIT);// http://mesa-dev.freedesktop.narkive.com/4FYSpYiY/patch-mesa-change-gl-all-attrib-bits-to-0xffffffff
-    glMatrixMode(GL_TEXTURE);
-    glPushMatrix();
-    glLoadIdentity();
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-}
-
-static void restore_gl_state() {
-    glMatrixMode(GL_TEXTURE);
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-    glPopAttrib();
-    glPopClientAttrib();
-}
-
 void ViewportBase::renderText(const Coordinate & pos, const QString & str, const bool fontScaling, bool centered, const QColor color) {
-    GLfloat modelview_mat[4][4], projection_mat[4][4],  gl_viewport[4];
-    glGetFloatv(GL_MODELVIEW_MATRIX, &modelview_mat[0][0]);
-    glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
+    GLfloat gl_viewport[4];
     glGetFloatv(GL_VIEWPORT, &gl_viewport[0]);
     //retrieve 2d screen position from coordinate
-    backup_gl_state();
     QOpenGLPaintDevice paintDevice(gl_viewport[2], gl_viewport[3]);//create paint device from viewport size and current context
     QPainter painter(&paintDevice);
     painter.setFont(QFont(painter.font().family(), (fontScaling ? std::ceil(0.02*gl_viewport[2]) : defaultFontSize) * devicePixelRatio()));
-    const auto pos2d = QVector3D(pos.x, pos.y, pos.z).project({&modelview_mat[0][0],4,4}, {&projection_mat[0][0],4,4}, {{0, 0}, paintDevice.size()});
+    const auto pos2d = QVector3D(pos.x, pos.y, pos.z).project(mv, p, {{0, 0}, paintDevice.size()});
     painter.setPen(color);
     painter.drawText(centered ? pos2d.x() - QFontMetrics(painter.font()).horizontalAdvance(str)/2. : pos2d.x(), gl_viewport[3] - pos2d.y(), str);//inverse y coordinate, extract height from gl viewport
     painter.end();//would otherwise fiddle with the gl state in the dtor
-    restore_gl_state();
 }
 
 void ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segment) {
@@ -1611,7 +1584,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 //            if (axis.normalize()) {
 //                glRotatef(angle * 180/boost::math::constants::pi<float>(), axis.x, axis.y, axis.z);
 //            }
-//            const auto diameter = (state->skeletonState->volBoundary() / zoomFactor) * 5e-3;
+            const auto diameter = (state->skeletonState->volBoundary() / zoomFactor) * 5e-3;
 //            const auto coneDiameter = 3 * diameter;
 //            const auto coneLength = 6 * diameter;
 //            const auto length = targetView.length() - coneLength;
@@ -1642,11 +1615,11 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
 //            glPopMatrix();
 
-//            const auto offset = targetView + std::ceil(3 * diameter);
-//            renderText(offset, label, options.enableTextScaling);
+            const auto offset = targetView + std::ceil(3 * diameter);
+            renderText(offset, label, options.enableTextScaling);
         };
-        if (format().profile() !=  QSurfaceFormat::CoreProfile && options.drawBoundaryAxes) {
-            glColor4f(0, 0, 0, 1);
+        if (options.drawBoundaryAxes) {
+//            glColor4f(0, 0, 0, 1);
             if (Viewport3D::showBoundariesInUm) {
                 renderAxis(floatCoordinate(scaledBoundary.x, 0, 0), QString("x: %1 µm").arg(scaledBoundary.x * 1e-3));
                 renderAxis(floatCoordinate(0, scaledBoundary.y, 0), QString("y: %1 µm").arg(scaledBoundary.y * 1e-3));
