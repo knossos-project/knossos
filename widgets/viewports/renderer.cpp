@@ -1491,7 +1491,6 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
                  crosshairBuf.bind();
                  if (crosshairBuf.size() == 0) {
-                     qDebug() << viewportType << "crosshairBuf" << crosshairBuf.size();
                      crosshairBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
                  } else {
                      glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
