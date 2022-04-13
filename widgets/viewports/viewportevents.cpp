@@ -651,7 +651,9 @@ void Viewport3D::handleKeyRelease(const QKeyEvent *event) {
 }
 
 void Viewport3D::focusOutEvent(QFocusEvent * event) {
-    resetWiggle();
+    if (focusWidget() != &wiggleButton) {
+        resetWiggle();
+    }
     ViewportBase::focusOutEvent(event);
 }
 
