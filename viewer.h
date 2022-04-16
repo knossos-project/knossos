@@ -237,7 +237,7 @@ signals:
     void zoomChanged();
     void movementAreaFactorChangedSignal();
     void magnificationLockChanged(bool);
-    void layerVisibilityChanged(const int);
+    void layerVisibilityChanged(const std::size_t);
     void layerRenderSettingsChanged();
     void mesh3dAlphaFactorChanged(float);
     void meshSlicingAlphaFactorChanged(float);
@@ -274,7 +274,7 @@ public slots:
     float lowestScreenPxXPerDataPx(const bool ofCurrentMag = true);
     int calcMag(const float screenPxXPerDataPx);
     void setMagnificationLock(const bool locked);
-    void setLayerVisibility(const int index, const bool enabled);
+    void setLayerVisibility(const std::size_t index, const bool enabled);
     void setMesh3dAlphaFactor(const float alpha);
     void setMeshSlicingAlphaFactor(const float alpha);
 };

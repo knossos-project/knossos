@@ -119,12 +119,12 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     QObject::connect(&createPaintObjectCheck, &QCheckBox::toggled, [](bool state){
         Segmentation::singleton().createPaintObject = state;
     });
-    QObject::connect(state->viewer, &Viewer::layerVisibilityChanged, [this](const int index) {
-        if (index == 1) {
-            overlayGroup.setChecked(Dataset::datasets.at(1).renderSettings.visible);
+    QObject::connect(state->viewer, &Viewer::layerVisibilityChanged, this, [this](const std::size_t index) {
+        if (index == Segmentation::singleton().layerId) {
+            overlayGroup.setChecked(Dataset::datasets.at(index).renderSettings.visible);
         }
     });
-    QObject::connect(&overlayGroup, &QGroupBox::clicked, [](const bool checked) { Dataset::datasets.at(Segmentation::singleton().layerId).renderSettings.visible = checked; });
+    QObject::connect(&overlayGroup, &QGroupBox::clicked, [](const bool checked) { state->viewer->setLayerVisibility(Segmentation::singleton().layerId, checked); });
     QObject::connect(&segmentationOverlaySlider, &QSlider::valueChanged, [this](int value){
         segmentationOverlaySpinBox.setValue(value);
         Segmentation::singleton().alpha = value;

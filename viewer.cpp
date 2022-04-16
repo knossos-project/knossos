@@ -1267,8 +1267,13 @@ QColor Viewer::getNodeColor(const nodeListElement & node) const {
     return color;
 }
 
-void Viewer::setLayerVisibility(const int index, const bool enabled) {
-    Dataset::datasets.at(index).renderSettings.visible = enabled;
+void Viewer::setLayerVisibility(const std::size_t index, const bool enabled) {
+    auto & layer = Dataset::datasets.at(index);
+    layer.allocationEnabled = layer.loadingEnabled = layer.renderSettings.visible = enabled;
+    Segmentation::singleton().enabled = std::count_if(std::begin(Dataset::datasets), std::end(Dataset::datasets), [](const auto & dataset){
+        return dataset.loadingEnabled && dataset.isOverlay();
+    });
+    loader_notify();
     emit layerVisibilityChanged(index);
 }
 

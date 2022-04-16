@@ -21,8 +21,13 @@ LayerItemModel::LayerItemModel() {
         }
     });
 
-    QObject::connect(state->viewer, &Viewer::layerVisibilityChanged, [this]() {
-        reset();
+    QObject::connect(state->viewer, &Viewer::layerVisibilityChanged, this, [this](const std::size_t idx) {
+        const auto & layerOrder = state->viewerState->layerOrder;
+        auto it = std::find(std::begin(layerOrder), std::end(layerOrder), idx);
+        if (it != std::end(layerOrder)) {
+            auto modelIndex = index(it - std::begin(layerOrder));
+            emit dataChanged(modelIndex, modelIndex);
+        }
     });
 }
 
@@ -101,9 +106,7 @@ bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, in
             }
         } else if(role == Qt::CheckStateRole) {
             if(index.column() == 0) {
-                auto & layer = Dataset::datasets[ordered_i(index.row())];
-                layer.allocationEnabled = layer.loadingEnabled = layerSettings.visible = value.toBool();
-                reloadLayers();
+                state->viewer->setLayerVisibility(ordered_i(index.row()), value.toBool());
             } else if (index.column() == 2 && value.toBool()) {
                 const auto beginIt = std::cbegin(state->viewerState->layerOrder);
                 const auto segi = std::distance(beginIt, std::find(beginIt, std::cend(state->viewerState->layerOrder), Segmentation::singleton().layerId));
