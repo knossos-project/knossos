@@ -256,19 +256,18 @@ static void restore_gl_state() {
 }
 
 void ViewportBase::renderText(const Coordinate & pos, const QString & str, const bool fontScaling, bool centered, const QColor color) {
-    GLdouble x, y, z, model[16], projection[16];
-    GLint gl_viewport[4];
-    glGetDoublev(GL_MODELVIEW_MATRIX, &model[0]);
-    glGetDoublev(GL_PROJECTION_MATRIX, &projection[0]);
-    glGetIntegerv(GL_VIEWPORT, gl_viewport);
+    GLfloat modelview_mat[4][4], projection_mat[4][4],  gl_viewport[4];
+    glGetFloatv(GL_MODELVIEW_MATRIX, &modelview_mat[0][0]);
+    glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
+    glGetFloatv(GL_VIEWPORT, &gl_viewport[0]);
     //retrieve 2d screen position from coordinate
     backup_gl_state();
     QOpenGLPaintDevice paintDevice(gl_viewport[2], gl_viewport[3]);//create paint device from viewport size and current context
     QPainter painter(&paintDevice);
     painter.setFont(QFont(painter.font().family(), (fontScaling ? std::ceil(0.02*gl_viewport[2]) : defaultFontSize) * devicePixelRatio()));
-    gluProject(pos.x, pos.y - 0.01*edgeLength, pos.z, &model[0], &projection[0], &gl_viewport[0], &x, &y, &z);
+    const auto pos2d = QVector3D(pos.x, pos.y - 0.01*edgeLength, pos.z).project({&modelview_mat[0][0],4,4}, {&projection_mat[0][0],4,4}, {{0, 0}, paintDevice.size()});
     painter.setPen(color);
-    painter.drawText(centered ? x - QFontMetrics(painter.font()).horizontalAdvance(str)/2. : x, gl_viewport[3] - y, str);//inverse y coordinate, extract height from gl viewport
+    painter.drawText(centered ? pos2d.x() - QFontMetrics(painter.font()).horizontalAdvance(str)/2. : pos2d.x(), gl_viewport[3] - pos2d.y(), str);//inverse y coordinate, extract height from gl viewport
     painter.end();//would otherwise fiddle with the gl state in the dtor
     restore_gl_state();
 }
