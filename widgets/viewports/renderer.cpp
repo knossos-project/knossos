@@ -244,6 +244,7 @@ void ViewportBase::renderText(const Coordinate & pos, const QString & str, const
     painter.setPen(color);
     painter.drawText(centered ? pos2d.x() - QFontMetrics(painter.font()).horizontalAdvance(str)/2. : pos2d.x(), gl_viewport[3] - pos2d.y(), str);//inverse y coordinate, extract height from gl viewport
     painter.end();//would otherwise fiddle with the gl state in the dtor
+    meshVao.bind();
 }
 
 void ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segment) {
@@ -433,6 +434,7 @@ void ViewportOrtho::renderViewportFrontFace() {
 }
 
 void Viewport3D::renderViewportFrontFace() {
+    QOpenGLVertexArrayObject::Binder vao{&meshVao};
     auto mv2 = mv, p2 = p;
     ViewportBase::renderViewportFrontFace();
 //    glColor4f(0, 0, 0, 1.);
@@ -880,6 +882,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
 
 //        glDisable(GL_TEXTURE_2D);
     }
+
     if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Brush) && hasCursor) {
         view();
         renderBrush(getMouseCoordinate());
@@ -2418,6 +2421,8 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     } else if (state->viewerState->idDisplay.testFlag(IdDisplay::ActiveNode) && state->skeletonState->activeNode != nullptr) {
         renderNodeText(*state->skeletonState->activeNode);
     }
+    glEnable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
     if (alwaysLinesAndPoints || state->viewerState->lightOnOff || options.nodePicking) {
 //        glBuffers.pointVertBuffer.vertex_buffer.bind();
 //        glVertexPointer(3, GL_FLOAT, 0, nullptr);
