@@ -2413,7 +2413,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         const auto acti = state->viewerState->idDisplay.testFlag(IdDisplay::ActiveNode) && state->skeletonState->activeNode != nullptr && *state->skeletonState->activeNode == node;
         auto nodeID = state->viewerState->idDisplay.testFlag(IdDisplay::AllNodes) || acti ? QString::number(node.nodeID) : "";
         auto comment = node.getComment();
-        comment = (ViewportOrtho::showNodeComments && comment.isEmpty() == false)? QString(":%1").arg(comment) : "";
+        comment = (ViewportOrtho::showNodeComments && !comment.isEmpty()) ? QString("%1%2").arg(nodeID.isEmpty() ? "" : ":").arg(comment) : "";
         if (nodeID.isEmpty() == false || comment.isEmpty() == false) {
             renderText(Dataset::current().scales[0].componentMul(node.position), nodeID.append(comment), options.enableTextScaling);
         }
