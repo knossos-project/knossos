@@ -2403,6 +2403,21 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         sphereShader.release();
         glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
     }
+    auto renderNodeText = [this, &options](auto & node){
+        auto nodeID = QString::number(node.nodeID);
+        auto comment = node.getComment();
+        comment = (ViewportOrtho::showNodeComments && comment.isEmpty() == false)? QString(":%1").arg(comment) : "";
+        if (nodeID.isEmpty() == false || comment.isEmpty() == false) {
+            renderText(Dataset::current().scales[0].componentMul(node.position), nodeID.append(comment), options.enableTextScaling);
+        }
+    };
+    if (state->viewerState->idDisplay.testFlag(IdDisplay::AllNodes)) {
+        for (auto elem : state->skeletonState->nodesByNodeID) {
+            renderNodeText(*elem.second);
+        }
+    } else if (state->viewerState->idDisplay.testFlag(IdDisplay::ActiveNode) && state->skeletonState->activeNode != nullptr) {
+        renderNodeText(*state->skeletonState->activeNode);
+    }
     if (alwaysLinesAndPoints || state->viewerState->lightOnOff || options.nodePicking) {
 //        glBuffers.pointVertBuffer.vertex_buffer.bind();
 //        glVertexPointer(3, GL_FLOAT, 0, nullptr);
