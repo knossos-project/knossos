@@ -427,13 +427,14 @@ void ViewportOrtho::renderViewportFrontFace() {
 //        glEnd();
 //    }
 
-//    if (state->viewerState->showScalebar) {
-//        renderScaleBar();
-//    }
+    if (state->viewerState->showScalebar) {
+        renderScaleBar();
+    }
 }
 
 void Viewport3D::renderViewportFrontFace() {
-//    ViewportBase::renderViewportFrontFace();
+    auto mv2 = mv, p2 = p;
+    ViewportBase::renderViewportFrontFace();
 //    glColor4f(0, 0, 0, 1.);
 //    glLineWidth(2.);
 //    glBegin(GL_LINES);
@@ -446,9 +447,11 @@ void Viewport3D::renderViewportFrontFace() {
 //        glVertex3d(1, edgeLength - 1, -1);
 //        glVertex3d(1, 1, -1);
 //    glEnd();
-//    if (Segmentation::singleton().volume_render_toggle == false && state->viewerState->showScalebar) {
-//        renderScaleBar();
-//    }
+    if (Segmentation::singleton().volume_render_toggle == false && state->viewerState->showScalebar) {
+        renderScaleBar();
+    }
+    mv = mv2;
+    p = p2;
 }
 
 auto getScaleBarLabelNmAndPx(double vpLenNm, int edgeLength) {
@@ -485,13 +488,13 @@ void ViewportBase::renderScaleBar() {
     Coordinate min(margin,  edgeLength - margin - height, -1);
     Coordinate max(min.x + scalebarLenPx, min.y + height, -1);
     const QColor color{state->viewerState->showScalebar == 1 ? Qt::black : Qt::white};
-    glColor3f(color.redF(), color.greenF(), color.blueF());
-    glBegin(GL_POLYGON);
-    glVertex3d(min.x, min.y, min.z);
-    glVertex3d(max.x, min.y, min.z);
-    glVertex3d(max.x, max.y, min.z);
-    glVertex3d(min.x, max.y, min.z);
-    glEnd();
+//    glColor3f(color.redF(), color.greenF(), color.blueF());
+//    glBegin(GL_POLYGON);
+//    glVertex3d(min.x, min.y, min.z);
+//    glVertex3d(max.x, min.y, min.z);
+//    glVertex3d(max.x, max.y, min.z);
+//    glVertex3d(min.x, max.y, min.z);
+//    glEnd();
 
     renderText(Coordinate(min.x + scalebarLenPx / 2, min.y - 0.01*edgeLength, min.z), sizeLabel, true, true, color);
 }

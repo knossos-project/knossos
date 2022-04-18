@@ -120,7 +120,7 @@ void Viewport3D::paintGL() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     renderViewport();
-//    renderViewportFrontFace();
+    renderViewportFrontFace();
 }
 
 void Viewport3D::refocus(const boost::optional<Coordinate> position) {
