@@ -305,7 +305,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
     auto config = toml_parse(file.fileName().toStdString());
     Dataset::list_t infos;
     for (auto && vit : toml::find(config, "Layer").as_array()) {
-        auto & info = infos.emplace_back();
+        Dataset info;
         const auto & value = toml::find_or(vit, "ServerFormat", std::string{});
         info.api = value == "knossos" ? API::Heidelbrain : value == "1" ? API::OpenConnectome : API::PyKnossos;
         info.url = QString::fromStdString(toml::find_or(vit, "URL", std::string{}));
@@ -325,9 +325,12 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         info.scale = info.scales.front();
         info.magnification = info.lowestAvailableMag = 1;
         info.highestAvailableMag = std::pow(2, scales.size() - 1);
-        info.fileextension = QString::fromStdString(toml::find(vit, "FileExtension").at(0).as_string());
-        info.type = typeMap.left.at(info.fileextension);
         info.description = QString::fromStdString(toml::find(vit, "Description").as_string());
+        for (const auto & ext : toml::find(vit, "FileExtension").as_array()) {
+            info.fileextension = QString::fromStdString(ext.as_string());
+            info.type = typeMap.left.at(info.fileextension);
+            infos.emplace_back(info);
+        }
     }
     for (auto && info : infos) {
         if (info.scales.empty()) {
