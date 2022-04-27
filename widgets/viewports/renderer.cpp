@@ -233,6 +233,8 @@ void Viewport3D::renderNode(const nodeListElement & node, const RenderOptions & 
     }
 }
 
+#include <QPaintEngine>
+
 void ViewportBase::renderText(const Coordinate & pos, const QString & str, const bool fontScaling, bool centered, const QColor color) {
     //retrieve 2d screen position from coordinate
     GLint gl_viewport[4];
@@ -242,11 +244,13 @@ void ViewportBase::renderText(const Coordinate & pos, const QString & str, const
         return;
     }
     QOpenGLPaintDevice paintDevice(gl_viewport[2], gl_viewport[3]);//create paint device from viewport size and current context
+    paintEngine()->setActive(true);// nv fix
     QPainter painter(&paintDevice);
     painter.setFont(QFont(painter.font().family(), (fontScaling ? std::ceil(0.02*gl_viewport[2]) : defaultFontSize) * devicePixelRatio()));
     painter.setPen(color);
     painter.drawText(centered ? pos2d.x() - QFontMetrics(painter.font()).horizontalAdvance(str)/2. : pos2d.x(), gl_viewport[3] - pos2d.y(), str);//inverse y coordinate, extract height from gl viewport
     painter.end();//would otherwise fiddle with the gl state in the dtor
+    paintEngine()->setActive(false);// nv fix clear
     meshVao.bind();
 }
 
