@@ -32,6 +32,9 @@ class DialogVisibilityNotify : public QDialog {
 public:
     DialogVisibilityNotify(const QString & settingsPrefix, QWidget * parent) : QDialog{parent}, settingsPrefix{settingsPrefix} {
         setWindowFlag(Qt::WindowContextHelpButtonHint, false);
+#ifdef Q_OS_MACOS// workaround for child dialogs not being on top of their parent on macOS
+        setWindowFlag(Qt::WindowStaysOnTopHint);
+#endif//Q_OS_MACOS
     }
 signals:
     void visibilityChanged(bool);
