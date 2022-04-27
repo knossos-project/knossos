@@ -243,9 +243,8 @@ void ViewportBase::renderText(const Coordinate & pos, const QString & str, const
     if (pos2d.x() < 0 || pos2d.y() < 0 || pos2d.x() > gl_viewport[2] || pos2d.y() > gl_viewport[3]) {
         return;
     }
-    QOpenGLPaintDevice paintDevice(gl_viewport[2], gl_viewport[3]);//create paint device from viewport size and current context
     paintEngine()->setActive(true);// nv fix
-    QPainter painter(&paintDevice);
+    QPainter painter(this);
     painter.setFont(QFont(painter.font().family(), (fontScaling ? std::ceil(0.02*gl_viewport[2]) : defaultFontSize) * devicePixelRatio()));
     painter.setPen(color);
     painter.drawText(centered ? pos2d.x() - QFontMetrics(painter.font()).horizontalAdvance(str)/2. : pos2d.x(), gl_viewport[3] - pos2d.y(), str);//inverse y coordinate, extract height from gl viewport
