@@ -945,7 +945,6 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         renderBrush(getMouseCoordinate());
     }
     if (dstPos) {
-        glPushMatrix();
         view();
         const auto srcPos2 = Dataset::current().scales[0].componentMul(srcPos);
         const auto dstPos2 = Dataset::current().scales[0].componentMul(*dstPos);
@@ -953,13 +952,34 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         const auto dstSvx = readVoxel(*dstPos);
         const auto erase = Annotation::singleton().annotationMode.testFlag(AnnotationMode::SubObjectSplit);
         const auto darken = bminvalid(erase, srcSvx, dstSvx);
+
+        QOpenGLVertexArrayObject::Binder vao(&meshVao);
+        const int vertexLocation = lineShader.attributeLocation("vertex");
+        lineShader.enableAttributeArray(vertexLocation);
+        mergeLineBuf.bind();
+
+        std::vector<floatCoordinate> vertices {
+            floatCoordinate(srcPos2.x, srcPos2.y, srcPos2.z),
+            floatCoordinate(dstPos2.x, dstPos2.y, dstPos2.z)
+        };
+        if (mergeLineBuf.size() != vertices.size() * sizeof(vertices.front())) {
+            mergeLineBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
+        } else {
+            glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
+        }
+        lineShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+        mergeLineBuf.release();
+
+        lineShader.bind();
+        QVector4D color{erase * 1.f, !erase * 1.f, 0, 1.f - 0.8f * darken};
+        lineShader.setUniformValue("color", color);
+        lineShader.setUniformValue("modelview_matrix", mv);
+        lineShader.setUniformValue("projection_matrix", p);
+
         glLineWidth(3.);
-        glBegin(GL_LINES);
-        glColor4f(erase, !erase, 0, 1 - 0.8 * darken);
-            glVertex3f(srcPos2.x, srcPos2.y, srcPos2.z);
-            glVertex3f(dstPos2.x, dstPos2.y, dstPos2.z);
-        glEnd();
-        glPopMatrix();
+        glDrawArrays(GL_LINES, 0, vertices.size());
+        lineShader.disableAttributeArray(vertexLocation);
+        lineShader.release();
     }
 }
 
