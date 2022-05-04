@@ -102,7 +102,7 @@ deploy:
   - provider: GitHub
     tag: nightly
     auth_token:
-      secure: 9tKkhsqR9qSoKt3390923aZ0EauffZQQ/6Ho0HdYlTEudtFJ1eTnw6B3TGclgqA0 # your encrypted token from GitHub
+      secure: 6H9lxjGN7S4JqVmcYajXB/aQfDgynqn3+u0Le8eHBup2sxBTgdsdP5uuGTIf5whj
     artifact: /.*\.KNOSSOS\..*/
     prerelease: true
     force_update: true
@@ -111,7 +111,7 @@ deploy:
   - provider: GitHub
     tag: nightly-dev
     auth_token:
-      secure: 9tKkhsqR9qSoKt3390923aZ0EauffZQQ/6Ho0HdYlTEudtFJ1eTnw6B3TGclgqA0 # your encrypted token from GitHub
+      secure: 6H9lxjGN7S4JqVmcYajXB/aQfDgynqn3+u0Le8eHBup2sxBTgdsdP5uuGTIf5whj
     artifact: /.*-KNOSSOS\..*/
     prerelease: true
     force_update: true
