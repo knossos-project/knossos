@@ -1982,19 +1982,20 @@ void synapseLoop(Func func, const ViewportType vpType){
 void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &options, const ViewportType viewportType) {
     glBuffers.regenVertBuffer = false;
     glBuffers.lineVertBuffer.clear();
-    glBuffers.lineVertBuffer2.clear();
-    glBuffers.lineVertBufferRef.clear();
+    glBuffers.cylinderBuffer.clear();
     glBuffers.pointVertBuffer.clear();
     glBuffers.colorPickingBuffer24.clear();
     glBuffers.colorPickingBuffer48.clear();
     glBuffers.colorPickingBuffer64.clear();
+    std::vector<floatCoordinate> segments;
     std::vector<float> radii, cradii;
+    std::vector<int8_t> cvid, cvid2;
 
     auto arrayFromQColor = [](QColor color){
         return decltype(glBuffers.lineVertBuffer.colors)::value_type{{static_cast<std::uint8_t>(color.red()), static_cast<std::uint8_t>(color.green()), static_cast<std::uint8_t>(color.blue()), static_cast<std::uint8_t>(color.alpha())}};
     };
 
-    auto addSegment = [arrayFromQColor, &cradii, &glBuffers](const segmentListElement & segment, const QColor & color) {
+    auto addSegment = [arrayFromQColor, &cradii, &cvid, &cvid2, &glBuffers, &segments](const segmentListElement & segment, const QColor & color) {
         const auto isoBase = Dataset::current().scales[0].componentMul(segment.source.position);
         const auto isoTop = Dataset::current().scales[0].componentMul(segment.target.position);
 
@@ -2002,30 +2003,22 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
         glBuffers.lineVertBuffer.emplace_back(isoTop, arrayFromQColor(color));
         const auto rbase = Dataset::current().scales[0].x * Skeletonizer::singleton().radius(segment.source) * state->viewerState->segRadiusToNodeRadius;
         const auto rtop  = Dataset::current().scales[0].x * Skeletonizer::singleton().radius(segment.target) * state->viewerState->segRadiusToNodeRadius;
-        glBuffers.lineVertBuffer2.emplace_back(isoBase, arrayFromQColor(color));
-        glBuffers.lineVertBuffer2.emplace_back(isoTop, arrayFromQColor(color));
-        glBuffers.lineVertBuffer2.emplace_back(isoTop, arrayFromQColor(color));
-        glBuffers.lineVertBuffer2.emplace_back(isoBase, arrayFromQColor(color));
-        glBuffers.lineVertBuffer2.emplace_back(isoTop, arrayFromQColor(color));
-        glBuffers.lineVertBuffer2.emplace_back(isoBase, arrayFromQColor(color));
-        glBuffers.lineVertBuffer2.emplace_back(isoBase, arrayFromQColor(color));
-        glBuffers.lineVertBuffer2.emplace_back(isoTop, arrayFromQColor(color));
-        glBuffers.lineVertBufferRef.emplace_back(isoTop, arrayFromQColor(color));
-        glBuffers.lineVertBufferRef.emplace_back(isoBase, arrayFromQColor(color));
-        glBuffers.lineVertBufferRef.emplace_back(isoBase, arrayFromQColor(color));
-        glBuffers.lineVertBufferRef.emplace_back(isoTop, arrayFromQColor(color));
-        glBuffers.lineVertBufferRef.emplace_back(isoBase, arrayFromQColor(color));
-        glBuffers.lineVertBufferRef.emplace_back(isoTop, arrayFromQColor(color));
-        glBuffers.lineVertBufferRef.emplace_back(isoTop, arrayFromQColor(color));
-        glBuffers.lineVertBufferRef.emplace_back(isoBase, arrayFromQColor(color));
-        cradii.emplace_back(rbase);
-        cradii.emplace_back(rtop);
-        cradii.emplace_back(rtop);
-        cradii.emplace_back(rbase);
-        cradii.emplace_back(rtop);
-        cradii.emplace_back(rbase);
-        cradii.emplace_back(rbase);
-        cradii.emplace_back(rtop);
+
+        const auto ccc = [&, isoBase, isoTop](auto isBase, auto sd){
+            const auto & [pos, pos2] = std::forward_as_tuple(isBase ? isoBase : isoTop, !isBase ? isoBase : isoTop);
+            glBuffers.cylinderBuffer.emplace_back(pos, arrayFromQColor(color));
+            segments.emplace_back(pos2 - pos);
+            cradii.emplace_back(isBase ? rbase : rtop);
+            cvid.emplace_back(sd);
+            cvid2.emplace_back(sd == 0);
+        };
+        ccc(1,  0);
+        ccc(0,  0);
+        ccc(0,  1);
+
+        ccc(1,  0);
+        ccc(1,  1);
+        ccc(0, -1);
     };
 
     auto addNode = [arrayFromQColor, options, &glBuffers, &radii](const nodeListElement & node) {
@@ -2093,10 +2086,13 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
 
     uploadVertexData(glBuffers.lineVertBuffer.color_buffer, glBuffers.lineVertBuffer.colors);
     uploadVertexData(glBuffers.lineVertBuffer.vertex_buffer, glBuffers.lineVertBuffer.vertices);
-    uploadVertexData(glBuffers.lineVertBuffer2.color_buffer, glBuffers.lineVertBuffer2.colors);
-    uploadVertexData(glBuffers.lineVertBuffer2.vertex_buffer, glBuffers.lineVertBuffer2.vertices);
-    uploadVertexData(glBuffers.lineVertBufferRef.vertex_buffer, glBuffers.lineVertBufferRef.vertices);
+
+    uploadVertexData(glBuffers.cylinderBuffer.vertex_buffer, glBuffers.cylinderBuffer.vertices);
+    uploadVertexData(glBuffers.segment_vector_buffer, segments);
     uploadVertexData(glBuffers.cylinder_radius_buffer, cradii);
+    uploadVertexData(glBuffers.cylinder_shift_buffer, cvid);
+    uploadVertexData(glBuffers.cylinder_raised_buffer, cvid2);
+    uploadVertexData(glBuffers.cylinderBuffer.color_buffer, glBuffers.cylinderBuffer.colors);
 }
 
 /*
@@ -2284,44 +2280,42 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     glLineWidth(alwaysLinesAndPoints ? lineSize(width()/displayedlengthInNmX) : smallestVisibleNodeSize());
     /* Render line geometry batch if it contains data and we don’t pick nodes */
     if (!options.nodePicking) {
-        if (state->viewerState->cumDistRenderThres == 7.f && !glBuffers.lineVertBuffer2.vertices.empty()) {
-            glBuffers.lineVertBuffer2.vertex_buffer.bind();
-            const int vertexLocation = cylinderShader.attributeLocation("vertex");
-            cylinderShader.enableAttributeArray(vertexLocation);
-            cylinderShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
-            glBuffers.lineVertBuffer2.vertex_buffer.release();
-
-            glBuffers.lineVertBufferRef.vertex_buffer.bind();
-            const int refLocation = cylinderShader.attributeLocation("ref");
-            cylinderShader.enableAttributeArray(refLocation);
-            cylinderShader.setAttributeBuffer(refLocation, GL_FLOAT, 0, 3);
-            glBuffers.lineVertBufferRef.vertex_buffer.release();
-
-            glBuffers.cylinder_radius_buffer.bind();
-            const int radiusLocation = cylinderShader.attributeLocation("radius");
-            cylinderShader.enableAttributeArray(radiusLocation);
-            cylinderShader.setAttributeBuffer(radiusLocation, GL_FLOAT, 0, 1);
-            glBuffers.cylinder_radius_buffer.release();
-
-            glBuffers.lineVertBuffer2.color_buffer.bind();
-            const int colorLocation = cylinderShader.attributeLocation("color");
-            cylinderShader.enableAttributeArray(colorLocation);
-            cylinderShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
-            glBuffers.lineVertBuffer2.color_buffer.release();
+        if (state->viewerState->cumDistRenderThres == 7.f && !glBuffers.cylinderBuffer.vertices.empty()) {
+            std::vector<int> locations;
+            const auto bbb = [this, &locations, &shader=cylinderShader](auto & buffer, auto name, auto size, GLenum type = GL_FLOAT){
+                const int vertexLocation = locations.emplace_back(shader.attributeLocation(name));
+                buffer.bind();
+                if (type == GL_BYTE) {
+                    glVertexAttribIPointer(vertexLocation, size, type, 0, nullptr);
+                } else {
+                    shader.setAttributeBuffer(vertexLocation, type, 0, size);
+                }
+                buffer.release();
+                shader.enableAttributeArray(vertexLocation);
+            };
+            bbb(glBuffers.cylinderBuffer.vertex_buffer, "vertex", 3);
+            bbb(glBuffers.segment_vector_buffer, "segment", 3);
+            bbb(glBuffers.cylinder_radius_buffer, "radius", 1);
+            bbb(glBuffers.cylinder_shift_buffer, "shift", 1, GL_BYTE);
+            bbb(glBuffers.cylinder_raised_buffer, "raised", 1, GL_BYTE);
+            bbb(glBuffers.cylinderBuffer.color_buffer, "color", 4, GL_UNSIGNED_BYTE);
 
             cylinderShader.bind();
             cylinderShader.setUniformValue("modelview_matrix", mv);
             cylinderShader.setUniformValue("projection_matrix", p);
-            cylinderShader.setUniformValue("light_bg", global_ambient);
             cylinderShader.setUniformValue("light_pos", lightPos);
+            cylinderShader.setUniformValue("light_bg", global_ambient);
             cylinderShader.setUniformValue("light_front", diffuseLight);
             cylinderShader.setUniformValue("light_back", ambientLight);
-//            glDrawArrays(GL_TRIANGLE_FAN, 0, static_cast<GLsizei>(glBuffers.lineVertBuffer2.vertices.size()));
 
-            cylinderShader.disableAttributeArray(vertexLocation);
-            cylinderShader.disableAttributeArray(refLocation);
-            cylinderShader.disableAttributeArray(radiusLocation);
-            cylinderShader.disableAttributeArray(colorLocation);
+            cylinderShader.setUniformValue("side_flip",  1.0f);
+            glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(glBuffers.cylinderBuffer.vertices.size()));
+            cylinderShader.setUniformValue("side_flip", -1.0f);
+            glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(glBuffers.cylinderBuffer.vertices.size()));
+
+            for (const auto & location : locations) {
+                cylinderShader.disableAttributeArray(location);
+            }
             cylinderShader.release();
         }
         if (alwaysLinesAndPoints || state->viewerState->lightOnOff) {

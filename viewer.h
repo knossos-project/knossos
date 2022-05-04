@@ -82,9 +82,12 @@ struct GLBuffers {
             vertices.emplace_back(std::forward<T>(coord));
             colors.emplace_back(std::forward<U>(color));
         }
-    } lineVertBuffer, lineVertBuffer2, lineVertBufferRef, pointVertBuffer;
+    } lineVertBuffer, cylinderBuffer, pointVertBuffer;
     QOpenGLBuffer radius_buffer{QOpenGLBuffer::VertexBuffer};
+    QOpenGLBuffer segment_vector_buffer{QOpenGLBuffer::VertexBuffer};
     QOpenGLBuffer cylinder_radius_buffer{QOpenGLBuffer::VertexBuffer};
+    QOpenGLBuffer cylinder_shift_buffer{QOpenGLBuffer::VertexBuffer};
+    QOpenGLBuffer cylinder_raised_buffer{QOpenGLBuffer::VertexBuffer};
     std::vector<std::array<std::uint8_t, 4>> colorPickingBuffer24, colorPickingBuffer48, colorPickingBuffer64;
 };
 
