@@ -2269,12 +2269,12 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
     const auto alwaysLinesAndPoints = state->viewerState->cumDistRenderThres > 19.f && options.enableLoddingAndLinesAndPoints;
 
 
-    QVector<float> v;
-    for (auto arg : {GL_LINE_WIDTH, GL_ALIASED_LINE_WIDTH_RANGE, GL_SMOOTH_LINE_WIDTH_RANGE, GL_SMOOTH_LINE_WIDTH_GRANULARITY}) {
-        v.push_front(-1);
-        v.push_front(-1);
-        glGetFloatv(arg, &v.front());
-    }
+//    QVector<float> v;
+//    for (auto arg : {GL_LINE_WIDTH, GL_ALIASED_LINE_WIDTH_RANGE, GL_SMOOTH_LINE_WIDTH_RANGE, GL_SMOOTH_LINE_WIDTH_GRANULARITY}) {
+//        v.push_front(-1);
+//        v.push_front(-1);
+//        glGetFloatv(arg, &v.front());
+//    }
 //    qDebug() << v << glIsEnabled(GL_LINE_SMOOTH);
     glEnable(GL_LINE_SMOOTH);
 //    qDebug() << alwaysLinesAndPoints << lineSize(width()/displayedlengthInNmX) << smallestVisibleNodeSize();
