@@ -36,6 +36,9 @@
 
 #include <snappy.h>
 
+#include <SimpleITK.h>
+#include <sitkImageOperators.h>
+
 #include <QBuffer>
 #include <QFile>
 #include <QFuture>
@@ -775,14 +778,34 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     broadcastProgress();
                 });
                 localPool.setMaxThreadCount(1024);
-                watcher.setFuture(QtConcurrent::run(&localPool, [loadingNr, &io, path]() -> boost::optional<bool> {
+                watcher.setFuture(QtConcurrent::run(&localPool, [loadingNr, &io, path, cubeCoord]() -> boost::optional<bool> {
                     // immediately exit unstarted thread from the previous loadSignal
                     if (loadingNr != Loader::Controller::singleton().loadingNr) {
                         return boost::none;
                     }
+                    io.open(QIODevice::WriteOnly | QIODevice::Unbuffered);
+
+                    namespace sitk = itk::simple;
+                    sitk::ImageFileReader reader;
+                    reader.SetFileName("/run/media/disk/carina/ts378_b2_denoised.mrc");
+                    reader.ReadImageInformation();
+                    const auto sizes = reader.GetSize();
+                    reader.SetExtractIndex({cubeCoord.x*128,cubeCoord.y*128,cubeCoord.z*128});
+                    reader.SetExtractIndex({std::min(cubeCoord.x*128,(int)sizes[0]-128), std::min(cubeCoord.y*128,(int)sizes[1]-128), std::min(cubeCoord.z*128,(int)sizes[2]-128)});
+                    reader.SetExtractSize({128,128,128});
+                    auto img = reader.Execute();
+                    auto * buf = img.GetBufferAsInt8();
+                    std::for_each(buf, buf + img.GetNumberOfPixels(), [](auto & elem){
+                //        elem = (elem - (float)*mima.first) * 255.0 / ((float)*mima.second-(float)*mima.first);
+                        elem = elem + 128.0;
+                    });
+                    io.write(reinterpret_cast<const char *>(buf), img.GetNumberOfPixels());
+                    io.close();
+                    io.open(QIODevice::ReadOnly | QIODevice::Unbuffered);
+                    return true;
+
                     QFile file(path);
                     file.open(QIODevice::ReadOnly | QIODevice::Unbuffered);
-                    io.open(QIODevice::WriteOnly | QIODevice::Unbuffered);
                     const int size = file.size();
                     auto * fmap = file.map(0, size);
                     if (fmap == nullptr && QFile{path}.exists()) {
