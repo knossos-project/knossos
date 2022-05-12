@@ -60,21 +60,18 @@ enum class RotationCenter {
 
 struct GLBuffers {
     bool regenVertBuffer{true};
+    bool regenHaloBuffer{true};
 
     // vertex buffers that are available for rendering
     struct RenderBuffer {
         std::vector<floatCoordinate> vertices;
         std::vector<std::array<std::uint8_t, 4>> colors;
-        std::unordered_map<size_t, unsigned int> colorBufferOffset;
         QOpenGLBuffer vertex_buffer{QOpenGLBuffer::VertexBuffer};
         QOpenGLBuffer color_buffer{QOpenGLBuffer::VertexBuffer};
-
-        size_t lastSelectedNode{0};
 
         void clear() {
             vertices.clear();
             colors.clear();
-            colorBufferOffset.clear();
         }
 
         template<typename T, typename U>
@@ -82,8 +79,9 @@ struct GLBuffers {
             vertices.emplace_back(std::forward<T>(coord));
             colors.emplace_back(std::forward<U>(color));
         }
-    } lineVertBuffer, cylinderBuffer, pointVertBuffer;
+    } lineVertBuffer, cylinderBuffer, pointVertBuffer, haloBuffer;
     QOpenGLBuffer radius_buffer{QOpenGLBuffer::VertexBuffer};
+    QOpenGLBuffer haloRadiusBuffer{QOpenGLBuffer::VertexBuffer};
     QOpenGLBuffer segment_vector_buffer{QOpenGLBuffer::VertexBuffer};
     QOpenGLBuffer cylinder_radius_buffer{QOpenGLBuffer::VertexBuffer};
     QOpenGLBuffer cylinder_shift_buffer{QOpenGLBuffer::VertexBuffer};

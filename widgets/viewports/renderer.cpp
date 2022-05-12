@@ -2001,6 +2001,47 @@ void synapseLoop(Func func, const ViewportType vpType){
 }
 
 void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &options, const ViewportType viewportType) {
+    constexpr const static auto arrayFromQColor = [](QColor color){
+        return decltype(glBuffers.lineVertBuffer.colors)::value_type{{static_cast<std::uint8_t>(color.red()), static_cast<std::uint8_t>(color.green()), static_cast<std::uint8_t>(color.blue()), static_cast<std::uint8_t>(color.alpha())}};
+    };
+    const static auto uploadVertexData = [](auto & buf, const auto & vertices){
+        buf.destroy();
+        buf.create();
+        buf.bind();
+        buf.allocate(vertices.data(), static_cast<int>(vertices.size() * sizeof(vertices.front())));
+        buf.release();
+    };
+    if (glBuffers.regenHaloBuffer || glBuffers.regenVertBuffer) {
+        glBuffers.regenHaloBuffer = false;
+        glBuffers.haloBuffer.clear();
+
+        std::vector<float> haloRadii;
+        auto addHalo = [&glBuffers, &haloRadii](auto & node, auto haloColor){
+            const float radius = Skeletonizer::singleton().radius(node);
+            // halo only 10% bigger then node or
+            // scale the halo size from 10% up to 100% bigger then the node size
+            // otherwise, the halo won't be visible on very small node sizes (=1.0)
+            // (x - x_0) * (f_1 - f_0)/(x_1 - x_0)  //Linear interpolation
+            const float mp = radius > 30.0f ? 1.1 : (radius - 1.0) * (1.1 - 2.0)/(30.0 - 1.0) + 2.0;
+            haloColor.setAlphaF(0.5);
+            glBuffers.haloBuffer.emplace_back(Dataset::current().scales[0].componentMul(node.position), arrayFromQColor(haloColor));
+            haloRadii.emplace_back(mp * Dataset::current().scales[0].x * radius);
+        };
+        if (options.highlightSelection) {
+            for (const auto * nodePtr : Skeletonizer::singleton().skeletonState.selectedNodes) {
+                addHalo(*nodePtr, QColor(Qt::green));
+            }
+        }
+        if (auto * node = state->skeletonState->activeNode; options.highlightActiveNode && node != nullptr && !node->selected) {
+            addHalo(*node, state->viewer->getNodeColor(*node));
+        }
+        uploadVertexData(glBuffers.haloBuffer.vertex_buffer, glBuffers.haloBuffer.vertices);
+        uploadVertexData(glBuffers.haloBuffer.color_buffer, glBuffers.haloBuffer.colors);
+        uploadVertexData(glBuffers.haloRadiusBuffer, haloRadii);
+    }
+    if (!glBuffers.regenVertBuffer) {
+        return;
+    }
     glBuffers.regenVertBuffer = false;
     glBuffers.lineVertBuffer.clear();
     glBuffers.cylinderBuffer.clear();
@@ -2012,11 +2053,7 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
     std::vector<float> radii, cradii;
     std::vector<int8_t> cvid, cvid2;
 
-    auto arrayFromQColor = [](QColor color){
-        return decltype(glBuffers.lineVertBuffer.colors)::value_type{{static_cast<std::uint8_t>(color.red()), static_cast<std::uint8_t>(color.green()), static_cast<std::uint8_t>(color.blue()), static_cast<std::uint8_t>(color.alpha())}};
-    };
-
-    auto addSegment = [arrayFromQColor, &cradii, &cvid, &cvid2, &glBuffers, &segments](const segmentListElement & segment, const QColor & color) {
+    auto addSegment = [&cradii, &cvid, &cvid2, &glBuffers, &segments](const segmentListElement & segment, const QColor & color) {
         const auto isoBase = Dataset::current().scales[0].componentMul(segment.source.position);
         const auto isoTop = Dataset::current().scales[0].componentMul(segment.target.position);
 
@@ -2042,23 +2079,11 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
         ccc(0, -1);
     };
 
-    auto addNode = [arrayFromQColor, options, &glBuffers, &radii](const nodeListElement & node) {
-        auto color = state->viewer->getNodeColor(node);
-
-        if (node.selected && options.highlightSelection) {// highlight selected nodes
-            auto selectedNodeColor = QColor(Qt::green);
-//            selectedNodeColor.setAlphaF(0.5f);// results in half-transparent nodes in low mode
-            color = selectedNodeColor;
-            glBuffers.pointVertBuffer.lastSelectedNode = node.nodeID;
-        }
-
-        const auto isoPos = Dataset::current().scales[0].componentMul(node.position);
-
+    auto addNode = [&glBuffers, &radii](const nodeListElement & node) {
         glBuffers.colorPickingBuffer24.emplace_back(arrayFromQColor(getPickingColor(node, RenderOptions::SelectionPass::NodeID0_24Bits)));
         glBuffers.colorPickingBuffer48.emplace_back(arrayFromQColor(getPickingColor(node, RenderOptions::SelectionPass::NodeID24_48Bits)));
         glBuffers.colorPickingBuffer64.emplace_back(arrayFromQColor(getPickingColor(node, RenderOptions::SelectionPass::NodeID48_64Bits)));
-        glBuffers.pointVertBuffer.emplace_back(isoPos, arrayFromQColor(color));
-        glBuffers.pointVertBuffer.colorBufferOffset[node.nodeID] = static_cast<unsigned int>(glBuffers.pointVertBuffer.vertices.size()-1);
+        glBuffers.pointVertBuffer.emplace_back(Dataset::current().scales[0].componentMul(node.position), arrayFromQColor(state->viewer->getNodeColor(node)));
         radii.emplace_back(Dataset::current().scales[0].x * Skeletonizer::singleton().radius(node));
     };
 
@@ -2094,13 +2119,6 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
         addSegment(virtualSegment, color);
     }, viewportType);
 
-    const auto uploadVertexData = [](auto & buf, const auto & vertices){
-        buf.destroy();
-        buf.create();
-        buf.bind();
-        buf.allocate(vertices.data(), static_cast<int>(vertices.size() * sizeof(vertices.front())));
-        buf.release();
-    };
     uploadVertexData(glBuffers.pointVertBuffer.color_buffer, glBuffers.pointVertBuffer.colors);
     uploadVertexData(glBuffers.pointVertBuffer.vertex_buffer, glBuffers.pointVertBuffer.vertices);
     uploadVertexData(glBuffers.radius_buffer, radii);
@@ -2160,9 +2178,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 //    glPushMatrix();
     const auto displayFlag = (viewportType == VIEWPORT_SKELETON) ? state->viewerState->skeletonDisplayVP3D : state->viewerState->skeletonDisplayVPOrtho;
     auto & glBuffers = displayFlag.testFlag(TreeDisplay::OnlySelected) ? state->viewerState->selectedTreesBuffers : state->viewerState->AllTreesBuffers;
-    if(glBuffers.regenVertBuffer) {
-        generateSkeletonGeometry(glBuffers, options, viewportType);
-    }
+    generateSkeletonGeometry(glBuffers, options, viewportType);
     if (!state->viewerState->onlyLinesAndPoints && state->viewerState->cumDistRenderThres < 7.f) {
         for (auto & currentTree : Skeletonizer::singleton().skeletonState.trees) {
             // focus on synapses, darken rest of skeleton
@@ -2420,6 +2436,26 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         sphereShader.setUniformValue("zoom", zoom);
 
         glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.pointVertBuffer.vertices.size()));
+
+        glBuffers.haloBuffer.vertex_buffer.bind();
+        sphereShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+        glBuffers.haloBuffer.vertex_buffer.release();
+        glBuffers.haloBuffer.color_buffer.bind();
+        sphereShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
+        glBuffers.haloBuffer.color_buffer.release();
+        glBuffers.haloRadiusBuffer.bind();
+        sphereShader.setAttributeBuffer(radiusLocation, GL_FLOAT, 0, 1);
+        glBuffers.haloRadiusBuffer.release();
+        sphereShader.setUniformValue("light_bg", QVector4D{0.25,0.25,0.25,1});
+        sphereShader.setUniformValue("light_front", QVector4D{0.5,0.5,0.5,1});
+        sphereShader.setUniformValue("light_back", QVector4D{0,0,0,1});
+        sphereShader.setUniformValue("invert", -1.0f);
+        glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.haloBuffer.vertices.size()));
+        sphereShader.setUniformValue("light_bg", QVector4D{0.5,0.5,0.5,1});
+        sphereShader.setUniformValue("light_front", QVector4D{1,1,1,1});
+        sphereShader.setUniformValue("light_back", QVector4D{0,0,0,1});
+        sphereShader.setUniformValue("invert", 1.0f);
+        glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.haloBuffer.vertices.size()));
 
         sphereShader.disableAttributeArray(vertexLocation);
         sphereShader.disableAttributeArray(colorLocation);

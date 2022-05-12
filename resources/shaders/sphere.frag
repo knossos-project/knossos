@@ -5,6 +5,7 @@ uniform vec4 light_bg;
 uniform vec4 light_front;
 uniform vec4 light_back;
 uniform bool picking;
+uniform float invert = 1.0f;
 
 in float fradius;
 in vec4 fcolor;
@@ -25,7 +26,7 @@ void main() {
         fragColor = fcolor * vec4(vec3(!picking) * vec3(light_bg.rgb + intensity * light_front.rgb + light_back.rgb) + vec3(picking), 1);
 
         float projectionDepthRange = (-2.0 / projection_matrix[2].z);
-        gl_FragDepth = gl_FragCoord.z + dist_edge * fradius * (gl_DepthRange.diff / projectionDepthRange);
+        gl_FragDepth = gl_FragCoord.z + invert * dist_edge * fradius * (gl_DepthRange.diff / projectionDepthRange);
         gl_FragDepth = clamp(gl_FragDepth, gl_DepthRange.near, gl_DepthRange.far);
     }
 }

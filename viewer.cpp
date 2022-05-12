@@ -81,31 +81,9 @@ Viewer::Viewer() : evilHack{[this](){ state->viewer = this; return true; }()} {
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeRemovedSignal, regVBuff);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treesMerged, regVBuff);
 
-    static auto updateSelectionColor = [this](GLBuffers & glBuffers) {
-        if (!glBuffers.regenVertBuffer) {
-            auto & svp = glBuffers.pointVertBuffer;
-            auto setColorAtOffset = [&svp](auto offset, auto color){
-                svp.colors[offset] = {{static_cast<std::uint8_t>(color.red()), static_cast<std::uint8_t>(color.green()), static_cast<std::uint8_t>(color.blue()), static_cast<std::uint8_t>(color.alpha())}};
-                svp.color_buffer.bind();
-                svp.color_buffer.write(static_cast<int>(offset * sizeof(svp.colors[offset])), &svp.colors[offset], sizeof(svp.colors[offset]));
-                svp.color_buffer.release();
-            };
-            if (svp.colorBufferOffset.count(svp.lastSelectedNode)) {// restore old node color
-                setColorAtOffset(svp.colorBufferOffset[svp.lastSelectedNode], getNodeColor(*state->skeletonState->nodesByNodeID[svp.lastSelectedNode]));
-            }
-            svp.lastSelectedNode = state->skeletonState->selectedNodes.front()->nodeID;
-            if (svp.colorBufferOffset.count(svp.lastSelectedNode)) {// colorize new active node
-                setColorAtOffset(svp.colorBufferOffset[svp.lastSelectedNode], QColor{Qt::green});
-            }
-        } else {
-            glBuffers.regenVertBuffer = true;
-        }
-    };
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::nodeSelectionChangedSignal, []() {
-        if (state->skeletonState->selectedNodes.size() == 1) {
-            updateSelectionColor(state->viewerState->AllTreesBuffers);
-            updateSelectionColor(state->viewerState->selectedTreesBuffers);
-        }
+        state->viewerState->AllTreesBuffers.regenHaloBuffer = true;
+        state->viewerState->selectedTreesBuffers.regenHaloBuffer = true;
     });
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::treeSelectionChangedSignal, regVBuff);
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::resetData, regVBuff);
