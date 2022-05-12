@@ -496,15 +496,36 @@ void ViewportBase::renderScaleBar() {
     Coordinate min(margin,  edgeLength - margin - height, -1);
     Coordinate max(min.x + scalebarLenPx, min.y + height, -1);
     const QColor color{state->viewerState->showScalebar == 1 ? Qt::black : Qt::white};
-//    glColor3f(color.redF(), color.greenF(), color.blueF());
-//    glBegin(GL_POLYGON);
-//    glVertex3d(min.x, min.y, min.z);
-//    glVertex3d(max.x, min.y, min.z);
-//    glVertex3d(max.x, max.y, min.z);
-//    glVertex3d(min.x, max.y, min.z);
-//    glEnd();
-
+    std::vector<floatCoordinate> vertices{
+        Coordinate{min.x, min.y, min.z},
+        Coordinate{max.x, min.y, min.z},
+        Coordinate{max.x, max.y, min.z},
+        Coordinate{min.x, max.y, min.z},
+    };
     renderText(Coordinate(min.x + scalebarLenPx / 2, min.y - 0.01*edgeLength, min.z), sizeLabel, true, true, color);
+
+    lineShader.bind();
+    const int vertexLocation = lineShader.attributeLocation("vertex");
+    lineShader.enableAttributeArray(vertexLocation);
+    scalebarBuf.bind();
+    if (scalebarBuf.size() == 0) {
+        scalebarBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
+    } else {
+        glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
+    }
+    lineShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+    scalebarBuf.release();
+
+    lineShader.setUniformValue("color", color);
+    lineShader.setUniformValue("modelview_matrix", mv);
+    lineShader.setUniformValue("projection_matrix", p);
+
+    glDisable(GL_DEPTH_TEST);
+    glDrawArrays(GL_LINES, 0, vertices.size());
+    lineShader.disableAttributeArray(vertexLocation);
+    lineShader.release();
+
+    glDisable(GL_DEPTH_TEST);
 }
 
 void ViewportOrtho::renderViewportFast() {
