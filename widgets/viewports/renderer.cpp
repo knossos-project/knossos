@@ -1581,7 +1581,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             lineShader.setUniformValue("modelview_matrix", mv);
             lineShader.setUniformValue("projection_matrix", p);
 
-            glDrawArrays(GL_LINES, 0, vertices.size());
+            glDrawArrays(GL_LINES, 0, gridVertices.size());
             lineShader.release();
             lineShader.disableAttributeArray(vertexLocation);
         }
