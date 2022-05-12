@@ -88,6 +88,7 @@ struct GLBuffers {
     QOpenGLBuffer cylinder_radius_buffer{QOpenGLBuffer::VertexBuffer};
     QOpenGLBuffer cylinder_shift_buffer{QOpenGLBuffer::VertexBuffer};
     QOpenGLBuffer cylinder_raised_buffer{QOpenGLBuffer::VertexBuffer};
+    QOpenGLBuffer color_picking_buffer{QOpenGLBuffer::VertexBuffer};
     std::vector<std::array<std::uint8_t, 4>> colorPickingBuffer24, colorPickingBuffer48, colorPickingBuffer64;
 };
 

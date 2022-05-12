@@ -2114,6 +2114,8 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
     uploadVertexData(glBuffers.cylinder_shift_buffer, cvid);
     uploadVertexData(glBuffers.cylinder_raised_buffer, cvid2);
     uploadVertexData(glBuffers.cylinderBuffer.color_buffer, glBuffers.cylinderBuffer.colors);
+    glBuffers.color_picking_buffer.destroy();
+    glBuffers.color_picking_buffer.create();
 }
 
 /*
@@ -2366,20 +2368,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 //    glEnableClientState(GL_COLOR_ARRAY);
 
     /* draw all nodes */
-    if(options.nodePicking) {
-        if(options.selectionPass == RenderOptions::SelectionPass::NodeID0_24Bits) {
-            glColorPointer(4, GL_UNSIGNED_BYTE, 0, glBuffers.colorPickingBuffer24.data());
-        } else if(options.selectionPass == RenderOptions::SelectionPass::NodeID24_48Bits) {
-            glColorPointer(4, GL_UNSIGNED_BYTE, 0, glBuffers.colorPickingBuffer48.data());
-        } else if(options.selectionPass == RenderOptions::SelectionPass::NodeID48_64Bits) {
-            glColorPointer(4, GL_UNSIGNED_BYTE, 0, glBuffers.colorPickingBuffer64.data());
-        }
-    } else {
-//        glBuffers.pointVertBuffer.color_buffer.bind();
-//        glColorPointer(4, GL_UNSIGNED_BYTE, 0, nullptr);
-//        glBuffers.pointVertBuffer.color_buffer.release();
-    }
-    if (!options.nodePicking && state->viewerState->cumDistRenderThres == 7.f) {
+    if (state->viewerState->cumDistRenderThres == 7.f) {
         glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);// GL_PROGRAM_POINT_SIZE gl3+
 //        glEnable(GL_POINT_SPRITE);// only gl2
         glBuffers.pointVertBuffer.vertex_buffer.bind();
@@ -2388,11 +2377,22 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         sphereShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
         glBuffers.pointVertBuffer.vertex_buffer.release();
 
-        glBuffers.pointVertBuffer.color_buffer.bind();
+        auto & colorBuffer = options.nodePicking ? glBuffers.color_picking_buffer : glBuffers.pointVertBuffer.color_buffer;
+        colorBuffer.bind();
+        if (options.nodePicking) {
+            const auto size = sizeof(glBuffers.colorPickingBuffer24.front());
+            if(options.selectionPass == RenderOptions::SelectionPass::NodeID0_24Bits) {
+                colorBuffer.allocate(glBuffers.colorPickingBuffer24.data(), glBuffers.colorPickingBuffer24.size() * size);
+            } else if(options.selectionPass == RenderOptions::SelectionPass::NodeID24_48Bits) {
+                colorBuffer.allocate(glBuffers.colorPickingBuffer48.data(), glBuffers.colorPickingBuffer48.size() * size);
+            } else if(options.selectionPass == RenderOptions::SelectionPass::NodeID48_64Bits) {
+                colorBuffer.allocate(glBuffers.colorPickingBuffer64.data(), glBuffers.colorPickingBuffer64.size() * size);
+            }
+        }
         const int colorLocation = sphereShader.attributeLocation("color");
         sphereShader.enableAttributeArray(colorLocation);
         sphereShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
-        glBuffers.pointVertBuffer.color_buffer.release();
+        colorBuffer.release();
 
         glBuffers.radius_buffer.bind();
         const int radiusLocation = sphereShader.attributeLocation("radius");
@@ -2406,6 +2406,7 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         sphereShader.setUniformValue("light_pos", lightPos);
         sphereShader.setUniformValue("light_front", diffuseLight);
         sphereShader.setUniformValue("light_back", ambientLight);
+        sphereShader.setUniformValue("picking", options.nodePicking);
         GLfloat mviewport[4];
         glGetFloatv(GL_VIEWPORT, &mviewport[0]);
         QVector4D tmp(mviewport[0], mviewport[1], mviewport[2], mviewport[3]);

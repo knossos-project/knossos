@@ -4,6 +4,7 @@ uniform mat4 projection_matrix;
 uniform vec4 light_bg;
 uniform vec4 light_front;
 uniform vec4 light_back;
+uniform bool picking;
 
 in float fradius;
 in vec4 fcolor;
@@ -21,7 +22,7 @@ void main() {
         float dist_edge = sqrt(1.0 - min(1.0, dist_squared));
         vec3 frag_normal = normalize(vec3(pos.x, pos.y, dist_edge));
         float intensity = max(0.0, dot(frag_normal, flight_normal));// spot
-        fragColor = fcolor * vec4(light_bg.rgb + intensity * light_front.rgb + light_back.rgb, 1);
+        fragColor = fcolor * vec4(vec3(!picking) * vec3(light_bg.rgb + intensity * light_front.rgb + light_back.rgb) + vec3(picking), 1);
 
         float projectionDepthRange = (-2.0 / projection_matrix[2].z);
         gl_FragDepth = gl_FragCoord.z + dist_edge * fradius * (gl_DepthRange.diff / projectionDepthRange);
