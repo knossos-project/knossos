@@ -265,7 +265,7 @@ void ViewportBase::renderText(const Coordinate & pos, const QString & str, const
     QOpenGLPaintDevice paintDevice(gl_viewport[2], gl_viewport[3]);//create paint device from viewport size and current context
     QPainter painter(&paintDevice);
     painter.setFont(QFont(painter.font().family(), (fontScaling ? std::ceil(0.02*gl_viewport[2]) : defaultFontSize) * devicePixelRatio()));
-    const auto pos2d = QVector3D(pos.x, pos.y - 0.01*edgeLength, pos.z).project({&modelview_mat[0][0],4,4}, {&projection_mat[0][0],4,4}, {{0, 0}, paintDevice.size()});
+    const auto pos2d = QVector3D(pos.x, pos.y, pos.z).project({&modelview_mat[0][0],4,4}, {&projection_mat[0][0],4,4}, {{0, 0}, paintDevice.size()});
     painter.setPen(color);
     painter.drawText(centered ? pos2d.x() - QFontMetrics(painter.font()).horizontalAdvance(str)/2. : pos2d.x(), gl_viewport[3] - pos2d.y(), str);//inverse y coordinate, extract height from gl viewport
     painter.end();//would otherwise fiddle with the gl state in the dtor
@@ -504,7 +504,7 @@ void ViewportBase::renderScaleBar() {
     glVertex3d(min.x, max.y, min.z);
     glEnd();
 
-    renderText(Coordinate(min.x + scalebarLenPx / 2, min.y, min.z), sizeLabel, true, true, color);
+    renderText(Coordinate(min.x + scalebarLenPx / 2, min.y - 0.01*edgeLength, min.z), sizeLabel, true, true, color);
 }
 
 void ViewportOrtho::renderViewportFast() {
