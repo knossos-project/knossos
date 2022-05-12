@@ -1550,7 +1550,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
             glPopMatrix();
 
-            const auto offset = targetView + std::ceil(9 * diameter);
+            const auto offset = targetView + std::ceil(3 * diameter);
             renderText(offset, label, options.enableTextScaling);
         };
         glColor4f(0, 0, 0, 1);
