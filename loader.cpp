@@ -787,6 +787,8 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
 
                     namespace sitk = itk::simple;
                     sitk::ImageFileReader reader;
+                    reader.SetFileName("/run/user/1002/gvfs/sftp:host=hgpu5/mnt/storage03/customer-homes/afitzpatrick/ts440_b2_denoised.mrc");
+                    reader.SetFileName("/mnt/storage03/customer-homes/afitzpatrick/ts440_b2_denoised.mrc");
                     reader.SetFileName("/run/media/disk/carina/ts378_b2_denoised.mrc");
                     reader.ReadImageInformation();
                     const auto sizes = reader.GetSize();
