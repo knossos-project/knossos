@@ -778,7 +778,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     broadcastProgress();
                 });
                 localPool.setMaxThreadCount(1024);
-                watcher.setFuture(QtConcurrent::run(&localPool, [loadingNr, &io, path, cubeCoord]() -> boost::optional<bool> {
+                watcher.setFuture(QtConcurrent::run(&localPool, [loadingNr, &io, path, cubeCoord, dataset]() -> boost::optional<bool> {
                     // immediately exit unstarted thread from the previous loadSignal
                     if (loadingNr != Loader::Controller::singleton().loadingNr) {
                         return boost::none;
@@ -789,12 +789,13 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     sitk::ImageFileReader reader;
                     reader.SetFileName("/run/user/1002/gvfs/sftp:host=hgpu5/mnt/storage03/customer-homes/afitzpatrick/ts440_b2_denoised.mrc");
                     reader.SetFileName("/mnt/storage03/customer-homes/afitzpatrick/ts440_b2_denoised.mrc");
-                    reader.SetFileName("/run/media/disk/carina/ts378_b2_denoised.mrc");
+//                    reader.SetFileName("/run/media/disk/carina/ts378_b2_denoised.mrc");
+                    reader.SetFileName("/run/media/mobile/test/ts378_b2_denoised.mrc");
                     reader.ReadImageInformation();
                     const auto sizes = reader.GetSize();
-                    reader.SetExtractIndex({cubeCoord.x*128,cubeCoord.y*128,cubeCoord.z*128});
-                    reader.SetExtractIndex({std::min(cubeCoord.x*128,(int)sizes[0]-128), std::min(cubeCoord.y*128,(int)sizes[1]-128), std::min(cubeCoord.z*128,(int)sizes[2]-128)});
-                    reader.SetExtractSize({128,128,128});
+                    reader.SetExtractIndex({cubeCoord.x*128,cubeCoord.y*128,cubeCoord.z*1});
+                    reader.SetExtractIndex({std::min(cubeCoord.x*128,(int)sizes[0]-128), std::min(cubeCoord.y*128,(int)sizes[1]-128), std::min(cubeCoord.z*1,(int)sizes[2]-1)});
+                    reader.SetExtractSize({128,128,1});
                     auto img = reader.Execute();
                     auto * buf = img.GetBufferAsInt8();
                     std::for_each(buf, buf + img.GetNumberOfPixels(), [](auto & elem){
