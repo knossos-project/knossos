@@ -130,7 +130,6 @@ struct BufferSelection {
     floatCoordinate coord;
 };
 
-constexpr int defaultFontSize = 10;
 class nodeListElement;
 class segmentListElement;
 class Mesh;
@@ -199,7 +198,6 @@ protected:
     void setFrontFacePerspective();
     void renderScaleBar();
     virtual void renderViewport(const RenderOptions & options = RenderOptions()) = 0;
-    void renderText(const Coordinate &pos, const QString &str, const bool fontScaling, const bool centered = false, const QColor color = Qt::black);
     void renderSphere(const Coordinate &pos, float radius, const QColor &color, const RenderOptions & options = RenderOptions());
     void renderCylinder(const Coordinate &base, float baseRadius, const Coordinate &top, float topRadius, const QColor &color, const RenderOptions & options = RenderOptions());
     void renderSkeleton(const RenderOptions & options = RenderOptions());

@@ -217,7 +217,7 @@ void ViewportOrtho::renderNode(const nodeListElement & node, const RenderOptions
         auto comment = node.getComment();
         comment = (ViewportOrtho::showNodeComments && comment.isEmpty() == false)? QString(":%1").arg(comment) : "";
         if (nodeID.isEmpty() == false || comment.isEmpty() == false) {
-            renderText(Dataset::current().scales[0].componentMul(node.position), nodeID.append(comment), options.enableTextScaling);
+//            renderText(Dataset::current().scales[0].componentMul(node.position), nodeID.append(comment), options.enableTextScaling);
         }
     }
 }
@@ -228,30 +228,44 @@ void Viewport3D::renderNode(const nodeListElement & node, const RenderOptions & 
         // Render the node description
         if (state->viewerState->idDisplay.testFlag(IdDisplay::AllNodes) || (state->viewerState->idDisplay.testFlag(IdDisplay::ActiveNode) && state->skeletonState->activeNode == &node)) {
             glColor4f(0.f, 0.f, 0.f, 1.f);
-            renderText(Dataset::current().scales[0].componentMul(node.position), QString::number(node.nodeID), options.enableTextScaling);
+//            renderText(Dataset::current().scales[0].componentMul(node.position), QString::number(node.nodeID), options.enableTextScaling);
         }
     }
 }
 
 #include <QPaintEngine>
 
-void ViewportBase::renderText(const Coordinate & pos, const QString & str, const bool fontScaling, bool centered, const QColor color) {
-    //retrieve 2d screen position from coordinate
+struct painterBinder {
+    QOpenGLVertexArrayObject & rebindVao;
+    QPainter painter;
     GLint gl_viewport[4];
-    glGetIntegerv(GL_VIEWPORT, &gl_viewport[0]);
-    const auto pos2d = QVector3D(pos.x, pos.y, pos.z).project(mv, p, {gl_viewport[0], gl_viewport[1], gl_viewport[2], gl_viewport[3]}).toPointF();
-    if (pos2d.x() < 0 || pos2d.y() < 0 || pos2d.x() > gl_viewport[2] || pos2d.y() > gl_viewport[3]) {
-        return;
+    int fontSize = -1;
+    painterBinder(QPaintDevice & pd, QOpenGLVertexArrayObject & vao, const bool fontScaling) : rebindVao{vao} {
+        pd.paintEngine()->setActive(true);// nv fix
+        painter.begin(&pd);
+        glGetIntegerv(GL_VIEWPORT, &gl_viewport[0]);
+        painter.setFont(QFont(painter.font().family(), (fontScaling ? std::ceil(0.02*gl_viewport[2]) : fontSize) * pd.devicePixelRatioF()));
     }
-    paintEngine()->setActive(true);// nv fix
-    QPainter painter(this);
-    painter.setFont(QFont(painter.font().family(), (fontScaling ? std::ceil(0.02*gl_viewport[2]) : defaultFontSize) * devicePixelRatioF()));
-    painter.setPen(color);
-    painter.drawText(centered ? pos2d.x() - QFontMetrics(painter.font()).horizontalAdvance(str)/2. : pos2d.x(), gl_viewport[3] - pos2d.y(), str);//inverse y coordinate, extract height from gl viewport
-    painter.end();//would otherwise fiddle with the gl state in the dtor
-    paintEngine()->setActive(false);// nv fix clear
-    meshVao.bind();
-}
+    template<typename T>
+    void write(const T & mv, const T & p, const floatCoordinate & pos, const QString & str, bool centered = false, const QColor color = Qt::black) {
+        // retrieve 2d screen position from coordinate
+        const auto pos2d = QVector3D(pos.x, pos.y, pos.z).project(mv, p, {gl_viewport[0], gl_viewport[1], gl_viewport[2], gl_viewport[3]}).toPointF();
+        if (pos2d.x() < 0 || pos2d.y() < 0 || pos2d.x() > gl_viewport[2] || pos2d.y() > gl_viewport[3]) {
+            return;
+        }
+        painter.setPen(color);
+        // inverse y coordinate, extract height from gl viewport
+        painter.drawText(centered ? pos2d.x() - QFontMetrics(painter.font()).horizontalAdvance(str)/2. : pos2d.x(), gl_viewport[3] - pos2d.y(), str);
+    }
+    ~painterBinder() {
+        painter.end();// would otherwise fiddle with the gl state in the dtor
+        rebindVao.bind();
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);//, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+    }
+};
 
 void ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segment) {
     float p[2][3], a, currentAngle, length, radius, distSourceInter;
@@ -502,7 +516,8 @@ void ViewportBase::renderScaleBar() {
         Coordinate{max.x, max.y, min.z},
         Coordinate{min.x, max.y, min.z},
     };
-    renderText(Coordinate(min.x + scalebarLenPx / 2, min.y - 0.01*edgeLength, min.z), sizeLabel, true, true, color);
+
+    painterBinder{*this, meshVao, true}.write(mv, p, Coordinate(min.x + scalebarLenPx / 2, min.y - 0.01*edgeLength, min.z), sizeLabel, true, color);
 
     lineShader.bind();
     const int vertexLocation = lineShader.attributeLocation("vertex");
@@ -1608,50 +1623,52 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         }
 
         // draw axes
-        auto renderAxis = [this, options](const floatCoordinate & targetView, const QString label) {
-//            glPushMatrix();
-
-//            floatCoordinate currentView = {0, 0, 1};
-//            const auto angle = std::acos(currentView.dot(targetView));
-//            auto axis = currentView.cross(targetView);
-//            if (axis.normalize()) {
-//                glRotatef(angle * 180/boost::math::constants::pi<float>(), axis.x, axis.y, axis.z);
-//            }
-            const auto diameter = (state->skeletonState->volBoundary() / zoomFactor) * 5e-3;
-//            const auto coneDiameter = 3 * diameter;
-//            const auto coneLength = 6 * diameter;
-//            const auto length = targetView.length() - coneLength;
-//            // axis cylinder lid
-//            GLUquadricObj * gluFloorObj = gluNewQuadric();
-//            gluQuadricNormals(gluFloorObj, GLU_SMOOTH);
-//            gluDisk(gluFloorObj, 0, diameter, 10, 1);
-//            gluDeleteQuadric(gluFloorObj);
-//            // axis cylinder
-//            GLUquadricObj * gluCylObj = gluNewQuadric();
-//            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-//            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-//            gluCylinder(gluCylObj, diameter, diameter, length, 10, 1);
-//            gluDeleteQuadric(gluCylObj);
-
-//            glTranslatef(0, 0, length);
-//            // cone lid
-//            GLUquadricObj * gluLidObj = gluNewQuadric();
-//            gluQuadricNormals(gluLidObj, GLU_SMOOTH);
-//            gluDisk(gluLidObj, 0, coneDiameter, 10, 1);
-//            gluDeleteQuadric(gluLidObj);
-//            // cone
-//            gluCylObj = gluNewQuadric();
-//            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-//            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-//            gluCylinder(gluCylObj, coneDiameter, 0., coneLength, 10, 5);
-//            gluDeleteQuadric(gluCylObj);
-
-//            glPopMatrix();
-
-            const auto offset = targetView + std::ceil(3 * diameter);
-            renderText(offset, label, options.enableTextScaling);
-        };
         if (options.drawBoundaryAxes) {
+            painterBinder pb{*this, meshVao, options.enableTextScaling};
+            pb.fontSize = 10;
+            auto renderAxis = [this, options, &pb](const floatCoordinate & targetView, const QString label) {
+    //            glPushMatrix();
+
+    //            floatCoordinate currentView = {0, 0, 1};
+    //            const auto angle = std::acos(currentView.dot(targetView));
+    //            auto axis = currentView.cross(targetView);
+    //            if (axis.normalize()) {
+    //                glRotatef(angle * 180/boost::math::constants::pi<float>(), axis.x, axis.y, axis.z);
+    //            }
+                const auto diameter = (state->skeletonState->volBoundary() / zoomFactor) * 5e-3;
+    //            const auto coneDiameter = 3 * diameter;
+    //            const auto coneLength = 6 * diameter;
+    //            const auto length = targetView.length() - coneLength;
+    //            // axis cylinder lid
+    //            GLUquadricObj * gluFloorObj = gluNewQuadric();
+    //            gluQuadricNormals(gluFloorObj, GLU_SMOOTH);
+    //            gluDisk(gluFloorObj, 0, diameter, 10, 1);
+    //            gluDeleteQuadric(gluFloorObj);
+    //            // axis cylinder
+    //            GLUquadricObj * gluCylObj = gluNewQuadric();
+    //            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+    //            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+    //            gluCylinder(gluCylObj, diameter, diameter, length, 10, 1);
+    //            gluDeleteQuadric(gluCylObj);
+
+    //            glTranslatef(0, 0, length);
+    //            // cone lid
+    //            GLUquadricObj * gluLidObj = gluNewQuadric();
+    //            gluQuadricNormals(gluLidObj, GLU_SMOOTH);
+    //            gluDisk(gluLidObj, 0, coneDiameter, 10, 1);
+    //            gluDeleteQuadric(gluLidObj);
+    //            // cone
+    //            gluCylObj = gluNewQuadric();
+    //            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+    //            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+    //            gluCylinder(gluCylObj, coneDiameter, 0., coneLength, 10, 5);
+    //            gluDeleteQuadric(gluCylObj);
+
+    //            glPopMatrix();
+
+                const auto offset = targetView + std::ceil(3 * diameter);
+                pb.write(mv, p, offset, label);
+            };
 //            glColor4f(0, 0, 0, 1);
             if (Viewport3D::showBoundariesInUm) {
                 renderAxis(floatCoordinate(scaledBoundary.x, 0, 0), QString("x: %1 µm").arg(scaledBoundary.x * 1e-3));
@@ -2466,22 +2483,20 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         sphereShader.release();
         glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
     }
-    auto renderNodeText = [this, &options](auto & node){
-        const auto acti = state->viewerState->idDisplay.testFlag(IdDisplay::ActiveNode) && state->skeletonState->activeNode != nullptr && *state->skeletonState->activeNode == node;
-        auto nodeID = state->viewerState->idDisplay.testFlag(IdDisplay::AllNodes) || acti ? QString::number(node.nodeID) : "";
-        auto comment = node.getComment();
-        comment = (ViewportOrtho::showNodeComments && !comment.isEmpty()) ? QString("%1%2").arg(nodeID.isEmpty() ? "" : ":").arg(comment) : "";
-        if (nodeID.isEmpty() == false || comment.isEmpty() == false) {
-            renderText(Dataset::current().scales[0].componentMul(node.position), nodeID.append(comment), options.enableTextScaling);
-        }
-    };
-    if (!state->viewerState->idDisplay.testFlag(IdDisplay::None) || ViewportOrtho::showNodeComments) {
+    if (!options.nodePicking && (!state->viewerState->idDisplay.testFlag(IdDisplay::None) || ViewportOrtho::showNodeComments)) {
+        painterBinder pb{*this, meshVao, options.enableTextScaling};
         for (auto elem : state->skeletonState->nodesByNodeID) {
-            renderNodeText(*elem.second);
+            const auto & node = *elem.second;
+            const auto acti = state->viewerState->idDisplay.testFlag(IdDisplay::ActiveNode) && state->skeletonState->activeNode != nullptr && *state->skeletonState->activeNode == node;
+            auto nodeID = state->viewerState->idDisplay.testFlag(IdDisplay::AllNodes) || acti ? QString::number(node.nodeID) : "";
+            auto comment = node.getComment();
+            comment = (ViewportOrtho::showNodeComments && !comment.isEmpty()) ? QString("%1%2").arg(nodeID.isEmpty() ? "" : ":", comment) : "";
+            if (nodeID.isEmpty() == false || comment.isEmpty() == false) {
+                const auto pos = Dataset::current().scales[0].componentMul(node.position) + Dataset::current().scales[0] * 0.5 * Skeletonizer::singleton().radius(node);
+                pb.write(mv, p, pos, nodeID.append(comment), false, Qt::darkGray);
+            }
         }
     }
-    glEnable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
     if (alwaysLinesAndPoints || state->viewerState->lightOnOff || options.nodePicking) {
 //        glBuffers.pointVertBuffer.vertex_buffer.bind();
 //        glVertexPointer(3, GL_FLOAT, 0, nullptr);
