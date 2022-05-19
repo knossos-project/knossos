@@ -62,7 +62,7 @@ void ZoomSlider::paintEvent(QPaintEvent *ev) {
     QPainter painter(this);
     painter.save();
     painter.translate(opt.rect.x(), opt.rect.y());
-    painter.setFont(QFont(painter.font().family(), 8 * devicePixelRatio()));
+    painter.setFont(QFont(painter.font().family(), 8 * devicePixelRatioF()));
     painter.setPen(opt.palette.windowText().color());
     int v = opt.minimum;
     int drawnTicks = 0;

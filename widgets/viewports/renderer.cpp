@@ -245,7 +245,7 @@ void ViewportBase::renderText(const Coordinate & pos, const QString & str, const
     }
     paintEngine()->setActive(true);// nv fix
     QPainter painter(this);
-    painter.setFont(QFont(painter.font().family(), (fontScaling ? std::ceil(0.02*gl_viewport[2]) : defaultFontSize) * devicePixelRatio()));
+    painter.setFont(QFont(painter.font().family(), (fontScaling ? std::ceil(0.02*gl_viewport[2]) : defaultFontSize) * devicePixelRatioF()));
     painter.setPen(color);
     painter.drawText(centered ? pos2d.x() - QFontMetrics(painter.font()).horizontalAdvance(str)/2. : pos2d.x(), gl_viewport[3] - pos2d.y(), str);//inverse y coordinate, extract height from gl viewport
     painter.end();//would otherwise fiddle with the gl state in the dtor
