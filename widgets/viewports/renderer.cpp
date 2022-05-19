@@ -2437,25 +2437,27 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
 
         glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.pointVertBuffer.vertices.size()));
 
-        glBuffers.haloBuffer.vertex_buffer.bind();
-        sphereShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
-        glBuffers.haloBuffer.vertex_buffer.release();
-        glBuffers.haloBuffer.color_buffer.bind();
-        sphereShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
-        glBuffers.haloBuffer.color_buffer.release();
-        glBuffers.haloRadiusBuffer.bind();
-        sphereShader.setAttributeBuffer(radiusLocation, GL_FLOAT, 0, 1);
-        glBuffers.haloRadiusBuffer.release();
-        sphereShader.setUniformValue("light_bg", QVector4D{0.25,0.25,0.25,1});
-        sphereShader.setUniformValue("light_front", QVector4D{0.5,0.5,0.5,1});
-        sphereShader.setUniformValue("light_back", QVector4D{0,0,0,1});
-        sphereShader.setUniformValue("invert", -1.0f);
-        glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.haloBuffer.vertices.size()));
-        sphereShader.setUniformValue("light_bg", QVector4D{0.5,0.5,0.5,1});
-        sphereShader.setUniformValue("light_front", QVector4D{1,1,1,1});
-        sphereShader.setUniformValue("light_back", QVector4D{0,0,0,1});
-        sphereShader.setUniformValue("invert", 1.0f);
-        glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.haloBuffer.vertices.size()));
+        if (!options.nodePicking) {
+            glBuffers.haloBuffer.vertex_buffer.bind();
+            sphereShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+            glBuffers.haloBuffer.vertex_buffer.release();
+            glBuffers.haloBuffer.color_buffer.bind();
+            sphereShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
+            glBuffers.haloBuffer.color_buffer.release();
+            glBuffers.haloRadiusBuffer.bind();
+            sphereShader.setAttributeBuffer(radiusLocation, GL_FLOAT, 0, 1);
+            glBuffers.haloRadiusBuffer.release();
+            sphereShader.setUniformValue("light_bg", QVector4D{0.25,0.25,0.25,1});
+            sphereShader.setUniformValue("light_front", QVector4D{0.5,0.5,0.5,1});
+            sphereShader.setUniformValue("light_back", QVector4D{0,0,0,1});
+            sphereShader.setUniformValue("invert", -1.0f);
+            glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.haloBuffer.vertices.size()));
+            sphereShader.setUniformValue("light_bg", QVector4D{0.5,0.5,0.5,1});
+            sphereShader.setUniformValue("light_front", QVector4D{1,1,1,1});
+            sphereShader.setUniformValue("light_back", QVector4D{0,0,0,1});
+            sphereShader.setUniformValue("invert", 1.0f);
+            glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.haloBuffer.vertices.size()));
+        }
 
         sphereShader.disableAttributeArray(vertexLocation);
         sphereShader.disableAttributeArray(colorLocation);
