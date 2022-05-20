@@ -44,6 +44,7 @@
 #include <boost/container/static_vector.hpp>
 #include <boost/range/combine.hpp>
 
+#include <cstdint>
 #include <fstream>
 #include <cmath>
 
@@ -881,10 +882,12 @@ void Viewer::run() {
         }
     }
 
-    window->forEachOrthoVPDo([](ViewportOrtho & vp) {
-        vp.update();
+    static std::uint8_t i{};
+    window->forEachVPDo([](ViewportBase & vp) {
+        if (++i % 4 == 0) {
+            vp.update();
+        }
     });
-    window->viewport3D->update();
 }
 
 void Viewer::applyTextureFilterSetting(const QOpenGLTexture::Filter texFiltering) {
