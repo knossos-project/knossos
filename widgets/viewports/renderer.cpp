@@ -2505,9 +2505,8 @@ void ViewportBase::renderSkeleton(const RenderOptions &options) {
         for (auto elem : state->skeletonState->nodesByNodeID) {
             const auto & node = *elem.second;
             const auto acti = state->viewerState->idDisplay.testFlag(IdDisplay::ActiveNode) && state->skeletonState->activeNode != nullptr && *state->skeletonState->activeNode == node;
-            auto nodeID = state->viewerState->idDisplay.testFlag(IdDisplay::AllNodes) || acti ? QString::number(node.nodeID) : "";
-            auto comment = node.getComment();
-            comment = (ViewportOrtho::showNodeComments && !comment.isEmpty()) ? QString("%1%2").arg(nodeID.isEmpty() ? "" : ":", comment) : "";
+            auto nodeID = state->viewerState->idDisplay.testFlag(IdDisplay::AllNodes) || acti ? QString::number(node.nodeID) : QString{};
+            const auto comment = (ViewportOrtho::showNodeComments && node.hasComment()) ? QString("%1%2").arg(nodeID.isEmpty() ? "" : ":", node.getComment()) : QString{};
             if (nodeID.isEmpty() == false || comment.isEmpty() == false) {
                 const auto pos = Dataset::current().scales[0].componentMul(node.position) + Dataset::current().scales[0] * 0.5 * Skeletonizer::singleton().radius(node);
                 pb.write(mv, p, pos, nodeID.append(comment), false, Qt::darkGray);

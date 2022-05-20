@@ -28,6 +28,7 @@
 class PropertyQuery {
 public:
     QVariantHash properties;
+    bool hasComment() const;
     QString getComment() const;
     void setComment(const QString & comment);
 };
