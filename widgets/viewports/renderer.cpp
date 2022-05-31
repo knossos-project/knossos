@@ -529,9 +529,9 @@ void ViewportBase::renderScaleBar() {
     const QColor color{state->viewerState->showScalebar == 1 ? Qt::black : Qt::white};
     std::vector<floatCoordinate> vertices{
         Coordinate{min.x, min.y, min.z},
+        Coordinate{min.x, max.y, min.z},
         Coordinate{max.x, min.y, min.z},
         Coordinate{max.x, max.y, min.z},
-        Coordinate{min.x, max.y, min.z},
     };
 
     painterBinder{*this, meshVao, true}.write(mv, p, Coordinate(min.x + scalebarLenPx / 2, min.y - 0.01*edgeLength, min.z), sizeLabel, true, color);
@@ -553,7 +553,7 @@ void ViewportBase::renderScaleBar() {
     lineShader.setUniformValue("projection_matrix", p);
 
     glDisable(GL_DEPTH_TEST);
-    glDrawArrays(GL_LINES, 0, vertices.size());
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, vertices.size());
     lineShader.disableAttributeArray(vertexLocation);
     lineShader.release();
 
