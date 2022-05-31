@@ -381,25 +381,42 @@ void ViewportBase::setFrontFacePerspective() {
 void ViewportBase::renderViewportFrontFace() {
     setFrontFacePerspective();
     // render node selection box
-//    if (state->viewerState->nodeSelectSquareData.first == static_cast<int>(viewportType)) {
-//        Coordinate leftUpper = state->viewerState->nodeSelectionSquare.first;
-//        Coordinate rightLower = state->viewerState->nodeSelectionSquare.second;
-//        glLineWidth(1.);
-//        glBegin(GL_QUADS);
-//        glColor4f(0, 1., 0, 0.2);
-//            glVertex3f(leftUpper.x, leftUpper.y, 0.f);
-//            glVertex3f(leftUpper.x, rightLower.y, 0.f);
-//            glVertex3f(rightLower.x, rightLower.y, 0.f);
-//            glVertex3f(rightLower.x, leftUpper.y, 0.f);
-//        glEnd();
-//        glBegin(GL_LINE_LOOP);
-//        glColor4f(0, 1., 0, 1);
-//            glVertex3f(leftUpper.x, leftUpper.y, 0.f);
-//            glVertex3f(leftUpper.x, rightLower.y, 0.f);
-//            glVertex3f(rightLower.x, rightLower.y, 0.f);
-//            glVertex3f(rightLower.x, leftUpper.y, 0.f);
-//        glEnd();
-//    }
+    if (state->viewerState->nodeSelectSquareData.first == static_cast<int>(viewportType)) {
+        Coordinate leftUpper = state->viewerState->nodeSelectionSquare.first;
+        Coordinate rightLower = state->viewerState->nodeSelectionSquare.second;
+        std::vector<floatCoordinate> vertices{
+            floatCoordinate(leftUpper.x, leftUpper.y, 0.f), // line
+            floatCoordinate(leftUpper.x, rightLower.y, 0.f), // line
+            floatCoordinate(rightLower.x, rightLower.y, 0.f), // line, rect
+            floatCoordinate(rightLower.x, leftUpper.y, 0.f), // line, rect
+            floatCoordinate(leftUpper.x, rightLower.y, 0.f), // rect
+            floatCoordinate(leftUpper.x, leftUpper.y, 0.f) // rect
+        };
+
+        int vertexLocation = lineShader.attributeLocation("vertex");
+        lineShader.enableAttributeArray(vertexLocation);
+        selectionSquareBuf.bind();
+        if (selectionSquareBuf.size() == 0) {
+            selectionSquareBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
+        } else {
+            glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
+        }
+        lineShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+        selectionSquareBuf.release();
+
+        lineShader.bind();
+        QVector4D color{0, 1., 0, 1};
+        lineShader.setUniformValue("color", color);
+        lineShader.setUniformValue("modelview_matrix", mv);
+        lineShader.setUniformValue("projection_matrix", p);
+        glDrawArrays(GL_LINE_LOOP, 0, 4);
+
+        color = {0, 1., 0, 0.2};
+        lineShader.setUniformValue("color", color);
+        glDrawArrays(GL_TRIANGLE_STRIP, 2, 4);
+        lineShader.release();
+        lineShader.disableAttributeArray(vertexLocation);
+    }
 }
 
 void ViewportOrtho::renderViewportFrontFace() {

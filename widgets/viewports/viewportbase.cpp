@@ -371,7 +371,7 @@ void ViewportBase::initializeGL() {
     screenVertexBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
     screenVertexBuf.release();
 
-    for (auto * buf : {&orthoVBuf, &texPosBuf, &boundaryBuf, &boundaryGridBuf, &crosshairBuf, &vpBorderBuf, &brushBuf, &scalebarBuf}) {
+    for (auto * buf : {&orthoVBuf, &texPosBuf, &boundaryBuf, &boundaryGridBuf, &crosshairBuf, &vpBorderBuf, &brushBuf, &scalebarBuf, &selectionSquareBuf}) {
         buf->create();
         buf->setUsagePattern(QOpenGLBuffer::DynamicDraw);
     }
