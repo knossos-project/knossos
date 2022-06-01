@@ -30,6 +30,7 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include <QSettings>
+#include <QComboBox>
 #include <QVBoxLayout>
 #include <QWidget>
 
@@ -44,7 +45,9 @@ class ViewportTab : public QWidget {
     QVBoxLayout generalLayout;
     QCheckBox showScalebarCheckBox{"Show scalebar"};
     QCheckBox showVPDecorationCheckBox{"Show viewport decorations"};
-    QCheckBox drawIntersectionsCrossHairCheckBox{"Draw intersection crosshairs"};
+    QHBoxLayout crosshairLayout;
+    QLabel crosshairLabel{"Intersection crosshairs"};
+    QComboBox crosshairDropdown;
     QCheckBox addArbVPCheckBox{"Add viewport with arbitrary view"};
     // 3D viewport
     QGroupBox viewport3DBox{tr("3D viewport")};

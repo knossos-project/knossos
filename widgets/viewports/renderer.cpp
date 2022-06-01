@@ -816,26 +816,22 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     glDisable(GL_DEPTH_TEST);// don’t render skeleton above crosshairs
-    if (options.drawCrosshairs) {
+    if (options.drawCrosshairs != CrosshairDisplay::HIDDEN) {
         auto mv2 = mv;
         mv2.translate(isoCurPos.x, isoCurPos.y, isoCurPos.z);
         float dataPxX = displayedIsoPx;
         float dataPxY = displayedIsoPx;
         const auto halfLength = dataPxX * v1;
-        const auto hOffset = viewportType == VIEWPORT_ARBITRARY ? QVector3D{} : 0.5 * v1 * Dataset::current().scale;
-        const auto vOffset = viewportType == VIEWPORT_ARBITRARY ? QVector3D{} : 0.5 * v2 * Dataset::current().scale;
-        const auto left = -halfLength - vOffset;
+        const auto hOffset = viewportType == VIEWPORT_ARBITRARY ? floatCoordinate{} : v1.componentMul(Dataset::current().scale) * 0.5;
+        const auto vOffset = viewportType == VIEWPORT_ARBITRARY ? floatCoordinate{} : v2.componentMul(Dataset::current().scale) * 0.5;
+        const auto left = vOffset * -1 - halfLength;
         const auto right = halfLength - vOffset;
 
         const auto halfHeight = dataPxY * v2;
-        const auto top = -halfHeight + hOffset;
+        const auto top = hOffset - halfHeight;
         const auto bottom = halfHeight + hOffset;
-        std::vector<floatCoordinate> vertices{
-            floatCoordinate(left.x(), left.y(), left.z()),
-            floatCoordinate(right.x(), right.y(), right.z()),
-            floatCoordinate(top.x(), top.y(), top.z()),
-            floatCoordinate(bottom.x(), bottom.y(), bottom.z())
-        };
+
+        std::vector<floatCoordinate> vertices = { left, right, top, bottom };
         const int vertexLocation = lineShader.attributeLocation("vertex");
         lineShader.enableAttributeArray(vertexLocation);
         crosshairBuf.bind();
@@ -846,9 +842,9 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         }
         lineShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
         crosshairBuf.release();
-
+        const auto opacity = options.drawCrosshairs == CrosshairDisplay::SUBTLE ? 0.3f : 1.f;
         lineShader.bind();
-        QVector4D color{std::abs(v2.z), std::abs(v2.y), std::abs(v2.x), 0.3};
+        QVector4D color{std::abs(v2.z), std::abs(v2.y), std::abs(v2.x), opacity};
         lineShader.setUniformValue("color", color);
         lineShader.setUniformValue("modelview_matrix", mv2);
         lineShader.setUniformValue("projection_matrix", p);
@@ -856,7 +852,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glLineWidth(1);
 
         glDrawArrays(GL_LINES, 0, 2);
-        color = {std::abs(v1.z), std::abs(v1.y), std::abs(v1.x), 0.3};
+        color = {std::abs(v1.z), std::abs(v1.y), std::abs(v1.x), opacity};
         lineShader.setUniformValue("color", color);
         glDrawArrays(GL_LINES, 2, 2);
         lineShader.disableAttributeArray(vertexLocation);

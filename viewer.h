@@ -27,6 +27,7 @@
 #include "usermove.h"
 #include "widgets/preferences/navigationtab.h"
 #include "widgets/mainwindow.h"
+#include "widgets/viewports/renderoptions.h"
 #include "widgets/viewports/viewportbase.h"
 
 #include <QColor>
@@ -160,7 +161,7 @@ struct ViewerState {
     // viewport rendering options
     float FOVmin{0.5};
     float FOVmax{1};
-    bool drawVPCrosshairs{true};
+    CrosshairDisplay crosshairDisplay{CrosshairDisplay::SUBTLE};
     RotationCenter rotationCenter{RotationCenter::ActiveNode};
     int showIntersections{false};
     int showScalebar{false};

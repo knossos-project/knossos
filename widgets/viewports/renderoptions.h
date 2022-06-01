@@ -1,5 +1,11 @@
 #pragma once
 
+enum class CrosshairDisplay {
+    SUBTLE,
+    STRONG,
+    HIDDEN
+};
+
 struct RenderOptions {
     enum class SelectionPass { NoSelection, NodeID0_24Bits, NodeID24_48Bits, NodeID48_64Bits };
     RenderOptions();
@@ -10,7 +16,7 @@ struct RenderOptions {
 
     bool drawBoundaryAxes{true};
     bool drawBoundaryBox{true};
-    bool drawCrosshairs{true};
+    CrosshairDisplay drawCrosshairs{CrosshairDisplay::SUBTLE};
     bool drawMesh{true};
     bool drawOverlay{true};
     bool drawSkeleton{true};
