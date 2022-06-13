@@ -46,6 +46,12 @@ public:
 
 class LayerDialogWidget : public DialogVisibilityNotify {
 Q_OBJECT
+    void updateLayerProperties();
+
+private slots:
+    void updateBiasHandle(const int value);
+    void updateRangeDeltaHandle(const int value);
+
 public:
     explicit LayerDialogWidget(QWidget * parent = nullptr);
 
@@ -57,8 +63,10 @@ public:
     QSlider opacitySlider{Qt::Horizontal};
     QLabel rangeDeltaSliderLabel{"range delta"};
     QSlider rangeDeltaSlider{Qt::Horizontal};
+    QSpinBox rangeDeltaSpinBox;
     QLabel biasSliderLabel{"bias"};
     QSlider biasSlider{Qt::Horizontal};
+    QSpinBox biasSpinBox;
     QCheckBox combineSlicesCheck{"combine consecutive slices"};
     QComboBox combineSlicesType;
     QSpinBox combineSlicesSpin;
@@ -79,7 +87,4 @@ public:
 
     void loadSettings();
     void saveSettings();
-
-private:
-    void updateLayerProperties();
 };

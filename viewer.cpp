@@ -244,9 +244,11 @@ const auto datasetAdjustment = [](auto layerId, auto index){
         return state->viewerState->datasetColortable[index];
     } else {
         const auto MAX_COLORVAL{std::numeric_limits<uint8_t>::max()};
-        const auto bias = Dataset::datasets[layerId].renderSettings.bias;
+        auto bias = Dataset::datasets[layerId].renderSettings.bias;
         const auto range = Dataset::datasets[layerId].renderSettings.rangeDelta;
-        const int dynIndex = index * range + 255.0 * (range < 0 ? 1.0 - bias : bias);
+        const bool invert = range < 0;
+        int dynIndex = (index - bias * 255) / std::abs(range);
+        dynIndex = invert ? 255 - dynIndex : dynIndex;
         std::uint8_t val = std::min(static_cast<int>(MAX_COLORVAL), std::max(0, dynIndex));
         return std::tuple(val, val, val);
     }

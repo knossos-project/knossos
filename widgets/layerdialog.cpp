@@ -170,14 +170,17 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     optionsLayout.addWidget(&opacitySlider, row, ++col);
     optionsLayout.addWidget(&linearFilteringCheckBox, row, ++col);
     biasSlider.setMaximum(255);
+    biasSpinBox.setMaximum(255);
     optionsLayout.addWidget(&biasSliderLabel, ++row, col=0);
     optionsLayout.addWidget(&biasSlider, row, ++col);
-    rangeDeltaSlider.setMinimum(-255);
-    rangeDeltaSlider.setMaximum(255);
+    optionsLayout.addWidget(&biasSpinBox, row, ++col);
+    rangeDeltaSlider.setRange(-255, 255);
     rangeDeltaSlider.setTickInterval(255);
+    rangeDeltaSpinBox.setRange(-255, 255);
     rangeDeltaSlider.setTickPosition(QSlider::TicksBothSides);
     optionsLayout.addWidget(&rangeDeltaSliderLabel, ++row, col=0);
     optionsLayout.addWidget(&rangeDeltaSlider, row, ++col);
+    optionsLayout.addWidget(&rangeDeltaSpinBox, row, ++col);
     combineSlicesType.addItems({"min", "max"});
     optionsLayout.addWidget(&combineSlicesCheck, ++row, col=0);
     optionsLayout.addWidget(&combineSlicesType, row, ++col);
@@ -277,26 +280,10 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
             emit itemModel.dataChanged(changeIndex, changeIndex, QVector<int>(Qt::EditRole));
         }
     });
-
-    QObject::connect(&rangeDeltaSlider, &QAbstractSlider::valueChanged, [this](int value){
-        const auto& currentIndex = treeView.selectionModel()->currentIndex();
-        if(currentIndex.isValid()) {;
-            std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
-            auto& layerSettings = Dataset::datasets[ordered_index].renderSettings;
-            layerSettings.rangeDelta = static_cast<float>(value) / rangeDeltaSlider.maximum();
-            state->viewer->reslice_notify(ordered_index);
-        }
-    });
-
-    QObject::connect(&biasSlider, &QAbstractSlider::valueChanged, [this](int value){
-        const auto& currentIndex = treeView.selectionModel()->currentIndex();
-        if(currentIndex.isValid()) {
-            std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
-            auto& layerSettings = Dataset::datasets[ordered_index].renderSettings;
-            layerSettings.bias = static_cast<float>(value) / biasSlider.maximum();
-            state->viewer->reslice_notify(ordered_index);
-        }
-    });
+    QObject::connect(&rangeDeltaSlider, &QAbstractSlider::valueChanged, this, &LayerDialogWidget::updateRangeDeltaHandle);
+    QObject::connect(&rangeDeltaSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &LayerDialogWidget::updateRangeDeltaHandle);
+    QObject::connect(&biasSlider, &QAbstractSlider::valueChanged, this, &LayerDialogWidget::updateBiasHandle);
+    QObject::connect(&biasSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &LayerDialogWidget::updateBiasHandle);
 
     QObject::connect(&combineSlicesCheck, &QCheckBox::stateChanged, [this](int checkstate){
         const auto& currentIndex = treeView.selectionModel()->currentIndex();
@@ -376,6 +363,30 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
 
     resize(800, 600);
     setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
+}
+
+void LayerDialogWidget::updateRangeDeltaHandle(const int value) {
+    const auto& currentIndex = treeView.selectionModel()->currentIndex();
+    if(currentIndex.isValid()) {
+        std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
+        auto& layerSettings = Dataset::datasets[ordered_index].renderSettings;
+        layerSettings.rangeDelta = static_cast<float>(value) / rangeDeltaSlider.maximum();
+        rangeDeltaSlider.setValue(value);
+        rangeDeltaSpinBox.setValue(value);
+        state->viewer->reslice_notify(ordered_index);
+    }
+}
+
+void LayerDialogWidget::updateBiasHandle(const int value) {
+    const auto& currentIndex = treeView.selectionModel()->currentIndex();
+    if(currentIndex.isValid()) {
+        std::size_t ordered_index = itemModel.ordered_i(currentIndex.row());
+        auto& layerSettings = Dataset::datasets[ordered_index].renderSettings;
+        layerSettings.bias = static_cast<float>(value) / biasSlider.maximum();
+        biasSlider.setValue(value);
+        biasSpinBox.setValue(value);
+        state->viewer->reslice_notify(ordered_index);
+    }
 }
 
 void LayerDialogWidget::loadSettings() {

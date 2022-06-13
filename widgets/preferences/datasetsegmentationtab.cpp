@@ -39,8 +39,10 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     biasSpinBox.setRange(0, 255);
     biasSlider.setRange(0, 255);
 
-    rangeDeltaSlider.setRange(1, 255);
-    rangeDeltaSpinBox.setRange(1, 255);
+    rangeDeltaSlider.setRange(-255, 255);
+    rangeDeltaSlider.setTickInterval(255);
+    rangeDeltaSlider.setTickPosition(QSlider::TicksBothSides);
+    rangeDeltaSpinBox.setRange(-255, 255);
 
     createPaintObjectCheck.setToolTip(tr("If there is no Object selected, \nautomatically create a fresh Object \nwhose Subobject ID is used for painting."));
     overlayGroup.setCheckable(true);
