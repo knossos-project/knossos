@@ -38,7 +38,6 @@
 #include "stateInfo.h"
 #include "viewer.h"
 
-#include <GL/gl.h>
 #include <QMatrix4x4>
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLPaintDevice>
