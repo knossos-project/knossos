@@ -32,6 +32,7 @@
 #include "widgets/viewports/viewportbase.h"
 
 #include <QApplication>
+#include <QDebug>
 #include <QFileInfo>
 #include <QScreen>
 #include <QSplashScreen>
@@ -79,6 +80,10 @@ struct MessageHermit {
         std::cerr << detail.toStdString() << std::endl;
         formatter << "→ app:" << &a << "→ qApp:" << qApp;
         std::cerr << formattedOutput.toStdString() << std::endl;
+        qDebug() << title.toUtf8();
+        qDebug() << info.toUtf8();
+        qDebug() << detail.toUtf8();
+        qDebug() << formattedOutput.toUtf8();
         if (!exec) {
             return;
         }
