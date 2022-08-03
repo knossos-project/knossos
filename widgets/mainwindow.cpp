@@ -590,12 +590,6 @@ void MainWindow::createMenus() {
     menuBar()->addMenu(&fileMenu);
     fileMenu.addAction(QIcon(":/resources/icons/menubar/choose-dataset.png"), tr("Choose Dataset …"), &widgetContainer.datasetLoadWidget, &DatasetLoadWidget::show);
     fileMenu.addSeparator();
-    fileMenu.addAction(QIcon(":/resources/icons/open-annotation.png"), "Import Coordinates", [this] {
-        const auto filenames = QFileDialog::getOpenFileNames(this, tr("Import coordinate list"), QDir::homePath(), tr("Text files (*.txt *.csv *.tsv)"));
-        if (!filenames.isEmpty()) {
-            CoordinateImportWidget{filenames, this}.exec();
-        }
-    });
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/menubar/create-annotation.png"), tr("Create New Annotation"), this, &MainWindow::newAnnotationSlot, QKeySequence::New);
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/menubar/open-annotation.png"), tr("Open Annotation …"), this, &MainWindow::openSlot, QKeySequence::Open);
     auto & recentfileMenu = *fileMenu.addMenu(QIcon(":/resources/icons/menubar/open-recent.png"), tr("Recent Annotation File(s)"));
@@ -610,6 +604,13 @@ void MainWindow::createMenus() {
     }
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/menubar/save-annotation.png"), tr("Save Annotation"), this, &MainWindow::saveSlot, QKeySequence::Save);
     addApplicationShortcut(fileMenu, QIcon(":/resources/icons/menubar/save-annotation-as.png"), tr("Save Annotation as …"), this, &MainWindow::saveAsSlotWrap, QKeySequence::SaveAs);
+    fileMenu.addSeparator();
+    fileMenu.addAction(QIcon(":/resources/icons/open-annotation.png"), "Import Coordinates", [this] {
+        const auto filenames = QFileDialog::getOpenFileNames(this, tr("Import coordinate list"), QDir::homePath(), tr("Text files (*.txt *.csv *.tsv)"));
+        if (!filenames.isEmpty()) {
+            CoordinateImportWidget{filenames, this}.exec();
+        }
+    });
     fileMenu.addSeparator();
     fileMenu.addAction(tr("Export to nml..."), this, &MainWindow::exportToNml);
     fileMenu.addSeparator();
