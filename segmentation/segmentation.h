@@ -286,6 +286,7 @@ public slots:
     void unmergeSelectedObjects(const Coordinate & clickPos);
     void jumpToSelectedObject();
     bool placeCommentForSelectedObjects(const QString & comment);
+    void setSelectedObjectsMutability(bool immutable);
     void restoreDefaultColorForSelectedObjects();
     void generateColors();
     void toggleVolumeRender(const bool render);

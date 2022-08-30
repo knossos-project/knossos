@@ -769,6 +769,13 @@ bool Segmentation::placeCommentForSelectedObjects(const QString & comment) {
     return !selectedObjectIndices.empty();
 }
 
+void Segmentation::setSelectedObjectsMutability(bool immutable) {
+    for (auto index : selectedObjectIndices) {
+        objects[index].immutable = immutable;
+        emit changedRow(index);
+    }
+}
+
 void Segmentation::restoreDefaultColorForSelectedObjects() {
     if (!selectedObjectIndices.empty()) {
         for (auto index : selectedObjectIndices) {

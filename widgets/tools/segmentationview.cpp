@@ -486,6 +486,9 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
                 }
             }
         });
+        QObject::connect(contextMenu.addAction("Lock"), &QAction::triggered, [](){ Segmentation::singleton().setSelectedObjectsMutability(true); });
+        QObject::connect(contextMenu.addAction("Unlock"), &QAction::triggered, [](){ Segmentation::singleton().setSelectedObjectsMutability(false); });
+        addDisabledSeparator(contextMenu);
         QObject::connect(contextMenu.addAction("Restore default color"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::restoreDefaultColorForSelectedObjects);
         deleteAction(contextMenu, table, "Delete", &Segmentation::singleton(), &Segmentation::deleteSelectedObjects);
         contextMenu.setDefaultAction(contextMenu.actions().front());
@@ -511,6 +514,9 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         contextMenu.actions().at(i++)->setEnabled(true);// generate meshes
         contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// assign new id
         contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// set category
+        contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// lock
+        contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// unlock
+        ++i;// separator
         contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// restoreColorAction
         contextMenu.actions().at(deleteActionIndex = i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// deleteAction
         ++i;// separator
