@@ -223,13 +223,12 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     });
 
     createGlobalAction(state->mainWindow, Qt::Key_F8, [](){
-        const auto cpos = state->viewerState->currentPosition.cube(128, Dataset::current().scaleFactor) - state->M/2;
+        const auto cpos = Dataset::datasets[Segmentation::singleton().layerId].global2cube(state->viewerState->currentPosition) - state->M/2;
         for (int z = cpos.z; z < cpos.z + state->M; ++z)
         for (int y = cpos.y; y < cpos.y + state->M; ++y)
         for (int x = cpos.x; x < cpos.x + state->M; ++x) {
             Loader::Controller::singleton().markCubeAsModified(Segmentation::singleton().layerId, {x, y, z}, Dataset::current().magnification);
         }
-
     });
 
     addDockWidget(Qt::RightDockWidgetArea, &cheatsheet);
