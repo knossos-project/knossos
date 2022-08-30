@@ -141,12 +141,17 @@ public:
 };
 
 template<typename T>
-class hash_list<T>::iterator : public std::iterator<std::bidirectional_iterator_tag, T, std::ptrdiff_t, reference*, reference> {
+class hash_list<T>::iterator {
     hash_list & owner;
     typename decltype(hash_list<T>::data)::iterator it;
     friend class hash_list;
     iterator(decltype(owner) & owner, const decltype(it) & it) : owner{owner}, it{it} {}
 public:
+    using iterator_category = std::bidirectional_iterator_tag;
+    using value_type = T;
+    using difference_type = std::ptrdiff_t;
+    using pointer = reference*;
+//    using reference = reference;
     bool operator!=(const iterator & other) {
         return it != other.it;
     }
