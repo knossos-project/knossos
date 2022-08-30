@@ -252,14 +252,12 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     brushRadiusEdit.setValue(Segmentation::singleton().brush.getRadius());
     twodBtn.setChecked(true);
 
-    toolsLayout.addWidget(&showOnlySelectedChck);
-    toolsLayout.addStretch();
-    toolsLayout.addStretch();
-    toolsLayout.addWidget(&brushRadiusLabel);
-    toolsLayout.addWidget(&brushRadiusEdit);
-    toolsLayout.addStretch();
-    toolsLayout.addWidget(&twodBtn);
-    toolsLayout.addWidget(&threedBtn);
+    toolsLayout.addWidget(&showOnlySelectedChck, 0, 0, Qt::AlignLeft);
+    toolsLayout.addWidget(&lockNewObjectsCheckbox, 1, 0, Qt::AlignLeft);
+    toolsLayout.addWidget(&brushRadiusLabel, 0, 1, Qt::AlignRight);
+    toolsLayout.addWidget(&brushRadiusEdit, 0, 2);
+    toolsLayout.addWidget(&twodBtn, 0, 3);
+    toolsLayout.addWidget(&threedBtn, 1, 3);
     layout.addLayout(&toolsLayout);
 
     categoryModel.recreate();
@@ -402,6 +400,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetSelection, this, &SegmentationView::updateSelection);
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetSelection, this, &SegmentationView::updateTouchedObjSelection);
     QObject::connect(&Segmentation::singleton(), &Segmentation::renderOnlySelectedObjsChanged, &showOnlySelectedChck, &QCheckBox::setChecked);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::lockNewObjectsChanged, &lockNewObjectsCheckbox, &QCheckBox::setChecked);
     QObject::connect(&Segmentation::singleton(), &Segmentation::categoriesChanged, &categoryModel, &CategoryModel::recreate);
     QObject::connect(&Segmentation::singleton(), &Segmentation::hoveredSubObjectChanged, [this](const uint64_t subobject_id, const std::vector<uint64_t> & overlapObjIndices) {
         auto text = tr("Hovered raw segmentation ID: %1").arg(subobject_id);
@@ -528,6 +527,9 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     QObject::connect(objectsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationView::selectionChanged);
     QObject::connect(touchedObjsTable.selectionModel(), &QItemSelectionModel::selectionChanged, this, &SegmentationView::touchedObjSelectionChanged);
     QObject::connect(&showOnlySelectedChck, &QCheckBox::clicked, &Segmentation::singleton(), &Segmentation::setRenderOnlySelectedObjs);
+    QObject::connect(&lockNewObjectsCheckbox, &QCheckBox::clicked, [this]() {
+        Segmentation::singleton().setLockNewObjects(lockNewObjectsCheckbox.isChecked());
+    });
 
     touchedObjectModel.recreate();
     objectModel.recreate();

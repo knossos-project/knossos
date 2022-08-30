@@ -130,6 +130,7 @@ Q_OBJECT
     uint64_t touched_subobject_id = 0;
     // For segmentation job mode
     uint64_t lastTodoObject_id = 0;
+    bool lockNewObjects{false};
 
     // This array holds the table for overlay coloring.
     // The colors should be "maximally different".
@@ -184,6 +185,8 @@ public:
     void setRenderOnlySelectedObjs(const bool onlySelected);
     decltype(backgroundId) getBackgroundId() const;
     void setBackgroundId(decltype(backgroundId));
+    decltype(lockNewObjects) getLockNewObjects() const;
+    void setLockNewObjects(const decltype(lockNewObjects));
     using color_t = std::tuple<std::uint8_t, std::uint8_t, std::uint8_t, std::uint8_t>;
     color_t subobjectColor(const uint64_t subObjectID) const;
     color_t colorObjectFromIndex(const uint64_t objectIndex) const;
@@ -263,6 +266,7 @@ signals:
     void resetTouchedObjects();
     void renderOnlySelectedObjsChanged(bool onlySelected);
     void backgroundIdChanged(uint64_t backgroundId);
+    void lockNewObjectsChanged(const bool lockNewObjects);
     void categoriesChanged();
     void todosLeftChanged();
     void hoveredSubObjectChanged(const uint64_t subobject_id, const std::vector<uint64_t> & overlapObjects);

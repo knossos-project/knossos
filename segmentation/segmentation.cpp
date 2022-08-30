@@ -124,6 +124,7 @@ void Segmentation::createAndSelectObject(const Coordinate & position, const QStr
     clearObjectSelection();
     auto & newObject = createObjectFromSubobjectId(SubObject::highestId + 1, position);
     newObject.category = category;
+    newObject.immutable = Segmentation::singleton().lockNewObjects;
     selectObject(newObject);
 }
 
@@ -217,6 +218,14 @@ decltype(Segmentation::backgroundId) Segmentation::getBackgroundId() const {
 
 void Segmentation::setBackgroundId(decltype(backgroundId) newBackgroundId) {
     emit backgroundIdChanged(backgroundId = newBackgroundId);
+}
+
+decltype(Segmentation::lockNewObjects) Segmentation::getLockNewObjects() const {
+    return lockNewObjects;
+}
+
+void Segmentation::setLockNewObjects(const decltype(lockNewObjects) newLockNewObjects) {
+    emit lockNewObjectsChanged(lockNewObjects = newLockNewObjects);
 }
 
 Segmentation::color_t Segmentation::colorObjectFromIndex(const uint64_t objectIndex) const {

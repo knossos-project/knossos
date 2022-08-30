@@ -329,6 +329,7 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
 
     xml.writeStartElement("segmentation");
     xml.writeAttribute("backgroundId", QString::number(Segmentation::singleton().getBackgroundId()));
+    xml.writeAttribute("lockNewObjects", QString::number(Segmentation::singleton().getLockNewObjects()));
     xml.writeEndElement();
 
     xml.writeStartElement("editPosition");
@@ -591,6 +592,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                     }
                 } else if(xml.name() == "segmentation") {
                     Segmentation::singleton().setBackgroundId(attributes.value("backgroundId").toULongLong());
+                    Segmentation::singleton().setLockNewObjects(attributes.hasAttribute("lockNewObjects") ? static_cast<bool>(attributes.value("lockNewObjects").toInt()) : false);
                 } else if(xml.name() == "editPosition") {
                     loadedPosition = floatCoordinate(attributes.value("x").toDouble(), attributes.value("y").toDouble(), attributes.value("z").toDouble());
                     if (nmlScale) {

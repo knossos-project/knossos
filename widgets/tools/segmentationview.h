@@ -33,6 +33,7 @@
 #include <QColorDialog>
 #include <QComboBox>
 #include <QDoubleSpinBox>
+#include <QGridLayout>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
@@ -106,13 +107,14 @@ public:
 class SegmentationView : public QWidget {
 Q_OBJECT
     QVBoxLayout layout;
-    QHBoxLayout toolsLayout;
+    QGridLayout toolsLayout;
     QButtonGroup modeGroup;
     QLabel brushRadiusLabel{"Brush radius"};
     QDoubleSpinBox brushRadiusEdit;
     QPushButton twodBtn{"2D"};
     QPushButton threedBtn{"3D"};
     QCheckBox showOnlySelectedChck{"Show only selected objects"};
+    QCheckBox lockNewObjectsCheckbox{"Lock new objects"};
     QHBoxLayout filterLayout;
     CategoryModel categoryModel;
     QComboBox categoryFilter;
