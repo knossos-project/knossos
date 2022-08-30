@@ -251,6 +251,14 @@ public:
     void mergelistLoad(QIODevice & file);
     void mergelistLoad(QTextStream & stream);
     void loadOverlayLutFromFile(const QString & filename = ":/resources/color_palette/default.json");
+    template<typename Func>
+    void bulkOperation(Func func) {
+        {
+            QSignalBlocker b{this};
+            func();
+        }
+        emit resetData();
+    }
 signals:
     void beforeAppendRow();
     void beforeRemoveRow();

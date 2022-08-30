@@ -39,6 +39,7 @@ void coordCubesMarkChanged(const CubeCoordSet & cubeChangeSet);
 std::optional<std::uint64_t> readLayerVoxel(const Coordinate & pos, const std::size_t layerIdx);
 std::uint64_t readVoxel(const Coordinate & pos);
 subobjectRetrievalMap readVoxels(const Coordinate & centerPos, const brush_t &);
+void collectFromMovementArea();
 void assignNewIdInMovementArea(const std::uint64_t newId);
 bool writeVoxel(const Coordinate & pos, const uint64_t value, bool isMarkChanged = true);
 void writeVoxels(const Coordinate & centerPos, const uint64_t value, const brush_t &, bool isMarkChanged = true);

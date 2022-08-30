@@ -181,6 +181,23 @@ CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  g
     return processRegion(globalFirst, globalLast, func, [](int &, int, int){});
 }
 
+void collectFromMovementArea() {
+    QElapsedTimer t;
+    t.start();
+    std::unordered_map<std::uint64_t, Coordinate> ids;
+    const auto cubeChangeSet = processRegion(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax, [&ids](uint64_t & voxel, const Coordinate & pos){
+        ids.try_emplace(voxel, pos);
+    });
+    ids.erase(Segmentation::singleton().getBackgroundId());
+    Segmentation::singleton().bulkOperation([&ids](){
+        for (const auto & [id, pos] : ids) {
+            Segmentation::singleton().selectObjectFromSubObject(id, pos);
+        }
+    });
+    coordCubesMarkChanged(cubeChangeSet);
+    qDebug() << "collected ids in" << t.nsecsElapsed()/1e9 << 's';
+}
+
 void assignNewIdInMovementArea(const std::uint64_t newId) {
     const auto cubeChangeSet = processRegion(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax, [newId](uint64_t & voxel, Coordinate){
         if (Segmentation::singleton().isSubObjectIdSelected(voxel)) {

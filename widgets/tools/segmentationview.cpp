@@ -452,6 +452,8 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         addDisabledSeparator(contextMenu);
         copyAction(contextMenu, table);
         addDisabledSeparator(contextMenu);
+        QObject::connect(contextMenu.addAction("Collect cubes and IDs"), &QAction::triggered, &collectFromMovementArea);
+        addDisabledSeparator(contextMenu);
         QObject::connect(contextMenu.addAction("Merge"), &QAction::triggered, &Segmentation::singleton(), &Segmentation::mergeSelectedObjects);
         QObject::connect(contextMenu.addAction("Generate mesh"), &QAction::triggered, [](){
             state->viewer->suspend([](){
@@ -500,6 +502,8 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() == 1);// jumpAction
         ++i;// separator
         contextMenu.actions().at(copyActionIndex = i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// copy selected contents
+        ++i;// separator
+        contextMenu.actions().at(i++)->setEnabled(true);// collect ids
         ++i;// separator
         contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 1);// mergeAction
         contextMenu.actions().at(i)->setText(tr("Generate mesh (%2, mag%1)").arg(Dataset::current().magnification)
