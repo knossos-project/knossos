@@ -5,6 +5,7 @@ time pacman -Sy archlinux-keyring --noconfirm
 time pacman -Syu --noconfirm
 
 cd ~
+git config --global --add safe.directory /root/knossos
 
 # run cmake and ninja
 mkdir knossos-build
