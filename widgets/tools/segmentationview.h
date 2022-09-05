@@ -158,6 +158,8 @@ public:
     uint64_t indexFromRow(const SegmentationObjectModel & model, const QModelIndex index) const;
     uint64_t indexFromRow(const TouchedObjectModel & model, const QModelIndex index) const;
     void userCreateObject();
+    QString getCategory(const int idx) const;
+    bool addObjectWithCategory(const int idx);
 public slots:
     void filter();
 };

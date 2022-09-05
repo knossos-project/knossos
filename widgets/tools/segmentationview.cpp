@@ -646,3 +646,24 @@ void SegmentationView::userCreateObject() {
     Segmentation::singleton().createAndSelectObject(state->viewerState->currentPosition, category);
     filter();
 }
+
+QString SegmentationView::getCategory(const int idx) const {
+    if (idx < categoryFilter.count()) {
+        return categoryFilter.itemText(idx);
+    }
+    return {};
+}
+
+bool SegmentationView::addObjectWithCategory(const int idx) {
+    if (idx < categoryFilter.count()) {
+        const Coordinate nopos{-1,-1,-1};
+        const auto id = Segmentation::singleton().highestSubobjectId() + 1;
+        auto & obj = Segmentation::singleton().createObjectFromSubobjectId(id, nopos);
+        obj.category = categoryFilter.itemText(idx);
+        obj.immutable = Segmentation::singleton().lockNewObjects;
+        Segmentation::singleton().clearObjectSelection();
+        Segmentation::singleton().selectObject(obj.index);
+        return true;
+    }
+    return false;
+}

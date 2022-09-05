@@ -252,6 +252,14 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     });
 
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRowSelection, &selectMeshesForObjects);
+    QObject::connect(&Segmentation::singleton(), &Segmentation::categoriesChanged, [this]() {
+        for (int idx = 1; idx < 10; ++idx) {
+            const auto category = widgetContainer.annotationWidget.segmentationTab.getCategory(idx);
+            categoryActions[idx-1]->setText(category);
+            categoryActions[idx-1]->setDisabled(category.isEmpty());
+        }
+    });
+    emit Segmentation::singleton().categoriesChanged();
 }
 
 void MainWindow::updateCursorLabel(const Coordinate & position, const ViewportType vpType) {
@@ -735,21 +743,26 @@ void MainWindow::createMenus() {
 
     });
 
-    auto commentsMenu = menuBar()->addMenu("&Comment Shortcuts");
-    auto addCommentShortcut = [&](const int number, const QKeySequence key){
-        auto & action = addApplicationShortcut(*commentsMenu, QIcon(), "", this, [this, number](){
-            if (placeComment(number-1)) {
-                activityLabel.setText(tr("Added comment: ") + CommentSetting::comments[number - 1].text);
+    auto * commentsMenu = menuBar()->addMenu("&Comment Shortcuts");
+    menuBar()->addMenu(&categoriesMenu);
+    auto addCommentShortcut = [&, this](auto * menu, const int number, const QKeySequence key){
+        bool comment = menu == commentsMenu;
+        auto & action = addApplicationShortcut(*menu, QIcon(), "", this, [comment, number, this](){
+            const auto placed = comment ? placeComment(number-1) : widgetContainer.annotationWidget.segmentationTab.addObjectWithCategory(number - 1);
+            if (placed) {
+                activityLabel.setText(comment ? tr("Added comment: ") + CommentSetting::comments[number - 1].text : tr("Added object: %1").arg(widgetContainer.annotationWidget.segmentationTab.getCategory(number - 1)));
                 activityLabel.setVisible(true);
                 activityAnimation.setDirection(QAbstractAnimation::Forward);
                 activityAnimation.start();
             }
         }, key);
-        commentActions.push_back(&action);
+        (comment? commentActions : categoryActions).push_back(&action);
         action.setEnabled(false);
     };
+
     for (int number = 1; number < 11; ++number) {
-        addCommentShortcut(number, QKeySequence(QString("Ctrl+%1").arg(number%10)));
+        addCommentShortcut(commentsMenu, number, QKeySequence(QString("Ctrl+%1").arg(number%10)));
+        if (number > 1) { addCommentShortcut(&categoriesMenu, number, QKeySequence(QString("Alt+%1").arg((number-1)%10))); }
     }
 
     commentsMenu->addSeparator();
@@ -1116,7 +1129,10 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
     enlargeBrushAction->setVisible(mode.testFlag(AnnotationMode::Brush));
     shrinkBrushAction->setVisible(mode.testFlag(AnnotationMode::Brush));
     clearMergelistAction->setVisible(segmentation && !mode.testFlag(AnnotationMode::Mode_MergeTracing));
-
+    categoriesMenu.setEnabled(segmentation && !mode.testFlag(AnnotationMode::Mode_Selection));
+    for (auto * action : categoriesMenu.actions()) {
+        action->setEnabled(categoriesMenu.isEnabled());
+    }
     if (mode.testFlag(AnnotationMode::Mode_MergeTracing) && state->skeletonState->activeNode != nullptr) {// sync subobject and node selection
         Skeletonizer::singleton().selectObjectForNode(*state->skeletonState->activeNode);
     }

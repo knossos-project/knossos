@@ -152,12 +152,14 @@ class MainWindow : public QMainWindow {
     CoordinateSpins currentPosSpins;
     QMenu fileMenu{"&File"};
     QMenu actionMenu{"&Action"};
+    QMenu categoriesMenu{"Cla&ss Shortcuts"};
     QMenu *scriptingMenu{nullptr};
     QString openFileDirectory;
     QString saveFileDirectory;
     QList<QString> skeletonFileHistory;
 
     std::vector<QAction*> commentActions;
+    std::vector<QAction*> categoryActions;
 
     QProgressBar networkProgressBar;
     QPushButton networkProgressAbortButton{"Abort"};
