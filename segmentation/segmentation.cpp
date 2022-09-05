@@ -565,6 +565,7 @@ void Segmentation::mergelistClear() {
     touched_subobject_id = 0;
     lastTodoObject_id = 0;
     categories = prefixed_categories;
+    emit categoriesChanged();
     emit resetData();
     emit resetSelection();
     emit resetTouchedObjects();
