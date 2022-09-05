@@ -131,7 +131,7 @@ Q_OBJECT
     // For segmentation job mode
     uint64_t lastTodoObject_id = 0;
     bool lockNewObjects{false};
-
+    QString defaultMergeClass;
     // This array holds the table for overlay coloring.
     // The colors should be "maximally different".
     std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> overlayColorMap;
@@ -220,6 +220,8 @@ public:
     uint64_t largestObjectContainingSubobject(const SubObject & subobject) const;
     uint64_t tryLargestObjectContainingSubobject(const uint64_t subObjectId) const;
     uint64_t smallestImmutableObjectContainingSubobject(const SubObject & subobject) const;
+    decltype(defaultMergeClass) getDefaultMergeClass() const;
+    void setDefaultMergeClass(const QString & mergeClass);
     //selection query
     bool isSelected(const SubObject & rhs) const;
     bool isSelected(const uint64_t &objectIndex) const;
@@ -279,6 +281,7 @@ signals:
     void todosLeftChanged();
     void hoveredSubObjectChanged(const uint64_t subobject_id, const std::vector<uint64_t> & overlapObjects);
     void volumeRenderToggled(const bool render);
+    void defaultMergeClassChanged(const QString & mergeClass);
 public slots:
     void clear();
     void deleteSelectedObjects();

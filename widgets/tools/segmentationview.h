@@ -1,4 +1,4 @@
-/*
+﻿/*
  *  This file is a part of KNOSSOS.
  *
  *  (C) Copyright 2007-2018
@@ -115,6 +115,9 @@ Q_OBJECT
     QPushButton threedBtn{"3D"};
     QCheckBox showOnlySelectedChck{"Show only selected objects"};
     QCheckBox lockNewObjectsCheckbox{"Lock new objects"};
+    QHBoxLayout mergeCategoryLayout;
+    QLabel defaultMergeCategoryLabel{"Default merge class"};
+    QLineEdit defaultMergeCategoryEdit{};
     QHBoxLayout filterLayout;
     CategoryModel categoryModel;
     QComboBox categoryFilter;

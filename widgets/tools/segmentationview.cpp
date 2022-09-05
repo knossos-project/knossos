@@ -254,6 +254,9 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
 
     toolsLayout.addWidget(&showOnlySelectedChck, 0, 0, Qt::AlignLeft);
     toolsLayout.addWidget(&lockNewObjectsCheckbox, 1, 0, Qt::AlignLeft);
+    mergeCategoryLayout.addWidget(&defaultMergeCategoryLabel);
+    mergeCategoryLayout.addWidget(&defaultMergeCategoryEdit);
+    toolsLayout.addLayout(&mergeCategoryLayout, 2, 0, Qt::AlignLeft);
     toolsLayout.addWidget(&brushRadiusLabel, 0, 1, Qt::AlignRight);
     toolsLayout.addWidget(&brushRadiusEdit, 0, 2);
     toolsLayout.addWidget(&twodBtn, 0, 3);
@@ -540,7 +543,8 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     QObject::connect(&lockNewObjectsCheckbox, &QCheckBox::clicked, [this]() {
         Segmentation::singleton().setLockNewObjects(lockNewObjectsCheckbox.isChecked());
     });
-
+    QObject::connect(&defaultMergeCategoryEdit, &QLineEdit::textChanged, [this]() { Segmentation::singleton().defaultMergeClass = defaultMergeCategoryEdit.text(); });
+    QObject::connect(&Segmentation::singleton(), &Segmentation::defaultMergeClassChanged, &defaultMergeCategoryEdit, &QLineEdit::setText);
     touchedObjectModel.recreate();
     objectModel.recreate();
 

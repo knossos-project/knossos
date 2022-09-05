@@ -338,6 +338,15 @@ uint64_t Segmentation::smallestImmutableObjectContainingSubobject(const Segmenta
     return objectIndex;
 }
 
+decltype(Segmentation::defaultMergeClass) Segmentation::getDefaultMergeClass() const {
+    return defaultMergeClass;
+}
+
+void Segmentation::setDefaultMergeClass(const QString & mergeClass) {
+    defaultMergeClass = mergeClass;
+    emit defaultMergeClassChanged(defaultMergeClass);
+}
+
 void Segmentation::hoverSubObject(const uint64_t subobject_id) {
     if (subobject_id != hovered_subobject_id) {
         const auto & iter = Segmentation::singleton().subobjects.find(subobject_id);
@@ -740,6 +749,7 @@ void Segmentation::mergeSelectedObjects() {
             emit changedRow(firstObj.index);
             removeObject(secondObj);
         }
+        changeCategory(objects[selectedObjectIndices.front()], defaultMergeClass);
         emit todosLeftChanged();
         emit merged(firstObj.id, secondObj.id);
     }
