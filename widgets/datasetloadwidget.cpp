@@ -564,7 +564,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M, Dataset::datasets.size());// resets textures
 
     updateDatasetInfo(Dataset::datasets);
-    applyGeometrySettings();
+    state->mainWindow->resetTextureProperties();
 
     if (changedBoundaryOrScale || !keepAnnotation) {
         emit datasetSwitchZoomDefaults();
@@ -604,16 +604,6 @@ void DatasetLoadWidget::saveSettings() {
     settings.setValue(DATASET_OVERLAY, Segmentation::singleton().enabled);
 
     settings.endGroup();
-}
-
-void DatasetLoadWidget::applyGeometrySettings() {
-    //settings depending on supercube and cube size
-    state->cubeSliceArea = std::pow(Dataset::current().cubeEdgeLength, 2);
-    state->cubeBytes = std::pow(Dataset::current().cubeEdgeLength, 3);
-    state->cubeSetElements = std::pow(state->M, 3);
-    state->cubeSetBytes = state->cubeSetElements * state->cubeBytes;
-
-    state->viewer->window->resetTextureProperties();
 }
 
 void DatasetLoadWidget::loadSettings() {
@@ -670,5 +660,5 @@ void DatasetLoadWidget::loadSettings() {
     fovSpin.setValue(cubeEdgeLen * (state->M - 1));
     adaptMemoryConsumption();
     settings.endGroup();
-    applyGeometrySettings();
+    state->mainWindow->resetTextureProperties();
 }

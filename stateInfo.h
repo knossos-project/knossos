@@ -63,23 +63,8 @@ public:
 
     bool quitSignal{false};
 
-    // Bytes in one datacube: 2^3N
-    std::size_t cubeBytes;
-
-    // Area of a cube slice in pixels;
-    int cubeSliceArea;
-
     // Supercube edge length in datacubes.
     int M;
-    std::size_t cubeSetElements;
-
-    // Bytes in one supercube (This is pretty much the memory
-    // footprint of KNOSSOS): M^3 * 2^3M
-    std::size_t cubeSetBytes;
-
-    // With 2^N being the edge length of a datacube in pixels and
-    // M being the edge length of a supercube (the set of all
-    // simultaneously loaded datacubes) in datacubes:
 
 // --- Inter-thread communication structures / signals / mutexes, etc. ---
 

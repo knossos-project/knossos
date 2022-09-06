@@ -332,7 +332,7 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxI
           && (0 <= currentPxInDc.z && currentPxInDc.z < cubeEdgeLen)) {
 
         const int sliceIndex = 4 * ( s + *t * std::ceil(usedSizeInCubePixels));
-        const int dcIndex = currentPxInDc.x + currentPxInDc.y * cubeEdgeLen + currentPxInDc.z * state->cubeSliceArea;
+        const int dcIndex = currentPxInDc.x + currentPxInDc.y * cubeEdgeLen + currentPxInDc.z * std::pow(cubeEdgeLen, 2);
         if(datacube == nullptr) {
             slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = 0;
         } else {
@@ -517,7 +517,7 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
         const CoordOfCube upperLeftDc = Dataset::datasets[layerId].global2cube(vp.texture.leftUpperPxInAbsPx) + offsetCube;
         QFutureSynchronizer<void> sync;
         for_each_resliced_cube_do(upperLeftDc, [this, cubeEdgeLen, layerId, &vp, &sync, currentPosition_inside_dc, first](auto, auto, auto currentDc, auto index){
-            int slicePositionWithinCube = vp.n.componentMul(currentPosition_inside_dc.componentMul(Coordinate{1, cubeEdgeLen, state->cubeSliceArea})).length();
+            const int slicePositionWithinCube = vp.n.componentMul(currentPosition_inside_dc.componentMul(Coordinate(1, cubeEdgeLen, std::pow(cubeEdgeLen, 2)))).length();
             Coordinate offsetCubeGlobal = vp.n.componentMul(vp.n.componentMul(currentPosition_inside_dc));// ensure n is positive by multiplying with itself
 
             state->protectCube2Pointer.lock();

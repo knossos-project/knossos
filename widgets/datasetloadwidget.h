@@ -176,7 +176,6 @@ class DatasetLoadWidget : public DialogVisibilityNotify {
     QPushButton processButton{"Load Dataset"};
     QPushButton cancelButton{"Close"};
 
-    void applyGeometrySettings();
     void datasetCellChanged(const QModelIndex &topLeft, const QModelIndex &, const QVector<int> &);
     Dataset::list_t infos;
     void updateDatasetInfo(const QUrl &url, const QString &info);
