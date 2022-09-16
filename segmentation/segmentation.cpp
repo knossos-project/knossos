@@ -49,7 +49,7 @@ Segmentation::Object::Object(std::vector<std::reference_wrapper<SubObject>> init
 }
 
 Segmentation::Object::Object(Object & first, Object & second)
-    : id(++highestId), todo(false), immutable(false), location(second.location), selected{true} { //merge is selected
+    : id(++highestId), todo(false), immutable(false), location(second.location), selected{first.selected || second.selected} {
     subobjects.reserve(first.subobjects.size() + second.subobjects.size());
     merge(first);
     merge(second);
@@ -72,7 +72,7 @@ void Segmentation::Object::addExistingSubObject(Segmentation::SubObject & sub) {
 Segmentation::Object & Segmentation::Object::merge(Segmentation::Object & other) {
     for (auto & elem : other.subobjects) {//add parent
         auto & parentObjs = elem.get().objects;
-        elem.get().selectedObjectsCount = 1;
+        elem.get().selectedObjectsCount -= other.selected;
         //don’t insert twice
         auto posIt = std::lower_bound(std::begin(parentObjs), std::end(parentObjs), this->index);
         if (posIt == std::end(parentObjs) || *posIt != this->index) {
@@ -828,4 +828,55 @@ void Segmentation::generateColors() {
 void Segmentation::toggleVolumeRender(const bool render) {
     volume_render_toggle = render;
     emit volumeRenderToggled(render);
+}
+
+void Segmentation::cell(bool cyto) {
+    clearObjectSelection();
+    const auto id = SubObject::highestId + 1;
+    const Coordinate nopos{-1,-1,-1};
+    auto cellidx = createObjectFromSubobjectId(id, nopos).index;
+    objects[cellidx].category = "cell";
+    objects[cellidx].immutable = false;
+    const auto childidx = createObjectFromSubobjectId(id, nopos).index;
+    objects[childidx].category = cyto ? "cytoplasm" : "nucleus";
+    objects[childidx].immutable = true;
+    objects[cellidx].merge(objects[childidx]);
+    emit changedRow(cellidx);
+    emit changedRow(childidx);
+    selectObject(childidx);
+}
+
+void Segmentation::plusNuc() {
+    if (!selectedObjectIndices.empty() && selectedObjectIndices.size() <= 2) {
+        std::unordered_map<decltype(Object::category), decltype(Object::index)> mesh;
+        for (const auto & oidx : selectedObjectIndices) {
+            for (const auto & so : objects[oidx].subobjects) {
+                for (const auto & parentoidx : so.get().objects) {
+                    mesh[objects[parentoidx].category] = parentoidx;
+                }
+            }
+        }
+        clearObjectSelection();
+        if (mesh.count("nucleus") != 0) {
+            selectObject(mesh["nucleus"]);
+            if (mesh.count("cytoplasm")) {
+                selectObject(mesh["cytoplasm"]);
+            }
+        } else {
+            if (auto cell = mesh.find("cell"); cell != std::end(mesh)) {
+                const auto oidx = cell->second;
+                const Coordinate nopos{-1,-1,-1};
+                const auto id = SubObject::highestId + 1;
+                auto & nuc = createObjectFromSubobjectId(id, nopos);
+                nuc.category = "nucleus";
+                nuc.immutable = true;
+                const auto nucidx = nuc.index;
+                objects[oidx].merge(nuc);
+                emit changedRow(oidx);
+                emit changedRow(nucidx);
+                selectObject(nucidx);
+                selectObject(mesh["cytoplasm"]);
+            }
+        }
+    }
 }

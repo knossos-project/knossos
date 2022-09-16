@@ -246,6 +246,9 @@ public:
     void touchObjects(const uint64_t subobject_id);
     void untouchObjects();
     std::vector<std::reference_wrapper<Object>> touchedObjects();
+    //custom modes
+    void cell(bool nuc);
+    void plusNuc();
     //files
     void mergelistClear();
     void mergelistSave(QIODevice & file) const;

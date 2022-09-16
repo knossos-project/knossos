@@ -143,6 +143,10 @@ class MainWindow : public QMainWindow {
     QAction *modeSwitchSeparator{nullptr};
     QAction *setMergeModeAction{nullptr};
     QAction *setPaintModeAction{nullptr};
+    // cell mode
+    QAction *cytoAction{};
+    QAction *plusNucAction{};
+    QAction *nucAction{};
 
     virtual void resizeEvent(QResizeEvent *event) override;
     virtual void dragEnterEvent(QDragEnterEvent *event) override;

@@ -678,6 +678,12 @@ void MainWindow::createMenus() {
     newObjectAction = &addApplicationShortcut(actionMenu, QIcon(), tr("New segmentation object"), this, [this]() {
         widgetContainer.annotationWidget.segmentationTab.userCreateObject();
     }, Qt::Key_C);
+    actionMenu.addSeparator();
+    //cell mode
+    cytoAction = &addApplicationShortcut(actionMenu, QIcon(), tr("New cell with cyoplasm"), this, [](){ Segmentation::singleton().cell(true); }, Qt::Key_1);
+    plusNucAction = &addApplicationShortcut(actionMenu, QIcon(), tr("Add nucleus to current cell"), this, [](){ Segmentation::singleton().plusNuc(); }, Qt::Key_2);
+    nucAction = &addApplicationShortcut(actionMenu, QIcon(), tr("New cell (nucleus only)"), this, [](){ Segmentation::singleton().cell(false); }, Qt::Key_3);
+    actionMenu.addSeparator();
     auto changeOverlayOpacity = [](int value) {
         Segmentation::singleton().alpha = static_cast<uint8_t>(std::max(0, std::min(255, static_cast<int>(Segmentation::singleton().alpha) + value)));
     };
