@@ -1,0 +1,68 @@
+<html>
+<head>
+	<meta content="text/html; charset=utf-8"/>
+	<link rel="stylesheet" href=":/resources/cheatsheet/cheatsheet.css" type="text/css" />
+</head>
+
+<body>
+	<h1>Segmentation Cell Painting</h1>
+
+	<p><a href=#annotation_seg>Segmentation table view</a> | <a href=#pref_seg>Visibility preferences</a></p>
+	<p><a href=#navi>Navigation preferences</a></p>
+
+	<p>
+	The Cell Segmentation mode defines three shortcuts for fast instance segmentation of cytoplasm and nuclei with automatic assignment to cell instances. The instance classes are identified by the class column in the <a href=#annotation_seg>Segmentation table</a>. The annotation workflow is as follows:
+	</p>
+	<p>
+	For cells in which both cytoplasm and nucleus are visible:
+	</p>
+	<ol>
+		<li>Press 1 (Creates cell instance with attached cytoplasm)</li>
+		<li>Paint cytoplasm</li>
+		<li>Press 2 (Adds nucleus instance to the cell)</li>
+		<li>Paint nucleus</li>
+	</ol>
+	<p>
+	For cells in which only cytoplasm is visible:
+	</p>
+	<ol>
+		<li>Press 1 (Creates cell instance with attached cytoplasm)</li>
+		<li>Paint cytoplasm</li>
+	</ol>
+	<p>
+	For cells in which only nucleus is visible:
+	</p>
+	<ol>
+		<li>Press 3 (Creates cell instance with attached nucleus)</li>
+		<li>Paint nucleus</li>
+	</ol>
+	<p>
+
+	<p>
+	To retroactively add or edit a nucleus in a cell with cytoplasm, the cell needs to be selected again before pressing 2. Adding cytoplasm retroactively to a cell with nucleus requires erasure and re-annotation of the cell from scratch.
+	</p>
+	<p>
+	<table>
+		<thead>
+			<tr>
+				<th align="left">Shortcut</th><th align="left">Action</th>
+			</tr>
+		</thead>
+		<tr><td><span class="sh">1</span></td><td>Create cell instance with attached cytoplasm</td></tr>
+		<tr><td><span class="sh">2</span></td><td>Add nucleus instance to existing cell with cytoplasm</td></tr>
+		<tr><td><span class="sh">3</span></td><td>Create cell instance with attached nucleus</td></tr>
+		<tr><td><span class="sh"><img src=":/resources/cheatsheet/middleclick.png" alt="Middle click"/> click</span></td><td>Bucket fill</td></tr>
+		<tr><td><span class="sh">Shift +  <img src=":/resources/cheatsheet/middleclick.png" alt="Middle click"/> scroll</span></td><td>Change brush size</td></tr>
+		<tr><td><span class="sh"><img src=":/resources/cheatsheet/rightclick.png" alt="Right click"/></span></td><td>Draw</td></tr>
+		<tr><td><span class="sh">Shift + <img src=":/resources/cheatsheet/rightclick.png" alt="Right click"/></span></td><td>Erase</td></tr>
+		<tr><td><span class="sh">-</span></td><td>Overlay: decrease opacity</td></tr>
+		<tr><td><span class="sh">+</span></td><td>Overlay: increase opacity</td></tr>
+		<tr><td><span class="sh">Hold space</span></td><td>Reveal raw data temporarily</td></tr>
+		<tr><td><span class="sh"><img src=":/resources/cheatsheet/leftclick.png" alt="Left click"/></span></td><td>Select object</td></tr>
+		<tr><td><span class="sh">Ctrl + +</span></td><td>Zoom in</td></tr>
+		<tr><td><span class="sh">Ctrl + -</span></td><td>Zoom out</td></tr>
+		<tr><td><span class="sh">Ctrl + 0</span></td><td>Zoom reset</td></tr>
+	</table>
+	</p>
+</body>
+</html>
