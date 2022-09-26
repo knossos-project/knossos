@@ -122,7 +122,7 @@ Q_OBJECT
     std::vector<Object> objects;
     std::unordered_map<uint64_t, uint64_t> objectIdToIndex;
     hash_list<uint64_t> selectedObjectIndices;
-    const QSet<QString> prefixed_categories = {"", "ecs", "mito", "myelin", "neuron", "synapse"};
+    const QSet<QString> prefixed_categories = {"", "cell", "cytoplasm", "ecs", "mito", "myelin", "neuron", "nucleus", "synapse"};
     QSet<QString> categories = prefixed_categories;
     uint64_t backgroundId = 0;
     uint64_t hovered_subobject_id = 0;
