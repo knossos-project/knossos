@@ -115,6 +115,7 @@ class MainWindow : public QMainWindow {
                                                  {AnnotationMode::Mode_Merge, tr("Segmentation Merge")},
                                                  {AnnotationMode::Mode_Paint, tr("Segmentation Paint")},
                                                  {AnnotationMode::Mode_OverPaint, tr("Segmentation Overpaint")},
+                                                 {AnnotationMode::Mode_CellSegmentation, tr("Segmentation Cell Painting")},
                                                  {AnnotationMode::Mode_Selection, tr("Review")},
                                                };
     WorkModeModel workModeModel;

@@ -364,6 +364,7 @@ void MainWindow::createToolbars() {
                          "<b>" + workModes[AnnotationMode::Mode_Merge] + ":</b> Segmentation by merging objects<br/>"
                          "<b>" + workModes[AnnotationMode::Mode_Paint] + ":</b> Segmentation by painting<br/>"
                          "<b>" + workModes[AnnotationMode::Mode_OverPaint] + ":</b> Segmentation by painting only over existing segmentation<br/>"
+                         "<b>" + workModes[AnnotationMode::Mode_CellSegmentation] + ":</b>Convenience cell segmentation workflow<br/>"
                          "<b>" + workModes[AnnotationMode::Mode_Tracing] + ":</b> Skeletonization on one tree<br/>"
                          "<b>" + workModes[AnnotationMode::Mode_TracingAdvanced] + ":</b> Unrestricted skeletonization<br/>");
     basicToolbar.addSeparator();
@@ -1134,6 +1135,11 @@ void MainWindow::setWorkMode(AnnotationMode workMode) {
     decreaseOpacityAction->setVisible(segmentation);
     enlargeBrushAction->setVisible(mode.testFlag(AnnotationMode::Brush));
     shrinkBrushAction->setVisible(mode.testFlag(AnnotationMode::Brush));
+    // cell seg
+    cytoAction->setVisible(mode.testFlag(AnnotationMode::Mode_CellSegmentation));
+    plusNucAction->setVisible(mode.testFlag(AnnotationMode::Mode_CellSegmentation));
+    nucAction->setVisible(mode.testFlag(AnnotationMode::Mode_CellSegmentation));
+
     clearMergelistAction->setVisible(segmentation && !mode.testFlag(AnnotationMode::Mode_MergeTracing));
     categoriesMenu.setEnabled(segmentation && !mode.testFlag(AnnotationMode::Mode_Selection));
     for (auto * action : categoriesMenu.actions()) {
