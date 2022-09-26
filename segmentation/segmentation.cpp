@@ -234,25 +234,25 @@ Segmentation::color_t Segmentation::colorObjectFromIndex(const uint64_t objectIn
         return std::tuple_cat(objects[objectIndex].color.get(), std::make_tuple(alpha));
     } else {
         const auto & objectId = objects[objectIndex].id;
-        if (objects[objectIndex].category.isEmpty()) {
-            return std::tuple_cat(overlayColorMap[objectId % overlayColorMap.size()], std::make_tuple(alpha));
-        }
-        std::uint16_t hash{0b1010101010101010};
-        for (const auto & c : objects[objectIndex].category) {
-            hash ^= c.unicode();
-        }
-        hash *= 10;
-        static auto table = [](){
-            std::mt19937 rng;
-            std::normal_distribution<float> dist(128, 64);
-            std::array<std::uint8_t, 1024> table;
-            for (auto & elem : table) {
-                elem = std::clamp(dist(rng), 0.f, 255.f);
+        if (segmentationColor == SegmentationColor::Class && !objects[objectIndex].category.isEmpty()) {
+            std::uint16_t hash{0b1010101010101010};
+            for (const auto & c : objects[objectIndex].category) {
+                hash ^= c.unicode();
             }
-            return table;
-        }();
-        const auto qc = QColor::fromHsl(hash % 360, 255, table[objectId % table.size()], alpha);
-        return {qc.red(), qc.green(), qc.blue(), qc.alpha()};
+            hash *= 10;
+            static auto table = [](){
+                std::mt19937 rng;
+                std::normal_distribution<float> dist(128, 64);
+                std::array<std::uint8_t, 1024> table;
+                for (auto & elem : table) {
+                    elem = std::clamp(dist(rng), 0.f, 255.f);
+                }
+                return table;
+            }();
+            const auto qc = QColor::fromHsl(hash % 360, 255, table[objectId % table.size()], alpha);
+            return {qc.red(), qc.green(), qc.blue(), qc.alpha()};
+        }
+        return std::tuple_cat(overlayColorMap[objectId % overlayColorMap.size()], std::make_tuple(alpha));
     }
 }
 

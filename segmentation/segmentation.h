@@ -42,6 +42,12 @@
 #include <unordered_map>
 #include <vector>
 
+enum SegmentationColor {
+    Class,
+    SubObject,
+    Object
+};
+
 class Segmentation : public QObject {
 Q_OBJECT
     friend void connectedComponent(const Coordinate & seed);
@@ -174,6 +180,7 @@ public:
     bool hoverVersion{false};
     uint64_t mouseFocusedObjectId{0};
     bool highlightBorder{true}; //highlight borders in segmentation viewport
+    SegmentationColor segmentationColor{SegmentationColor::Class};
 
     bool enabled{false};
     std::size_t layerId;

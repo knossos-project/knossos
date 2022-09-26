@@ -23,6 +23,7 @@
 #pragma once
 
 #include <QCheckBox>
+#include <QComboBox>
 #include <QGridLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
@@ -59,6 +60,10 @@ class DatasetAndSegmentationTab : public QWidget {
     QSpinBox segmentationOverlaySpinBox;
     QSlider segmentationOverlaySlider{Qt::Horizontal};
     QCheckBox segmentationBorderHighlight{"Highlight borders"};
+    // segmentation color
+    QCheckBox overrideObjectColorCheck{"Override Object color"};
+    QComboBox overrideObjectColorCombo;
+
     // segmentation volume
     QGroupBox volumeGroup{"Show volume in 3D viewport"};
     QGridLayout volumeLayout;
