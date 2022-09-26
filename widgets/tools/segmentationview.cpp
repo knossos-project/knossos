@@ -102,9 +102,13 @@ QVariant SegmentationObjectModel::headerData(int section, Qt::Orientation orient
 }
 
 QVariant SegmentationObjectModel::objectGet(const Segmentation::Object &obj, const QModelIndex & index, int role) const {
-    if (index.column() == 0 && (role == Qt::BackgroundRole || role == Qt::DecorationRole || role == Qt::UserRole)) {
-        const auto color = Segmentation::singleton().colorObjectFromIndex(obj.index);
-        return QColor(std::get<0>(color), std::get<1>(color), std::get<2>(color));
+    if (index.column() == 0) {
+        if (role == Qt::DecorationRole || role == Qt::UserRole || (role == Qt::BackgroundRole && !obj.color.has_value())) {
+            const auto color = Segmentation::singleton().colorObjectFromIndex(obj.index);
+            return QColor(std::get<0>(color), std::get<1>(color), std::get<2>(color));
+        } else if (role == Qt::DisplayRole && obj.color.has_value()) {
+            return "🖉";
+        }
     } else if (index.column() == 2 && (role == Qt::CheckStateRole || role == Qt::UserRole)) {
         return (obj.immutable ? Qt::Checked : Qt::Unchecked);
     } else if (role == Qt::DisplayRole || role == Qt::EditRole || role == Qt::UserRole) {
@@ -329,11 +333,13 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     QObject::connect(&commentFilter, &QLineEdit::textEdited, this, &SegmentationView::filter);
     QObject::connect(&regExCheckbox, &QCheckBox::stateChanged, this, &SegmentationView::filter);
 
-    for (const auto & index : {0, 1, 2}) {
+    for (const auto & index : {1, 2}) {
         //resize once, constantly resizing slows down selection and scroll to considerably
         touchedObjsTable.resizeColumnToContents(index);
         objectsTable.resizeColumnToContents(index);
     }
+    objectsTable.setColumnWidth(0, 50);
+    touchedObjsTable.setColumnWidth(0, 50);
 
     QObject::connect(&Segmentation::singleton(), &Segmentation::beforeAppendRow, &objectModel, &SegmentationObjectModel::appendRowBegin);
     QObject::connect(&Segmentation::singleton(), &Segmentation::beforeRemoveRow, [this](){
