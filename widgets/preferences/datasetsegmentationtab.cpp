@@ -48,6 +48,9 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     overlayGroup.setCheckable(true);
     segmentationOverlaySpinBox.setRange(0, 255);
     segmentationOverlaySlider.setRange(0, 255);
+
+    overrideObjectColorCombo.addItems({"Class color", "Subobject color"});
+
     volumeGroup.setCheckable(true);
     volumeGroup.setChecked(false);
 
@@ -71,6 +74,8 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
     overlayLayout.addWidget(&segmentationOverlaySlider, row, 1);
     overlayLayout.addWidget(&segmentationOverlaySpinBox, row, 2);
     overlayLayout.addWidget(&segmentationBorderHighlight, ++row, 0);
+    overlayLayout.addWidget(&overrideObjectColorCheck, ++row, 0);
+    overlayLayout.addWidget(&overrideObjectColorCombo, row, 1);
     overlayGroup.setLayout(&overlayLayout);
     row = 0;
     volumeLayout.addWidget(&volumeOpaquenessLabel, row, 0); volumeLayout.addWidget(&volumeOpaquenessSlider, row, 1); volumeLayout.addWidget(&volumeOpaquenessSpinBox, row, 2);
@@ -141,6 +146,15 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
         Segmentation::singleton().highlightBorder = checked;
         state->viewer->segmentation_changed();
     });
+    QObject::connect(&overrideObjectColorCheck, &QCheckBox::toggled, [this](const bool override) {
+        Segmentation::singleton().segmentationColor = !override ? SegmentationColor::Object : static_cast<SegmentationColor>(overrideObjectColorCombo.currentIndex());
+        overrideObjectColorCombo.setEnabled(override);
+        state->viewer->segmentation_changed();
+    });
+    QObject::connect(&overrideObjectColorCombo, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](const int index) {
+        Segmentation::singleton().segmentationColor = static_cast<SegmentationColor>(index);
+        state->viewer->segmentation_changed();
+    });
 
     QObject::connect(&volumeGroup, &QGroupBox::clicked, &Segmentation::singleton(), &Segmentation::toggleVolumeRender);
     QObject::connect(&Segmentation::singleton(), &Segmentation::volumeRenderToggled, &volumeGroup, &QGroupBox::setChecked);
@@ -205,6 +219,7 @@ void DatasetAndSegmentationTab::saveSettings() const {
     settings.setValue(SEGMENTATION_CREATE_PAINT_OBJECT, createPaintObjectCheck.isChecked());
     settings.setValue(SEGMENTATION_OVERLAY_ALPHA, segmentationOverlaySlider.value());
     settings.setValue(SEGMENTATITION_HIGHLIGHT_BORDER, segmentationBorderHighlight.isChecked());
+    settings.setValue(SEGMENTATION_COLOR, overrideObjectColorCheck.isChecked() ? overrideObjectColorCombo.currentIndex() : static_cast<int>(SegmentationColor::Object));
     settings.setValue(DATASET_LUT_FILE, lutFilePath);
     settings.setValue(DATASET_LUT_FILE_USED, useOwnDatasetColorsCheckBox.isChecked());
     settings.setValue(VOLUME_ALPHA, volumeOpaquenessSpinBox.value());
@@ -229,6 +244,12 @@ void DatasetAndSegmentationTab::loadSettings() {
     segmentationOverlaySlider.valueChanged(segmentationOverlaySlider.value());
     segmentationBorderHighlight.setChecked(settings.value(SEGMENTATITION_HIGHLIGHT_BORDER, true).toBool());
     segmentationBorderHighlight.clicked(segmentationBorderHighlight.isChecked());
+    const auto segmentationColorIdx = settings.value(SEGMENTATION_COLOR, 0).toInt();
+    if (static_cast<SegmentationColor>(segmentationColorIdx) != SegmentationColor::Object) {
+        overrideObjectColorCheck.setChecked(true);
+        overrideObjectColorCombo.setCurrentIndex(segmentationColorIdx);
+        overrideObjectColorCombo.currentIndexChanged(segmentationColorIdx);
+    }
     volumeOpaquenessSpinBox.setValue(settings.value(VOLUME_ALPHA, 37).toInt());
     volumeOpaquenessSpinBox.valueChanged(volumeOpaquenessSpinBox.value());
     Segmentation::singleton().volume_background_color = settings.value(VOLUME_BACKGROUND_COLOR, QColor(Qt::darkGray)).value<QColor>();

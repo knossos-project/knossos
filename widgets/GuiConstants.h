@@ -108,6 +108,7 @@ const QString RANGE_DELTA = "range_delta";
 const QString SEGMENTATION_CREATE_PAINT_OBJECT = "segmentation_create_paint_object";
 const QString SEGMENTATION_OVERLAY_ALPHA = "segmentation_overlay_alpha";
 const QString SEGMENTATITION_HIGHLIGHT_BORDER = "segmentation_border_highlighting";
+const QString SEGMENTATION_COLOR = "segmentation_color";
 
 // Preferences Viewports Tab
 const QString ADD_ARB_VP = "add_arb_vp";

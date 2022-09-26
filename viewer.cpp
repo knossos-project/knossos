@@ -407,7 +407,7 @@ void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx,
                 const uint64_t subobjectId = datacube[0];
 
                 const auto queryColor = [&](){
-                    if (layerId == seg.layerId) {// apply mergelist
+                    if ((layerId == seg.layerId) && Segmentation::singleton().segmentationColor != SegmentationColor::SubObject) {// apply mergelist
                         return seg.colorObjectFromSubobjectId(subobjectId);
                     } else if (subobjectId != seg.getBackgroundId()) {
                          return seg.subobjectColor(subobjectId);
