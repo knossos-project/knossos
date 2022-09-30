@@ -161,7 +161,7 @@ void ViewportOrtho::sendCursorPosition() {
 
 float ViewportOrtho::displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const {
     float FOVinDCs = ((float)state->M) - 1.f;
-    float result = FOVinDCs * Dataset::current().cubeEdgeLength / static_cast<float>(texture.size);
+    float result = FOVinDCs * Dataset::current().cubeEdgeLength.x / static_cast<float>(texture.size);// FIXME
     return (std::floor((result * zoomFactor) / 2. / texture.texUnitsPerDataPx) * texture.texUnitsPerDataPx)*2;
 }
 

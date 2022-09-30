@@ -43,7 +43,7 @@ std::pair<bool, void *> getRawCube(const Coordinate & pos, const std::size_t lay
 template<typename T = std::uint64_t>
 boost::multi_array_ref<T, 3> getCubeRef(void * const rawcube, const std::size_t layerIdx = Segmentation::singleton().layerId) {
     const auto cubeEdgeLen = Dataset::datasets[layerIdx].cubeEdgeLength;
-    const auto dims = boost::extents[cubeEdgeLen][cubeEdgeLen][cubeEdgeLen];
+    const auto dims = boost::extents[cubeEdgeLen.z][cubeEdgeLen.y][cubeEdgeLen.x];
     return boost::multi_array_ref<T, 3>(reinterpret_cast<T *>(rawcube), dims);
 }
 
@@ -159,7 +159,7 @@ CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  g
         auto rawcube = getRawCube(globalCubeBegin);
         if (rawcube.first) {
             auto cubeRef = getCubeRef(rawcube.second);
-            const auto globalCubeEnd = globalCubeBegin + Dataset::current().scaleFactor * cubeEdgeLen;
+            const auto globalCubeEnd = globalCubeBegin + Dataset::current().scaleFactor.componentMul(cubeEdgeLen);
             const auto localStart = globalFirst.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeEdgeLen, Dataset::current().scaleFactor);
             const auto localEnd = globalLast.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeEdgeLen, Dataset::current().scaleFactor);
 

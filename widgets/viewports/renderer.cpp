@@ -290,7 +290,7 @@ void ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segmen
                     {0.,1.,0.},
                     {0.,0.,1.}};
 
-    const auto distToCurrPos = 0.5 * (state->M / 2) * Dataset::current().cubeEdgeLength * Dataset::current().magnification * Dataset::current().scales[0].x;
+    const auto distToCurrPos = 0.5 * (state->M / 2) * Dataset::current().cubeEdgeLength.x * Dataset::current().magnification * Dataset::current().scales[0].x;//FIXME
 
     //Check if there is an intersection between the given segment and one
     //of the slice planes.
@@ -541,9 +541,9 @@ void ViewportOrtho::renderViewportFast() {
     triangleVertices.push_back({{0.0f, gpucubeedge, 0.0f}});
     std::vector<std::array<GLfloat, 3>> textureVertices;
     textureVertices.reserve(6);
-    for (float z = 0.0f; z < (xy ? 1 : gpusupercube); ++z)
-    for (float y = 0.0f; y < (xz ? 1 : gpusupercube); ++y)
-    for (float x = 0.0f; x < (zy ? 1 : gpusupercube); ++x) {
+    for (float z = 0.0f; z < (xy ? 1 : gpusupercube.z); ++z)
+    for (float y = 0.0f; y < (xz ? 1 : gpusupercube.y); ++y)
+    for (float x = 0.0f; x < (zy ? 1 : gpusupercube.x); ++x) {
         const float frame = std::fmod(xy ? cpos.z : xz ? cpos.y : cpos.x, state->viewer->gpucubeedge);
         const auto texR = (0.5f + frame) / gpucubeedge;
 
@@ -571,8 +571,8 @@ void ViewportOrtho::renderViewportFast() {
 
     //z component of vp vectors specifies portion of scale to apply
     const auto zScaleIncrement = !arb ? scale - 1 : 0;
-    const float hfov = texture.FOV * fov / (1 + zScaleIncrement * std::abs(v1.z));
-    const float vfov = texture.FOV * fov / (1 + zScaleIncrement * std::abs(v2.z));
+    const float hfov = texture.FOV * fov.componentMul(v1).length() / (1 + zScaleIncrement * std::abs(v1.z));
+    const float vfov = texture.FOV * fov.componentMul(v2).length() / (1 + zScaleIncrement * std::abs(v2.z));
     viewMatrix.scale(width() / hfov, height() / vfov);
     const auto cameraPos = floatCoordinate{cpos} + n;
     viewMatrix.lookAt(cameraPos, cpos, v2);
@@ -629,16 +629,16 @@ void ViewportOrtho::renderViewportFast() {
                 glDrawArrays(GL_TRIANGLE_FAN, 0, static_cast<int>(triangleVertices.size()));
             };
             if (!arb) {
-                const float halfsc = fov * 0.5f / gpucubeedge;
+                const float halfsc = fov.componentMul(v1).length() * 0.5f / gpucubeedge;
                 const float offsetx = cpos.x / gpucubeedge - halfsc * !zy;
                 const float offsety = cpos.y / gpucubeedge - halfsc * !xz;
                 const float offsetz = cpos.z / gpucubeedge - halfsc * !xy;
                 const float startx = 0 * cpos.x / gpucubeedge;
                 const float starty = 0 * cpos.y / gpucubeedge;
                 const float startz = 0 * cpos.z / gpucubeedge;
-                const float endx = startx + (zy ? 1 : gpusupercube);
-                const float endy = starty + (xz ? 1 : gpusupercube);
-                const float endz = startz + (xy ? 1 : gpusupercube);
+                const float endx = startx + (zy ? 1 : gpusupercube.x);
+                const float endy = starty + (xz ? 1 : gpusupercube.y);
+                const float endz = startz + (xy ? 1 : gpusupercube.z);
                 for (float z = startz; z < endz; ++z)
                 for (float y = starty; y < endy; ++y)
                 for (float x = startx; x < endx; ++x) {
@@ -947,9 +947,9 @@ void Viewport3D::renderVolumeVP() {
         glLoadIdentity();
 
         // dataset translation adjustment
-        glTranslatef((static_cast<float>(state->viewerState->currentPosition.x % cubeLen) / cubeLen - 0.5f) / state->M,
-                     (static_cast<float>(state->viewerState->currentPosition.y % cubeLen) / cubeLen - 0.5f) / state->M,
-                     (static_cast<float>(state->viewerState->currentPosition.z % cubeLen) / cubeLen - 0.5f) / state->M);
+        glTranslatef((static_cast<float>(state->viewerState->currentPosition.x % cubeLen.x) / cubeLen.x - 0.5f) / state->M,
+                     (static_cast<float>(state->viewerState->currentPosition.y % cubeLen.y) / cubeLen.y - 0.5f) / state->M,
+                     (static_cast<float>(state->viewerState->currentPosition.z % cubeLen.z) / cubeLen.z - 0.5f) / state->M);
 
         glTranslatef(0.5f, 0.5f, 0.5f);
         glScalef(volumeClippingAdjust, volumeClippingAdjust, volumeClippingAdjust); // scale to remove cube corner clipping

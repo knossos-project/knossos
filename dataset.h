@@ -94,7 +94,7 @@ struct Dataset {
     // datacube in bytes 2^3N which has to be <= 2^32 - 1 (unsigned int).
     // So N cannot be larger than 10.
     // Edge length of one cube in pixels: 2^N
-    int cubeEdgeLength{128};
+    Coordinate cubeEdgeLength{128, 128, 128};
     QString description;
     // Current dataset identifier string
     QString experimentname;

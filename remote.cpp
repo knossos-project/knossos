@@ -42,7 +42,7 @@ Remote::Remote() {
 void Remote::process(const Coordinate & pos, bool rotate) {
     //distance vector
     floatCoordinate deltaPos = pos - state->viewerState->currentPosition;
-    const float jumpThreshold = 0.5f * Dataset::current().cubeEdgeLength * state->M * Dataset::current().magnification;//approximately inside sc
+    const float jumpThreshold = 0.5f * Dataset::current().cubeEdgeLength.x * state->M * Dataset::current().magnification;//approximately inside sc WARNING
     if (deltaPos.length() > jumpThreshold) {
         state->viewer->setPosition(pos);
     } else if (pos != state->viewerState->currentPosition) {

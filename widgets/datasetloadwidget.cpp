@@ -292,13 +292,13 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     });
     QObject::connect(&cubeEdgeSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](int cubeedge){
         fovSpin.setCubeEdge(cubeedge);
-        adaptMemoryConsumption();
+        adaptMemoryConsumption(Coordinate{cubeedge, cubeedge, cubeedge});
     });
-    QObject::connect(&fovSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &DatasetLoadWidget::adaptMemoryConsumption);
-    QObject::connect(&segmentationOverlayCheckbox, &QCheckBox::stateChanged, this, &DatasetLoadWidget::adaptMemoryConsumption);
+    QObject::connect(&fovSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](){ adaptMemoryConsumption(); });
+    QObject::connect(&segmentationOverlayCheckbox, &QCheckBox::stateChanged, [this](){ adaptMemoryConsumption(); });
     QObject::connect(&processButton, &QPushButton::clicked, this, &DatasetLoadWidget::processButtonClicked);
     static auto resetSettings = [this]() {
-        fovSpin.setValue(Dataset::current().cubeEdgeLength * (state->M - 1));
+        fovSpin.setValue(Dataset::current().cubeEdgeLength.x * (state->M - 1));//FIXME
         segmentationOverlayCheckbox.setChecked(Segmentation::singleton().enabled);
     };
     QObject::connect(this, &DatasetLoadWidget::rejected, []() { resetSettings(); });
@@ -344,12 +344,13 @@ void DatasetLoadWidget::updateDatasetInfo(const Dataset::list_t & datas) {
     infos = datas;
     const auto datasetinfo = infos.front();
     //make sure supercubeedge is small again
-    auto supercubeedge = (fovSpin.value() + cubeEdgeSpin.value()) / datasetinfo.cubeEdgeLength;
+    auto supercubeedge = (fovSpin.value() + cubeEdgeSpin.value()) / cubeEdgeSpin.value();//FIXME
     supercubeedge = std::max(3, supercubeedge - !(supercubeedge % 2));
-    fovSpin.setCubeEdge(datasetinfo.cubeEdgeLength);
-    fovSpin.setValue((supercubeedge - 1) * datasetinfo.cubeEdgeLength);
-    cubeEdgeSpin.setValue(datasetinfo.cubeEdgeLength);
-    adaptMemoryConsumption();
+    fovSpin.setCubeEdge(datasetinfo.cubeEdgeLength.x);
+    fovSpin.setValue((supercubeedge - 1) * datasetinfo.cubeEdgeLength.x);
+    cubeEdgeSpin.setRange(1, std::max(cubeEdgeSpin.value(), datasetinfo.cubeEdgeLength.x));
+    cubeEdgeSpin.setValue(datasetinfo.cubeEdgeLength.x);
+    adaptMemoryConsumption(datasetinfo.cubeEdgeLength);
 
     QString infotext = tr("<b>%1 Dataset</b><br />%2");
     if (!datasetinfo.url.isLocalFile()) {
@@ -361,7 +362,7 @@ void DatasetLoadWidget::updateDatasetInfo(const Dataset::list_t & datas) {
         .arg(datasetinfo.experimentname)
         .arg(datasetinfo.boundary.x).arg(datasetinfo.boundary.y).arg(datasetinfo.boundary.z)
         .arg(datasetinfo.compressionString())
-        .arg(datasetinfo.cubeEdgeLength)
+        .arg(QString{"%1,%2,%3"}.arg(datasetinfo.cubeEdgeLength.x).arg(datasetinfo.cubeEdgeLength.y).arg(datasetinfo.cubeEdgeLength.z))
         .arg(datasetinfo.magnification)
         .arg(datasetinfo.scale.x)
         .arg(datasetinfo.scale.y)
@@ -380,9 +381,16 @@ void DatasetLoadWidget::updateDatasetInfo(const Dataset::list_t & datas) {
     }
 }
 
-void DatasetLoadWidget::adaptMemoryConsumption() {
+void DatasetLoadWidget::adaptMemoryConsumption(boost::optional<Coordinate> cubeShape) {
+    static Coordinate lastCubeShape;
+    if (cubeShape) {
+        lastCubeShape = cubeShape.get();
+    }
     const auto fov = fovSpin.value();
-    auto mebibytes = std::pow(fov + cubeEdgeSpin.value(), 3) / std::pow(1024, 2);
+    auto mebibytes = (fov + lastCubeShape.x) * (fov + lastCubeShape.y) / std::pow(1024, 2);
+    if (lastCubeShape.z != 1) {// assuming this is actually 2D – it doesn’t have to be
+        mebibytes *= fov + lastCubeShape.z;
+    }
     mebibytes += segmentationOverlayCheckbox.isChecked() * OBJID_BYTES * mebibytes;
     mebibytes += infos.size() * std::pow(std::pow(2, std::ceil(std::log2(fov + cubeEdgeSpin.value()))), 2) * 4 * 2 * 3 / std::pow(2, 20);
     auto text = QString("FOV per dimension (%1 MiB memory)").arg(mebibytes);
@@ -541,12 +549,12 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     const bool changedBoundaryOrScale = layers.front().boundary != Dataset::current().boundary || layers.front().scale != Dataset::current().scale;
 
     // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
-    const auto cubeEdgeLen = cubeEdgeSpin.text().toInt();
-    for (auto && layer : layers) {
-        if (!(layer.api == Dataset::API::Heidelbrain || layer.api == Dataset::API::PyKnossos)) {
-            layer.cubeEdgeLength = cubeEdgeLen;
-        }
-    }
+    const auto cubeEdgeLen = layers[0].cubeEdgeLength.x;cubeEdgeSpin.text().toInt();
+//    for (auto && layer : layers) {
+//        if (!(layer.api == Dataset::API::Heidelbrain || layer.api == Dataset::API::PyKnossos)) {
+//            layer.cubeEdgeLength = {cubeEdgeLen, cubeEdgeLen, cubeEdgeLen};
+//        }
+//    }
     state->M = (fovSpin.value() + cubeEdgeLen) / cubeEdgeLen;
     if (loadOverlay != boost::none) {
         segmentationOverlayCheckbox.setChecked(loadOverlay.get());
@@ -610,7 +618,7 @@ void DatasetLoadWidget::saveSettings() {
 
     settings.setValue(DATASET_MRU, datasetModel.datasets.filter(QRegularExpression(".+")));
 
-    settings.setValue(DATASET_CUBE_EDGE, Dataset::current().cubeEdgeLength);
+    settings.setValue(DATASET_CUBE_EDGE, Dataset::current().cubeEdgeLength.x);
     settings.setValue(DATASET_SUPERCUBE_EDGE, state->M);
     settings.setValue(DATASET_OVERLAY, Segmentation::singleton().enabled);
 
@@ -660,12 +668,13 @@ void DatasetLoadWidget::loadSettings() {
             }
         }
     }// QSignalBlocker
-    auto & cubeEdgeLen = Dataset::current().cubeEdgeLength;
+    auto & cubeEdgeLen = Dataset::current().cubeEdgeLength.x;//FIXME
     cubeEdgeLen = settings.value(DATASET_CUBE_EDGE, 128).toInt();
     state->M = settings.value(DATASET_SUPERCUBE_EDGE, 3).toInt();
     segmentationOverlayCheckbox.setChecked(settings.value(DATASET_OVERLAY, false).toBool());
     state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M, Dataset::datasets.size());
 
+    cubeEdgeSpin.setMaximum(std::max(cubeEdgeSpin.maximum(), cubeEdgeLen));
     cubeEdgeSpin.setValue(cubeEdgeLen);
     fovSpin.setCubeEdge(cubeEdgeLen);
     fovSpin.setValue(cubeEdgeLen * (state->M - 1));
