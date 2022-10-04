@@ -16,6 +16,7 @@ std::size_t LayerItemModel::ordered_i(std::size_t index) const {
 LayerItemModel::LayerItemModel() {
     QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, []() {
         // adjust datasetOrder size to fit all elements in dataset
+        state->viewerState->layerOrder.clear();
         for(std::size_t i = state->viewerState->layerOrder.size(); i < Dataset::datasets.size(); ++i) {
             state->viewerState->layerOrder.emplace_back(i);
         }
