@@ -129,8 +129,8 @@ public:
     }
     void setCubeEdge(const int newCubeEdge) {
         cubeEdge = newCubeEdge;
-        setRange(cubeEdge * 2, cubeEdge * 1024);
-        setSingleStep(cubeEdge * 2);
+        setRange(cubeEdge, cubeEdge * 1024);
+        setSingleStep(cubeEdge);
         auto val = QString::number(value());
         fixup(val);
         setValue(val.toInt());
@@ -140,16 +140,12 @@ public:
             return QValidator::Invalid;
         }
         auto number = valueFromText(input);
-        return ((number % cubeEdge == 0) && ((number / cubeEdge) % 2 == 0)) ? QValidator::Acceptable : QValidator::Intermediate;
+        return number % cubeEdge == 0 ? QValidator::Acceptable : QValidator::Intermediate;
     }
     virtual void fixup(QString &input) const override {
         auto number = valueFromText(input);
-        auto ratio = static_cast<int>(std::floor(static_cast<float>(number) / cubeEdge));
-        if (ratio % 2 == 0) {
-            input = textFromValue(ratio * cubeEdge);
-        } else {
-            input = textFromValue((ratio + 1) * cubeEdge);
-        }
+        auto ratio = static_cast<int>(std::round(static_cast<float>(number) / cubeEdge));
+        input = textFromValue(ratio * cubeEdge);
     }
 };
 

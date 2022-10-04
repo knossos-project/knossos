@@ -344,8 +344,7 @@ void DatasetLoadWidget::updateDatasetInfo(const Dataset::list_t & datas) {
     infos = datas;
     const auto datasetinfo = infos.front();
     //make sure supercubeedge is small again
-    auto supercubeedge = (fovSpin.value() + cubeEdgeSpin.value()) / datasetinfo.cubeEdgeLength;
-    supercubeedge = std::max(3, supercubeedge - !(supercubeedge % 2));
+    const auto supercubeedge = (fovSpin.value() + cubeEdgeSpin.value()) / datasetinfo.cubeEdgeLength;
     fovSpin.setCubeEdge(datasetinfo.cubeEdgeLength);
     fovSpin.setValue((supercubeedge - 1) * datasetinfo.cubeEdgeLength);
     cubeEdgeSpin.setValue(datasetinfo.cubeEdgeLength);

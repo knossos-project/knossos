@@ -181,21 +181,23 @@ struct LO_Element {
     float loadOrderMetrics[LL_METRIC_NUM];
 };
 
-std::vector<CoordOfCube> Loader::Worker::DcoiFromPos(const CoordOfCube & currentOrigin, const UserMoveType userMoveType, const floatCoordinate & direction) {
-    const float floatHalfSc = state->M / 2.;
-    const int halfSc = std::floor(floatHalfSc);
+std::vector<CoordOfCube> Loader::Worker::DcoiFromPos(const Coordinate & cpos, const UserMoveType userMoveType, const floatCoordinate & direction) {
     const auto cubeElemCount = std::pow(state->M, 3);
+    const auto centerCube = datasets[0].global2cube(cpos);
+    const auto halfFOV = datasets[0].cube2global({1,1,1}) * (state->M - 1) / 2;
+    const auto tlCubeOffset = datasets[0].global2cube(cpos - halfFOV) - centerCube;
+    const auto brCubeOffset = datasets[0].global2cube(cpos + halfFOV) - centerCube;
 
     int i = 0;
     currentMaxMetric = 0;
     std::vector<LO_Element> DcArray(cubeElemCount);
-    for (int x = -halfSc; x < halfSc + 1; ++x) {
-        for (int y = -halfSc; y < halfSc + 1; ++y) {
-            for (int z = -halfSc; z < halfSc + 1; ++z) {
-                DcArray[i].coordinate = {currentOrigin.x + x, currentOrigin.y + y, currentOrigin.z + z};
+    for (int x = tlCubeOffset.x; x <= brCubeOffset.x; ++x) {
+        for (int y = tlCubeOffset.y; y <= brCubeOffset.y; ++y) {
+            for (int z = tlCubeOffset.z; z <= brCubeOffset.z; ++z) {
+                DcArray[i].coordinate = {centerCube.x + x, centerCube.y + y, centerCube.z + z};
                 DcArray[i].offset = {x, y, z};
                 floatCoordinate currentMetricPos(x, y, z);
-                CalcLoadOrderMetric(floatHalfSc, currentMetricPos, userMoveType, direction, &DcArray[i].loadOrderMetrics[0]);
+                CalcLoadOrderMetric(0.5 * state->M, currentMetricPos, userMoveType, direction, &DcArray[i].loadOrderMetrics[0]);
                 ++i;
             }
         }
@@ -610,7 +612,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         unloadCurrentMagnification();
         loaderMagnification = datasets[0].magIndex;
     }
-    const auto Dcoi = DcoiFromPos(datasets[0].global2cube(center), userMoveType, direction);//datacubes of interest prioritized around the current position
+    const auto Dcoi = DcoiFromPos(center, userMoveType, direction);//datacubes of interest prioritized around the current position
     //split dcoi into slice planes and rest
     std::vector<std::pair<std::size_t, CoordOfCube>> allCubes;
     for (auto && todo : Dcoi) {

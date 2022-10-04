@@ -97,7 +97,11 @@ public:
     }
 
     template<typename T>
-    constexpr CoordinateDerived componentMul(const T & rhs) const {
+    constexpr std::enable_if_t<std::is_scalar_v<T>, CoordinateDerived> componentMul(const T & rhs) const {
+        return *this * rhs;
+    }
+    template<typename T>
+    constexpr std::enable_if_t<!std::is_scalar_v<T>, CoordinateDerived> componentMul(const T & rhs) const {
         return CoordinateDerived(x * rhs.x, y * rhs.y, z * rhs.z);
     }
 

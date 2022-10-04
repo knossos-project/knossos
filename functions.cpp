@@ -34,25 +34,23 @@ constexpr bool inRange(const int value, const int min, const int max) {
 }
 
 bool insideCurrentSupercube(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const Coordinate & cubeSize) {
-    const auto halfSupercube = cubeSize * cubesPerDimension / 2;
-    const int xcube = center.x - center.x % cubeSize.x + cubeSize.x / 2;
-    const int ycube = center.y - center.y % cubeSize.y + cubeSize.y / 2;
-    const int zcube = center.z - center.z % cubeSize.z + cubeSize.z / 2;
+    const auto halfSupercube = cubeSize.componentMul(cubesPerDimension-1) / 2.;
+    const auto c = coord.cube(cubeSize.x, {1.f,1.f,1.f});
+    const auto tl = (center - halfSupercube).cube(cubeSize.x, {1.f,1.f,1.f});
+    const auto br = (center + halfSupercube).cube(cubeSize.x, {1.f,1.f,1.f}) + 1;
     bool valid = true;
-    valid &= inRange(coord.x, xcube - halfSupercube.x, xcube + halfSupercube.x);
-    valid &= inRange(coord.y, ycube - halfSupercube.y, ycube + halfSupercube.y);
-    valid &= inRange(coord.z, zcube - halfSupercube.z, zcube + halfSupercube.z);
+    valid &= inRange(c.x, tl.x, br.x);
+    valid &= inRange(c.y, tl.y, br.y);
+    valid &= inRange(c.z, tl.z, br.z);
     return valid;
 }
 
 bool currentlyVisible(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const Coordinate & cubeSize) {
     const bool valid = insideCurrentSupercube(coord, center, cubesPerDimension, cubeSize);
-    const int xmin = std::max(0, std::min(Dataset::current().boundary.x, center.x - center.x % cubeSize.x));
-    const int ymin = std::max(0, std::min(Dataset::current().boundary.y, center.y - center.y % cubeSize.y));
-    const int zmin = std::max(0, std::min(Dataset::current().boundary.z, center.z - center.z % cubeSize.z));
-    const bool xvalid = valid & inRange(coord.x, xmin, xmin + cubeSize.x);
-    const bool yvalid = valid & inRange(coord.y, ymin, ymin + cubeSize.y);
-    const bool zvalid = valid & inRange(coord.z, zmin, zmin + cubeSize.z);
+    const auto c = coord.cube(cubeSize.x, {1.f,1.f,1.f}).cube2Global(cubeSize.x, {1.f,1.f,1.f});
+    const bool xvalid = valid & inRange(coord.x, c.x, c.x + cubeSize.x);
+    const bool yvalid = valid & inRange(coord.y, c.y, c.y + cubeSize.y);
+    const bool zvalid = valid & inRange(coord.z, c.z, c.z + cubeSize.z);
     return xvalid || yvalid || zvalid;
 }
 
