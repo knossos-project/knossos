@@ -29,6 +29,7 @@
 
 QString annotationFileDefaultName();
 QString annotationFileDefaultPath();
+void loadDatasetFromAnnotation(class QIODevice & file, bool needOverlay, bool merge);
 void annotationFileLoad(const QString & filename, bool mergeSkeleton, const QString & treeCmtOnMultiLoad = "");
 void annotationFileSave(const QString & filename, const bool onlySelectedTrees = false, const bool saveTime = true, const bool saveDatasetPath = true);
 void nmlExport(const QString & filename);

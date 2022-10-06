@@ -60,12 +60,15 @@ QString annotationFileDefaultPath() {
     return QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/annotationFiles/" + annotationFileDefaultName();
 }
 
-auto loadDatasetFromAnnotation = [](auto & file, bool needOverlay){
+void loadDatasetFromAnnotation(QIODevice & file, bool needOverlay, bool merge = false){
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        throw std::runtime_error("loadXmlSkeleton open failed");
+        throw std::runtime_error("loadDatasetFromAnnotation open failed");
     }
     QString experimentName, path;
     bool overlay{needOverlay || Segmentation::singleton().enabled};
+    Coordinate movementAreaMin;//0
+    Coordinate movementAreaMax = Dataset::current().boundary;
+
     QXmlStreamReader xml(&file);
     xml.readNextStartElement();// <things>
     while (xml.readNextStartElement()) {
@@ -76,7 +79,28 @@ auto loadDatasetFromAnnotation = [](auto & file, bool needOverlay){
                     experimentName = attributes.value("name").toString();
                 } else if(xml.name() == "dataset") {
                     path = attributes.value("path").toString();
-                    overlay = attributes.value("overlay").isEmpty() ? overlay : static_cast<bool>(attributes.value("overlay").toInt());
+                    if (attributes.hasAttribute("overlay")) {
+                        overlay = static_cast<bool>(attributes.value("overlay").toInt());
+                    }
+                } else if (xml.name() == "guiMode") {
+                    if (attributes.value("mode").toString() == "proof reading") {
+                        Annotation::singleton().guiMode = GUIMode::ProofReading;
+                    }
+                } else if(xml.name() == "MovementArea") {
+                    std::unordered_map<QString, int> attrs;
+                    for (const auto & a : attributes) {
+                        attrs[a.name().toString()] = a.value().toInt();
+                    }
+                    movementAreaMin = {attrs["min.x"], attrs["min.y"], attrs["min.z"]};
+                    if (attrs.count("size.x") && attrs.count("size.y") && attrs.count("size.z")) {
+                        Coordinate movementAreaSize{attrs["size.x"], attrs["size.y"], attrs["size.z"]};
+                        movementAreaMax = movementAreaMin + movementAreaSize;
+                    } else { // old max-inclusive movement area
+                        // The movement area will appear smaller by 1 compared to before. But the data is still contained in the kzip.
+                        // If we instead incremented it by 1 to keep appearance consistent to before,
+                        // the newly saved kzip would have a different movement area than before which might break client code.
+                        movementAreaMax = {attrs["max.x"], attrs["max.y"], attrs["max.z"]};
+                    }
                 }
                 xml.skipCurrentElement();
             }
@@ -86,8 +110,11 @@ auto loadDatasetFromAnnotation = [](auto & file, bool needOverlay){
     if (experimentName != Dataset::current().experimentname || (overlay && !Segmentation::singleton().enabled)) {
         state->viewer->window->widgetContainer.datasetLoadWidget.loadDataset(overlay, path, true);
     }
+    if (!merge) {
+        Annotation::singleton().updateMovementArea(movementAreaMin, movementAreaMax);//range checked
+    }
     file.close();
-};
+}
 
 void annotationFileLoad(const QString & filename, bool mergeSkeleton, const QString & treeCmtOnMultiLoad) {
     QElapsedTimer time;
@@ -111,12 +138,12 @@ void annotationFileLoad(const QString & filename, bool mergeSkeleton, const QStr
                 func(file);
             }
         };
-        getSpecificFile("annotation.xml", [&archive, &cubeRegEx](auto & file){
+        getSpecificFile("annotation.xml", [&archive, &cubeRegEx, mergeSkeleton](auto & file){
             const auto files = archive.getFileNameList();
             const auto hasSnappyCubes = std::find_if(std::cbegin(files), std::cend(files), [&cubeRegEx](const auto & elem){
                 return cubeRegEx.match(elem).hasMatch();
             }) != std::cend(files);
-            loadDatasetFromAnnotation(file, hasSnappyCubes);
+            loadDatasetFromAnnotation(file, hasSnappyCubes, mergeSkeleton);
         });
         for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) {
             const auto match = cubeRegEx.match(archive.getCurrentFileName());

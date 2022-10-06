@@ -265,7 +265,9 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     xml.writeAttribute("mode", (Annotation::singleton().guiMode == GUIMode::ProofReading) ? "proof reading" : "none");
     xml.writeEndElement();
     xml.writeStartElement("dataset");
-    xml.writeAttribute("path", (saveDatasetPath && !Annotation::singleton().authenticatedByConf)? state->viewer->window->widgetContainer.datasetLoadWidget.datasetUrl.toString() : "");
+    if (saveDatasetPath && !Annotation::singleton().authenticatedByConf) {
+        xml.writeAttribute("path", state->viewer->window->widgetContainer.datasetLoadWidget.datasetUrl.toString());
+    }
     xml.writeAttribute("overlay", QString::number(static_cast<int>(Segmentation::singleton().enabled)));
     xml.writeEndElement();
     const auto & task = Annotation::singleton().fileTask;
@@ -442,6 +444,7 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
 }
 
 std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> Skeletonizer::loadXmlSkeleton(QIODevice & file, const bool merge, const QString & treeCmtOnMultiLoad) {
+    loadDatasetFromAnnotation(file, false, merge);
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         throw std::runtime_error("loadXmlSkeleton open failed");
     }
@@ -468,7 +471,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     std::unordered_map<decltype(nodeListElement::nodeID), std::reference_wrapper<nodeListElement>> nodeMap;
     std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> treeMap;
 
-    const QSet<QString> knownElements({"offset", "skeletonDisplayMode"});
+    const QSet<QString> knownElements({"offset", "skeletonDisplayMode", "experiment", "dataset", "guiMode", "MovementArea"});
     QSet<QString> skippedElements;
 
     QElapsedTimer bench;
@@ -492,60 +495,10 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                     matlabCoordinates = false;
                 } else if (xml.name() == "node_position_numbering") {// legacy tag
                     matlabCoordinates = attributes.value("index_origin").toInt();
-                } else if (xml.name() == "guiMode") {
-                    if (attributes.value("mode").toString() == "proof reading") {
-                        Annotation::singleton().guiMode = GUIMode::ProofReading;
-                    }
-                } else if(xml.name() == "dataset") {
-                    const auto path = attributes.value("path").toString();
-                    const bool overlay = attributes.value("overlay").isEmpty() ? Segmentation::singleton().enabled : static_cast<bool>(attributes.value("overlay").toInt());
-                    if (experimentName != Dataset::current().experimentname || (overlay && !Segmentation::singleton().enabled)) {
-                        state->viewer->window->widgetContainer.datasetLoadWidget.loadDataset(overlay, path, true);
-                    }
                 } else if(xml.name() == "MovementArea") {
-                        Coordinate movementAreaMin;//0
-                        Coordinate movementAreaMax = Dataset::current().boundary;
-                        bool sizeSet{false};
-                        Coordinate movementAreaSize = Dataset::current().boundary;
-                        for (const auto & attribute : attributes) {
-                            const auto & name = attribute.name();
-                            const auto & value = attribute.value();
-                            if (name == "min.x") {
-                                movementAreaMin.x = value.toInt();
-                            } else if (name == "min.y") {
-                                movementAreaMin.y = value.toInt();
-                            } else if (name == "min.z") {
-                                movementAreaMin.z = value.toInt();
-                            } else if (name == "size.x") {
-                                sizeSet = true;
-                                movementAreaSize.x = value.toInt();
-                            } else if (name == "size.y") {
-                                sizeSet = true;
-                                movementAreaSize.y = value.toInt();
-                            } else if (name == "size.z") {
-                                sizeSet = true;
-                                movementAreaSize.z = value.toInt();
-                            } else if (name == "max.x") {
-                                movementAreaMax.x = value.toInt();
-                            } else if (name == "max.y") {
-                                movementAreaMax.y = value.toInt();
-                            } else if (name == "max.z") {
-                                movementAreaMax.z = value.toInt();
-                            }
-                        }
-                    if (!merge) {
-                        if (sizeSet) {
-                            Annotation::singleton().updateMovementArea(movementAreaMin, movementAreaMin + movementAreaSize);//range checked
-                        } else { // old max-inclusive movement area
-                            Annotation::singleton().updateMovementArea(movementAreaMin, movementAreaMax);
-                            // The movement area will appear smaller by 1 compared to before. But the data is still contained in the kzip.
-                            // If we instead incremented it by 1 to keep appearance consistent to before,
-                            // the newly saved kzip would have a different movement area than before which might break client code.
-                        }
-                    }
-                    if (!sizeSet) {
-                        movementAreaSize = movementAreaMax - movementAreaMin;
-                    }
+                    const auto movementAreaMin = Annotation::singleton().movementAreaMin;
+                    const auto movementAreaMax = Annotation::singleton().movementAreaMax;
+                    const auto movementAreaSize = movementAreaMax - movementAreaMin;
                     if (!treeCmtOnMultiLoad.isEmpty() && movementAreaSize != Dataset::current().boundary) {
                         QVector<float> verts, normals;
                         auto addVert = [&verts](floatCoordinate coord){
