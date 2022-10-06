@@ -917,7 +917,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     QMessageBox msgBox{QApplication::activeWindow()};
     auto msg = tr("");
     if (!skippedElements.empty()) {
-        msg += tr("• Some unknown elements have been skipped.\n\n").arg(xml.lineNumber());
+        msg += tr("• Some unknown elements have been skipped.\n\n");
         QString buffer;
         QDebug{&buffer} << skippedElements;
         msgBox.setDetailedText(tr("Skipped elements: %1").arg(buffer));
