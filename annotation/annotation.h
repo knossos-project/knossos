@@ -98,6 +98,7 @@ public:
     AAMTask fileTask;
     QFlags<AnnotationMode> annotationMode;
     GUIMode guiMode{GUIMode::None};
+    std::optional<QString> embeddedDataset;
 
     Coordinate movementAreaMin; // Center of movement area
     Coordinate movementAreaMax; // Range around movement center for every dimension

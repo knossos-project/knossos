@@ -436,6 +436,10 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     }
     tableWidget.selectionModel()->select(datasetModel.index(row, 0), QItemSelectionModel::ClearAndSelect);
     tableWidget.scrollTo(sortAndFilterProxy.mapFromSource(tableWidget.selectionModel()->selectedIndexes()[0]));
+    return loadDataset(download.second, loadOverlay, path, silent);
+}
+
+bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> loadOverlay, QUrl path, const bool silent) {
     bool keepAnnotation = silent;
     if (!silent && !Annotation::singleton().isEmpty()) {
         QMessageBox question{QApplication::activeWindow()};
@@ -451,8 +455,6 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         }
         keepAnnotation = question.clickedButton() == keepButton;
     }
-    auto data = download.second;
-
     QString token;
     if (Dataset::isGoogleBrainmaps(path)) {
         const auto pair = getBrainmapsToken();
@@ -482,7 +484,6 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
             return false;
         }
     }
-
     auto layers = [this, &path, &data, &loadOverlay, &silent]() {
         try {
             return Dataset::parse(path, data, loadOverlay.get_value_or(segmentationOverlayCheckbox.isChecked()));
@@ -534,8 +535,10 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
         }
     }
 
-    datasetUrl = {path};//remember config url
-    qDebug() << "loading dataset" << datasetUrl;
+    qDebug() << (Annotation::singleton().embeddedDataset ? "embedded" : "loading") << "dataset" << path;
+    if (!Annotation::singleton().embeddedDataset) {
+        datasetUrl = {path};//remember config url
+    }
     Loader::Controller::singleton().suspendLoader();//we change variables the loader uses
     const bool changedBoundaryOrScale = layers.front().boundary != Dataset::current().boundary || layers.front().scale != Dataset::current().scale;
 
@@ -546,6 +549,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
             layer.cubeEdgeLength = cubeEdgeLen;
         }
     }
+    updateDatasetInfo(layers);// updates FOV
     state->M = (fovSpin.value() + cubeEdgeLen) / cubeEdgeLen;
     if (loadOverlay != boost::none) {
         segmentationOverlayCheckbox.setChecked(loadOverlay.get());
@@ -561,7 +565,6 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
 
     state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M, Dataset::datasets.size());// resets textures
 
-    updateDatasetInfo(Dataset::datasets);
     state->mainWindow->resetTextureProperties();
 
     if (changedBoundaryOrScale || !keepAnnotation) {
@@ -583,6 +586,9 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     state->viewer->datasetColorAdjustmentsChanged();// set range delta and bias for all layers
     state->viewer->updateDatasetMag();// clear vps and notify loader
     Annotation::singleton().authenticatedByConf = path.url().endsWith(".auth.conf");
+    if (Annotation::singleton().embeddedDataset && QUrl{Annotation::singleton().embeddedDataset.value()} != path) {
+        Annotation::singleton().embeddedDataset.reset();
+    }
 
     emit datasetChanged();
 

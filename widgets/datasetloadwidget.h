@@ -184,6 +184,7 @@ public:
 
     explicit DatasetLoadWidget(QWidget *parent = 0);
     bool loadDataset(const boost::optional<bool> loadOverlay = boost::none, QUrl path = {}, const bool silent = false);
+    bool loadDataset(QString data, const boost::optional<bool> loadOverlay, QUrl path, const bool silent);
     void saveSettings() override;
     void loadSettings() override;
 

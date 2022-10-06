@@ -777,6 +777,14 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             if (dataset.url.scheme() != "file") {
                 downloads[cubeCoord] = &dynamic_cast<QNetworkReply &>(io);
                 QObject::connect(downloads[cubeCoord], &QNetworkReply::finished, this, processDownload);
+            } else if (Annotation::singleton().embeddedDataset) {
+                const auto path = QFileInfo{*Annotation::singleton().embeddedDataset}.dir().path() + request.url().toLocalFile();
+                const bool exists = Annotation::singleton().extraFiles.contains(path);
+                if (exists) {
+                    dynamic_cast<QBuffer &>(io).setBuffer(&Annotation::singleton().extraFiles[path]);
+                    io.open(QIODevice::ReadOnly | QIODevice::Unbuffered);
+                }
+                processDownload(exists);
             } else {
                 opens[cubeCoord] = std::make_unique<OpenWatcher>();
                 auto & watcher = *opens[cubeCoord];

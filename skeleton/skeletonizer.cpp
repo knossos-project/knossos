@@ -266,7 +266,11 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     xml.writeEndElement();
     xml.writeStartElement("dataset");
     if (saveDatasetPath && !Annotation::singleton().authenticatedByConf) {
-        xml.writeAttribute("path", state->viewer->window->widgetContainer.datasetLoadWidget.datasetUrl.toString());
+        if (Annotation::singleton().embeddedDataset) {
+            xml.writeAttribute("embedded", Annotation::singleton().embeddedDataset.value());
+        } else {
+            xml.writeAttribute("path", state->viewer->window->widgetContainer.datasetLoadWidget.datasetUrl.toString());
+        }
     }
     xml.writeAttribute("overlay", QString::number(static_cast<int>(Segmentation::singleton().enabled)));
     xml.writeEndElement();

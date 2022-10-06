@@ -66,6 +66,7 @@ void loadDatasetFromAnnotation(QIODevice & file, bool needOverlay, bool merge = 
     }
     QString experimentName, path;
     bool overlay{needOverlay || Segmentation::singleton().enabled};
+    bool embedded{false};
     Coordinate movementAreaMin;//0
     Coordinate movementAreaMax = Dataset::current().boundary;
 
@@ -78,7 +79,8 @@ void loadDatasetFromAnnotation(QIODevice & file, bool needOverlay, bool merge = 
                 if (xml.name() == "experiment") {
                     experimentName = attributes.value("name").toString();
                 } else if(xml.name() == "dataset") {
-                    path = attributes.value("path").toString();
+                    embedded = attributes.hasAttribute("embedded");
+                    path = attributes.value(embedded ? "embedded" : "path").toString();
                     if (attributes.hasAttribute("overlay")) {
                         overlay = static_cast<bool>(attributes.value("overlay").toInt());
                     }
@@ -107,7 +109,9 @@ void loadDatasetFromAnnotation(QIODevice & file, bool needOverlay, bool merge = 
         }
         xml.skipCurrentElement();
     }
-    if (experimentName != Dataset::current().experimentname || (overlay && !Segmentation::singleton().enabled)) {
+    if (embedded) {
+        Annotation::singleton().embeddedDataset = path;
+    } else if (experimentName != Dataset::current().experimentname || (overlay && !Segmentation::singleton().enabled)) {
         state->viewer->window->widgetContainer.datasetLoadWidget.loadDataset(overlay, path, true);
     }
     if (!merge) {
@@ -131,9 +135,11 @@ void annotationFileLoad(const QString & filename, bool mergeSkeleton, const QStr
         qDebug() << "loading file without memory map (because it failed)";
     }
     if (archive.open(QuaZip::mdUnzip)) {
-        const auto getSpecificFile = [&archive, &nonExtraFiles](const QString & filename, auto func){
+        const auto getSpecificFile = [&archive, &nonExtraFiles](const QString & filename, auto func, bool remember = true){
             if (archive.setCurrentFile(filename)) {
-                nonExtraFiles.insert(archive.getCurrentFileName());
+                if (remember) {
+                    nonExtraFiles.insert(archive.getCurrentFileName());
+                }
                 QuaZipFile file(&archive);
                 func(file);
             }
@@ -145,6 +151,13 @@ void annotationFileLoad(const QString & filename, bool mergeSkeleton, const QStr
             }) != std::cend(files);
             loadDatasetFromAnnotation(file, hasSnappyCubes, mergeSkeleton);
         });
+        if (Annotation::singleton().embeddedDataset) {
+            const auto path = Annotation::singleton().embeddedDataset.value();
+            getSpecificFile(path, [&path](auto & file){
+                file.open(QIODevice::ReadOnly);
+                state->viewer->window->widgetContainer.datasetLoadWidget.loadDataset(file.readAll(), true, path, true);
+            }, false);
+        }
         for (auto valid = archive.goToFirstFile(); valid; valid = archive.goToNextFile()) {
             const auto match = cubeRegEx.match(archive.getCurrentFileName());
             if (match.hasMatch()) {
@@ -228,6 +241,9 @@ void annotationFileLoad(const QString & filename, bool mergeSkeleton, const QStr
         }
     } else {
         throw std::runtime_error(QObject::tr("opening %1 for reading failed").arg(filename).toStdString());
+    }
+    if (Annotation::singleton().embeddedDataset) {
+        state->viewer->updateDatasetMag();// restart loader after all extra files are available
     }
     qDebug() << "annotationFileLoad took" << time.nsecsElapsed() / 1e9 << "s";
 }
