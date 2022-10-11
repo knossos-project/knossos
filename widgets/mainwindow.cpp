@@ -842,33 +842,35 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
     if (fileNames.empty()) {
         return false;
     }
-
     bool mergeSegmentation = mergeAll;
     bool mergeSkeleton = mergeAll;
-    bool existingSegmentation = Segmentation::singleton().hasSegData();
-    bool existingSkeleton = !state->skeletonState->trees.empty();
-    bool existingBoth = existingSegmentation && existingSkeleton;
-    if (!mergeAll && (existingSegmentation || existingSkeleton)) {
+    {
+    const bool existingSegmentation = Segmentation::singleton().hasSegData();
+    const bool existingSkeleton = !state->skeletonState->trees.empty();
+    const bool existingExtraFiles = !Annotation::singleton().extraFiles.isEmpty();
+    const bool existingAll = existingSegmentation && existingSkeleton && existingExtraFiles;
+    if (!mergeAll && (existingSegmentation || existingSkeleton || existingExtraFiles)) {
         QMessageBox prompt{QApplication::activeWindow()};
         prompt.setIcon(QMessageBox::Question);
         prompt.setText(QObject::tr("Which action would you like to choose?"));
         QString text = tr("There is existing: <ul>")
             + (existingSegmentation ? tr("<li>Segmentation data</li>") : tr(""))
             + (existingSkeleton ? tr("<li>Skeleton data</li>") : tr(""))
+            + (existingExtraFiles ? tr("<li>Extra files</li>") : tr(""))
             + tr("</ul>")
-            + tr("which can be merged or overwritten.");
+            + (existingSegmentation || existingSkeleton ? tr("which can be merged or overwritten.") : tr(""));
         prompt.setInformativeText(text);
-        const auto * overrideAllButton = prompt.addButton(QObject::tr("&Overwrite%1").arg(existingBoth ? " Both" : ""), QMessageBox::AcceptRole);
-        const auto * keepAllButton = existingBoth ? prompt.addButton(QObject::tr("&Keep Both"), QMessageBox::AcceptRole) : nullptr;
-        const auto * segmenationKeepButton = existingSegmentation ? prompt.addButton(QObject::tr("Keep%1 Seg&menation").arg(existingBoth ? " only" : ""), QMessageBox::AcceptRole) : nullptr;
-        const auto * skeletonKeepButton = existingSkeleton ? prompt.addButton(QObject::tr("Keep%1 &Skeleton").arg(existingBoth ? " only" : ""), QMessageBox::AcceptRole) : nullptr;
+        const auto * overrideAllButton = prompt.addButton(QObject::tr("&Overwrite%1").arg(existingAll ? " Both" : ""), QMessageBox::AcceptRole);
+        const auto * keepAllButton = existingAll ? prompt.addButton(QObject::tr("&Keep All"), QMessageBox::AcceptRole) : nullptr;
+        const auto * segmenationKeepButton = existingSegmentation ? prompt.addButton(QObject::tr("Keep%1 Seg&menation").arg(existingAll ? " only" : ""), QMessageBox::AcceptRole) : nullptr;
+        const auto * skeletonKeepButton = existingSkeleton ? prompt.addButton(QObject::tr("Keep%1 &Skeleton").arg(existingAll ? " only" : ""), QMessageBox::AcceptRole) : nullptr;
         const auto * cancelButton = prompt.addButton(QMessageBox::Cancel);
         prompt.exec();
         if (prompt.clickedButton() == cancelButton) {
             return false;
         }
-        mergeSegmentation = prompt.clickedButton() == keepAllButton || prompt.clickedButton() == segmenationKeepButton;
-        mergeSkeleton = prompt.clickedButton() == keepAllButton || prompt.clickedButton() == skeletonKeepButton;
+        const auto mergeSegmentation = prompt.clickedButton() == keepAllButton || prompt.clickedButton() == segmenationKeepButton;
+        const auto mergeSkeleton = prompt.clickedButton() == keepAllButton || prompt.clickedButton() == skeletonKeepButton;
         if (prompt.clickedButton() == overrideAllButton) {
             Annotation::singleton().clearAnnotation();
             updateTitlebar();
@@ -880,6 +882,7 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
                 Skeletonizer::singleton().clearSkeleton();
             }
         }
+    }
     }
 
     bool multipleFiles = fileNames.size() > 1;
