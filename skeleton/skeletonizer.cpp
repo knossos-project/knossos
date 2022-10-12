@@ -740,11 +740,11 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                                 } else if (name == "radius") {
                                     radius = (nmlScale ? nmlScale->x / Dataset::current().scales[0].x : 1) * value.toDouble();
                                 } else if (name == "x") {
-                                    currentCoordinate.x = (nmlScale ? nmlScale->x / Dataset::current().scales[0].x : 1) * value.toDouble() - matlabCoordinates;
+                                    currentCoordinate.x = std::round((nmlScale ? nmlScale->x / Dataset::current().scales[0].x : 1) * value.toDouble()) - matlabCoordinates;
                                 } else if (name == "y") {
-                                    currentCoordinate.y = (nmlScale ? nmlScale->y / Dataset::current().scales[0].y : 1) * value.toDouble() - matlabCoordinates;
+                                    currentCoordinate.y = std::round((nmlScale ? nmlScale->y / Dataset::current().scales[0].y : 1) * value.toDouble()) - matlabCoordinates;
                                 } else if (name == "z") {
-                                    currentCoordinate.z = (nmlScale ? nmlScale->z / Dataset::current().scales[0].z : 1) * value.toDouble() - matlabCoordinates;
+                                    currentCoordinate.z = std::round((nmlScale ? nmlScale->z / Dataset::current().scales[0].z : 1) * value.toDouble()) - matlabCoordinates;
                                 } else if (name == "inVp") {
                                     inVP = static_cast<ViewportType>(value.toInt());
                                 } else if (name == "inMag") {
