@@ -1,7 +1,3 @@
-QMainWindow {
-    background: #dddddd;
-}
-
 QStatusBar {
     background: #404244;
 }
