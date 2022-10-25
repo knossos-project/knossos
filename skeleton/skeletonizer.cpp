@@ -1885,6 +1885,9 @@ void Skeletonizer::select(QSet<T*> elems) {
     toggleSelection(elems);
 }
 
+template void Skeletonizer::select<nodeListElement>(QSet<nodeListElement*> nodes);
+template void Skeletonizer::select<treeListElement>(QSet<treeListElement*> trees);
+
 template<typename T>
 void Skeletonizer::toggleSelection(const QSet<T*> & elems) {
     auto & selectedElems = selected<T>();
