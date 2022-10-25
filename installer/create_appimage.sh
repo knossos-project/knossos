@@ -26,7 +26,6 @@ cp -av /usr/lib/libfontconfig.so* usr/lib/
 
 rm -vf usr/lib/libgcrypt.so* usr/lib/libxcb-shm.so*
 rm -vf usr/lib/libffi.so* # (process:2633): Gtk-WARNING **: Locale not supported by C library. # has GTK icons regardless of style
-rm -vf usr/lib/libpython2.7.so* # keeping it prioritized will warn about failing »import site«
 
 # Failed to finding matching FBConfig
 #The X11 connection broke: No error (code 0)
@@ -66,13 +65,14 @@ function optional_lib {
 	cp -av "$@" $target
 }
 
-for lib in libstdc++.so.* libgcc_s.so.*; do
-	optional_lib usr/lib/versioned /usr/lib/$lib
+for lib in stdc++ gcc_s; do
+	optional_lib usr/lib/versioned /usr/lib/lib$lib.so.*
 done
-for lib in libpython2.7.so.* libOpenGL.so.* libGLdispatch.so.* libGLX.so.* libGL.so.* libGLU.so.*; do
-	optional_lib usr/lib/supplemental /usr/lib/$lib
+for lib in OpenGL GLdispatch GLX GL GLU; do
+	optional_lib usr/lib/supplemental /usr/lib/lib$lib.so.*
 done
-chmod -v +w usr/lib/supplemental/libpython2.7.so.*/libpython2.7.so.*.* # workaround to allow overwriting on reruns
+optional_lib usr/lib/supplemental usr/lib/libpython*.so*
+rm -vf usr/lib/libpython*.so* # keeping it prioritized will warn about failing »import site«
 
 rm -v AppRun
 cp -v ../../knossos/installer/AppRun .

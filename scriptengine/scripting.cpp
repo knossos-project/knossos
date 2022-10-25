@@ -72,6 +72,18 @@ void PythonQtInit() {
     };
     Py_IsInitialized();// trigger a delay load to make the module available to GetModuleHandle in LoadPythonSymbol
 #endif
+#if PY_MAJOR_VERSION >= 3 && PY_MINOR_VERSION >= 8
+    // Py_Initialize within PythonQt aborts in an unrecoverable way if initialization fails in Python 3
+    PyConfig config;
+    PyConfig_InitPythonConfig(&config);
+    const auto status = Py_InitializeFromConfig(&config);
+    PyConfig_Clear(&config);
+    if (PyStatus_Exception(status)) {
+        qWarning() << "Py_InitializeFromConfig failed";
+        throw status;
+    }
+    Py_FinalizeEx();// just uninit again here and give PythonQt the responsibility
+#endif
     PythonQt::init();
 #ifdef QtAll
     PythonQt_QtAll::init();
@@ -137,11 +149,11 @@ void Scripting::initialize() {
     if (evalScript("nosite", Py_eval_input).toBool()) {
         QMessageBox box;
         box.setIcon(QMessageBox::Critical);
-        box.setText("Python 2.7 installation misconfigured.");
-        box.setInformativeText("Couldn’t »import site« which means that Python 2.7 couldn’t find its default library files \n"
+        box.setText("Python installation misconfigured.");
+        box.setInformativeText("Couldn’t »import site« which means that Python couldn’t find its default library files \n"
                                "and using most Python libraries – and plugins depending on those – wont work. \n"
                                "\n"
-                               "Un- and reinstallation of a system wide Python 2.7 is advised. \n"
+                               "Un- and reinstallation of a system wide Python is advised. \n"
                                "(Alternatively try to fix it manually: registry, environment variables)");
         box.setDetailedText(evalScript("sys.version", Py_eval_input).toString());
         box.addButton("Ignore", QMessageBox::AcceptRole);
