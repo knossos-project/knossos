@@ -47,7 +47,7 @@ rm -vf usr/lib/libX11-xcb.so*
 #mv -v libxcb-xinput* libxcb-xinerama* usr/lib/
 
 mkdir -pv glibc
-tar -xf $(find /var/cache/pacman/pkg -iname $(expac "%n-%v-x86_64.pkg.tar.zst" glibc)) -C glibc
+tar -xf $(find /var/cache/pacman/pkg -iname $(expac "%n-%v-*.pkg.tar.zst" glibc)) -C glibc
 
 set -x
 patchelf --add-needed libpthread.so.0 usr/bin/knossos
