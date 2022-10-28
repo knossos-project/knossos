@@ -578,56 +578,48 @@ void ViewportOrtho::renderViewportFast() {
     const auto cameraPos = floatCoordinate{cpos} + n;
     viewMatrix.lookAt(cameraPos, cpos, v2);
 
-    // raw data shader
-    raw_data_shader.bind();
-    int vertexLocation = raw_data_shader.attributeLocation("vertex");
-    int texLocation = raw_data_shader.attributeLocation("texCoordVertex");
-    raw_data_shader.enableAttributeArray(vertexLocation);
-    raw_data_shader.enableAttributeArray(texLocation);
-    raw_data_shader.setAttributeArray(vertexLocation, triangleVertices.data()->data(), 3);
-    raw_data_shader.setAttributeArray(texLocation, textureVertices.data()->data(), 3);
-    raw_data_shader.setUniformValue("view_matrix", viewMatrix);
-    raw_data_shader.setUniformValue("projection_matrix", projectionMatrix);
-    raw_data_shader.setUniformValue("texture", 0);
-
-    // overlay data shader
-    overlay_data_shader.bind();
-    int overtexLocation = overlay_data_shader.attributeLocation("vertex");
-    int otexLocation = overlay_data_shader.attributeLocation("texCoordVertex");
-    overlay_data_shader.enableAttributeArray(overtexLocation);
-    overlay_data_shader.enableAttributeArray(otexLocation);
-    overlay_data_shader.setAttributeArray(overtexLocation, triangleVertices.data()->data(), triangleVertices.data()->size());
-    overlay_data_shader.setAttributeArray(otexLocation, textureVertices.data()->data(), textureVertices.data()->size());
-    overlay_data_shader.setUniformValue("view_matrix", viewMatrix);
-    overlay_data_shader.setUniformValue("projection_matrix", projectionMatrix);
-    overlay_data_shader.setUniformValue("indexTexture", 0);
-    overlay_data_shader.setUniformValue("textureLUT", 1);
-    overlay_data_shader.setUniformValue("factor", static_cast<float>(std::numeric_limits<gpu_lut_cube::gpu_index>::max()));
-
     glEnable(GL_TEXTURE_3D);
 
     for (auto & layer : state->viewer->layers) {
         if (layer.enabled && layer.opacity >= 0.0f && !(state->viewerState->showOnlyRawData && layer.isOverlayData)) {
+            auto & shader = layer.isOverlayData ? overlay_data_shader : raw_data_shader;
+            shader.bind();
+            shader.setUniformValue("textureOpacity", layer.isOverlayData ? Segmentation::singleton().alpha / 256.0f : layer.opacity);
+            const int vertexLocation = shader.attributeLocation("vertex");
+            const int texLocation = shader.attributeLocation("texCoordVertex");
+            shader.enableAttributeArray(vertexLocation);
+            shader.enableAttributeArray(texLocation);
+            shader.setAttributeArray(vertexLocation, triangleVertices.data()->data(), triangleVertices.data()->size());
+            shader.setAttributeArray(texLocation, textureVertices.data()->data(), textureVertices.data()->size());
+            shader.setUniformValue("view_matrix", viewMatrix);
+            shader.setUniformValue("projection_matrix", projectionMatrix);
             if (layer.isOverlayData) {
-                overlay_data_shader.bind();
-                overlay_data_shader.setUniformValue("textureOpacity", Segmentation::singleton().alpha / 256.0f);
+                overlay_data_shader.setUniformValue("indexTexture", 0);
+                overlay_data_shader.setUniformValue("textureLUT", 1);
+                overlay_data_shader.setUniformValue("factor", static_cast<float>(std::numeric_limits<gpu_lut_cube::gpu_index>::max()));
             } else {
-                raw_data_shader.bind();
-                raw_data_shader.setUniformValue("textureOpacity", layer.opacity);
+                raw_data_shader.setUniformValue("texture", 0);
             }
-
             auto render = [&](auto & cube, const QMatrix4x4 modelMatrix = {}){
                 if (layer.isOverlayData) {
                     auto & punned = static_cast<gpu_lut_cube&>(cube);
                     punned.cube.bind(0);
                     punned.lut.bind(1);
-                    overlay_data_shader.setUniformValue("model_matrix", modelMatrix);
                     overlay_data_shader.setUniformValue("lutSize", static_cast<float>(punned.lut.width() * punned.lut.height() * punned.lut.depth()));
                 } else {
-                    raw_data_shader.setUniformValue("model_matrix", modelMatrix);
                     cube.cube.bind(0);
                 }
+                shader.setUniformValue("model_matrix", modelMatrix);
+
                 glDrawArrays(GL_TRIANGLE_FAN, 0, static_cast<int>(triangleVertices.size()));
+
+                if (layer.isOverlayData) {
+                    auto & punned = static_cast<gpu_lut_cube&>(cube);
+                    punned.lut.release(1, QOpenGLTexture::ResetTextureUnit);
+                    punned.cube.release(0, QOpenGLTexture::ResetTextureUnit);
+                } else {
+                    cube.cube.release(0, QOpenGLTexture::ResetTextureUnit);
+                }
             };
             if (!arb) {
                 const float halfsc = fov * 0.5f / gpucubeedge;
@@ -673,18 +665,13 @@ void ViewportOrtho::renderViewportFast() {
                     }
                 }
             }
+            shader.disableAttributeArray(vertexLocation);
+            shader.disableAttributeArray(texLocation);
+            shader.release();
         }
     }
 
-    glActiveTexture(GL_TEXTURE0);
     glDisable(GL_TEXTURE_3D);
-
-    raw_data_shader.disableAttributeArray(vertexLocation);
-    raw_data_shader.disableAttributeArray(texLocation);
-    raw_data_shader.release();
-    overlay_data_shader.disableAttributeArray(overtexLocation);
-    overlay_data_shader.disableAttributeArray(otexLocation);
-    overlay_data_shader.release();
 
     times.recordSample();
 
