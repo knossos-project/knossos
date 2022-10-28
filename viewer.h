@@ -214,8 +214,8 @@ public:
     MainWindow *window = &mainWindow;
 
     std::list<TextureLayer> layers;
-    int gpucubeedge = 64;
-    bool gpuRendering = true;
+    int gpucubeedge{128};
+    bool gpuRendering{false};
 
     ViewportOrtho *viewportXY, *viewportXZ, *viewportZY;
     ViewportArb *viewportArb;

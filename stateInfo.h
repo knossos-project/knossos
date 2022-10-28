@@ -59,7 +59,7 @@ inline void * cubeQuery(const coord2bytep_map_t &h, const std::size_t layerId, c
 class stateInfo {
 public:
     //  Info about the data
-    bool gpuSlicer = false;
+    bool gpuSlicer{true};
 
     bool quitSignal{false};
 
