@@ -66,10 +66,10 @@ struct Dataset {
     bool isOverlay() const;
 
     CoordOfCube global2cube(const Coordinate & globalCoord) const {
-        return globalCoord.cube(cubeEdgeLength, scaleFactor);
+        return globalCoord.cube(cubeShape, scaleFactor);
     }
     Coordinate cube2global(const CoordOfCube & cubeCoord) const {
-        return cubeCoord.cube2Global(cubeEdgeLength, scaleFactor);
+        return cubeCoord.cube2Global(cubeShape, scaleFactor);
     }
 
     API api{API::Heidelbrain};
@@ -94,7 +94,8 @@ struct Dataset {
     // datacube in bytes 2^3N which has to be <= 2^32 - 1 (unsigned int).
     // So N cannot be larger than 10.
     // Edge length of one cube in pixels: 2^N
-    int cubeEdgeLength{128};
+    Coordinate cubeShape{128, 128, 128};
+    Coordinate gpuCubeShape{128, 128, 128};
     QString description;
     // Current dataset identifier string
     QString experimentname;

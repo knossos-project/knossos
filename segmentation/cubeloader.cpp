@@ -42,8 +42,8 @@ std::pair<bool, void *> getRawCube(const Coordinate & pos, const std::size_t lay
 
 template<typename T = std::uint64_t>
 boost::multi_array_ref<T, 3> getCubeRef(void * const rawcube, const std::size_t layerIdx = Segmentation::singleton().layerId) {
-    const auto cubeEdgeLen = Dataset::datasets[layerIdx].cubeEdgeLength;
-    const auto dims = boost::extents[cubeEdgeLen][cubeEdgeLen][cubeEdgeLen];
+    const auto cubeShape = Dataset::datasets[layerIdx].cubeShape;
+    const auto dims = boost::extents[cubeShape.z][cubeShape.y][cubeShape.x];
     return boost::multi_array_ref<T, 3>(reinterpret_cast<T *>(rawcube), dims);
 }
 
@@ -53,7 +53,7 @@ std::optional<std::uint64_t> readLayerVoxel(const Coordinate & pos, const std::s
     if (!cubeIt.first || (Dataset::datasets[layerIdx].isOverlay() && Annotation::singleton().outsideMovementArea(pos))) {
         return std::nullopt;
     }
-    const auto inCube = pos.insideCube(Dataset::datasets[layerIdx].cubeEdgeLength, Dataset::datasets[layerIdx].scaleFactor);
+    const auto inCube = pos.insideCube(Dataset::datasets[layerIdx].cubeShape, Dataset::datasets[layerIdx].scaleFactor);
     const auto access = [&](auto arg){
         return getCubeRef<decltype(arg)>(cubeIt.second, layerIdx)[inCube.z][inCube.y][inCube.x];
     };
@@ -72,10 +72,10 @@ bool writeVoxel(const Coordinate & pos, const uint64_t value, bool isMarkChanged
     if (Annotation::singleton().outsideMovementArea(pos) || !cubeIt.first) {
         return false;
     }
-    const auto inCube = pos.insideCube(Dataset::current().cubeEdgeLength, Dataset::current().scaleFactor);
+    const auto inCube = pos.insideCube(Dataset::current().cubeShape, Dataset::current().scaleFactor);
     getCubeRef<std::uint64_t>(cubeIt.second)[inCube.z][inCube.y][inCube.x] = value;
     if (isMarkChanged) {
-        Loader::Controller::singleton().markCubeAsModified(Segmentation::singleton().layerId, pos.cube(Dataset::current().cubeEdgeLength, Dataset::current().scaleFactor), Dataset::current().magnification);
+        Loader::Controller::singleton().markCubeAsModified(Segmentation::singleton().layerId, pos.cube(Dataset::current().cubeShape, Dataset::current().scaleFactor), Dataset::current().magnification);
     }
     return true;
 }
@@ -116,7 +116,7 @@ void coordCubesMarkChanged(const CubeCoordSet & cubeChangeSet) {
 }
 
 auto wholeCubes = [](const Coordinate & globalFirst, const Coordinate & globalLast, const uint64_t value, CubeCoordSet & cubeChangeSet) {
-    const auto wholeCubeBegin = Dataset::current().global2cube(globalFirst + Dataset::current().cubeEdgeLength - 1);
+    const auto wholeCubeBegin = Dataset::current().global2cube(globalFirst + Dataset::current().cubeShape - 1);
     const auto wholeCubeEnd = Dataset::current().global2cube(globalLast);
 
     //fill all whole cubes
@@ -144,7 +144,7 @@ auto wholeCubes = [](const Coordinate & globalFirst, const Coordinate & globalLa
 
 template<typename Func, typename Skip>
 CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  globalLast, Func func, Skip skip) {
-    const auto & cubeEdgeLen = Dataset::current().cubeEdgeLength;
+    const auto & cubeShape = Dataset::current().cubeShape;
     const auto cubeBegin = Dataset::current().global2cube(globalFirst);
     const auto cubeEnd = Dataset::current().global2cube(globalLast) + 1;
     CubeCoordSet cubeCoords;
@@ -159,9 +159,9 @@ CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  g
         auto rawcube = getRawCube(globalCubeBegin);
         if (rawcube.first) {
             auto cubeRef = getCubeRef(rawcube.second);
-            const auto globalCubeEnd = globalCubeBegin + Dataset::current().scaleFactor * cubeEdgeLen;
-            const auto localStart = globalFirst.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeEdgeLen, Dataset::current().scaleFactor);
-            const auto localEnd = globalLast.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeEdgeLen, Dataset::current().scaleFactor);
+            const auto globalCubeEnd = globalCubeBegin + Dataset::current().scaleFactor.componentMul(cubeShape);
+            const auto localStart = globalFirst.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeShape, Dataset::current().scaleFactor);
+            const auto localEnd = globalLast.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeShape, Dataset::current().scaleFactor);
 
             for (int z = localStart.z; z <= localEnd.z; ++z)
             for (int y = localStart.y; y <= localEnd.y; ++y)
