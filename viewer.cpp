@@ -381,6 +381,7 @@ void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx,
     const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? 4 - 4 * cubeEdgeLen * cubeEdgeLen : 0;
 
     const auto & seg = Segmentation::singleton();
+    const auto bgid = layerId == seg.layerId ? seg.getBackgroundId() : 0;
     //cache
     uint64_t subobjectIdCache = Segmentation::singleton().getBackgroundId();
     bool selectedCache = seg.isSubObjectIdSelected(subobjectIdCache);
@@ -416,14 +417,19 @@ void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx,
         slice += texNext * v1start;
         for (int xxy = v1start; xxy < v1end; ++xxy) {
             const uint64_t subobjectId = datacube[0];
+            if (subobjectId == bgid) {// blank background
+                std::fill(slice, slice + 4, 0);
+                ++counter;
+                datacube += voxelIncrement;
+                slice += texNext;
+                continue;
+            }
 
             const auto queryColor = [&](){
                 if ((layerId == seg.layerId) && Segmentation::singleton().segmentationColor != SegmentationColor::SubObject) {// apply mergelist
                     return seg.colorObjectFromSubobjectId(subobjectId);
-                } else if (subobjectId != seg.getBackgroundId()) {
-                     return seg.subobjectColor(subobjectId);
-                } else {// blank background
-                    return Segmentation::color_t{};
+                } else {
+                    return seg.subobjectColor(subobjectId);
                 }
             };
             const auto color = (subobjectIdCache == subobjectId) ? colorCache : queryColor();
