@@ -151,6 +151,19 @@ void annotationFileLoad(const QString & filename, bool mergeSkeleton, const QStr
             }) != std::cend(files);
             loadDatasetFromAnnotation(file, hasSnappyCubes, mergeSkeleton);
         });
+        const auto loadSettings = [&getSpecificFile, &archive](){
+            getSpecificFile("settings.ini", [&archive](auto & file){
+                QTemporaryFile tempFile;
+                if (file.open(QIODevice::ReadOnly | QIODevice::Text) && tempFile.open()) {
+                    tempFile.write(Annotation::singleton().extraFiles[archive.getCurrentFileName()] = file.readAll());
+                    tempFile.close();// QSettings wants to reopen it
+                    state->mainWindow->loadCustomPreferences(tempFile.fileName());
+                } else {
+                    throw std::runtime_error("couldn’t store custom settings.ini from annotation file to a temporary file");
+                }
+            });
+        };
+        loadSettings();// load custom settings before and after loading a dataset
         if (Annotation::singleton().embeddedDataset) {
             const auto path = Annotation::singleton().embeddedDataset.value();
             getSpecificFile(path, [&path](auto & file){
@@ -173,16 +186,7 @@ void annotationFileLoad(const QString & filename, bool mergeSkeleton, const QStr
                 Loader::Controller::singleton().snappyCacheSupplySnappy(Segmentation::singleton().layerId, cubeCoord, cubeMagnification, file.readAll().toStdString());
             }
         }
-        getSpecificFile("settings.ini", [&archive](auto & file){
-            QTemporaryFile tempFile;
-            if (file.open(QIODevice::ReadOnly | QIODevice::Text) && tempFile.open()) {
-                tempFile.write(Annotation::singleton().extraFiles[archive.getCurrentFileName()] = file.readAll());
-                tempFile.close();// QSettings wants to reopen it
-                state->mainWindow->loadCustomPreferences(tempFile.fileName());
-            } else {
-                throw std::runtime_error("couldn’t store custom settings.ini from annotation file to a temporary file");
-            }
-        });
+        loadSettings();
         getSpecificFile("mergelist.txt", [](auto & file){
             Segmentation::singleton().mergelistLoad(file);
         });
