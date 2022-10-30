@@ -44,8 +44,10 @@
 #include <boost/container/static_vector.hpp>
 #include <boost/range/combine.hpp>
 
-#include <fstream>
+#include <algorithm>
+#include <cstddef>
 #include <cmath>
+#include <fstream>
 
 ViewerState::ViewerState() {
     state->viewerState = this;
@@ -370,11 +372,7 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxI
  *
  */
 void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId) {
-    const auto cubeCoord = Dataset::current().global2cube(cubePosInAbsPx);
-    const auto cubeMaxGlobalCoord = Dataset::current().cube2global(cubeCoord + CoordOfCube{1,1,1}) - Coordinate{1,1,1};
-    const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
-    const auto partlyOutsideMovementArea = Annotation::singleton().outsideMovementArea(Dataset::current().cube2global(cubeCoord))
-            || Annotation::singleton().outsideMovementArea(cubeMaxGlobalCoord);
+    const auto cubeEdgeLen = Dataset::datasets[layerId].cubeEdgeLength;
     // we traverse ZY column first because of better locailty of reference
     const std::size_t voxelIncrement = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen : 1;
     const std::size_t sliceIncrement = vp.viewportType == VIEWPORT_XY ? cubeEdgeLen : cubeEdgeLen * cubeEdgeLen;
@@ -391,80 +389,97 @@ void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx,
     const std::size_t min = cubeEdgeLen;
     const std::size_t max = cubeEdgeLen * (cubeEdgeLen - 1);
     std::size_t counter = 0;//slice position
-    for (int yzz = 0; yzz < cubeEdgeLen; ++yzz) {
-        for (int xxy = 0; xxy < cubeEdgeLen; ++xxy) {
-            bool hide = false;
-            if (partlyOutsideMovementArea) {
-                const auto offsetx = Dataset::current().scaleFactor.componentMul(Coordinate(vp.viewportType == VIEWPORT_XY || vp.viewportType == VIEWPORT_XZ, vp.viewportType == VIEWPORT_ZY, 0) * xxy);
-                const auto offsety = Dataset::current().scaleFactor.componentMul(Coordinate(0, vp.viewportType == VIEWPORT_XY, vp.viewportType == VIEWPORT_XZ || vp.viewportType == VIEWPORT_ZY) * yzz);
-                if (Annotation::singleton().outsideMovementArea(cubePosInAbsPx + offsetx + offsety)) {
-                    slice[3] = 0;
-                    hide = true;
+
+    const auto pxOffsetInCube = (Annotation::singleton().movementAreaMin - cubePosInAbsPx) / Dataset::datasets[layerId].scaleFactor;
+    const auto pxEndInCubeFloat = floatCoordinate(Annotation::singleton().movementAreaMax - cubePosInAbsPx) / Dataset::datasets[layerId].scaleFactor;
+    int v1start = std::clamp( vp.v1.dot(pxOffsetInCube), .0f, cubeEdgeLen*1.f);
+    int v2start = std::clamp(-vp.v2.dot(pxOffsetInCube), .0f, cubeEdgeLen*1.f);
+    int v1end   = std::clamp(std::ceil( vp.v1.dot(pxEndInCubeFloat)), .1f, cubeEdgeLen*1.f);
+    int v2end   = std::clamp(std::ceil(-vp.v2.dot(pxEndInCubeFloat)), .1f, cubeEdgeLen*1.f);
+
+    std::fill(slice, slice + 4*v2start*cubeEdgeLen, 0);
+    for (std::uint8_t * ptr = slice + 4*v2start*cubeEdgeLen; ptr < slice + 4*v2end*cubeEdgeLen; ptr+=4*cubeEdgeLen) {
+        std::fill(ptr          , ptr + 4*v1start, 0);
+        std::fill(ptr + 4*v1end, ptr + 4*cubeEdgeLen , 0);
+    }
+    std::fill(slice + 4*v2end*cubeEdgeLen, slice + 4*cubeEdgeLen*cubeEdgeLen, 0);
+    if (vp.viewportType == VIEWPORT_ZY) {// iteration through the cube defines the direction
+        std::swap(v1start, v2start);
+        std::swap(v1end  , v2end);
+    }
+    counter += v2start * cubeEdgeLen;
+    datacube += v2start * (voxelIncrement * cubeEdgeLen + lineIncrement);
+    slice += v2start * (texNext * cubeEdgeLen + texNextLine);
+    for (int yzz = v2start; yzz < v2end; ++yzz) {
+        counter += v1start;
+        datacube += voxelIncrement * v1start;
+        slice += texNext * v1start;
+        for (int xxy = v1start; xxy < v1end; ++xxy) {
+            const uint64_t subobjectId = datacube[0];
+
+            const auto queryColor = [&](){
+                if ((layerId == seg.layerId) && Segmentation::singleton().segmentationColor != SegmentationColor::SubObject) {// apply mergelist
+                    return seg.colorObjectFromSubobjectId(subobjectId);
+                } else if (subobjectId != seg.getBackgroundId()) {
+                     return seg.subobjectColor(subobjectId);
+                } else {// blank background
+                    return Segmentation::color_t{};
                 }
-            }
+            };
+            const auto color = (subobjectIdCache == subobjectId) ? colorCache : queryColor();
+            slice[0] = std::get<0>(color);
+            slice[1] = std::get<1>(color);
+            slice[2] = std::get<2>(color);
+            slice[3] = std::get<3>(color);
 
-            if(hide == false) {
-                const uint64_t subobjectId = datacube[0];
+            const bool selected = layerId == seg.layerId && ((subobjectIdCache == subobjectId) ? selectedCache : seg.isSubObjectIdSelected(subobjectId));
+            const bool isPastFirstRow = counter >= min;
+            const bool isBeforeLastRow = counter < max;
+            const bool isNotFirstColumn = counter % cubeEdgeLen != 0;
+            const bool isNotLastColumn = (counter + 1) % cubeEdgeLen != 0;
 
-                const auto queryColor = [&](){
-                    if ((layerId == seg.layerId) && Segmentation::singleton().segmentationColor != SegmentationColor::SubObject) {// apply mergelist
-                        return seg.colorObjectFromSubobjectId(subobjectId);
-                    } else if (subobjectId != seg.getBackgroundId()) {
-                         return seg.subobjectColor(subobjectId);
-                    } else {// blank background
-                        return Segmentation::color_t{};
-                    }
-                };
-                const auto color = (subobjectIdCache == subobjectId) ? colorCache : queryColor();
-                slice[0] = std::get<0>(color);
-                slice[1] = std::get<1>(color);
-                slice[2] = std::get<2>(color);
-                slice[3] = std::get<3>(color);
-
-                const bool selected = layerId == seg.layerId && ((subobjectIdCache == subobjectId) ? selectedCache : seg.isSubObjectIdSelected(subobjectId));
-                const bool isPastFirstRow = counter >= min;
-                const bool isBeforeLastRow = counter < max;
-                const bool isNotFirstColumn = counter % cubeEdgeLen != 0;
-                const bool isNotLastColumn = (counter + 1) % cubeEdgeLen != 0;
-
-                // highlight edges where needed
-                if(seg.highlightBorder) {
-                    if(seg.hoverVersion) {
-                        uint64_t objectId = seg.tryLargestObjectContainingSubobject(subobjectId);
-                        if (selected && seg.mouseFocusedObjectId == objectId) {
-                            if(isPastFirstRow && isBeforeLastRow && isNotFirstColumn && isNotLastColumn) {
-                                const uint64_t left   = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube - voxelIncrement));
-                                const uint64_t right  = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube + voxelIncrement));
-                                const uint64_t top    = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube - sliceIncrement));
-                                const uint64_t bottom = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube + sliceIncrement));
-                                //enhance alpha of this voxel if any of the surrounding voxels belong to another object
-                                if (objectId != left || objectId != right || objectId != top || objectId != bottom) {
-                                    slice[3] = std::min(255, slice[3]*4);
-                                }
+            // highlight edges where needed
+            if(seg.highlightBorder) {
+                if(seg.hoverVersion) {
+                    uint64_t objectId = seg.tryLargestObjectContainingSubobject(subobjectId);
+                    if (selected && seg.mouseFocusedObjectId == objectId) {
+                        if(isPastFirstRow && isBeforeLastRow && isNotFirstColumn && isNotLastColumn) {
+                            const uint64_t left   = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube - voxelIncrement));
+                            const uint64_t right  = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube + voxelIncrement));
+                            const uint64_t top    = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube - sliceIncrement));
+                            const uint64_t bottom = seg.tryLargestObjectContainingSubobject(*reinterpret_cast<uint64_t*>(datacube + sliceIncrement));
+                            //enhance alpha of this voxel if any of the surrounding voxels belong to another object
+                            if (objectId != left || objectId != right || objectId != top || objectId != bottom) {
+                                slice[3] = std::min(255, slice[3]*4);
                             }
                         }
                     }
-                    else if (selected && isPastFirstRow && isBeforeLastRow && isNotFirstColumn && isNotLastColumn) {
-                        const uint64_t left   = datacube[-voxelIncrement];
-                        const uint64_t right  = datacube[+voxelIncrement];
-                        const uint64_t top    = datacube[-sliceIncrement];
-                        const uint64_t bottom = datacube[+sliceIncrement];
-                        //enhance alpha of this voxel if any of the surrounding voxels belong to another subobject
-                        if (subobjectId != left || subobjectId != right || subobjectId != top || subobjectId != bottom) {
-                            slice[3] = std::min(255, slice[3]*4);
-                        }
+                }
+                else if (selected && isPastFirstRow && isBeforeLastRow && isNotFirstColumn && isNotLastColumn) {
+                    const uint64_t left   = datacube[-voxelIncrement];
+                    const uint64_t right  = datacube[+voxelIncrement];
+                    const uint64_t top    = datacube[-sliceIncrement];
+                    const uint64_t bottom = datacube[+sliceIncrement];
+                    //enhance alpha of this voxel if any of the surrounding voxels belong to another subobject
+                    if (subobjectId != left || subobjectId != right || subobjectId != top || subobjectId != bottom) {
+                        slice[3] = std::min(255, slice[3]*4);
                     }
                 }
-
-                //fill cache
-                subobjectIdCache = subobjectId;
-                colorCache = color;
-                selectedCache = selected;
             }
+
+            //fill cache
+            subobjectIdCache = subobjectId;
+            colorCache = color;
+            selectedCache = selected;
+
             ++counter;
             datacube += voxelIncrement;
             slice += texNext;
         }
+        counter += (cubeEdgeLen - v1end);
+        datacube += voxelIncrement * (cubeEdgeLen - v1end);
+        slice += texNext * (cubeEdgeLen - v1end);
+
         datacube += lineIncrement;
         slice += texNextLine;
     }
