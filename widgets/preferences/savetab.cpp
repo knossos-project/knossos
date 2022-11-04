@@ -111,6 +111,7 @@ void SaveTab::loadSettings(const QSettings & settings) {
     // autosaveGroup.toggled will handle the autosave timer and its time (therefore load the time first)
     autosaveIntervalSpinBox.setValue(settings.value(SAVING_INTERVAL, 5).toInt());
     autosaveGroup.setChecked(settings.value(AUTO_SAVING, true).toBool());
+    autosaveGroup.toggled(autosaveGroup.isChecked());
 
     const auto buttonId = static_cast<int>(settings.value(PLY_SAVE_AS_BIN, true).toBool());
     plySaveButtonGroup.button(buttonId)->setChecked(true);
