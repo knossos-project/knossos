@@ -75,15 +75,15 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent) {
     mainLayout.addStretch();
     setLayout(&mainLayout);
 
-    QObject::connect(&autoincrementFileNameButton, &QCheckBox::stateChanged, [](const bool on) {
+    QObject::connect(&autoincrementFileNameButton, &QCheckBox::stateChanged, this, [](const bool on) {
         Annotation::singleton().autoFilenameIncrementBool = on;
     });
-    QObject::connect(&autosaveIntervalSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](const int value) {
+    QObject::connect(&autosaveIntervalSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, [this](const int value) {
         if (autosaveGroup.isChecked()) {
             Annotation::singleton().autoSaveTimer.start(value * 60 * 1000);
         }
     });
-    QObject::connect(&autosaveGroup, &QGroupBox::toggled, [this](const bool on) {
+    QObject::connect(&autosaveGroup, &QGroupBox::toggled, this, [this](const bool on) {
         if (on) {
             Annotation::singleton().autoSaveTimer.start(autosaveIntervalSpinBox.value() * 60 * 1000);
         } else {
@@ -91,13 +91,13 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent) {
         }
         state->viewer->window->updateTitlebar();
     });
-    QObject::connect(&plySaveButtonGroup, &QButtonGroup::idClicked, [](auto id) {
+    QObject::connect(&plySaveButtonGroup, &QButtonGroup::idClicked, this, [](auto id) {
         Annotation::singleton().savePlyAsBinary = static_cast<bool>(id);
     });
-    QObject::connect(&customSaveButton, &QPushButton::clicked, [this](const bool) {
+    QObject::connect(&customSaveButton, &QPushButton::clicked, this, [this](const bool) {
         state->viewer->window->saveAsSlot(false, saveTimeButton.isChecked(), saveDatasetPathButton.isChecked());
     });
-    QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this]() {
+    QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, this, [this]() {
        saveDatasetPathButton.setDisabled(Annotation::singleton().authenticatedByConf);
     });
 }
