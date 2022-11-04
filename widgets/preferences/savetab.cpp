@@ -83,7 +83,7 @@ SaveTab::SaveTab(QWidget * parent) : QWidget(parent) {
             Annotation::singleton().autoSaveTimer.start(value * 60 * 1000);
         }
     });
-    QObject::connect(&autosaveGroup, &QGroupBox::toggled, this, [this](const bool on) {
+    QObject::connect(&autosaveGroup, &QGroupBox::toggled, this, [this](bool on) {
         if (on) {
             Annotation::singleton().autoSaveTimer.start(autosaveIntervalSpinBox.value() * 60 * 1000);
         } else {
