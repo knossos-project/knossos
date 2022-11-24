@@ -83,7 +83,8 @@ if(NOT BUILD_SHARED_LIBS AND NOT ${QtCoreLibraryType} MATCHES STATIC_LIBRARY)
     message(FATAL_ERROR "BUILD_SHARED_LIBS has been set to FALSE, but the Qt version found is not static")
 endif()
 
-set(pythonqt Qt5Python310 CACHE STRING "PythonQt flavour to search for")
+find_package(Python COMPONENTS Development.Embed)
+set(pythonqt Qt5Python3${Python_VERSION_MINOR} CACHE STRING "PythonQt flavour to search for")
 find_package(Boost 1.50 REQUIRED) # 1.50 added hash_value of std::tuple for Coordinate hash specialization
 find_package(OpenGL REQUIRED COMPONENTS OpenGL) # GLU
 find_package(${pythonqt} REQUIRED)
