@@ -1,16 +1,12 @@
 #!/bin/bash
 set -euxo pipefail
 
-PYTHON_VERSION=$(brew list --versions python | tr " " "\n" | tail -1)
-PYTHON_MAJOR=$(echo ${PYTHON_VERSION} | cut -d '.' -f1)
-PYTHON_MINOR=$(echo ${PYTHON_VERSION} | cut -d '.' -f2)
-
-QUAZIP_VERSION=$(brew list --versions quazip | tr " " "\n" | tail -1)
+QUAZIP_VERSION=$(brew list --versions quazip | tr ' ' '\n' | tail -1)
 
 cd ${APPVEYOR_BUILD_FOLDER} && cd ..
 # Build KNOSSOS
 mkdir knossos-build && cd knossos-build
-time cmake -G Ninja ../knossos -Dpythonqt=Qt5Python${PYTHON_MAJOR}${PYTHON_MINOR} -DCMAKE_PREFIX_PATH=/usr/local/opt/qt@5/
+time cmake -G Ninja ../knossos -DCMAKE_PREFIX_PATH=/usr/local/opt/qt@5/ -DCMAKE_CXX_FLAGS=-Wno-deprecated-declarations
 time ninja
 
 # OS X housekeeping
@@ -23,9 +19,10 @@ cp -v /usr/local/lib/libquazip1-qt5.${QUAZIP_VERSION}.dylib KNOSSOS.app/Contents
   install_name_tool KNOSSOS.app/Contents/Frameworks/libquazip1-qt5.1.dylib -change /usr/local/opt/qt@5/lib/QtCore.framework/Versions/5/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/5/QtCore ||
   true
 
-cp -r /usr/local/Frameworks/Python.framework KNOSSOS.app/Contents/Frameworks/
-rm -rf KNOSSOS.app/Contents/Frameworks/Python.framework/Versions/2.7
-install_name_tool KNOSSOS.app/Contents/MacOS/knossos -change /usr/local/opt/python@${PYTHON_MAJOR}.${PYTHON_MINOR}/Frameworks/Python.framework/Versions/${PYTHON_MAJOR}.${PYTHON_MINOR}/Python @executable_path/../Frameworks/Python.framework/Versions/${PYTHON_MAJOR}.${PYTHON_MINOR}/Python
+PY_VER=$(cd /usr/local/Frameworks/Python.framework/Versions/ && echo * | tr ' ' '\n' | grep -v Current | sort -V | tail -1)
+mkdir -p KNOSSOS.app/Contents/Frameworks/Python.framework/Versions
+cp -r /usr/local/Frameworks/Python.framework/Versions/${PY_VER} KNOSSOS.app/Contents/Frameworks/Python.framework/Versions
+install_name_tool KNOSSOS.app/Contents/MacOS/knossos -change /usr/local/opt/python@${PY_VER}/Frameworks/Python.framework/Versions/${PY_VER}/Python @executable_path/../Frameworks/Python.framework/Versions/${PY_VER}/Python
 
 # Deployment
 time zip -rq ${APPVEYOR_BUILD_FOLDER}/macos.KNOSSOS.nightly.app.zip KNOSSOS.app
