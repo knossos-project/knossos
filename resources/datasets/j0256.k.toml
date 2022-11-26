@@ -1,0 +1,9 @@
+[[Layer]]
+URL = "http://knossosstreaming-mf.esc.rzg.mpg.de/j0256_cubed/"
+Name = "j0256"
+Description = "j0256 songbird HVC dataset"
+FileExtension = [".jpg", ".raw"]
+ServerFormat = "knossos"
+Extent_px = [15104, 15104, 2661]
+CubeShape_px = [128, 128, 128]
+VoxelSize_nm = [[11, 11, 29], [22, 22, 58], [44, 44, 116], [88, 88, 232], [176, 176, 464], [352, 352, 928], [704, 704, 1856]]

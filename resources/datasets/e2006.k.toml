@@ -1,0 +1,9 @@
+[[Layer]]
+URL = "http://knossosstreaming-mf.esc.rzg.mpg.de/e2006/"
+Name = "080823_e2006_mouseHRP"
+Description = "e2006 retina dataset"
+FileExtension = [".jpg", ".raw"]
+ServerFormat = "knossos"
+Extent_px = [8192, 7424, 3200]
+CubeShape_px = [128, 128, 128]
+VoxelSize_nm = [[16.5, 16.5, 25.0], [33, 33, 50], [66, 66, 100], [132, 132, 200], [264, 264, 400], [528, 528, 800]]

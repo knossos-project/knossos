@@ -1,0 +1,9 @@
+[[Layer]]
+URL = "http://knossosstreaming-mf.esc.rzg.mpg.de/ek0563/"
+Name = "100527_k0563"
+Description = "ek0563 retina dataset"
+FileExtension = [".jpg", ".raw"]
+ServerFormat = "knossos"
+Extent_px = [4608, 5632, 5760]
+CubeShape_px = [128, 128, 128]
+VoxelSize_nm = [[12, 12, 25], [24, 24, 50], [48, 48, 100], [96, 96, 200], [192, 192, 400]]

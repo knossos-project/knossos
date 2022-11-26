@@ -611,13 +611,17 @@ void DatasetLoadWidget::saveSettings() {
 }
 
 void DatasetLoadWidget::loadSettings() {
-    auto transitionedDataset = [](const QString & dataset){//update old files from settings
+    const auto obsoleteConfs = QSet<QString>{"file::/resources/datasets/e2006.k.conf", "file::/resources/datasets/ek0563.k.conf", "file::/resources/datasets/j0256.k.conf", "file::/resources/datasets/e2006.pyk.conf", "file::/resources/datasets/ek0563.pyk.conf", "file::/resources/datasets/j0256.pyk.conf", "file::/resources/datasets/flyem14.pyk.conf"};
+    auto transitionedDataset = [&obsoleteConfs](const QString & dataset){//update old files from settings
         QUrl url = dataset;
         if (QRegularExpression("^[A-Z]:").match(dataset).hasMatch()) {//set file scheme for windows drive letters
             url = QUrl::fromLocalFile(dataset);
         }
         if (url.isRelative()) {
             url = QUrl::fromLocalFile(dataset);
+        }
+        if (obsoleteConfs.contains(url.url())) {
+            url.setUrl(url.url().replace(".k.conf", ".k.toml").replace(".pyk.conf", ".k.toml"));
         }
         return url;
     };
@@ -629,9 +633,11 @@ void DatasetLoadWidget::loadSettings() {
     datasetUrl = transitionedDataset(settings.value(DATASET_LAST_USED, "").toString());
     datasetModel.clear(); // prevent dataset duplication on loading custom settings
     auto appendRowSelectIfLU = [this](const QString & dataset){
-        datasetModel.add(dataset);
-        if (dataset == datasetUrl.toString()) {
-            tableWidget.selectionModel()->select(datasetModel.index(datasetModel.rowCount() - 2, 0), QItemSelectionModel::ClearAndSelect);
+        if (const auto iter = std::find(std::begin(datasetModel.datasets), std::end(datasetModel.datasets), dataset); iter == std::end(datasetModel.datasets)) {
+            datasetModel.add(dataset);
+            if (dataset == datasetUrl.toString()) {
+                tableWidget.selectionModel()->select(datasetModel.index(datasetModel.rowCount() - 2, 0), QItemSelectionModel::ClearAndSelect);
+            }
         }
     };
 
@@ -639,18 +645,13 @@ void DatasetLoadWidget::loadSettings() {
         QSignalBlocker blocker{tableWidget};// we don’t want to process these in datasetCellChanged
         // add datasets from file
         for (const auto & dataset : settings.value(DATASET_MRU).toStringList()) {
-            const auto obsoleteConfs = QSet<QString>{"file::/resources/datasets/e2006.k.conf", "file::/resources/datasets/ek0563.k.conf", "file::/resources/datasets/j0256.k.conf"};
-            if (!obsoleteConfs.contains(dataset)) {
-                appendRowSelectIfLU(transitionedDataset(dataset).toString());
-            }
+            appendRowSelectIfLU(transitionedDataset(dataset).toString());
         }
         // add public datasets
         const auto datasetsDir = QDir(":/resources/datasets");
         for (const auto & dataset : datasetsDir.entryInfoList()) {
             const auto url = QUrl::fromLocalFile(dataset.absoluteFilePath()).toString();
-            if (const auto iter = std::find(std::begin(datasetModel.datasets), std::end(datasetModel.datasets), url); iter == std::end(datasetModel.datasets)) {
-                appendRowSelectIfLU(url);
-            }
+            appendRowSelectIfLU(url);
         }
     }// QSignalBlocker
     auto & cubeEdgeLen = Dataset::current().cubeEdgeLength;

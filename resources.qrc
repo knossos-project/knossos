@@ -6,10 +6,10 @@
         <file>resources/cheatsheet/rightclick.png</file>
         <file>resources/color_palette/default.json</file>
         <file>resources/color_palette/linear_kry_5-98_c75.json</file>
-        <file>resources/datasets/e2006.pyk.conf</file>
-        <file>resources/datasets/ek0563.pyk.conf</file>
-        <file>resources/datasets/flyem14.pyk.conf</file>
-        <file>resources/datasets/j0256.pyk.conf</file>
+        <file>resources/datasets/e2006.k.toml</file>
+        <file>resources/datasets/ek0563.k.toml</file>
+        <file>resources/datasets/flyem14.k.toml</file>
+        <file>resources/datasets/j0256.k.toml</file>
         <file>resources/icons/active-arrow.png</file>
         <file>resources/icons/annotation.png</file>
         <file>resources/icons/application-exit.png</file>

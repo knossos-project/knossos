@@ -1,0 +1,8 @@
+[[Layer]]
+URL = "http://flyem14:dua8Eeliquo1bei4vieVacohg@data.ariadne.ai/flyem14/"
+Name = "flyem14"
+Description = "The TEMCA2 dataset is released by Zheng Lauritzen et al. in 2018 Cell under a CC-BY-NC 4.0 International license"
+FileExtension = [".jpg"]
+Extent_px = [247936, 129705, 7061]
+CubeShape_px = [128, 128, 128]
+VoxelSize_nm = [[4, 4, 40], [8, 8, 40], [16, 16, 40], [32, 32, 40], [64, 64, 80], [128, 128, 160], [256, 256, 320], [512, 512, 640], [1024, 1024, 1280], [2048, 2048, 2560], [4096, 4096, 5120]]
