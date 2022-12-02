@@ -534,6 +534,16 @@ bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> lo
             layer.token = token;
         }
     }
+    if (std::any_of(std::next(std::cbegin(layers)), std::cend(layers), [&layers](auto & layer){ return layer.cubeEdgeLength != layers[0].cubeEdgeLength; })) {
+        QMessageBox warning{QApplication::activeWindow()};
+        warning.setIcon(QMessageBox::Warning);
+        warning.setText(tr("Partially unsupported dataset configuration."));
+        warning.setInformativeText(tr("There are layers with different cube sizes. "
+                                      "The dataset will be loaded, but data from those layers will be misplaced. "
+                                      "(they can be manually disabled in the layer widget)"));
+        qWarning() << warning.informativeText();
+        warning.exec();
+    }
 
     qDebug() << (Annotation::singleton().embeddedDataset ? "embedded" : "loading") << "dataset" << path;
     if (!Annotation::singleton().embeddedDataset) {
