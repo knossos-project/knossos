@@ -3,7 +3,6 @@
 #include "coordinate.h"
 #include "dataset.h"
 #include "loader.h"
-#include "segmentation/cubeloader.h"
 #include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
 
@@ -269,7 +268,9 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
     }
     value = 0;
     const auto addMesh = [&](auto & iterable, const auto func){
-        QSignalBlocker blocker(Skeletonizer::singleton());
+        QSignalBlocker blockautosave(Annotation::singleton().autoSaveTimer);
+        QSignalBlocker blockseg(Segmentation::singleton());
+        QSignalBlocker blockskel(Skeletonizer::singleton());
         for (auto && elem : iterable) {
             if (progress.wasCanceled()) {
                 break;
@@ -286,16 +287,14 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
             Skeletonizer::singleton().addMeshToTree(Segmentation::singleton().oid(oidx), nmcoords, normals, obj2faces[oidx], colors, GL_TRIANGLES);
         });
     } else {
-        QSignalBlocker blocker(Segmentation::singleton());
         addMesh(obj2verts, [&](auto & oidverts, auto normals, auto colors){
             auto & nmcoords = oidverts.second;
             const auto coord = floatCoordinate{nmcoords[0], nmcoords[1], nmcoords[2]} / Dataset::current().scales[0];
             const auto oidx = Segmentation::singleton().largestObjectContainingSubobjectId(oidverts.first, coord);
             Skeletonizer::singleton().addMeshToTree(Segmentation::singleton().oid(oidx), nmcoords, normals, obj2faces[oidverts.first], colors, GL_TRIANGLES);
         });
-        blocker.unblock();
-        Segmentation::singleton().resetData();
     }
+    Segmentation::singleton().resetData();
     Skeletonizer::singleton().resetData();
 }
 
