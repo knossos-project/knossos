@@ -27,9 +27,9 @@ for:
   services:
     - docker
   install:
-    - docker pull knossostool/knossos
+    - time docker pull ghcr.io/knossos-project/arch
   build_script:
-    - docker run --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${APPVEYOR_BUILD_FOLDER}:/root/knossos -e APPVEYOR_REPO_BRANCH knossostool/knossos bash -c '/root/knossos/ci/build_linux.sh'
+    - time docker run --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${APPVEYOR_BUILD_FOLDER}:/root/knossos -e APPVEYOR_REPO_BRANCH ghcr.io/knossos-project/arch bash -c '/root/knossos/ci/build_linux.sh'
   artifacts:
     - path: '*nightly.*'
 -
