@@ -12,6 +12,13 @@ image:
   - Ubuntu1804
   - Ubuntu1604
 
+environment:
+  MESA_DIST_WIN_VER: 22.3.0
+
+init:
+  - cmd: ver
+  - cmd: systeminfo | findstr /B /C:"OS Name" /C:"OS Version"
+
 for:
 -
   matrix:
@@ -92,8 +99,8 @@ for:
   deploy: off
 
 test_script:
-  - cmd: curl -C - -LO https://github.com/pal1000/mesa-dist-win/releases/download/22.0.1/mesa3d-22.0.1-release-msvc.7z
-  - cmd: 7z e "-i!x64/*.dll" "-i!x64/*.json" mesa3d-22.0.1-release-msvc.7z
+  - cmd: curl -C - -LO https://github.com/pal1000/mesa-dist-win/releases/download/%MESA_DIST_WIN_VER%/mesa3d-%MESA_DIST_WIN_VER%-release-msvc.7z
+  - cmd: 7z e "-i!x64/*.dll" "-i!x64/*.json" "mesa3d-*-release-msvc.7z"
   - cmd: win.%APPVEYOR_REPO_BRANCH%-KNOSSOS.nightly.exe exit
   # custom screen specification is required for 1604, because the default used to be only 8 bit
   - sh: time xvfb-run -e /dev/stdout --auto-servernum -s '-screen 0 1024x768x24' ./linux.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.AppImage exit
