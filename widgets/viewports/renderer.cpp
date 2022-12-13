@@ -1943,10 +1943,10 @@ void ViewportOrtho::renderArbitrarySlicePane(const RenderOptions & options,  QMa
             shaderTextureQuad2.setUniformValue("projection_matrix", p);
 
 //            glEnable(GL_TEXTURE_2D);
-            texture.texHandle[layerId].bind();
+            texture.texHandle.bind();
             glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
             shaderTextureQuad2.release();
-            texture.texHandle[layerId].release();
+            texture.texHandle.release();
 //            glDisable(GL_TEXTURE_2D);
 
             shaderTextureQuad2.disableAttributeArray(texLocation);
