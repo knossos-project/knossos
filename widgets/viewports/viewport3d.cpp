@@ -66,7 +66,7 @@ Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBas
     rotationTimer.setInterval(10);
     rotationTimer.callOnTimeout(this, [this]{
         if (state->skeletonState->definedSkeletonVpView != SKELVP_CUSTOM || state->skeletonState->rotationcounter != 0) {
-            repaint();
+            update();
         } else {
             QMetaObject::invokeMethod(&rotationTimer, &QTimer::stop);
         }
@@ -75,7 +75,7 @@ Viewport3D::Viewport3D(QWidget *parent, ViewportType viewportType) : ViewportBas
         QObject::connect(button, &QPushButton::clicked, this, [this, view=view]{
             if (state->skeletonState->rotationcounter == 0) {
                 state->skeletonState->definedSkeletonVpView = view;
-                repaint();
+                update();
                 if (view == SKELVP_R180 || view == SKELVP_R90) {
                     QMetaObject::invokeMethod(&rotationTimer, qOverload<>(&QTimer::start));
                 }
