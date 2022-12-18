@@ -150,8 +150,8 @@ public:
     using iterator_category = std::bidirectional_iterator_tag;
     using value_type = T;
     using difference_type = std::ptrdiff_t;
+    using reference = hash_list<T>::reference;
     using pointer = reference*;
-//    using reference = reference;
     bool operator!=(const iterator & other) {
         return it != other.it;
     }
