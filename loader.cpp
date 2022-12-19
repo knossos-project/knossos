@@ -791,8 +791,10 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 io.setParent(&watcher);// reparent, so it gets destroyed upon cleanup
                 const auto path = request.url().toLocalFile();
                 QObject::connect(&watcher, &std::remove_reference_t<decltype(watcher)>::finished, this, [this, &watcher, processDownload, &opens, cubeCoord, path](){
-                    if (auto res = watcher.result()) {// skip aborted open
-                        processDownload(res.get() || QFile{path}.exists());
+                    if (!watcher.isCanceled()) {
+                        if (auto res = watcher.result()) {// skip loadingNr-aborted open
+                            processDownload(res.get() || QFile{path}.exists());
+                        }
                     }
                     opens.erase(cubeCoord);
                     broadcastProgress();
