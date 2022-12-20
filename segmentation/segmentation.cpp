@@ -159,10 +159,12 @@ void Segmentation::removeObject(Object & object) {
     object.subobjects.clear();
     //swap with last, so no intermediate rows need to be deleted
     if (objects.size() > 1 && object.index != objects.back().index) {
-        //replace object index in subobjects
+        //replace sorted object index in subobjects
         for (auto & elem : objects.back().subobjects) {
             auto & subobject = elem.get();
-            std::replace(std::begin(subobject.objects), std::end(subobject.objects), objects.back().index, object.index);
+            const auto lo = std::rbegin(subobject.objects);
+            const auto hi = std::upper_bound(lo, std::rend(subobject.objects), object.index, std::greater<>{});
+            *std::rotate(lo, lo+1, hi) = object.index;
         }
         //replace object index in selected objects
         selectedObjectIndices.replace(objects.back().index, object.index);
