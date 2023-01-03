@@ -151,7 +151,7 @@ DatasetAndSegmentationTab::DatasetAndSegmentationTab(QWidget *parent) : QWidget(
         overrideObjectColorCombo.setEnabled(override);
         state->viewer->segmentation_changed();
     });
-    QObject::connect(&overrideObjectColorCombo, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this](const int index) {
+    QObject::connect(&overrideObjectColorCombo, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [](const int index) {
         Segmentation::singleton().segmentationColor = static_cast<SegmentationColor>(index);
         state->viewer->segmentation_changed();
     });
