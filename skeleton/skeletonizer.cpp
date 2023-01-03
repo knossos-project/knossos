@@ -1884,6 +1884,9 @@ void Skeletonizer::select(QSet<T*> elems) {
     }
     toggleSelection(elems);
 }
+// NOTE Clang 15 issues (implicit instantiation should be sufficient)
+template void Skeletonizer::select(QSet<nodeListElement*>);
+template void Skeletonizer::select(QSet<treeListElement*>);
 
 template<typename T>
 void Skeletonizer::toggleSelection(const QSet<T*> & elems) {
