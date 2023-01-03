@@ -19,7 +19,7 @@
     For further information, visit https://knossos.app
     or contact knossosteam@gmail.com
 ]]
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.24)
 project(knossos CXX)
 
 if(NOT CMAKE_BUILD_TYPE)#prevent accidental debug builds
@@ -58,6 +58,7 @@ list(APPEND SRC_LIST ${cheatsheet_dir}/cheatsheet.qrc)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_COLOR_DIAGNOSTICS ON)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)#resource files
@@ -149,6 +150,16 @@ add_custom_command(OUTPUT ${cheatsheet_dir}/cheatsheet.qrc
     DEPENDS ${genpages}
 )
 
+find_program(LLD lld)
+if(LLD)
+    message(STATUS "using LLVM linker")
+    # CMAKE_COLOR_DIAGNOSTICS doesn’t apply coloring to the compiler driver during linking
+    add_link_options(-fuse-ld=lld LINKER:--color-diagnostics -fdiagnostics-color=always)
+else()
+    message(STATUS "using gold linker")
+    add_link_options($<$<PLATFORM_ID:Linux>:-fuse-ld=gold>)
+endif()
+
 add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE ${SRC_LIST} buildinfo.cpp)
 set_source_files_properties(${cheatsheet_dir}/cheatsheet.qrc PROPERTIES
     AUTORCC_OPTIONS "--root;/cheatsheet"
@@ -168,17 +179,6 @@ if(PythonQt_QtAll)
     set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY QT_NO_PLUGINS Qt5::DSServicePlugin)
 endif()
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-    find_program(LLD lld)
-    if(LLD)
-        message(STATUS "using LLVM linker")
-        set(LINUXLINKER -fuse-ld=lld)
-    else()
-        message(STATUS "using gold linker")
-        set(LINUXLINKER -fuse-ld=gold)
-    endif()
-endif()
-
 target_link_libraries(${PROJECT_NAME}
     Boost::headers
     OpenGL::GLU
@@ -191,7 +191,6 @@ target_link_libraries(${PROJECT_NAME}
     QuaZip::QuaZip
     Snappy::Snappy
     toml11::toml11
-    ${LINUXLINKER}
     $<$<AND:$<PLATFORM_ID:Windows>,$<NOT:$<CONFIG:Debug>>>:-Wl,--dynamicbase># use ASLR, required by the »Windows security features test« for »Windows Desktop App Certification«
 )
 
@@ -216,12 +215,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 #target_compile_options(${PROJECT_NAME} PRIVATE "-ftime-report")
 target_compile_options(${PROJECT_NAME} PRIVATE "-pedantic-errors")
 target_compile_options(${PROJECT_NAME} PRIVATE "-Wall" "-Wextra")
-
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(${PROJECT_NAME} PRIVATE "-fcolor-diagnostics")
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    target_compile_options(${PROJECT_NAME} PRIVATE "-fdiagnostics-color=always")
-endif()
+target_compile_options(${PROJECT_NAME} PRIVATE "-fdiagnostics-show-template-tree")
 
 #list(APPEND CMAKE_CXX_FLAGS "-fsanitize=address")
 
