@@ -22,7 +22,7 @@
 
 # provides an imported target for the quazip library
 
-find_package(QuaZip-Qt5)
+find_package(QuaZip-Qt5 CONFIG)
 
 if (NOT TARGET QuaZip::QuaZip)
     find_package(ZLIB REQUIRED)

@@ -71,7 +71,7 @@ if(NOT BUILD_SHARED_LIBS) # try to force search for static libraries if BUILD_SH
     list(PREPEND CMAKE_FIND_LIBRARY_SUFFIXES .a .lib) # prefer static (*.a) over import (*.dll.a) libraries
 endif()
 
-find_package(Qt5 5.15 REQUIRED COMPONENTS Concurrent Core Gui Network Widgets) # QJsonValue::operator[]
+find_package(Qt5 5.15 REQUIRED COMPONENTS Concurrent Core Gui Network Widgets CONFIG) # QJsonValue::operator[]
 
 get_target_property(QtCoreLinkLibraries Qt::Core INTERFACE_LINK_LIBRARIES)
 get_target_property(QtCoreLibraryType ${QtCoreLinkLibraries} TYPE)
@@ -89,9 +89,9 @@ find_package(Python COMPONENTS Development.Embed)
 set(pythonqt Qt5Python3${Python_VERSION_MINOR} CACHE STRING "PythonQt flavour to search for")
 find_package(Boost 1.50 REQUIRED) # 1.50 added hash_value of std::tuple for Coordinate hash specialization
 find_package(OpenGL REQUIRED COMPONENTS OpenGL) # GLU
-find_package(${pythonqt} REQUIRED)
-find_package(Snappy REQUIRED)
-find_package(QuaZip 0.6.2 REQUIRED)
+find_package(${pythonqt} REQUIRED CONFIG)
+find_package(Snappy REQUIRED MODULE)
+find_package(QuaZip 0.6.2 REQUIRED MODULE)
 
 include(FetchContent)
 FetchContent_Declare(toml11 GIT_REPOSITORY https://github.com/ToruNiina/toml11.git)
@@ -173,7 +173,7 @@ add_dependencies(${PROJECT_NAME} buildinfo)#main target needs buildinfo
 
 option(PythonQt_QtAll "Include the PythonQt QtAll extension which wraps all Qt libraries" ON)
 if(PythonQt_QtAll)
-    find_package(${pythonqt}_QtAll REQUIRED)
+    find_package(${pythonqt}_QtAll REQUIRED CONFIG)
     target_compile_definitions(${PROJECT_NAME} PRIVATE "QtAll")
     target_link_libraries(${PROJECT_NAME} ${pythonqt}_QtAll)
     # remove the DSServicePlugin as it will depend on multimedia libraries (i.e. evc.dll) only available in non-N editions of Windows
