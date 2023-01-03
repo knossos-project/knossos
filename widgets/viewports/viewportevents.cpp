@@ -379,9 +379,9 @@ void ViewportBase::handleMouseReleaseLeft(const QMouseEvent *event) {
         }
         if (state->viewerState->nodeSelectSquareData.first != -1 || !selectedNodes.empty()) {//only select no nodes if we drew a selection rectangle
             if (state->viewerState->nodeSelectSquareData.second == Qt::ControlModifier) {
-                Skeletonizer::singleton().toggleNodeSelection(selectedNodes);
+                Skeletonizer::singleton().toggleSelection(selectedNodes);
             } else {
-                Skeletonizer::singleton().selectNodes(selectedNodes);
+                Skeletonizer::singleton().select(selectedNodes);
             }
         }
         state->viewerState->nodeSelectSquareData = std::make_pair(-1, Qt::NoModifier);//disable node selection square
@@ -574,7 +574,7 @@ void ViewportBase::handleKeyPress(const QKeyEvent *event) {
             prompt.addButton(tr("Cancel"), QMessageBox::RejectRole);
             prompt.exec();
             if (prompt.clickedButton() == confirmButton) {
-                Skeletonizer::singleton().selectNodes({});
+                Skeletonizer::singleton().select<nodeListElement>({});
             }
         }
     } else if(event->key() == Qt::Key_F4) {

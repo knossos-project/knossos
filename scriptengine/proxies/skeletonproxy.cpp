@@ -132,7 +132,7 @@ QList<nodeListElement *> SkeletonProxy::find_nodes_in_tree(treeListElement & tre
 
 void SkeletonProxy::move_node_to_tree(quint64 node_id, quint64 tree_id) {
     nodeListElement *node = Skeletonizer::singleton().findNodeByNodeID(node_id);
-    Skeletonizer::singleton().selectNodes({node});
+    Skeletonizer::singleton().select(QSet{node});
     Skeletonizer::singleton().moveSelectedNodesToTree(tree_id);
 }
 
@@ -371,7 +371,7 @@ bool SkeletonProxy::set_branch_node(quint64 node_id) {
 
 QList<nodeListElement *> SkeletonProxy::selected_nodes() {
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
-    return {std::begin(state->skeletonState->selectedNodes), std::end(state->skeletonState->selectedNodes)};
+    return {std::cbegin(state->skeletonState->selectedNodes), std::cend(state->skeletonState->selectedNodes)};
 #else
     return QVector<nodeListElement *>::fromStdVector(state->skeletonState->selectedNodes).toList();
 #endif
@@ -379,9 +379,9 @@ QList<nodeListElement *> SkeletonProxy::selected_nodes() {
 
 void SkeletonProxy::select_nodes(QList<nodeListElement *> nodes) {
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
-    Skeletonizer::singleton().selectNodes({std::begin(nodes), std::end(nodes)});
+    Skeletonizer::singleton().select(QSet(std::cbegin(nodes), std::cend(nodes)));
 #else
-    Skeletonizer::singleton().selectNodes(nodes.toSet());
+    Skeletonizer::singleton().select(nodes.toSet());
 #endif
 }
 

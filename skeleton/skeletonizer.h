@@ -253,9 +253,6 @@ public:
 
     boost::optional<nodeListElement &> addNode(boost::optional<decltype(nodeListElement::nodeID)> nodeID, const float radius, const decltype(treeListElement::treeID) treeID, const Coordinate & position, const ViewportType VPtype, const int inMag, boost::optional<uint64_t> time, const bool respectLocks, const QHash<QString, QVariant> & properties = {});
 
-    void selectNodes(QSet<nodeListElement *> nodes);
-    void toggleNodeSelection(const QSet<nodeListElement *> & nodes);
-    void selectTrees(const std::vector<treeListElement*> & trees);
     void inferTreeSelectionFromNodeSelection();
     void deleteSelectedTrees();
     void deleteSelectedNodes();

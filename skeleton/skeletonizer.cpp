@@ -1092,7 +1092,7 @@ bool Skeletonizer::setActiveTreeByID(decltype(treeListElement::treeID) treeID) {
 
     skeletonState.activeTree = currentTree;
 
-    selectTrees({currentTree});
+    select(QSet{currentTree});
 
     //switch to nearby node of new tree
     if (skeletonState.activeNode != nullptr && skeletonState.activeNode->correspondingTree != currentTree) {
@@ -1118,13 +1118,13 @@ bool Skeletonizer::setActiveNode(nodeListElement *node) {
     skeletonState.activeNode = node;
 
     if (node == nullptr) {
-        selectNodes({});
+        select<nodeListElement>({});
         if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
             Segmentation::singleton().clearObjectSelection();
         }
     } else {
         if (!node->selected) {
-            selectNodes({node});
+            select(QSet{node});
         }
         if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_MergeTracing)) {
             selectObjectForNode(*node);
@@ -1914,25 +1914,6 @@ void Skeletonizer::toggleSelection(const QSet<T*> & elems) {
     notifySelection<T>();
 }
 
-template void Skeletonizer::toggleSelection<nodeListElement>(const QSet<nodeListElement*> & nodes);
-template void Skeletonizer::toggleSelection<treeListElement>(const QSet<treeListElement*> & trees);
-
-void Skeletonizer::toggleNodeSelection(const QSet<nodeListElement*> & nodeSet) {
-    toggleSelection(nodeSet);
-}
-
-void Skeletonizer::selectNodes(QSet<nodeListElement*> nodeSet) {
-    select(nodeSet);
-}
-
-void Skeletonizer::selectTrees(const std::vector<treeListElement*> & trees) {
-    QSet<treeListElement*> treeSet;
-    for (const auto & elem : trees) {
-        treeSet.insert(elem);
-    }
-    select(treeSet);
-}
-
 void Skeletonizer::inferTreeSelectionFromNodeSelection() {
     QSet<treeListElement*> treeSet;
     for (const auto & elem : skeletonState.selectedNodes) {
@@ -1956,7 +1937,7 @@ void Skeletonizer::deleteSelectedNodes() {
         delNode(0, &node);
     });
     if (skeletonState.activeNode != nullptr) {
-        selectNodes({skeletonState.activeNode});
+        select(QSet{skeletonState.activeNode});
     }
 }
 

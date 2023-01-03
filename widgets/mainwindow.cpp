@@ -663,7 +663,7 @@ void MainWindow::createMenus() {
     jumpToCycle = &addApplicationShortcut(actionMenu, QIcon(), tr("Jump to Cycle"), this, [this]() {
         auto cycle = Skeletonizer::singleton().findCycle();
         if (!cycle.isEmpty()) {
-            Skeletonizer::singleton().selectNodes(cycle);
+            Skeletonizer::singleton().select(cycle);
             Skeletonizer::singleton().jumpToNode(**(cycle.begin()));
         } else {
             QMessageBox box{this};

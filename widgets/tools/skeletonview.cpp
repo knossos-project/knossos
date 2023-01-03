@@ -236,7 +236,7 @@ void NodeModel::recreate(const bool matchAll = true) {
                 hits.emplace_back(node);
             } else if (matchAll && mode.testFlag(FilterMode::Selected) && node.get().selected) {
                 selectionFromModel = true;
-                Skeletonizer::singleton().toggleNodeSelection({&node.get()});
+                Skeletonizer::singleton().toggleSelection(QSet{&node.get()});
                 selectionFromModel = false;
             }
         }
@@ -875,7 +875,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             }
         }
         if (foundNode) {
-            Skeletonizer::singleton().selectNodes({&foundNode.get()});
+            Skeletonizer::singleton().select(QSet{&foundNode.get()});
             Skeletonizer::singleton().jumpToNode(foundNode.get());
         } else {
             QMessageBox box{this};
@@ -887,7 +887,7 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
     QObject::connect(nodeContextMenu.addAction("Highlight path"), &QAction::triggered, [this]() {
         auto path = Skeletonizer::singleton().getPath(Skeletonizer::singleton().skeletonState.selectedNodes);
         if (!path.empty()) {
-            Skeletonizer::singleton().selectNodes(path);
+            Skeletonizer::singleton().select(path);
             Skeletonizer::singleton().jumpToNode(**path.begin());
         } else {
             QMessageBox box{this};
