@@ -73,7 +73,8 @@ endif()
 
 find_package(Qt5 5.15 REQUIRED COMPONENTS Concurrent Core Gui Network Widgets) # QJsonValue::operator[]
 
-get_target_property(QtCoreLibraryType Qt5::Core TYPE)
+get_target_property(QtCoreLinkLibraries Qt::Core INTERFACE_LINK_LIBRARIES)
+get_target_property(QtCoreLibraryType ${QtCoreLinkLibraries} TYPE)
 if(BUILD_SHARED_LIBS AND ${QtCoreLibraryType} MATCHES STATIC_LIBRARY)
     message(STATUS "static Qt found, disabling BUILD_SHARED_LIBS")
     set(BUILD_SHARED_LIBS OFF) # changing this later wont affect already cached libraries
@@ -143,7 +144,7 @@ endforeach()
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove -f ${cheatsheet_dir}/cheatsheet.qrc) # missing pages (e.g. on branch switch) break build
 add_custom_command(OUTPUT ${cheatsheet_dir}/cheatsheet.qrc
     COMMAND ${CMAKE_COMMAND} -E remove -f cheatsheet.qrc # remove old .qrc, otherwise it will be added to new .qrc
-    COMMAND Qt5::rcc --project -o ../cheatsheet.qrc # need to create in different folder otherwise .qrc will contain itself. Yep…
+    COMMAND Qt::rcc --project -o ../cheatsheet.qrc # need to create in different folder otherwise .qrc will contain itself. Yep…
     COMMAND ${CMAKE_COMMAND} -E rename ../cheatsheet.qrc ${cheatsheet_dir}/cheatsheet.qrc
     WORKING_DIRECTORY ${cheatsheet_dir}
     COMMENT "Creating cheatsheet.qrc"
@@ -176,17 +177,17 @@ if(PythonQt_QtAll)
     target_compile_definitions(${PROJECT_NAME} PRIVATE "QtAll")
     target_link_libraries(${PROJECT_NAME} ${pythonqt}_QtAll)
     # remove the DSServicePlugin as it will depend on multimedia libraries (i.e. evc.dll) only available in non-N editions of Windows
-    set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY QT_NO_PLUGINS Qt5::DSServicePlugin)
+    set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY QT_NO_PLUGINS Qt::DSServicePlugin)
 endif()
 
 target_link_libraries(${PROJECT_NAME}
     Boost::headers
     OpenGL::GLU
-    Qt5::Concurrent
-    Qt5::Core
-    Qt5::Gui
-    Qt5::Network
-    Qt5::Widgets
+    Qt::Concurrent
+    Qt::Core
+    Qt::Gui
+    Qt::Network
+    Qt::Widgets
     ${pythonqt}
     QuaZip::QuaZip
     Snappy::Snappy
