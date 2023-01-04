@@ -731,6 +731,7 @@ void Segmentation::mergeSelectedObjects() {
     while (selectedObjectIndices.size() > 1) {
         auto & firstObj = objects[selectedObjectIndices.front()];//front is the merge origin
         auto & secondObj = objects[selectedObjectIndices.back()];
+        const auto [firstId, secondId] = std::tuple{firstObj->id, secondObj->id};
         //objects are no longer selected when they got merged
         auto flat_deselect = [this](Object & object){
             object.selected = object.todo = false;
@@ -767,7 +768,7 @@ void Segmentation::mergeSelectedObjects() {
         }
         changeCategory(objects[selectedObjectIndices.front()], defaultMergeClass);
         emit todosLeftChanged();
-        emit merged(firstObj.id, secondObj.id);
+        emit merged(firstId, secondId);
     }
 }
 
