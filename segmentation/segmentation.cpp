@@ -748,17 +748,13 @@ void Segmentation::mergeSelectedObjects() {
 
             flat_deselect(objects[firstIndex]);//firstObj got invalidated
             selectedObjectIndices.emplace_front(newIndex);//move new index to front, so it gets the new merge origin
-            emit changedRowSelection(firstIndex);
-            emit changedRowSelection(secondIndex);
         } else if (secondObj.immutable) {
             flat_deselect(secondObj);
             firstObj.merge(secondObj);
-            emit changedRowSelection(secondObj.index);
             emit changedRow(firstObj.index);
         } else if (firstObj.immutable) {
             flat_deselect(firstObj);
             secondObj.merge(firstObj);
-            emit changedRowSelection(firstObj.index);
             emit changedRow(secondObj.index);
         } else {//if both are mutable the second object is merged into the first
             flat_deselect(secondObj);
