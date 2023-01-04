@@ -121,7 +121,7 @@ Q_OBJECT
         explicit Object(Object & first, Object & second);
         bool operator==(const Object & other) const;
         void addExistingSubObject(SubObject & sub);
-        Object & merge(Object & other);
+        Object & merge(Object & other, bool adjustSelection = false);
     };
 
     std::unordered_map<uint64_t, SubObject> subobjects;
