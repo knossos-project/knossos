@@ -49,10 +49,10 @@ Segmentation::Object::Object(std::vector<std::reference_wrapper<SubObject>> init
 }
 
 Segmentation::Object::Object(Object & first, Object & second)
-    : id(++highestId), todo(true), immutable(false), location(second.location), selected{first.selected || second.selected} {
+    : id(++highestId), todo(true), immutable(false), location(second.location), selected{true} {
     subobjects.reserve(first.subobjects.size() + second.subobjects.size());
-    merge(first);
-    merge(second);
+    merge(first, true);
+    merge(second, true);
     subobjects.shrink_to_fit();
 }
 
@@ -69,14 +69,16 @@ void Segmentation::Object::addExistingSubObject(Segmentation::SubObject & sub) {
     subobjects.emplace_back(sub);//add child
 }
 
-Segmentation::Object & Segmentation::Object::merge(Segmentation::Object & other) {
+Segmentation::Object & Segmentation::Object::merge(Segmentation::Object & other, bool capSelection) {
     for (auto & elem : other.subobjects) {//add parent
         auto & parentObjs = elem.get().objects;
-        elem.get().selectedObjectsCount -= other.selected;
         //don’t insert twice
         auto posIt = std::lower_bound(std::begin(parentObjs), std::end(parentObjs), this->index);
         if (posIt == std::end(parentObjs) || *posIt != this->index) {
             parentObjs.emplace(posIt, this->index);
+            elem.get().selectedObjectsCount += this->selected * !capSelection;
+        } else if (capSelection) {// if merge doesn’t affect ownership it can still change the selection
+            elem.get().selectedObjectsCount = 1;
         }
     }
     decltype(subobjects) tmp;
@@ -740,25 +742,22 @@ void Segmentation::mergeSelectedObjects() {
         };
         //4 (im)mutability possibilities
         if (secondObj.immutable && firstObj.immutable) {
+            flat_deselect(firstObj);
             flat_deselect(secondObj);
-            const auto firstIndex = firstObj.index;
-            const auto secondIndex = secondObj.index;
-
-            uint64_t newIndex = createObject(secondObj, firstObj).index;//create new object from merge result, invalidates firstObj and secondObj references since vector size changed
-
-            flat_deselect(objects[firstIndex]);//firstObj got invalidated
+            // create new and already selected object from merge result
+            uint64_t newIndex = createObject(secondObj, firstObj).index;
             selectedObjectIndices.emplace_front(newIndex);//move new index to front, so it gets the new merge origin
         } else if (secondObj.immutable) {
             flat_deselect(secondObj);
-            firstObj.merge(secondObj);
+            firstObj.merge(secondObj, true);
             emit changedRow(firstObj.index);
         } else if (firstObj.immutable) {
             flat_deselect(firstObj);
-            secondObj.merge(firstObj);
+            secondObj.merge(firstObj, true);
             emit changedRow(secondObj.index);
         } else {//if both are mutable the second object is merged into the first
             flat_deselect(secondObj);
-            firstObj.merge(secondObj);
+            firstObj.merge(secondObj, true);
             emit changedRow(firstObj.index);
             removeObject(secondObj);
         }
