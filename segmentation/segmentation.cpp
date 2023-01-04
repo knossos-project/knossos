@@ -731,35 +731,32 @@ void Segmentation::deleteSelectedObjects() {
 
 void Segmentation::mergeSelectedObjects() {
     while (selectedObjectIndices.size() > 1) {
-        auto & firstObj = objects[selectedObjectIndices.front()];//front is the merge origin
-        auto & secondObj = objects[selectedObjectIndices.back()];
+        auto * firstObj = &objects[selectedObjectIndices.front()];// front is the merge origin
+        auto * secondObj = &objects[selectedObjectIndices.back()];
         const auto [firstId, secondId] = std::tuple{firstObj->id, secondObj->id};
         //objects are no longer selected when they got merged
         auto flat_deselect = [this](Object & object){
             object.selected = object.todo = false;
             selectedObjectIndices.erase(object.index);
-            emit changedRowSelection(object.index);//deselect
+            emit changedRowSelection(object.index);// deselected
         };
-        //4 (im)mutability possibilities
-        if (secondObj.immutable && firstObj.immutable) {
-            flat_deselect(firstObj);
-            flat_deselect(secondObj);
+        // 4 (im)mutability possibilities
+        if (secondObj->immutable && firstObj->immutable) {
+            flat_deselect(*firstObj);
+            flat_deselect(*secondObj);
             // create new and already selected object from merge result
-            uint64_t newIndex = createObject(secondObj, firstObj).index;
-            selectedObjectIndices.emplace_front(newIndex);//move new index to front, so it gets the new merge origin
-        } else if (secondObj.immutable) {
-            flat_deselect(secondObj);
-            firstObj.merge(secondObj, true);
-            emit changedRow(firstObj.index);
-        } else if (firstObj.immutable) {
-            flat_deselect(firstObj);
-            secondObj.merge(firstObj, true);
-            emit changedRow(secondObj.index);
-        } else {//if both are mutable the second object is merged into the first
-            flat_deselect(secondObj);
-            firstObj.merge(secondObj, true);
-            emit changedRow(firstObj.index);
-            removeObject(secondObj);
+            const auto newIndex = createObject(*secondObj, *firstObj).index;
+            selectedObjectIndices.emplace_front(newIndex);// move new index to front, to become the new merge origin
+        } else {
+            if (firstObj->immutable) {
+                std::swap(firstObj, secondObj);
+            }
+            flat_deselect(*secondObj);
+            firstObj->merge(*secondObj, true);
+            emit changedRow(firstObj->index);
+            if (!secondObj->immutable) {
+                removeObject(*secondObj);
+            }
         }
         changeCategory(objects[selectedObjectIndices.front()], defaultMergeClass);
         emit todosLeftChanged();
