@@ -219,7 +219,7 @@ int main(int argc, char * argv[]) { boost::leaf::try_handle_all([argc, &argv]() 
 
             const auto coord = Dataset::current().boundary / 2;
             ::state->viewer->setPosition(coord);
-            ::state->viewer->updateDatasetMag();// clear vps and notify loader
+            ::state->viewer->updateDatasetMag(0);// clear vps and notify loader
 
             ::state->mainWindow->setWorkMode(AnnotationMode::Mode_Paint);
             auto & seg = Segmentation::singleton();
