@@ -1,0 +1,51 @@
+# Maintainer: Norbert Pfeiler <norbert.pfeiler@gmail.com>
+
+_pyver=312
+_realname=pythonqt-qt5-optpy$_pyver
+pkgname="$MINGW_PACKAGE_PREFIX-$_realname"-static
+pkgver=3.2+126.ga476ceb
+pkgrel=1
+arch=('any')
+pkgdesc="PythonQt fork featuring Qt 5.x and Python 3.x support and improved CMake build system (static Qt5 + Python2 version)"
+license=('LGPL')
+url="https://github.com/knossos-project/PythonQt"
+makedepends=($MINGW_PACKAGE_PREFIX-{cmake,gcc,ninja} mingw-w64-ucrt-x86_64-binutils "git")
+depends=("$MINGW_PACKAGE_PREFIX-qt5-static")
+conflicts=("$MINGW_PACKAGE_PREFIX-qt5-python$_pyver-static")
+provides=("$MINGW_PACKAGE_PREFIX-qt5-python$_pyver-static")
+options=(!strip)
+source=(git+https://github.com/knossos-project/PythonQt.git#branch=optpy$_pyver)
+md5sums=('SKIP')
+
+pkgver() {
+  cd "PythonQt"
+  git describe --always --dirty --tags | sed 's/^v//;s/-/+/;s/-/./g'
+}
+
+build() {
+  mkdir -p "$srcdir/build-$MINGW_CHOST-$_realname"
+  cd "$srcdir/build-$MINGW_CHOST-$_realname"
+
+  gendef C:/Python$_pyver-x64/python$_pyver.dll
+  grep -v ' DATA' python$_pyver.def > python$_pyver.nodata.def
+  /ucrt64/bin/dlltool --input-def python$_pyver.nodata.def --output-delaylib libpython$_pyver.dl.a
+
+  cmake -G Ninja \
+    -DCMAKE_PREFIX_PATH:STRING="$MINGW_PREFIX/qt5-static" \
+    -DCMAKE_BUILD_TYPE=RELEASE \
+    -DBUILD_SHARED_LIBS=FALSE \
+    -DCMAKE_INSTALL_PREFIX="$pkgdir$MINGW_PREFIX/qt5-static" \
+    -DPythonQt_Qt5=TRUE \
+    -DPythonQt_Python3=TRUE \
+    ../PythonQt
+    #-DPYTHON_LIBRARY=libpython$_pyver.dl.a \
+  cmake --build .
+}
+
+check() {
+  cmake --build "$srcdir/build-$MINGW_CHOST-$_realname" --target tests
+}
+
+package() {
+  cmake --install "$srcdir/build-$MINGW_CHOST-$_realname"
+}

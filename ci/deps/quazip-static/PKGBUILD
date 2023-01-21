@@ -1,0 +1,54 @@
+# Maintainer: Norbert Pfeiler <norbert.pfeiler@gmail.com>
+
+pkgname="$MINGW_PACKAGE_PREFIX-quazip-qt5-static"
+pkgver=1.4
+pkgrel=1
+pkgdesc="A C++/Qt ZIP library (mingw-w64). qt5-static version"
+arch=('any')
+license=('LGPL')
+url="http://quazip.sourceforge.net/"
+replaces=("$MINGW_PACKAGE_PREFIX-quazip-static")
+conflicts=("$MINGW_PACKAGE_PREFIX-quazip-static")
+provides=("$MINGW_PACKAGE_PREFIX-quazip-static")
+depends=("$MINGW_PACKAGE_PREFIX-qt5-static"
+  "$MINGW_PACKAGE_PREFIX-zlib")
+makedepends=("$MINGW_PACKAGE_PREFIX-cmake"
+  "$MINGW_PACKAGE_PREFIX-gcc"
+  "$MINGW_PACKAGE_PREFIX-ninja")
+options=(!strip)
+source=("https://github.com/stachenov/quazip/archive/v${pkgver}.zip")
+md5sums=('50aa70b2b802ec3f469b0e879b6c1505')
+
+build() {
+  cmake -G Ninja \
+    -B "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-release" \
+    -DQUAZIP_ENABLE_TESTS=ON \
+    -DBZIP2_LIBRARY_RELEASE="/mingw64/lib/libbz2.a" \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DCMAKE_BUILD_TYPE=RELEASE \
+    -DCMAKE_PREFIX_PATH=$MINGW_PREFIX/qt5-static \
+    -DCMAKE_INSTALL_PREFIX="$pkgdir$MINGW_PREFIX/qt5-static" \
+    -S "$srcdir/quazip-${pkgver}"
+  cmake --build "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-release"
+
+  cmake -G Ninja \
+    -B "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-debug" \
+    -DQUAZIP_ENABLE_TESTS=ON \
+    -DBZIP2_LIBRARY_RELEASE="/mingw64/lib/libbz2.a" \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DCMAKE_BUILD_TYPE=DEBUG \
+    -DCMAKE_PREFIX_PATH=$MINGW_PREFIX/qt5-static \
+    -DCMAKE_INSTALL_PREFIX="$pkgdir$MINGW_PREFIX/qt5-static" \
+    -S "$srcdir/quazip-${pkgver}"
+  cmake --build "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-debug"
+}
+
+check() {
+  ctest --test-dir "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-release"
+  ctest --test-dir "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-debug"
+}
+
+package() {
+  cmake --install "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-release"
+  cmake --install "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-debug"
+}
