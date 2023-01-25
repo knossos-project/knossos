@@ -735,12 +735,35 @@ void MainWindow::createMenus() {
         }
         viewport3D->refocus();
     }, Qt::Key_S);
-    addApplicationShortcut(*viewMenu, QIcon(), tr("Forward-traverse Tree"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(NodeGenerator::Direction::Forward); }, Qt::Key_X);
+    auto & asdfa = addApplicationShortcut(*viewMenu, QIcon(), tr("Forward-traverse Tree"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(NodeGenerator::Direction::Forward); }, Qt::Key_X);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Backward-traverse Tree"), &Skeletonizer::singleton(), []() { Skeletonizer::singleton().goToNode(NodeGenerator::Direction::Backward); }, Qt::SHIFT + Qt::Key_X);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Next Node in Table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(true);}, Qt::Key_N);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Previous Node in Table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextNode(false);}, Qt::Key_P);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Next Tree in Table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextTree(true);}, Qt::Key_Z);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Previous Tree in Table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextTree(false);}, Qt::SHIFT + Qt::Key_Z);
+    addApplicationShortcut(*viewMenu, QIcon(), tr("valis"), this, [this](){
+        if (Dataset::datasets.size() > 1 && !Dataset::datasets[1].allocationEnabled && !Dataset::datasets[1].isOverlay()) {// TODO multi layer
+            std::swap(Dataset::datasets[0], Dataset::datasets[1]);
+            std::swap(Dataset::datasets[0].renderSettings.visible, Dataset::datasets[1].renderSettings.visible);
+            std::swap(Dataset::datasets[0].allocationEnabled, Dataset::datasets[1].allocationEnabled);
+            std::swap(Dataset::datasets[0].loadingEnabled, Dataset::datasets[1].loadingEnabled);
+            state->viewer->layerRenderSettingsChanged();
+            emit widgetContainer.datasetLoadWidget.datasetChanged();
+            state->viewer->updateDatasetMag();
+            updateCompressionRatioDisplay();
+        }
+        auto & ns = Skeletonizer::singleton().skeletonState.activeTree->nodes;
+        auto & n = ns.front().nodeID != Skeletonizer::singleton().skeletonState.activeNode->nodeID ? ns.front() : ns.back();
+        Skeletonizer::singleton().setActiveNode(&n);
+        if (n.nodeID == ns.front().nodeID) {
+            Skeletonizer::singleton().skeletonState.selectedNodes.front()->selected = false;
+            Skeletonizer::singleton().skeletonState.selectedNodes.clear();
+        } else {
+            Skeletonizer::singleton().select(QSet{&n});
+        }
+        Skeletonizer::singleton().setActiveNode(&n);
+        Skeletonizer::singleton().jumpToNode(n);
+    }, Qt::Key_F3);
 
     viewMenu->addSeparator();
 
