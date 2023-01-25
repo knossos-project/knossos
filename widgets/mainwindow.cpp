@@ -742,25 +742,24 @@ void MainWindow::createMenus() {
     addApplicationShortcut(*viewMenu, QIcon(), tr("Next Tree in Table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextTree(true);}, Qt::Key_Z);
     addApplicationShortcut(*viewMenu, QIcon(), tr("Previous Tree in Table"), this, [this](){widgetContainer.annotationWidget.skeletonTab.jumpToNextTree(false);}, Qt::SHIFT + Qt::Key_Z);
     addApplicationShortcut(*viewMenu, QIcon(), tr("valis"), this, [this](){
-        if (Dataset::datasets.size() > 1 && !Dataset::datasets[1].allocationEnabled && !Dataset::datasets[1].isOverlay()) {// TODO multi layer
-            std::swap(Dataset::datasets[0], Dataset::datasets[1]);
-            std::swap(Dataset::datasets[0].renderSettings.visible, Dataset::datasets[1].renderSettings.visible);
-            std::swap(Dataset::datasets[0].allocationEnabled, Dataset::datasets[1].allocationEnabled);
-            std::swap(Dataset::datasets[0].loadingEnabled, Dataset::datasets[1].loadingEnabled);
-            state->viewer->layerRenderSettingsChanged();
-            emit widgetContainer.datasetLoadWidget.datasetChanged();
-            state->viewer->updateDatasetMag();
-            updateCompressionRatioDisplay();
-        }
         auto & ns = Skeletonizer::singleton().skeletonState.activeTree->nodes;
         auto & n = ns.front().nodeID != Skeletonizer::singleton().skeletonState.activeNode->nodeID ? ns.front() : ns.back();
         Skeletonizer::singleton().setActiveNode(&n);
         if (n.nodeID == ns.front().nodeID) {
+            Dataset::datasets[0].renderSettings.visible = true;
+            Dataset::datasets[1].renderSettings.visible = false;
+            Skeletonizer::singleton().setRadius(n, 0.25);
+            Skeletonizer::singleton().setRadius(ns.back(), 0);
             Skeletonizer::singleton().skeletonState.selectedNodes.front()->selected = false;
             Skeletonizer::singleton().skeletonState.selectedNodes.clear();
         } else {
+            Dataset::datasets[0].renderSettings.visible = false;
+            Dataset::datasets[1].renderSettings.visible = true;
+            Skeletonizer::singleton().setRadius(n, 0.25);
+            Skeletonizer::singleton().setRadius(ns.front(), 0);
             Skeletonizer::singleton().select(QSet{&n});
         }
+        state->viewer->layerRenderSettingsChanged();
         Skeletonizer::singleton().setActiveNode(&n);
         Skeletonizer::singleton().jumpToNode(n);
     }, Qt::Key_F3);
