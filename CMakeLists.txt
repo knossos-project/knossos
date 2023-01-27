@@ -155,7 +155,7 @@ find_program(LLD lld)
 if(LLD)
     message(STATUS "using LLVM linker")
     # CMAKE_COLOR_DIAGNOSTICS doesn’t apply coloring to the compiler driver during linking
-    add_link_options(-fuse-ld=lld LINKER:--color-diagnostics -fdiagnostics-color=always)
+    add_link_options(-fuse-ld=lld $<$<PLATFORM_ID:Linux>:LINKER:--color-diagnostics> -fdiagnostics-color=always)
 else()
     message(STATUS "using gold linker")
     add_link_options($<$<PLATFORM_ID:Linux>:-fuse-ld=gold>)

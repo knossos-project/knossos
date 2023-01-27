@@ -60,7 +60,8 @@ void ViewportArb::updateOverlayTexture() {
         return;
     }
     resliceNecessary[Segmentation::singleton().layerId] = false;
-    const int width = (state->M - 1) * Dataset::current().cubeEdgeLength / std::sqrt(2);
+    const auto & dset = Dataset::datasets[Segmentation::singleton().layerId];
+    const int width = (state->M - 1) * std::max({dset.cubeShape.x, dset.cubeShape.y, dset.cubeShape.z}) / std::sqrt(2);
     const int height = width;
     const auto begin = leftUpperPxInAbsPx_float;
     auto & texData = texture.texData[Segmentation::singleton().layerId];
@@ -71,7 +72,7 @@ void ViewportArb::updateOverlayTexture() {
     auto colorCache = Segmentation::singleton().colorObjectFromSubobjectId(subobjectIdCache);
     for (int y = 0; y < height; ++y)
     for (int x = 0; x < width; ++x) {
-        const auto dataPos = static_cast<Coordinate>(begin + v1 * Dataset::current().magnification * x - v2 * Dataset::current().magnification * y);
+        const auto dataPos = static_cast<Coordinate>(begin + v1 * dset.magnification * x - v2 * dset.magnification * y);
         if (dataPos.x < 0 || dataPos.y < 0 || dataPos.z < 0) {
             viewportView[y][x][0] = viewportView[y][x][1] = viewportView[y][x][2] = viewportView[y][x][3] = 0;
         } else {

@@ -51,7 +51,7 @@ class gpu_raw_cube {
 public:
     QOpenGLTexture cube{QOpenGLTexture::Target3D};
     std::vector<floatCoordinate> vertices;
-    gpu_raw_cube(const int gpucubeedge, const bool index = false);
+    gpu_raw_cube(const Coordinate & gpucubeshape, const bool index = false);
     virtual ~gpu_raw_cube() = default;
     std::vector<char> prepare(boost::multi_array_ref<std::uint8_t, 3>::const_array_view<3>::type view);
     void upload(const std::vector<char> & data);
@@ -67,7 +67,7 @@ private:
     std::vector<std::array<std::uint8_t, 4>> colors;
 public:
     QOpenGLTexture lut{QOpenGLTexture::Target1D};
-    gpu_lut_cube(const int gpucubeedge);
+    gpu_lut_cube(const Coordinate & gpucubeshape);
     std::vector<gpu_index> prepare(boost::multi_array_ref<uint64_t, 3>::const_array_view<3>::type view);
     void upload(const std::vector<gpu_index> & data);
     void generate(boost::multi_array_ref<std::uint64_t, 3>::const_array_view<3>::type view);
@@ -87,9 +87,9 @@ public:
     TextureLayer(QOpenGLContext & sharectx);
     ~TextureLayer();
     template<typename cube_type, typename elem_type>
-    void createBogusCube(const int cpucubeedge, const int gpucubeedge);
-    void createBogusCube(const int cpucubeedge, const int gpucubeedge);
+    void createBogusCube(const Coordinate & cpucubeshape, const Coordinate & gpucubeshape);
+    void createBogusCube(const Coordinate & cpucubeshape, const Coordinate & gpucubeshape);
     template<typename cube_type, typename elem_type>
-    void cubeSubArray(const boost::const_multi_array_ref<elem_type, 3> cube, const int gpucubeedge, const CoordOfGPUCube gpuCoord, const Coordinate offset);
-    void cubeSubArray(const void * data, const int cpucubeedge, const int gpucubeedge, const CoordOfGPUCube gpuCoord, const Coordinate offset);
+    void cubeSubArray(const boost::const_multi_array_ref<elem_type, 3> cube, const Coordinate & gpucubeshape, const CoordOfGPUCube & gpuCoord, const Coordinate & offset);
+    void cubeSubArray(const void * data, const Coordinate &  cpucubeshape, const Coordinate & gpucubeshape, const CoordOfGPUCube & gpuCoord, const Coordinate & offset);
 };
