@@ -214,7 +214,6 @@ public:
     MainWindow *window = &mainWindow;
 
     std::list<TextureLayer> layers;
-    int gpucubeedge{128};
     bool gpuRendering{false};
 
     ViewportOrtho *viewportXY, *viewportXZ, *viewportZY;
@@ -224,6 +223,7 @@ public:
     QTimer timer;
 
     void arbCubes(ViewportArb & vp);
+    void arbCubes(ViewportArb & vp, const Dataset & layer, TextureLayer & textureLayer);
     void setEnableArbVP(const bool on);
     void setDefaultVPSizeAndPos(const bool on);
     void resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge, const std::size_t layerCount);
@@ -262,7 +262,7 @@ public slots:
     void vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId);
     void addRotation(const QQuaternion & quaternion);
     void resetRotation();
-    void calculateMissingOrthoGPUCubes(TextureLayer & layer);
+    void calculateMissingOrthoGPUCubes(const Dataset & dset, TextureLayer & layer);
     void reslice_notify();
     void reslice_notify(const std::size_t layerId);
     void reslice_notify_all(const std::size_t layerId, boost::optional<CoordOfCube> globalCoord = boost::none);

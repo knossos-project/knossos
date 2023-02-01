@@ -60,8 +60,6 @@
 #define LM_LOCAL    0
 #define LM_FTP      1
 
-bool currentlyVisibleWrapWrap(const Coordinate & center, const Coordinate & coord);
-
 namespace Loader{
 class Controller;
 class Worker;
