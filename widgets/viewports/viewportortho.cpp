@@ -67,18 +67,6 @@ ViewportOrtho::~ViewportOrtho() {
 void ViewportOrtho::initializeGL() {
     ViewportBase::initializeGL();
     resetTexture(Dataset::datasets.size());
-
-    if (state->gpuSlicer) {
-        if (viewportType == ViewportType::VIEWPORT_XY) {
-//            state->viewer->gpucubeedge = 128;
-            state->viewer->layers.emplace_back(*context());
-            state->viewer->layers.back().createBogusCube(Dataset::current().cubeEdgeLength, state->viewer->gpucubeedge);
-            state->viewer->layers.emplace_back(*context());
-//            state->viewer->layers.back().enabled = false;
-            state->viewer->layers.back().isOverlayData = true;
-            state->viewer->layers.back().createBogusCube(Dataset::current().cubeEdgeLength, state->viewer->gpucubeedge);
-        }
-    }
 }
 
 void ViewportOrtho::paintGL() {
@@ -128,6 +116,15 @@ void ViewportOrtho::resetTexture(const std::size_t layerCount) {
             elem.setData(image);
             elem.release();
         }
+        if (state->gpuSlicer && viewportType == ViewportType::VIEWPORT_XY) {
+            state->viewer->layers.clear();
+            for (const auto & dset : Dataset::datasets) {
+                state->viewer->layers.emplace_back(*context());
+                state->viewer->layers.back().isOverlayData = dset.isOverlay();
+                state->viewer->layers.back().createBogusCube(dset.cubeShape, dset.gpuCubeShape);
+            }
+            makeCurrent();// reset the surface
+        }
         applyTextureFilter();
     }
 }
@@ -153,7 +150,7 @@ void ViewportOrtho::sendCursorPosition() {
 
 float ViewportOrtho::displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const {
     float FOVinDCs = ((float)state->M) - 1.f;
-    float result = FOVinDCs * Dataset::current().cubeEdgeLength / static_cast<float>(texture.size);
+    float result = FOVinDCs * Dataset::current().cubeShape.x / static_cast<float>(texture.size);// FIXME
     return (std::floor((result * zoomFactor) / 2. / texture.texUnitsPerDataPx) * texture.texUnitsPerDataPx)*2;
 }
 
