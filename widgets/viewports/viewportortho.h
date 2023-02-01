@@ -38,7 +38,8 @@ class ViewportOrtho : public ViewportBase {
     virtual void zoom(const float zoomStep) override;
     virtual float zoomStep() const override { return 0.75; }
 
-    virtual void renderViewportFast();
+    void renderViewportFast();
+    void renderViewportFast(const struct Dataset & dset, class TextureLayer & layer);
     virtual void renderViewport(const RenderOptions &options = RenderOptions()) override;
     virtual void renderSegment(const segmentListElement & segment, const QColor &color, const RenderOptions & options = RenderOptions()) override;
     void renderSegPlaneIntersection(const segmentListElement & segment);
