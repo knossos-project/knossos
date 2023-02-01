@@ -55,17 +55,14 @@
 //generalizing this needs polymorphic lambdas or return type deduction
 auto currentlyVisibleWrap = [](const Coordinate & center, const Dataset & dataset){
     return [&center, &dataset](const CoordOfCube & coord){
-        return currentlyVisible(dataset.cube2global(coord), center, state->M, dataset.scaleFactor * dataset.cubeEdgeLength);
+        return currentlyVisible(dataset.cube2global(coord), center, {state->M, state->M, state->M}, dataset.scaleFactor.componentMul(dataset.cubeShape));
     };
 };
 auto insideCurrentSupercubeWrap = [](const Coordinate & center, const Dataset & dataset){
     return [center, dataset](const CoordOfCube & coord){
-        return insideCurrentSupercube(dataset.cube2global(coord), center, state->M, dataset.scaleFactor * dataset.cubeEdgeLength);
+        return insideCurrentSupercube(dataset.cube2global(coord), center, {state->M, state->M, state->M}, dataset.scaleFactor.componentMul(dataset.cubeShape));
     };
 };
-bool currentlyVisibleWrapWrap(const Coordinate & center, const Coordinate & coord) {// only for use from main thread
-    return currentlyVisible(coord, center, state->M, Dataset::current().scaleFactor * Dataset::current().cubeEdgeLength);
-}
 
 void Loader::Controller::suspendLoader() {
     ++loadingNr;
@@ -334,7 +331,7 @@ void Loader::Worker::snappyCacheBackupRaw(const std::size_t layerId, const Coord
     //insert empty string into snappy cache
     auto snappyIt = snappyCache[layerId][loaderMagnification].emplace(std::piecewise_construct, std::forward_as_tuple(cubeCoord), std::forward_as_tuple()).first;
     //compress cube into the new string
-    snappy::Compress(reinterpret_cast<const char *>(cube), OBJID_BYTES * std::pow(datasets[layerId].cubeEdgeLength, 3), &snappyIt->second);
+    snappy::Compress(reinterpret_cast<const char *>(cube), OBJID_BYTES * datasets[layerId].cubeShape.prod(), &snappyIt->second);
 }
 
 void Loader::Worker::snappyCacheClear() {
@@ -442,7 +439,7 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
     bool success = false;
 
     auto data = reply.read(reply.bytesAvailable());//readAll can be very slow – https://bugreports.qt.io/browse/QTBUG-45926
-    const auto cubeVxCount = std::pow(dataset.cubeEdgeLength, 3);
+    const auto cubeVxCount = dataset.cubeShape.prod();
     const std::size_t availableSize = data.size();
     if (dataset.type == Dataset::CubeType::RAW_UNCOMPRESSED) {
         const std::size_t expectedSize = cubeVxCount;
@@ -460,8 +457,8 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
     } else if (dataset.type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_16) {
         const std::size_t expectedSize = cubeVxCount * OBJID_BYTES / 4;
         if (availableSize == expectedSize) {
-            boost::multi_array_ref<uint16_t, 1> dataRef(reinterpret_cast<uint16_t *>(data.data()), boost::extents[std::pow(dataset.cubeEdgeLength, 3)]);
-            boost::multi_array_ref<uint64_t, 1> slotRef(reinterpret_cast<uint64_t *>(currentSlot), boost::extents[std::pow(dataset.cubeEdgeLength, 3)]);
+            boost::multi_array_ref<uint16_t, 1> dataRef(reinterpret_cast<uint16_t *>(data.data()), boost::extents[cubeVxCount]);
+            boost::multi_array_ref<uint64_t, 1> slotRef(reinterpret_cast<uint64_t *>(currentSlot), boost::extents[cubeVxCount]);
             std::copy(std::begin(dataRef), std::end(dataRef), std::begin(slotRef));
             success = true;
         }
@@ -581,7 +578,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             if (datasets[layerId].allocationEnabled && changedDatasets[layerId].allocationEnabled
                     && loaderCacheSize == cacheSize
                     && datasets[layerId].type == changedDatasets[layerId].type
-                    && datasets[layerId].cubeEdgeLength == changedDatasets[layerId].cubeEdgeLength) {
+                    && datasets[layerId].cubeShape == changedDatasets[layerId].cubeShape) {
                 continue;// loader-relevant layer properties didn’t change
             }
             unloadCurrentMagnification(layerId);
@@ -593,7 +590,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         }
         const auto overlayFactor = changedDatasets[layerId].isOverlay() ? OBJID_BYTES : 1;
 
-        const auto cubeBytes = std::pow(changedDatasets[layerId].cubeEdgeLength, 3) * overlayFactor;
+        const auto cubeBytes = changedDatasets[layerId].cubeShape.prod() * overlayFactor;
         const auto cubeSetElements = std::pow(state->M, 3);
         const auto cubeSetBytes = cubeSetElements * cubeBytes;
         qDebug() << layerId << "Allocating" << cubeSetBytes / 1024. / 1024. << "MiB for cubes.";
@@ -683,7 +680,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 if (!freeSlots.empty()) {
                     auto * currentSlot = freeSlots.front();
                     freeSlots.pop_front();
-                    const std::size_t cubeBytes = std::pow(dataset.cubeEdgeLength, 3) * (dataset.isOverlay() ? OBJID_BYTES : 1);
+                    const std::size_t cubeBytes = dataset.cubeShape.prod() * (dataset.isOverlay() ? OBJID_BYTES : 1);
                     std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeBytes, 0);
                     state->protectCube2Pointer.lock();
                     cubeHash[cubeCoord] = currentSlot;
@@ -707,14 +704,14 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             }
             auto & io = [&]() -> QIODevice & {
                 if (dataset.api == Dataset::API::GoogleBrainmaps) {
-                    const auto inmagCoord = cubeCoord * dataset.cubeEdgeLength;
+                    const auto inmagCoord = cubeCoord.componentMul(dataset.cubeShape);
                     request.setRawHeader("Content-Type", "application/octet-stream");
-                    const QString json(R"json({"geometry":{"corner":"%1,%2,%3", "size":"%4,%4,%4", "scale":%5}, "subvolume_format":"SINGLE_IMAGE", "image_format_options":{"image_format":"JPEG", "jpeg_quality":70}})json");
-                    payload = json.arg(inmagCoord.x).arg(inmagCoord.y).arg(inmagCoord.z).arg(dataset.cubeEdgeLength).arg(loaderMagnification).toUtf8();
+                    const QString json(R"json({"geometry":{"corner":"%1,%2,%3", "size":"%4,%5,%6", "scale":%7}, "subvolume_format":"SINGLE_IMAGE", "image_format_options":{"image_format":"JPEG", "jpeg_quality":70}})json");
+                    payload = json.arg(inmagCoord.x).arg(inmagCoord.y).arg(inmagCoord.z).arg(dataset.cubeShape.x).arg(dataset.cubeShape.y).arg(dataset.cubeShape.z).arg(loaderMagnification).toUtf8();
                 } else if (dataset.api == Dataset::API::WebKnossos) {
                     const auto globalCoord = dataset.cube2global(cubeCoord);
                     request.setRawHeader("Content-Type", "application/json");
-                    payload = QString{R"json([{"position":[%1,%2,%3],"zoomStep":%4,"cubeSize":%5,"fourBit":false}])json"}.arg(globalCoord.x).arg(globalCoord.y).arg(globalCoord.z).arg(static_cast<std::size_t>(std::log2(dataset.magnification))).arg(dataset.cubeEdgeLength).toUtf8();
+                    payload = QString{R"json([{"position":[%1,%2,%3],"zoomStep":%4,"cubeSize":%5,"fourBit":false}])json"}.arg(globalCoord.x).arg(globalCoord.y).arg(globalCoord.z).arg(static_cast<std::size_t>(std::log2(dataset.magnification))).arg(dataset.cubeShape.x).toUtf8();
                 }
                 if (dataset.url.scheme() == "file") {
                     return *new QBuffer{};
@@ -749,7 +746,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     if ((maybeReply != nullptr && maybeReply->error() == QNetworkReply::ContentNotFoundError) || (maybeReply == nullptr && !exists)) {//404 → fill
                         auto * currentSlot = freeSlots.front();
                         freeSlots.pop_front();
-                        const std::size_t cubeBytes = std::pow(dataset.cubeEdgeLength, 3) * (dataset.isOverlay() ? OBJID_BYTES : 1);
+                        const std::size_t cubeBytes = dataset.cubeShape.prod() * (dataset.isOverlay() ? OBJID_BYTES : 1);
                         std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeBytes, 0);
                         state->protectCube2Pointer.lock();
                         cubeHash[cubeCoord] = currentSlot;
