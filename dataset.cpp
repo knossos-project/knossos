@@ -257,10 +257,9 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
             const auto tokenList = value.split(",");
             info.boundary = Coordinate(tokenList.at(0).toFloat(), tokenList.at(1).toFloat(), tokenList.at(2).toFloat());
         } else if (token == "_CubeSize") {
-            info.cubeEdgeLength = value.split(",").at(0).toInt();
-            if (value.split(",").at(2).toInt() == 1) {
-                throw std::runtime_error("2D support is not yet integrated here");
-            }
+            info.cubeShape = {value.split(",").at(0).toInt(), value.split(",").at(1).toInt(), value.split(",").at(2).toInt()};
+            info.gpuCubeShape = info.cubeShape;// possibly ÷2
+            info.gpuCubeShape.z = std::max(1, info.gpuCubeShape.z);// 1/2=0 → 1
         } else if (token == "_Color") {
             info.renderSettings.color = QColor{value};
         } else if (token == "_Visible") {
@@ -313,7 +312,8 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         const auto & extent = toml::find(vit, "Extent_px").as_array();
         info.boundary = Coordinate(extent.at(0).as_integer(), extent.at(1).as_integer(), extent.at(2).as_integer());
         const auto & cube_shape = toml::find(vit, "CubeShape_px").as_array();
-        info.cubeEdgeLength = cube_shape.at(0).as_integer();
+        info.cubeShape = Coordinate(cube_shape.at(0).as_integer(), cube_shape.at(1).as_integer(), cube_shape.at(2).as_integer());
+        info.gpuCubeShape = info.cubeShape;
         const auto & scales = toml::find(vit, "VoxelSize_nm").as_array();
         for (const auto & scaleit : scales) {
             const auto scale = scaleit.as_array();
@@ -439,7 +439,9 @@ Dataset::list_t Dataset::fromLegacyConf(const QUrl & configUrl, QString config) 
         } else if (token == "magnification") {
             info.magnification = tokenList.at(1).toInt();
         } else if (token == "cube_edge_length") {
-            info.cubeEdgeLength = tokenList.at(1).toInt();
+            info.cubeShape = {tokenList.at(1).toInt(), tokenList.at(1).toInt(), tokenList.at(1).toInt()};
+            info.gpuCubeShape = info.cubeShape;// possibly ÷2
+            info.gpuCubeShape.z = std::max(1, info.gpuCubeShape.z);// 1/2=0 → 1
         } else if (token == "ftp_mode") {
             auto urltokenList = tokenList;
             urltokenList.pop_front();
@@ -530,12 +532,12 @@ QUrl Dataset::openConnectomeCubeUrl(CoordOfCube coord) const {
     auto path = url.path();
 
     path += (!path.endsWith('/') ? "/" : "") + QString::number(static_cast<std::size_t>(std::log2(magnification)));// >= 0
-    coord.x *= cubeEdgeLength;
-    coord.y *= cubeEdgeLength;
+    coord.x *= cubeShape.x;
+    coord.y *= cubeShape.y;
     coord.z += 1;//offset
-    path += "/" + QString("%1,%2").arg(coord.x).arg(coord.x + cubeEdgeLength);
-    path += "/" + QString("%1,%2").arg(coord.y).arg(coord.y + cubeEdgeLength);
-    path += "/" + QString("%1,%2").arg(coord.z).arg(coord.z + cubeEdgeLength);
+    path += "/" + QString("%1,%2").arg(coord.x).arg(coord.x + cubeShape.x);
+    path += "/" + QString("%1,%2").arg(coord.y).arg(coord.y + cubeShape.y);
+    path += "/" + QString("%1,%2").arg(coord.z).arg(coord.z + cubeShape.z);
 
     auto base = url;
     base.setPath(path + "/");

@@ -24,6 +24,7 @@
 
 #include "dataset.h"
 #include "profiler.h"
+#include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
 #include "viewer.h"
@@ -164,38 +165,39 @@ void Viewport3D::updateVolumeTexture() {
     static Profiler tex_transfer_profiler;
 
     tex_gen_profiler.start(); // ----------------------------------------------------------- profiling
-    const auto currentPosDc = state->viewerState->currentPosition.cube(Dataset::current().cubeEdgeLength, Dataset::current().scaleFactor);
-    int cubeLen = Dataset::current().cubeEdgeLength;
+    const auto currentPosDc = Dataset::datasets[seg.layerId].global2cube(state->viewerState->currentPosition);
+    const bool zwei = Dataset::datasets[seg.layerId].boundary.z == 1;
+    const auto cubeLen = Dataset::datasets[seg.layerId].cubeShape;
     int M = state->M;
     int M_radius = (M - 1) / 2;
-    GLubyte* colcube = new GLubyte[4*texLen*texLen*texLen];
+    GLubyte* colcube = new GLubyte[4*texLen*texLen*(zwei ? 1 : texLen)];
     std::tuple<uint64_t, Segmentation::color_t> lastIdColor;
 
     state->protectCube2Pointer.lock();
 
     dcfetch_profiler.start(); // ----------------------------------------------------------- profiling
-    uint64_t** rawcubes = new uint64_t*[M*M*M];
-    for(int z = 0; z < M; ++z)
+    uint64_t** rawcubes = new uint64_t*[M*M*(zwei ? 1 : M)];
+    for(int z = 0; z < (zwei ? 1 : M); ++z)
     for(int y = 0; y < M; ++y)
     for(int x = 0; x < M; ++x) {
         auto cubeIndex = z*M*M + y*M + x;
         const CoordOfCube cubeCoordRelative{x - M_radius, y - M_radius, z - M_radius};
         rawcubes[cubeIndex] = reinterpret_cast<uint64_t*>(cubeQuery(state->cube2Pointer
-            , Segmentation::singleton().layerId, Dataset::current().magIndex, currentPosDc + cubeCoordRelative));
+            , Segmentation::singleton().layerId, Dataset::datasets[seg.layerId].magIndex, currentPosDc + cubeCoordRelative));
     }
     dcfetch_profiler.end(); // ----------------------------------------------------------- profiling
 
     colorfetch_profiler.start(); // ----------------------------------------------------------- profiling
 
-    for(int z = 0; z < texLen; ++z)
+    for(int z = 0; z < (zwei ? 1 : texLen); ++z)
     for(int y = 0; y < texLen; ++y)
     for(int x = 0; x < texLen; ++x) {
-        Coordinate DcCoord{(x * M)/cubeLen, (y * M)/cubeLen, (z * M)/cubeLen};
+        Coordinate DcCoord{(x * M)/cubeLen.x, (y * M)/cubeLen.y, (z * M)/cubeLen.z};
         auto cubeIndex = DcCoord.z*M*M + DcCoord.y*M + DcCoord.x;
         auto& rawcube = rawcubes[cubeIndex];
 
         if(rawcube != nullptr) {
-            auto indexInDc  = ((z * M)%cubeLen)*cubeLen*cubeLen + ((y * M)%cubeLen)*cubeLen + (x * M)%cubeLen;
+            auto indexInDc  = ((z * M)%cubeLen.z)*cubeLen.y*cubeLen.x + ((y * M)%cubeLen.y)*cubeLen.x + (x * M)%cubeLen.x;
             auto indexInTex = z*texLen*texLen + y*texLen + x;
             auto subobjectId = rawcube[indexInDc];
             if(subobjectId == std::get<0>(lastIdColor)) {
@@ -234,7 +236,7 @@ void Viewport3D::updateVolumeTexture() {
     colorfetch_profiler.end(); // ----------------------------------------------------------- profiling
 
     occlusion_profiler.start(); // ----------------------------------------------------------- profiling
-    for(int z = 1; z < texLen - 1; ++z)
+    for(int z = 1; z < (zwei ? 1 : texLen - 1); ++z)
     for(int y = 1; y < texLen - 1; ++y)
     for(int x = 1; x < texLen - 1; ++x) {
         auto indexInTex = (z)*texLen*texLen + (y)*texLen + x;
@@ -250,7 +252,7 @@ void Viewport3D::updateVolumeTexture() {
         }
     }
 
-    for(int z = 1; z < texLen - 1; ++z)
+    for(int z = 1; z < (zwei ? 1 : texLen - 1); ++z)
     for(int y = 1; y < texLen - 1; ++y)
     for(int x = 1; x < texLen - 1; ++x) {
         auto indexInTex = (z)*texLen*texLen + (y)*texLen + x;
@@ -266,7 +268,7 @@ void Viewport3D::updateVolumeTexture() {
         }
     }
 
-    for(int z = 1; z < texLen - 1; ++z)
+    for(int z = 1; z < (zwei ? 1 : texLen - 1); ++z)
     for(int y = 1; y < texLen - 1; ++y)
     for(int x = 1; x < texLen - 1; ++x) {
         auto indexInTex = (z)*texLen*texLen + (y)*texLen + x;
