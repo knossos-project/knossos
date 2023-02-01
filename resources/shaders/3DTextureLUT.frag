@@ -14,5 +14,5 @@ void main() {
     float index = texture3D(indexTexture, texCoordFrag).r;
     index *= factor;
     gl_FragColor = texture1D(textureLUT, (index + 0.5) / lutSize);
-    gl_FragColor.a = textureOpacity;
+    gl_FragColor.a *= textureOpacity;
 }
