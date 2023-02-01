@@ -21,6 +21,7 @@
  */
 
 #include "annotation/annotation.h"
+#include "coordinate.h"
 #include "dataset.h"
 #include "functions.h"
 #include "widgets/viewports/viewportarb.h"
@@ -52,6 +53,7 @@
 #endif
 
 #include <boost/math/constants/constants.hpp>
+#include <boost/range/combine.hpp>
 
 #include <array>
 #include <cmath>
@@ -290,7 +292,7 @@ void ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segmen
                     {0.,1.,0.},
                     {0.,0.,1.}};
 
-    const auto distToCurrPos = 0.5 * (state->M / 2) * Dataset::current().cubeEdgeLength * Dataset::current().magnification * Dataset::current().scales[0].x;
+    const auto distToCurrPos = 0.5 * (state->M / 2) * Dataset::current().cubeShape.x * Dataset::current().magnification * Dataset::current().scales[0].x;
 
     //Check if there is an intersection between the given segment and one
     //of the slice planes.
@@ -508,10 +510,6 @@ void ViewportBase::renderScaleBar() {
 }
 
 void ViewportOrtho::renderViewportFast() {
-    if (state->viewer->layers.empty()) {
-        return;
-    }
-
     QOpenGLTimeMonitor times;
     times.setSampleCount(3);
     times.create();
@@ -520,16 +518,25 @@ void ViewportOrtho::renderViewportFast() {
     glClearColor(1, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0, 0, 0, 0);
+    if (Dataset::datasets.size() == state->viewer->layers.size()) {
+        for (auto && [dset, layer] : boost::combine(Dataset::datasets, state->viewer->layers)) {
+            renderViewportFast(dset, layer);
+        }
+    }
+    times.recordSample();
+//    qDebug() << "render time: " << times.waitForIntervals();
+}
 
+void ViewportOrtho::renderViewportFast(const Dataset & dset, TextureLayer & layer) {
     const bool xy = viewportType == VIEWPORT_XY;
     const bool xz = viewportType == VIEWPORT_XZ;
     const bool zy = viewportType == VIEWPORT_ZY;
     const bool arb = viewportType == VIEWPORT_ARBITRARY;
-    const float gpucubeedge = state->viewer->gpucubeedge;
-    const auto fov = (state->M - 1) * Dataset::current().cubeEdgeLength / (arb ? std::sqrt(2) : 1);//remove cpu overlap
-    const auto gpusupercube = fov / gpucubeedge + 1;//add gpu overlap
+    const floatCoordinate gpuCubeShape = dset.gpuCubeShape;
+    const auto fov = (state->M - 1) * dset.cubeShape / (arb ? std::sqrt(2) : 1);//remove cpu overlap
+    const auto gpusupercube = fov / gpuCubeShape + 1;//add gpu overlap
     floatCoordinate cpos = state->viewerState->currentPosition;
-    const auto scale = Dataset::current().scale.z / Dataset::current().scale.x;
+    const auto scale = dset.scale.z / dset.scale.x;
     if (arb) {
         cpos.z *= scale;
     }
@@ -537,16 +544,16 @@ void ViewportOrtho::renderViewportFast() {
     std::vector<std::array<GLfloat, 3>> triangleVertices;
     triangleVertices.reserve(6);
     triangleVertices.push_back({{0.0f, 0.0f, 0.0f}});
-    triangleVertices.push_back({{gpucubeedge, 0.0f, 0.0f}});
-    triangleVertices.push_back({{gpucubeedge, gpucubeedge, 0.0f}});
-    triangleVertices.push_back({{0.0f, gpucubeedge, 0.0f}});
+    triangleVertices.push_back({{gpuCubeShape.x, 0.0f, 0.0f}});
+    triangleVertices.push_back({{gpuCubeShape.x, gpuCubeShape.y, 0.0f}});
+    triangleVertices.push_back({{0.0f, gpuCubeShape.y, 0.0f}});
     std::vector<std::array<GLfloat, 3>> textureVertices;
     textureVertices.reserve(6);
-    for (float z = 0.0f; z < (xy ? 1 : gpusupercube); ++z)
-    for (float y = 0.0f; y < (xz ? 1 : gpusupercube); ++y)
-    for (float x = 0.0f; x < (zy ? 1 : gpusupercube); ++x) {
-        const float frame = std::fmod(xy ? cpos.z : xz ? cpos.y : cpos.x, state->viewer->gpucubeedge);
-        const auto texR = (0.5f + frame) / gpucubeedge;
+    for (float z = 0.0f; z < (xy ? 1 : gpusupercube.z); ++z)
+    for (float y = 0.0f; y < (xz ? 1 : gpusupercube.y); ++y)
+    for (float x = 0.0f; x < (zy ? 1 : gpusupercube.x); ++x) {
+        const float frame = std::fmod(xy ? cpos.z : xz ? cpos.y : cpos.x, dset.gpuCubeShape.z);
+        const auto texR = (0.5f + frame) / gpuCubeShape.z;
 
         if (xy) {
             textureVertices.push_back({{0.0f, 0.0f, texR}});
@@ -568,114 +575,107 @@ void ViewportOrtho::renderViewportFast() {
 
     QMatrix4x4 viewMatrix;
     QMatrix4x4 projectionMatrix;
-    projectionMatrix.ortho(-0.5 * width(), 0.5 * width(), -0.5 * height(), 0.5 * height(), -scale * gpucubeedge, scale * gpucubeedge);
+    projectionMatrix.ortho(-0.5 * width(), 0.5 * width(), -0.5 * height(), 0.5 * height(), -scale * gpuCubeShape.z, scale * gpuCubeShape.z);
 
     //z component of vp vectors specifies portion of scale to apply
     const auto zScaleIncrement = !arb ? scale - 1 : 0;
-    const float hfov = texture.FOV * fov / (1 + zScaleIncrement * std::abs(v1.z));
-    const float vfov = texture.FOV * fov / (1 + zScaleIncrement * std::abs(v2.z));
+    const float hfov = texture.FOV * fov.componentMul(v1).length() / (1 + zScaleIncrement * std::abs(v1.z));
+    const float vfov = texture.FOV * fov.componentMul(v2).length() / (1 + zScaleIncrement * std::abs(v2.z));
     viewMatrix.scale(width() / hfov, height() / vfov);
     const auto cameraPos = floatCoordinate{cpos} + n;
     viewMatrix.lookAt(cameraPos, cpos, v2);
 
     glEnable(GL_TEXTURE_3D);
-
-    for (auto & layer : state->viewer->layers) {
-        if (layer.enabled && layer.opacity >= 0.0f && !(state->viewerState->showOnlyRawData && layer.isOverlayData)) {
-            auto & shader = layer.isOverlayData ? overlay_data_shader : raw_data_shader;
-            shader.bind();
-            shader.setUniformValue("textureOpacity", layer.isOverlayData ? Segmentation::singleton().alpha / 256.0f : layer.opacity);
-            const int vertexLocation = shader.attributeLocation("vertex");
-            const int texLocation = shader.attributeLocation("texCoordVertex");
-            shader.enableAttributeArray(vertexLocation);
-            shader.enableAttributeArray(texLocation);
-            shader.setAttributeArray(vertexLocation, triangleVertices.data()->data(), triangleVertices.data()->size());
-            shader.setAttributeArray(texLocation, textureVertices.data()->data(), textureVertices.data()->size());
-            shader.setUniformValue("view_matrix", viewMatrix);
-            shader.setUniformValue("projection_matrix", projectionMatrix);
-            if (layer.isOverlayData) {
-                overlay_data_shader.setUniformValue("indexTexture", 0);
-                overlay_data_shader.setUniformValue("textureLUT", 1);
-                overlay_data_shader.setUniformValue("factor", static_cast<float>(std::numeric_limits<gpu_lut_cube::gpu_index>::max()));
-            } else {
-                raw_data_shader.setUniformValue("texture", 0);
-            }
-            auto render = [&](auto & cube, const QMatrix4x4 modelMatrix = {}){
-                if (layer.isOverlayData) {
-                    auto & punned = static_cast<gpu_lut_cube&>(cube);
-                    punned.cube.bind(0);
-                    punned.lut.bind(1);
-                    overlay_data_shader.setUniformValue("lutSize", static_cast<float>(punned.lut.width() * punned.lut.height() * punned.lut.depth()));
-                } else {
-                    cube.cube.bind(0);
-                }
-                shader.setUniformValue("model_matrix", modelMatrix);
-
-                glDrawArrays(GL_TRIANGLE_FAN, 0, static_cast<int>(triangleVertices.size()));
-
-                if (layer.isOverlayData) {
-                    auto & punned = static_cast<gpu_lut_cube&>(cube);
-                    punned.lut.release(1, QOpenGLTexture::ResetTextureUnit);
-                    punned.cube.release(0, QOpenGLTexture::ResetTextureUnit);
-                } else {
-                    cube.cube.release(0, QOpenGLTexture::ResetTextureUnit);
-                }
-            };
-            if (!arb) {
-                const float halfsc = fov * 0.5f / gpucubeedge;
-                const float offsetx = cpos.x / gpucubeedge - halfsc * !zy;
-                const float offsety = cpos.y / gpucubeedge - halfsc * !xz;
-                const float offsetz = cpos.z / gpucubeedge - halfsc * !xy;
-                const float startx = 0 * cpos.x / gpucubeedge;
-                const float starty = 0 * cpos.y / gpucubeedge;
-                const float startz = 0 * cpos.z / gpucubeedge;
-                const float endx = startx + (zy ? 1 : gpusupercube);
-                const float endy = starty + (xz ? 1 : gpusupercube);
-                const float endz = startz + (xy ? 1 : gpusupercube);
-                for (float z = startz; z < endz; ++z)
-                for (float y = starty; y < endy; ++y)
-                for (float x = startx; x < endx; ++x) {
-                    const auto pos = CoordOfGPUCube(offsetx + x, offsety + y, offsetz + z);
-                    auto it = layer.textures.find(pos);
-                    auto & ptr = it != std::end(layer.textures) ? *it->second : *layer.bogusCube;
-
-                    QMatrix4x4 modelMatrix;
-                    modelMatrix.translate(pos.x * gpucubeedge, pos.y * gpucubeedge, pos.z * gpucubeedge);
-                    modelMatrix.scale(1, 1 - 2*(zy + xy), 1 - 2*xz);// HACK still don’t know
-                    modelMatrix.rotate(QQuaternion::fromAxes(v1, v2, n));
-
-                    render(ptr, modelMatrix);
-                }
-            } else {
-                for (auto & pair : layer.textures) {
-                    auto & pos = pair.first;
-                    auto & cube = *pair.second;
-                    if (!cube.vertices.empty()) {
-                        triangleVertices.clear();
-                        textureVertices.clear();
-                        for (const auto & vertex : cube.vertices) {
-                            triangleVertices.push_back({{vertex.x, vertex.y, vertex.z * scale}});
-                            const auto depthOffset = static_cast<float>(vertex.z - pos.z * gpucubeedge);
-                            const auto texR = (0.5f + depthOffset) / gpucubeedge;
-                            textureVertices.push_back({{static_cast<float>(vertex.x - pos.x * gpucubeedge) / gpucubeedge
-                                                        , static_cast<float>(vertex.y - pos.y * gpucubeedge) / gpucubeedge
-                                                        , texR}});
-                        }
-                        render(cube);
-                    }
-                }
-            }
-            shader.disableAttributeArray(vertexLocation);
-            shader.disableAttributeArray(texLocation);
-            shader.release();
+    if (dset.renderSettings.visible && dset.renderSettings.opacity >= 0.0f && !(state->viewerState->showOnlyRawData && layer.isOverlayData)) {
+        auto & shader = layer.isOverlayData ? overlay_data_shader : raw_data_shader;
+        shader.bind();
+        shader.setUniformValue("textureOpacity", static_cast<float>(dset.renderSettings.opacity) * (layer.isOverlayData ? Segmentation::singleton().alpha / 255.0f : 1.0f));
+        const int vertexLocation = shader.attributeLocation("vertex");
+        const int texLocation = shader.attributeLocation("texCoordVertex");
+        shader.enableAttributeArray(vertexLocation);
+        shader.enableAttributeArray(texLocation);
+        shader.setAttributeArray(vertexLocation, triangleVertices.data()->data(), triangleVertices.data()->size());
+        shader.setAttributeArray(texLocation, textureVertices.data()->data(), textureVertices.data()->size());
+        shader.setUniformValue("view_matrix", viewMatrix);
+        shader.setUniformValue("projection_matrix", projectionMatrix);
+        if (layer.isOverlayData) {
+            overlay_data_shader.setUniformValue("indexTexture", 0);
+            overlay_data_shader.setUniformValue("textureLUT", 1);
+            overlay_data_shader.setUniformValue("factor", static_cast<float>(std::numeric_limits<gpu_lut_cube::gpu_index>::max()));
+        } else {
+            raw_data_shader.setUniformValue("texture", 0);
         }
+        auto render = [&](auto & cube, const QMatrix4x4 modelMatrix = {}){
+            if (layer.isOverlayData) {
+                auto & punned = static_cast<gpu_lut_cube&>(cube);
+                punned.cube.bind(0);
+                punned.lut.bind(1);
+                overlay_data_shader.setUniformValue("lutSize", static_cast<float>(punned.lut.width() * punned.lut.height() * punned.lut.depth()));
+            } else {
+                cube.cube.bind(0);
+            }
+            shader.setUniformValue("model_matrix", modelMatrix);
+
+            glDrawArrays(GL_TRIANGLE_FAN, 0, static_cast<int>(triangleVertices.size()));
+
+            if (layer.isOverlayData) {
+                auto & punned = static_cast<gpu_lut_cube&>(cube);
+                punned.lut.release(1, QOpenGLTexture::ResetTextureUnit);
+                punned.cube.release(0, QOpenGLTexture::ResetTextureUnit);
+            } else {
+                cube.cube.release(0, QOpenGLTexture::ResetTextureUnit);
+            }
+        };
+        if (!arb) {
+            const float halfsc = fov.componentMul(v1).length() * 0.5f / gpuCubeShape.x;
+            const float offsetx = cpos.x / gpuCubeShape.x - halfsc * !zy;
+            const float offsety = cpos.y / gpuCubeShape.y - halfsc * !xz;
+            const float offsetz = cpos.z / gpuCubeShape.z - halfsc * !xy;
+            const float startx = 0 * cpos.x / gpuCubeShape.x;
+            const float starty = 0 * cpos.y / gpuCubeShape.y;
+            const float startz = 0 * cpos.z / gpuCubeShape.z;
+            const float endx = startx + (zy ? 1 : gpusupercube.x);
+            const float endy = starty + (xz ? 1 : gpusupercube.y);
+            const float endz = startz + (xy ? 1 : gpusupercube.z);
+            for (float z = startz; z < endz; ++z)
+            for (float y = starty; y < endy; ++y)
+            for (float x = startx; x < endx; ++x) {
+                const auto gcubepos = CoordOfGPUCube(offsetx + x, offsety + y, offsetz + z);
+                auto it = layer.textures.find(gcubepos);
+                auto & ptr = it != std::end(layer.textures) ? *it->second : *layer.bogusCube;
+
+                QMatrix4x4 modelMatrix;
+                const auto pos = gcubepos.componentMul(gpuCubeShape);
+                modelMatrix.translate(pos.x, pos.y, pos.z);
+                modelMatrix.scale(1, 1 - 2*(zy + xy), 1 - 2*xz);// HACK still don’t know
+                modelMatrix.rotate(QQuaternion::fromAxes(v1, v2, n));
+
+                render(ptr, modelMatrix);
+            }
+        } else {
+            for (auto & pair : layer.textures) {
+                auto & pos = pair.first;
+                auto & cube = *pair.second;
+                if (!cube.vertices.empty()) {
+                    triangleVertices.clear();
+                    textureVertices.clear();
+                    for (const auto & vertex : cube.vertices) {
+                        triangleVertices.push_back({{vertex.x, vertex.y, vertex.z * scale}});
+                        const auto depthOffset = static_cast<float>(vertex.z - pos.z * gpuCubeShape.z);
+                        const auto texR = (0.5f + depthOffset) / gpuCubeShape.z;
+                        textureVertices.push_back({{static_cast<float>(vertex.x - pos.x * gpuCubeShape.x) / gpuCubeShape.x
+                                                    , static_cast<float>(vertex.y - pos.y * gpuCubeShape.y) / gpuCubeShape.y
+                                                    , texR}});
+                    }
+                    render(cube);
+                }
+            }
+        }
+        shader.disableAttributeArray(vertexLocation);
+        shader.disableAttributeArray(texLocation);
+        shader.release();
     }
-
     glDisable(GL_TEXTURE_3D);
-
-    times.recordSample();
-
-//    qDebug() << "render time: " << times.waitForIntervals();
 }
 
 static bool shouldRenderMesh(const treeListElement & tree, const ViewportType viewportType);
@@ -683,8 +683,9 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glEnable(GL_MULTISAMPLE);
 
     const auto scale = Dataset::current().scale.componentMul(n).length();
-    const auto nears = scale * state->viewerState->depthCutOff;
-    const auto fars = -scale * state->viewerState->depthCutOff;
+    const auto depth = Dataset::current().boundary.z == 1 ? state->skeletonState->volBoundary() : scale * state->viewerState->depthCutOff;
+    const auto nears = depth;
+    const auto fars = -depth;
     const auto nearVal = -nears;
     const auto farVal = -fars;
     glMatrixMode(GL_PROJECTION);
@@ -866,7 +867,7 @@ void Viewport3D::renderVolumeVP() {
     if(seg.volume_tex_id != 0) {
         static float volumeClippingAdjust = 1.73f;
         static float translationSpeedAdjust = 1.0 / 500.0f;
-        auto cubeLen = Dataset::current().cubeEdgeLength;
+        auto cubeLen = Dataset::datasets[seg.layerId].cubeShape;
         int texLen = seg.volume_tex_len;
         GLuint volTexId = seg.volume_tex_id;
 
@@ -935,9 +936,9 @@ void Viewport3D::renderVolumeVP() {
         glLoadIdentity();
 
         // dataset translation adjustment
-        glTranslatef((static_cast<float>(state->viewerState->currentPosition.x % cubeLen) / cubeLen - 0.5f) / state->M,
-                     (static_cast<float>(state->viewerState->currentPosition.y % cubeLen) / cubeLen - 0.5f) / state->M,
-                     (static_cast<float>(state->viewerState->currentPosition.z % cubeLen) / cubeLen - 0.5f) / state->M);
+        glTranslatef((static_cast<float>(state->viewerState->currentPosition.x % cubeLen.x) / cubeLen.x - 0.5f) / state->M,
+                     (static_cast<float>(state->viewerState->currentPosition.y % cubeLen.y) / cubeLen.y - 0.5f) / state->M,
+                     (static_cast<float>(state->viewerState->currentPosition.z % cubeLen.z) / cubeLen.z - 0.5f) / state->M);
 
         glTranslatef(0.5f, 0.5f, 0.5f);
         glScalef(volumeClippingAdjust, volumeClippingAdjust, volumeClippingAdjust); // scale to remove cube corner clipping
@@ -955,8 +956,8 @@ void Viewport3D::renderVolumeVP() {
 
         glBindTexture(GL_TEXTURE_3D, volTexId);
         float volume_opacity = seg.volume_opacity / 255.0f;
-        for(int i = 0; i < texLen * volumeClippingAdjust * maxScaleRatio; ++i) {
-            float depth = i/(texLen * volumeClippingAdjust * maxScaleRatio);
+        for(int i = 0; i < (Dataset::datasets[seg.layerId].boundary.z == 1 ? 1 : texLen * volumeClippingAdjust * maxScaleRatio); ++i) {
+            float depth = Dataset::datasets[seg.layerId].boundary.z == 1 ? 0.5 : i/(texLen * volumeClippingAdjust * maxScaleRatio);
             glColor4f(depth, depth, depth, volume_opacity);
             glBegin(GL_QUADS);
                 glTexCoord3f(0.0f, 1.0f, depth);
