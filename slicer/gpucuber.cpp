@@ -82,7 +82,7 @@ std::vector<gpu_lut_cube::gpu_index> gpu_lut_cube::prepare(boost::multi_array_re
             data.emplace_back(index);
             if (!existing) {
                 const auto color = Segmentation::singleton().colorObjectFromSubobjectId(elem);
-                lastColor = {{std::get<0>(color), std::get<1>(color), std::get<2>(color), std::get<3>(color)}};
+                lastColor = {{std::get<0>(color), std::get<1>(color), std::get<2>(color), static_cast<std::uint8_t>(std::get<3>(color) * 255.0 / Segmentation::singleton().alpha)}};// binarize alpha
                 colors.push_back(lastColor);
             }
             lastElem = elem;
