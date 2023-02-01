@@ -205,7 +205,7 @@ float Viewer::highestScreenPxXPerDataPx(const bool ofCurrentMag) {
     const float texUnitsPerDataPx = 1. / viewerState.texEdgeLength / (ofCurrentMag ? lowestMag() : Dataset::current().lowestAvailableMag);
     auto * vp = viewportXY;
     float FOVinDCs = static_cast<float>(state->M) - 1.f;
-    float displayedEdgeLen = (FOVinDCs * VPZOOMMAX * Dataset::current().cubeEdgeLength) / vp->texture.size;
+    float displayedEdgeLen = (FOVinDCs * VPZOOMMAX * Dataset::current().cubeShape.x) / vp->texture.size;
     displayedEdgeLen = (std::ceil(displayedEdgeLen / 2. / texUnitsPerDataPx) * texUnitsPerDataPx) * 2.;
     return vp->edgeLength / (displayedEdgeLen / texUnitsPerDataPx);
 }
@@ -214,7 +214,7 @@ float Viewer::lowestScreenPxXPerDataPx(const bool ofCurrentMag) {
     const float texUnitsPerDataPx = 1. / viewerState.texEdgeLength / (ofCurrentMag ? highestMag() : Dataset::current().highestAvailableMag);
     auto * vp = viewportXY;
     float FOVinDCs = static_cast<float>(state->M) - 1.f;
-    float displayedEdgeLen = (FOVinDCs * Dataset::current().cubeEdgeLength) / vp->texture.size;
+    float displayedEdgeLen = (FOVinDCs * Dataset::current().cubeShape.x) / vp->texture.size;
     displayedEdgeLen = (std::ceil(displayedEdgeLen / 2. / texUnitsPerDataPx) * texUnitsPerDataPx) * 2.;
     return vp->edgeLength / (displayedEdgeLen / texUnitsPerDataPx);
 }
@@ -259,19 +259,19 @@ const auto datasetAdjustment = [](auto layerId, auto index){
 void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId, const boost::optional<decltype(Dataset::LayerRenderSettings::combineSlicesType)> combineType) {
     const auto cubeCoord = Dataset::current().global2cube(cubePosInAbsPx);
     const auto cubeMaxGlobalCoord = Dataset::current().cube2global(cubeCoord + CoordOfCube{1,1,1}) - Coordinate{1,1,1};
-    const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
+    const auto cubeShape = Dataset::current().cubeShape;
     const auto partlyOutsideMovementArea = Annotation::singleton().outsideMovementArea(Dataset::current().cube2global(cubeCoord))
             || Annotation::singleton().outsideMovementArea(cubeMaxGlobalCoord);
     // we traverse ZY column first because of better locailty of reference
-    const std::size_t voxelIncrement = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen : 1;
-    const std::size_t sliceIncrement = vp.viewportType == VIEWPORT_XY ? cubeEdgeLen : cubeEdgeLen * cubeEdgeLen;
-    const std::size_t lineIncrement = vp.viewportType == VIEWPORT_ZY ? 0 : sliceIncrement - cubeEdgeLen;
-    const std::size_t texNext = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen * 4 : 4;// RGBA per pixel
-    const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? 4 - 4 * cubeEdgeLen * cubeEdgeLen : 0;
+    const std::size_t voxelIncrement = vp.viewportType == VIEWPORT_ZY ? cubeShape.x : 1;
+    const std::size_t sliceIncrement = vp.viewportType == VIEWPORT_XY ? cubeShape.x : cubeShape.x * cubeShape.y;
+    const std::size_t lineIncrement = vp.viewportType == VIEWPORT_ZY ? 0 : sliceIncrement - cubeShape.x;
+    const std::size_t texNext = vp.viewportType == VIEWPORT_ZY ? cubeShape.x * 4 : 4;// RGBA per pixel
+    const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? 4 - 4 * cubeShape.y * cubeShape.x : 0;
 
     const bool isDatasetAdjustment = state->viewerState->datasetColortableOn || Dataset::datasets[layerId].renderSettings.bias > 0.0 || Dataset::datasets[layerId].renderSettings.rangeDelta < 1.0;
-    for (int yzz = 0; yzz < cubeEdgeLen; ++yzz) {
-        for (int xxy = 0; xxy < cubeEdgeLen; ++xxy) {
+    for (int yzz = 0; yzz < (vp.viewportType == VIEWPORT_XY ? cubeShape.y : cubeShape.z); ++yzz) {
+        for (int xxy = 0; xxy < (vp.viewportType == VIEWPORT_ZY ? cubeShape.y : cubeShape.x); ++xxy) {
             uint8_t r, g, b;
             if (isDatasetAdjustment) {
                 std::tie(r, g, b) = datasetAdjustment(layerId, datacube[0]);
@@ -312,9 +312,9 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
 
 void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxInDc_float, std::uint8_t * slice, int s, int *t, const floatCoordinate & v2, const std::size_t layerId, float usedSizeInCubePixels) {
     Coordinate currentPxInDc = {roundFloat(currentPxInDc_float->x), roundFloat(currentPxInDc_float->y), roundFloat(currentPxInDc_float->z)};
-    const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
+    const auto cubeShape = Dataset::current().cubeShape;
     if((currentPxInDc.x < 0) || (currentPxInDc.y < 0) || (currentPxInDc.z < 0) ||
-       (currentPxInDc.x >= cubeEdgeLen) || (currentPxInDc.y >= cubeEdgeLen) || (currentPxInDc.z >= cubeEdgeLen)) {
+       (currentPxInDc.x >= cubeShape.x) || (currentPxInDc.y >= cubeShape.y) || (currentPxInDc.z >= cubeShape.z)) {
         const int sliceIndex = 3 * ( s + *t * std::ceil(usedSizeInCubePixels));
         slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = 0;
         slice[sliceIndex + 3] = 255;
@@ -329,12 +329,12 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxI
         return;
     }
 
-    while((0 <= currentPxInDc.x && currentPxInDc.x < cubeEdgeLen)
-          && (0 <= currentPxInDc.y && currentPxInDc.y < cubeEdgeLen)
-          && (0 <= currentPxInDc.z && currentPxInDc.z < cubeEdgeLen)) {
+    while((0 <= currentPxInDc.x && currentPxInDc.x < cubeShape.x)
+          && (0 <= currentPxInDc.y && currentPxInDc.y < cubeShape.y)
+          && (0 <= currentPxInDc.z && currentPxInDc.z < cubeShape.z)) {
 
         const int sliceIndex = 4 * ( s + *t * std::ceil(usedSizeInCubePixels));
-        const int dcIndex = currentPxInDc.x + currentPxInDc.y * cubeEdgeLen + currentPxInDc.z * std::pow(cubeEdgeLen, 2);
+        const int dcIndex = currentPxInDc.x + currentPxInDc.y * cubeShape.x + currentPxInDc.z * cubeShape.x * cubeShape.y;
         if(datacube == nullptr) {
             slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = 0;
         } else {
@@ -372,45 +372,47 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxI
  *
  */
 void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId) {
-    const auto cubeEdgeLen = Dataset::datasets[layerId].cubeEdgeLength;
+    const auto cubeShape = Dataset::datasets[layerId].cubeShape;
     // we traverse ZY column first because of better locailty of reference
-    const std::size_t voxelIncrement = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen : 1;
-    const std::size_t sliceIncrement = vp.viewportType == VIEWPORT_XY ? cubeEdgeLen : cubeEdgeLen * cubeEdgeLen;
-    const std::size_t lineIncrement = vp.viewportType == VIEWPORT_ZY ? 0 : sliceIncrement - cubeEdgeLen;
-    const std::size_t texNext = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen * 4 : 4;// RGBA per pixel
-    const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? 4 - 4 * cubeEdgeLen * cubeEdgeLen : 0;
+    const std::size_t voxelIncrement = vp.viewportType == VIEWPORT_ZY ? cubeShape.x : 1;
+    const std::size_t sliceIncrement = vp.viewportType == VIEWPORT_XY ? cubeShape.x : cubeShape.x * cubeShape.y;
+    const std::size_t lineIncrement = vp.viewportType == VIEWPORT_ZY ? 0 : sliceIncrement - cubeShape.x;
+    const std::size_t texNext = vp.viewportType == VIEWPORT_ZY ? cubeShape.x * 4 : 4;// RGBA per pixel
+    const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? 4 - 4 * cubeShape.y * cubeShape.x : 0;
 
     const auto & seg = Segmentation::singleton();
     const auto bgid = layerId == seg.layerId ? seg.getBackgroundId() : 0;
     //cache
-    uint64_t subobjectIdCache = Segmentation::singleton().getBackgroundId();
-    bool selectedCache = seg.isSubObjectIdSelected(subobjectIdCache);
+    std::uint64_t subobjectIdCache{bgid};
+    bool selectedCache{false};
     Segmentation::color_t colorCache;
-    //first and last row boundaries
-    const std::size_t min = cubeEdgeLen;
-    const std::size_t max = cubeEdgeLen * (cubeEdgeLen - 1);
-    std::size_t counter = 0;//slice position
 
     const auto pxOffsetInCube = (Annotation::singleton().movementAreaMin - cubePosInAbsPx) / Dataset::datasets[layerId].scaleFactor;
     const auto pxEndInCubeFloat = floatCoordinate(Annotation::singleton().movementAreaMax - cubePosInAbsPx) / Dataset::datasets[layerId].scaleFactor;
-    int v1start = std::clamp( vp.v1.dot(pxOffsetInCube), .0f, cubeEdgeLen*1.f);
-    int v2start = std::clamp(-vp.v2.dot(pxOffsetInCube), .0f, cubeEdgeLen*1.f);
-    int v1end   = std::clamp(std::ceil( vp.v1.dot(pxEndInCubeFloat)), .1f, cubeEdgeLen*1.f);
-    int v2end   = std::clamp(std::ceil(-vp.v2.dot(pxEndInCubeFloat)), .1f, cubeEdgeLen*1.f);
+    int v1size = std::abs(cubeShape.dot(vp.v1));
+    int v2size = std::abs(cubeShape.dot(vp.v2));
+    int v1start = std::clamp( vp.v1.dot(pxOffsetInCube), .0f, v1size*1.f);
+    int v2start = std::clamp(-vp.v2.dot(pxOffsetInCube), .0f, v2size*1.f);
+    int v1end   = std::clamp(std::ceil( vp.v1.dot(pxEndInCubeFloat)), 1.f, v1size*1.f);
+    int v2end   = std::clamp(std::ceil(-vp.v2.dot(pxEndInCubeFloat)), 1.f, v2size*1.f);
+    // first and last row boundariess
+    const std::size_t min = v1size;
+    const std::size_t max = v1size * (v2size - 1);
 
-    std::fill(slice, slice + 4*v2start*cubeEdgeLen, 0);
-    for (std::uint8_t * ptr = slice + 4*v2start*cubeEdgeLen; ptr < slice + 4*v2end*cubeEdgeLen; ptr+=4*cubeEdgeLen) {
+    std::fill(slice, slice + 4*v2start*v1size, 0);
+    for (std::uint8_t * ptr = slice + 4*v2start*v1size; ptr < slice + 4*v2end*v1size; ptr+=4*v1size) {
         std::fill(ptr          , ptr + 4*v1start, 0);
-        std::fill(ptr + 4*v1end, ptr + 4*cubeEdgeLen , 0);
+        std::fill(ptr + 4*v1end, ptr + 4*v1size , 0);
     }
-    std::fill(slice + 4*v2end*cubeEdgeLen, slice + 4*cubeEdgeLen*cubeEdgeLen, 0);
+    std::fill(slice + 4*v2end*v1size, slice + 4*v2size*v1size, 0);
     if (vp.viewportType == VIEWPORT_ZY) {// iteration through the cube defines the direction
+        std::swap(v1size , v2size);
         std::swap(v1start, v2start);
         std::swap(v1end  , v2end);
     }
-    counter += v2start * cubeEdgeLen;
-    datacube += v2start * (voxelIncrement * cubeEdgeLen + lineIncrement);
-    slice += v2start * (texNext * cubeEdgeLen + texNextLine);
+    std::size_t counter = v2start * v1size;// slice position
+    datacube += v2start * (voxelIncrement * v1size + lineIncrement);
+    slice += v2start * (texNext * v1size + texNextLine);
     for (int yzz = v2start; yzz < v2end; ++yzz) {
         counter += v1start;
         datacube += voxelIncrement * v1start;
@@ -441,8 +443,8 @@ void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx,
             const bool selected = layerId == seg.layerId && ((subobjectIdCache == subobjectId) ? selectedCache : seg.isSubObjectIdSelected(subobjectId));
             const bool isPastFirstRow = counter >= min;
             const bool isBeforeLastRow = counter < max;
-            const bool isNotFirstColumn = counter % cubeEdgeLen != 0;
-            const bool isNotLastColumn = (counter + 1) % cubeEdgeLen != 0;
+            const bool isNotFirstColumn = std::fmod(counter, v1size) != 0;
+            const bool isNotLastColumn = std::fmod((counter + 1), v1size) != 0;
 
             // highlight edges where needed
             if(seg.highlightBorder) {
@@ -482,9 +484,9 @@ void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx,
             datacube += voxelIncrement;
             slice += texNext;
         }
-        counter += (cubeEdgeLen - v1end);
-        datacube += voxelIncrement * (cubeEdgeLen - v1end);
-        slice += texNext * (cubeEdgeLen - v1end);
+        counter += (v1size - v1end);
+        datacube += voxelIncrement * (v1size - v1end);
+        slice += texNext * (v1size - v1end);
 
         datacube += lineIncrement;
         slice += texNextLine;
@@ -502,8 +504,8 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
             * Dataset::datasets[layerId].renderSettings.combineSlices
             * ((vp.viewportType == VIEWPORT_XY) || !Dataset::datasets[layerId].renderSettings.combineSlicesXyOnly);
     bool first{true};
-    const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
-    auto for_each_resliced_cube_do = [this, layerId, cubeEdgeLen, &vp](const CoordOfCube upperLeftDc, auto func){
+    const auto cubeShape = Dataset::datasets[layerId].cubeShape;
+    auto for_each_resliced_cube_do = [this, layerId, cubeShape, &vp](const CoordOfCube upperLeftDc, auto func){
         for (int x_dc = 0; x_dc < state->M; ++x_dc) {
             for (int y_dc = 0; y_dc < state->M; ++y_dc) {
                 const auto v1dc = vp.v1 * x_dc, v2dc = vp.v2 * -y_dc;// v2 is negative
@@ -511,21 +513,20 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
                 if (!vp.resliceNecessary[layerId] && vp.resliceNecessaryCubes[layerId].find(currentDc) == std::end(vp.resliceNecessaryCubes[layerId])) {
                     continue;
                 }
-                const int index = 4 * (y_dc * viewerState.texEdgeLength * cubeEdgeLen + x_dc * cubeEdgeLen * cubeEdgeLen);
+                const int index = 4 * (y_dc * viewerState.texEdgeLength * cubeShape.x + x_dc * cubeShape.y * cubeShape.x);
                 func(x_dc, y_dc, currentDc, index);
             }
         }
     };
     for (int multiSlicei{-multiSliceiMax}; multiSlicei <= multiSliceiMax; ++multiSlicei) {
-        const auto cubeEdgeLen = Dataset::current().cubeEdgeLength;
-        const auto offset = vp.n.componentMul(Dataset::current().scaleFactor) * multiSlicei;
+        const auto offset = vp.n.componentMul(Dataset::datasets[layerId].scaleFactor) * multiSlicei;
         const auto cpos = state->viewerState->currentPosition;
         const auto offsetCube = Dataset::datasets[layerId].global2cube(cpos + offset) - Dataset::datasets[layerId].global2cube(cpos);
-        const auto & [min, max] = state->viewerState->showOnlyRawData ? std::pair(Coordinate(0, 0, 0), Dataset::current().boundary)
+        const auto & [min, max] = state->viewerState->showOnlyRawData ? std::pair(Coordinate(0, 0, 0), Dataset::datasets[layerId].boundary)
                                                                       : std::pair(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax);
         const CoordInCube currentPosition_inside_dc = (cpos + offset)
                 .capped(min, max)
-                .insideCube(cubeEdgeLen, Dataset::current().scaleFactor);
+                .insideCube(cubeShape, Dataset::datasets[layerId].scaleFactor);
         if (Annotation::singleton().outsideMovementArea(state->viewerState->currentPosition + offset) && !state->viewerState->showOnlyRawData) {
             continue;
         }
@@ -537,19 +538,19 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
         }
         const CoordOfCube upperLeftDc = Dataset::datasets[layerId].global2cube(vp.texture.leftUpperPxInAbsPx) + offsetCube;
         QFutureSynchronizer<void> sync;
-        for_each_resliced_cube_do(upperLeftDc, [this, cubeEdgeLen, layerId, &vp, &sync, currentPosition_inside_dc, first](auto, auto, auto currentDc, auto index){
-            const int slicePositionWithinCube = vp.n.componentMul(currentPosition_inside_dc.componentMul(Coordinate(1, cubeEdgeLen, std::pow(cubeEdgeLen, 2)))).length();
+        for_each_resliced_cube_do(upperLeftDc, [this, cubeShape, layerId, &vp, &sync, currentPosition_inside_dc, first](auto, auto, auto currentDc, auto index){
+            int slicePositionWithinCube = vp.n.componentMul(currentPosition_inside_dc.componentMul(Coordinate{1, cubeShape.x, cubeShape.y * cubeShape.x})).length();
             Coordinate offsetCubeGlobal = vp.n.componentMul(vp.n.componentMul(currentPosition_inside_dc));// ensure n is positive by multiplying with itself
 
             state->protectCube2Pointer.lock();
-            void * const cube = cubeQuery(state->cube2Pointer, layerId, Dataset::current().magIndex, currentDc);
+            void * const cube = cubeQuery(state->cube2Pointer, layerId, Dataset::datasets[layerId].magIndex, currentDc);
             state->protectCube2Pointer.unlock();
 
             // Take care of the data textures.
             Coordinate slicePosInAbsPx = Dataset::datasets[layerId].cube2global(currentDc) + Dataset::datasets[layerId].scaleFactor.componentMul(offsetCubeGlobal);
             // This is used to index into the texture. overlayData[index] is the first
             // byte of the datacube slice at position (x_dc, y_dc) in the texture.
-            sync.addFuture(QtConcurrent::run([this, &vp, cube, first, slicePositionWithinCube, slicePosInAbsPx, index, layerId, cubeEdgeLen]()  {
+            sync.addFuture(QtConcurrent::run([this, &vp, cube, first, slicePositionWithinCube, slicePosInAbsPx, index, layerId, cubeShape]()  {
                 if (cube != nullptr) {
                     if (Dataset::datasets[layerId].isOverlay()) {
                         ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.texture.texData[layerId].data() + index, vp, layerId);
@@ -558,7 +559,7 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
                         dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.texture.texData[layerId].data() + index, vp, layerId, combine);
                     }
                 } else {
-                    std::fill(vp.texture.texData[layerId].data() + index, vp.texture.texData[layerId].data() + index + 4 * cubeEdgeLen * cubeEdgeLen, 0);
+                    std::fill(vp.texture.texData[layerId].data() + index, vp.texture.texData[layerId].data() + index + 4 * cubeShape.y * cubeShape.x, 0);
                 }
             }));
         });
@@ -567,8 +568,8 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
     }
     vp.texture.texHandle[layerId].bind();
     const CoordOfCube upperLeftDc = Dataset::datasets[layerId].global2cube(vp.texture.leftUpperPxInAbsPx);
-    for_each_resliced_cube_do(upperLeftDc, [cubeEdgeLen, layerId, &vp](auto x_dc, auto y_dc, auto, auto index){
-        glTexSubImage2D(GL_TEXTURE_2D, 0, x_dc * cubeEdgeLen, y_dc * cubeEdgeLen, cubeEdgeLen, cubeEdgeLen, GL_RGBA, GL_UNSIGNED_BYTE, vp.texture.texData[layerId].data() + index);
+    for_each_resliced_cube_do(upperLeftDc, [cubeShape, layerId, &vp](auto x_dc, auto y_dc, auto, auto index){
+        glTexSubImage2D(GL_TEXTURE_2D, 0, x_dc * cubeShape.componentMul(vp.v1).length(), y_dc * cubeShape.componentMul(vp.v2).length(), cubeShape.x, cubeShape.y, GL_RGBA, GL_UNSIGNED_BYTE, vp.texture.texData[layerId].data() + index);
     });
     vp.texture.texHandle[layerId].release();
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -577,38 +578,44 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
 }
 
 void Viewer::arbCubes(ViewportArb & vp) {
-    const auto pointInCube = [this](const Coordinate currentDC, const floatCoordinate point) {
-       return currentDC.x * gpucubeedge <= point.x && point.x <= currentDC.x * gpucubeedge + gpucubeedge &&
-              currentDC.y * gpucubeedge <= point.y && point.y <= currentDC.y * gpucubeedge + gpucubeedge &&
-              currentDC.z * gpucubeedge <= point.z && point.z <= currentDC.z * gpucubeedge + gpucubeedge;
+    if (Dataset::datasets.size() == layers.size()) {
+        for (auto && [dataset, texturelayer] : boost::combine(Dataset::datasets, layers)) {
+            arbCubes(vp, dataset, texturelayer);
+        }
+    }
+}
+
+void Viewer::arbCubes(ViewportArb & vp, const Dataset & dset, TextureLayer & textureLayer) {
+    const auto pointInCube = [&shape = dset.gpuCubeShape](const Coordinate currentDC, const floatCoordinate point) {
+       return currentDC.x * shape.x <= point.x && point.x <= currentDC.x * shape.x + shape.x &&
+              currentDC.y * shape.y <= point.y && point.y <= currentDC.y * shape.y + shape.y &&
+              currentDC.z * shape.z <= point.z && point.z <= currentDC.z * shape.z + shape.z;
     };
 
     const floatCoordinate xAxis = {1, 0, 0}; const floatCoordinate yAxis = {0, 1, 0}; const floatCoordinate zAxis = {0, 0, 1};
     const auto normal = vp.n;// the normal vector direction is not important here because it doesn’t change the plane
 
-    for (auto & layer : layers) {
-        layer.pendingArbCubes.clear();
-        for (auto & pair : layer.textures) {
-            pair.second->vertices.clear();
-        }
+    textureLayer.pendingArbCubes.clear();
+    for (auto & pair : textureLayer.textures) {
+        pair.second->vertices.clear();
     }
 
-    const auto gpusupercube = (state->M - 1) * Dataset::current().cubeEdgeLength / gpucubeedge + 1;//remove cpu overlap and add gpu overlap
-    const auto scroot = (state->viewerState->currentPosition / gpucubeedge) - gpusupercube / 2;
-    floatCoordinate root = vp.texture.leftUpperPxInAbsPx / Dataset::current().magnification;
-    for (int z = 0; z < gpusupercube; ++z)
-    for (int y = 0; y < gpusupercube; ++y)
-    for (int x = 0; x < gpusupercube; ++x) {
+    const auto gpusupercube = (state->M - 1) * dset.cubeShape / dset.gpuCubeShape + 1;//remove cpu overlap and add gpu overlap
+    const auto scroot = (state->viewerState->currentPosition / dset.gpuCubeShape) - gpusupercube / 2;
+    floatCoordinate root = vp.texture.leftUpperPxInAbsPx / dset.scaleFactor;
+    for (int z = 0; z < gpusupercube.z; ++z)
+    for (int y = 0; y < gpusupercube.y; ++y)
+    for (int x = 0; x < gpusupercube.x; ++x) {
         Coordinate currentGPUDc = scroot + Coordinate{x, y, z};
 
         if (currentGPUDc.x < 0 || currentGPUDc.y < 0 || currentGPUDc.z < 0) {
             continue;
         }
 
-        floatCoordinate topPlaneUpVec = currentGPUDc * gpucubeedge;
-        floatCoordinate bottomPlaneUpVec = currentGPUDc * gpucubeedge + floatCoordinate(gpucubeedge, gpucubeedge, 0);
-        floatCoordinate leftPlaneUpVec = currentGPUDc * gpucubeedge + floatCoordinate(0, gpucubeedge, gpucubeedge);
-        floatCoordinate rightPlaneUpVec = currentGPUDc * gpucubeedge + floatCoordinate(gpucubeedge, 0, gpucubeedge);
+        floatCoordinate topPlaneUpVec = currentGPUDc.componentMul(dset.gpuCubeShape);
+        floatCoordinate bottomPlaneUpVec = currentGPUDc.componentMul(dset.gpuCubeShape) + dset.gpuCubeShape.componentMul(floatCoordinate(1,1,0));
+        floatCoordinate leftPlaneUpVec = currentGPUDc.componentMul(dset.gpuCubeShape) + dset.gpuCubeShape.componentMul(floatCoordinate(0,1,1));
+        floatCoordinate rightPlaneUpVec = currentGPUDc.componentMul(dset.gpuCubeShape) + dset.gpuCubeShape.componentMul(floatCoordinate(1,0,1));
 
         std::vector<floatCoordinate> points;
         auto addPoints = [&](const floatCoordinate & plane, const floatCoordinate & axis){
@@ -667,16 +674,14 @@ void Viewer::arbCubes(ViewportArb & vp) {
             }
             if (moreThanXEndBorder && moreThanYEndBorder && moreThanZEndBorder) {
                 const CoordOfGPUCube gpuCoord{currentGPUDc.x, currentGPUDc.y, currentGPUDc.z};
-                const auto globalCoord = gpuCoord.cube2Global(gpucubeedge, Dataset::current().scaleFactor);
-                for (auto & layer : layers) {
-                    auto cubeIt = layer.textures.find(gpuCoord);
-                    if (cubeIt != std::end(layer.textures)) {
-                        cubeIt->second->vertices = /*std::move*/(points);
-                    } else {
-                        const auto cubeCoord = Dataset::current().global2cube(globalCoord);
-                        const auto offset = globalCoord - Dataset::current().cube2global(cubeCoord);
-                        layer.pendingArbCubes.emplace_back(gpuCoord, offset);
-                    }
+                const auto globalCoord = gpuCoord.cube2Global(dset.gpuCubeShape, dset.scaleFactor);
+                auto cubeIt = textureLayer.textures.find(gpuCoord);
+                if (cubeIt != std::end(textureLayer.textures)) {
+                    cubeIt->second->vertices = /*std::move*/(points);
+                } else {
+                    const auto cubeCoord = Dataset::current().global2cube(globalCoord);
+                    const auto offset = globalCoord - Dataset::current().cube2global(cubeCoord);
+                    textureLayer.pendingArbCubes.emplace_back(gpuCoord, offset);
                 }
             }
         }
@@ -703,7 +708,7 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
     // from those cubes into the texture.
     floatCoordinate currentPxInDc_float, rowPx_float, currentPx_float;
 
-    rowPx_float = vp.texture.leftUpperPxInAbsPx / Dataset::current().scaleFactor;
+    rowPx_float = vp.texture.leftUpperPxInAbsPx / Dataset::datasets[layerId].scaleFactor;
     currentPx_float = rowPx_float;
 
     static std::vector<std::uint8_t> texData;// reallocation for every run would be a waste
@@ -714,7 +719,7 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
         t = 0;
         while(t < vp.texture.usedSizeInCubePixels) {
             Coordinate currentPx = {roundFloat(currentPx_float.x), roundFloat(currentPx_float.y), roundFloat(currentPx_float.z)};
-            Coordinate currentDc = currentPx / Dataset::current().cubeEdgeLength;
+            Coordinate currentDc = currentPx / Dataset::datasets[layerId].cubeShape;
 
             if(currentPx.x < 0) { currentDc.x -= 1; }
             if(currentPx.y < 0) { currentDc.y -= 1; }
@@ -724,7 +729,7 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
             void * const datacube = cubeQuery(state->cube2Pointer, layerId, Dataset::datasets[layerId].magIndex, {currentDc.x, currentDc.y, currentDc.z});
             state->protectCube2Pointer.unlock();
 
-            currentPxInDc_float = currentPx_float - currentDc * Dataset::current().cubeEdgeLength;
+            currentPxInDc_float = currentPx_float - currentDc * Dataset::datasets[layerId].cubeShape.componentMul(vp.v1).length();
             t_old = t;
 
             dcSliceExtract(reinterpret_cast<std::uint8_t *>(datacube), &currentPxInDc_float, texData.data(), s, &t, vp.v2, layerId, vp.texture.usedSizeInCubePixels);
@@ -900,18 +905,18 @@ void Viewer::run() {
     // might cancel the current loading process. When all textures
     // have been processed, we go into an idle state, in which we wait for events.
     if (state->gpuSlicer && gpuRendering) {
-        const auto & loadPendingCubes = [&](TextureLayer & layer, std::vector<std::pair<CoordOfGPUCube, Coordinate>> & pendingCubes, QElapsedTimer & timer) {
-            while (!pendingCubes.empty() && !timer.hasExpired(3)) {
+        const auto & loadPendingCubes = [&](const Dataset & dset, TextureLayer & layer, auto layerId, std::vector<std::pair<CoordOfGPUCube, Coordinate>> & pendingCubes, QElapsedTimer & timer) {
+            while (!pendingCubes.empty() && !timer.hasExpired(30)) {
                 const auto pair = pendingCubes.back();
                 pendingCubes.pop_back();
                 if (layer.textures.find(pair.first) == std::end(layer.textures)) {
-                    const auto globalCoord = pair.first.cube2Global(gpucubeedge, Dataset::current().scaleFactor);
-                    const auto cubeCoord = globalCoord.cube(Dataset::current().cubeEdgeLength, Dataset::current().scaleFactor);
+                    const auto globalCoord = pair.first.cube2Global(dset.gpuCubeShape, dset.scaleFactor);
+                    const auto cubeCoord = dset.global2cube(globalCoord);
                     state->protectCube2Pointer.lock();
-                    const auto * ptr = cubeQuery(state->cube2Pointer, layer.isOverlayData, Dataset::current().magIndex, cubeCoord);
+                    const auto * ptr = cubeQuery(state->cube2Pointer, layerId, dset.magIndex, cubeCoord);
                     state->protectCube2Pointer.unlock();
                     if (ptr != nullptr) {
-                        layer.cubeSubArray(ptr, Dataset::current().cubeEdgeLength, gpucubeedge, pair.first, pair.second);
+                        layer.cubeSubArray(ptr, dset.cubeShape, dset.gpuCubeShape, pair.first, pair.second);
                     }
                 }
             }
@@ -919,11 +924,16 @@ void Viewer::run() {
 
         QElapsedTimer timer;
         timer.start();
-        for (auto & layer : layers) {
-            calculateMissingOrthoGPUCubes(layer);
-            loadPendingCubes(layer, layer.pendingOrthoCubes, timer);
-            loadPendingCubes(layer, layer.pendingArbCubes, timer);
+        qDebug() << "loadPendingCubes";
+        std::size_t id{};
+        for (auto && [dset, textures] : boost::combine(Dataset::datasets, layers)) {
+            calculateMissingOrthoGPUCubes(dset, textures);
+            qDebug() << textures.pendingOrthoCubes.size() << textures.pendingArbCubes.size() << textures.textures.size();
+            loadPendingCubes(dset, textures, id, textures.pendingOrthoCubes, timer);
+            loadPendingCubes(dset, textures, id, textures.pendingArbCubes, timer);
+            ++id;
         }
+        qDebug() << "loadPendingCubes" << timer.nsecsElapsed()/1e6;
     }
 
     window->forEachOrthoVPDo([](ViewportOrtho & vp) {
@@ -993,13 +1003,12 @@ void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, 
         }
     }
 
-    // This determines whether the server will broadcast the coordinate change
-    // to its client or not.
+    // TODO multi layer with heterogeneous cube size
     const auto fov = Dataset::current().cube2global({1,1,1}) * (state->M - 1);
     const auto lastCorner = viewerState.currentPosition - fov / 2;
     const auto lastCorner_dc = Dataset::current().global2cube(lastCorner);
     const auto lastPosition_dc = Dataset::current().global2cube(viewerState.currentPosition);
-    const auto lastPosition_gpudc = lastCorner.cube(gpucubeedge, Dataset::current().scaleFactor);
+    const auto lastPosition_gpudc = lastCorner.cube(Dataset::current().gpuCubeShape, Dataset::current().scaleFactor);
 
     const Coordinate movement = step;
     auto newPos = viewerState.currentPosition + movement;
@@ -1015,7 +1024,7 @@ void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, 
     const auto newCorner = viewerState.currentPosition - fov / 2;
     const auto newCorner_dc = Dataset::current().global2cube(newCorner);
     const auto newPosition_dc = Dataset::current().global2cube(viewerState.currentPosition);
-    const auto newPosition_gpudc = newCorner.cube(gpucubeedge, Dataset::current().scaleFactor);
+    const auto newPosition_gpudc = newCorner.cube(Dataset::current().gpuCubeShape, Dataset::current().scaleFactor);
 
     if (newPosition_dc != lastPosition_dc || newCorner_dc != lastCorner_dc) {
         reslice_notify();
@@ -1027,22 +1036,22 @@ void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, 
         loader_notify(userMoveType, direction);
     }
 
-    if (state->gpuSlicer && newPosition_gpudc != lastPosition_gpudc) {
-        const auto supercubeedge = state->M * Dataset::current().cubeEdgeLength / gpucubeedge - (Dataset::current().cubeEdgeLength / gpucubeedge - 1);
-        for (auto & layer : layers) {
-            layer.ctx.makeCurrent(&layer.surface);
+    if (state->gpuSlicer && newPosition_gpudc != lastPosition_gpudc && Dataset::datasets.size() == layers.size()) {
+        for (auto && [dset, textures] : boost::combine(Dataset::datasets, layers)) {
+            const auto gpuscedge = state->M * dset.cubeShape / dset.gpuCubeShape - (dset.cubeShape / dset.gpuCubeShape - 1);
+            textures.ctx.makeCurrent(&textures.surface);
             std::vector<CoordOfGPUCube> obsoleteCubes;
-            for (const auto & pair : layer.textures) {
+            for (const auto & pair : textures.textures) {
                 const auto pos = pair.first;
-                const auto globalCoord = pos.cube2Global(gpucubeedge, Dataset::current().scaleFactor);
-                if (!currentlyVisible(globalCoord, viewerState.currentPosition, supercubeedge, Dataset::current().scaleFactor * gpucubeedge)) {
+                const auto globalCoord = pos.cube2Global(dset.gpuCubeShape, dset.scaleFactor);
+                if (!currentlyVisible(globalCoord, viewerState.currentPosition, gpuscedge , dset.scaleFactor.componentMul(dset.gpuCubeShape))) {
                     obsoleteCubes.emplace_back(pos);
                 }
             }
             for (const auto & pos : obsoleteCubes) {
-                layer.textures.erase(pos);
+                textures.textures.erase(pos);
             }
-            calculateMissingOrthoGPUCubes(layer);
+            calculateMissingOrthoGPUCubes(dset, textures);
         }
     }
 
@@ -1067,22 +1076,23 @@ void Viewer::userMoveClear() {
     moveCache = {};
 }
 
-void Viewer::calculateMissingOrthoGPUCubes(TextureLayer & layer) {
+void Viewer::calculateMissingOrthoGPUCubes(const Dataset & dset, TextureLayer & layer) {
     layer.pendingOrthoCubes.clear();
 
-    const auto gpusupercube = (state->M - 1) * Dataset::current().cubeEdgeLength / gpucubeedge + 1;//remove cpu overlap and add gpu overlap
-    const int halfSupercube = gpusupercube * 0.5;
-    auto edge = state->viewerState->currentPosition.cube(gpucubeedge, Dataset::current().scaleFactor) - halfSupercube;
+    const auto gsc = (state->M - 1) * dset.cubeShape / dset.gpuCubeShape + 1;//remove cpu overlap and add gpu overlap
+    const auto gpusupercube = CoordOfCube(gsc.x, gsc.y, gsc.z);
+    const auto halfSupercube = gpusupercube / 2;
+    auto edge = state->viewerState->currentPosition.cube(dset.gpuCubeShape, dset.scaleFactor) - halfSupercube;
     const auto end = edge + gpusupercube;
     edge = {std::max(0, edge.x), std::max(0, edge.y), std::max(0, edge.z)};//negative coords are calculated incorrectly and there are no cubes anyway
     for (int x = edge.x; x < end.x; ++x)
     for (int y = edge.y; y < end.y; ++y)
     for (int z = edge.z; z < end.z; ++z) {
         const auto gpuCoord = CoordOfGPUCube{x, y, z};
-        const auto globalCoord = gpuCoord.cube2Global(gpucubeedge, Dataset::current().scaleFactor);
-        if (currentlyVisible(globalCoord, state->viewerState->currentPosition, gpusupercube, Dataset::current().scaleFactor * gpucubeedge) && layer.textures.count(gpuCoord) == 0) {
-            const auto cubeCoord = Dataset::current().global2cube(globalCoord);
-            const auto offset = globalCoord - Dataset::current().cube2global(cubeCoord);
+        const auto globalCoord = gpuCoord.cube2Global(dset.gpuCubeShape, dset.scaleFactor);
+        if (currentlyVisible(globalCoord, state->viewerState->currentPosition, gsc, dset.scaleFactor.componentMul(dset.gpuCubeShape)) && layer.textures.count(gpuCoord) == 0) {//FIXME
+            const auto cubeCoord = dset.global2cube(globalCoord);
+            const auto offset = globalCoord - dset.cube2global(cubeCoord);
             layer.pendingOrthoCubes.emplace_back(gpuCoord, offset);
         }
     }
@@ -1242,9 +1252,11 @@ void Viewer::resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge, co
                     .arg(layerCount * newTexEdgeLength * newTexEdgeLength *4./*RGBA*/*2/*cpu+gpu*/*3/*vps*//(1<<20)).toStdString().c_str();
         viewerState.texEdgeLength = newTexEdgeLength;
         window->resetTextureProperties();
-        window->forEachOrthoVPDo([layerCount](ViewportOrtho & vp) {
-            vp.resetTexture(layerCount);
-        });
+        if (layerCount > 0) {
+            window->forEachOrthoVPDo([layerCount](ViewportOrtho & vp) {
+                vp.resetTexture(layerCount);
+            });
+        }
         recalcTextureOffsets();
     }
 }

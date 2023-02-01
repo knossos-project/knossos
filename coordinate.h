@@ -97,12 +97,11 @@ public:
     }
 
     template<typename T>
-    constexpr std::enable_if_t<std::is_scalar_v<T>, CoordinateDerived> componentMul(const T & rhs) const {
-        return *this * rhs;
-    }
-    template<typename T>
-    constexpr std::enable_if_t<!std::is_scalar_v<T>, CoordinateDerived> componentMul(const T & rhs) const {
+    constexpr CoordinateDerived componentMul(const T & rhs) const {
         return CoordinateDerived(x * rhs.x, y * rhs.y, z * rhs.z);
+    }
+    constexpr CoordinateDerived componentMul(const ComponentType x, const ComponentType y, const ComponentType z) const {
+        return CoordinateDerived(this->x * x, this->y * y, this->z * z);
     }
 
     constexpr ComponentType dot(const CoordinateDerived & rhs) const {
@@ -130,6 +129,10 @@ public:
     template<typename T>
     constexpr CoordinateDerived_if_valid_t<T> & operator/=(const T & rhs) {
         return static_cast<CoordinateDerived&>(*this = *this / rhs);
+    }
+
+    ComponentType prod() const {
+        return x * y * z;
     }
 
     float length() const {
@@ -202,47 +205,47 @@ template<>
 class Coord<int, 0> : public CoordinateBase<int, Coordinate> {
 public:
     using CoordinateBase<int, Coordinate>::CoordinateBase;
-    inline CoordOfCube cube(const int size, const floatCoordinate scale) const;
-    constexpr CoordInCube insideCube(const int size, const floatCoordinate scale) const;
+    inline CoordOfCube cube(const Coordinate & size, const floatCoordinate scale) const;
+    constexpr CoordInCube insideCube(const Coordinate & size, const floatCoordinate scale) const;
 };
 
 template<>
 class Coord<int, 1> : public CoordinateBase<int, CoordOfCube> {
 public:
     using CoordinateBase<int, CoordOfCube>::CoordinateBase;
-    constexpr Coordinate cube2Global(const int cubeEdgeLength, const floatCoordinate scale) const;
+    constexpr Coordinate cube2Global(const Coordinate & cubeShape, const floatCoordinate scale) const;
 };
 
 template<>
 class Coord<int, 2> : public CoordinateBase<int, CoordInCube> {
 public:
     using CoordinateBase<int, CoordInCube>::CoordinateBase;
-    inline Coordinate insideCube2Global(const CoordOfCube & cube, const int cubeEdgeLength, const floatCoordinate scale) const;
+    inline Coordinate insideCube2Global(const CoordOfCube & cube, const Coordinate & cubeShape, const floatCoordinate scale) const;
 };
 
 template<>
 class Coord<int, 3> : public CoordinateBase<int, CoordOfGPUCube> {
 public:
     using CoordinateBase<int, CoordOfGPUCube>::CoordinateBase;
-    constexpr Coordinate cube2Global(const int cubeEdgeLength, const floatCoordinate scale) const;
+    constexpr Coordinate cube2Global(const Coordinate & cubeShape, const floatCoordinate scale) const;
 };
 
-inline CoordOfCube Coordinate::cube(const int size, const floatCoordinate scale) const {
-    return CoordOfCube(std::floor(x / scale.x / size), std::floor(y / scale.y / size), std::floor(z / scale.z / size));
+inline CoordOfCube Coordinate::cube(const Coordinate & size, const floatCoordinate scale) const {
+    return CoordOfCube(std::floor(x / scale.x / size.x), std::floor(y / scale.y / size.y), std::floor(z / scale.z / size.z));
 }
-constexpr CoordInCube Coordinate::insideCube(const int size, const floatCoordinate scale) const {
-    return CoordInCube(static_cast<int>(x / scale.x) % size, static_cast<int>(y / scale.y) % size, static_cast<int>(z / scale.z) % size);
-}
-
-constexpr Coordinate CoordOfCube::cube2Global(const int size, const floatCoordinate scale) const {
-    return Coordinate(x * size * scale.x, y * size * scale.y, z * size * scale.z);
+constexpr CoordInCube Coordinate::insideCube(const Coordinate & size, const floatCoordinate scale) const {
+    return CoordInCube(static_cast<int>(x / scale.x) % size.x, static_cast<int>(y / scale.y) % size.y, static_cast<int>(z / scale.z) % size.z);
 }
 
-constexpr Coordinate CoordOfGPUCube::cube2Global(const int size, const floatCoordinate scale) const {
-    return Coordinate(x * size * scale.x, y * size * scale.y, z * size * scale.z);
+constexpr Coordinate CoordOfCube::cube2Global(const Coordinate & size, const floatCoordinate scale) const {
+    return Coordinate(x * size.x * scale.x, y * size.y * scale.y, z * size.z * scale.z);
 }
 
-inline Coordinate CoordInCube::insideCube2Global(const CoordOfCube & cube, const int size, const floatCoordinate scale) const {
+constexpr Coordinate CoordOfGPUCube::cube2Global(const Coordinate & size, const floatCoordinate scale) const {
+    return Coordinate(x * size.x * scale.x, y * size.y * scale.y, z * size.z * scale.z);
+}
+
+inline Coordinate CoordInCube::insideCube2Global(const CoordOfCube & cube, const Coordinate & size, const floatCoordinate scale) const {
     return cube.cube2Global(size, scale) + scale.componentMul(Coordinate{x, y, z});
 }
 

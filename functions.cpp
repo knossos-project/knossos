@@ -33,11 +33,11 @@ constexpr bool inRange(const int value, const int min, const int max) {
     return value >= min && value < max;
 }
 
-bool insideCurrentSupercube(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const Coordinate & cubeSize) {
+bool insideCurrentSupercube(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const Coordinate & cubeSizeGlobal) {
     const auto halfSupercube = cubeSize.componentMul(cubesPerDimension-1) / 2.;
-    const auto c = coord.cube(1, cubeSize);
-    const auto tl = (center - halfSupercube).cube(1, cubeSize);
-    const auto br = (center + halfSupercube).cube(1, cubeSize) + 1;
+    const auto c = coord.cube(1, cubeSizeGlobal);
+    const auto tl = (center - halfSupercube).cube(1, cubeSizeGlobal);
+    const auto br = (center + halfSupercube).cube(1, cubeSizeGlobal) + 1;
     bool valid = true;
     valid &= inRange(c.x, tl.x, br.x);
     valid &= inRange(c.y, tl.y, br.y);
@@ -45,9 +45,9 @@ bool insideCurrentSupercube(const Coordinate & coord, const Coordinate & center,
     return valid;
 }
 
-bool currentlyVisible(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const Coordinate & cubeSize) {
-    const bool valid = insideCurrentSupercube(coord, center, cubesPerDimension, cubeSize);
-    const auto c = center.cube(1, cubeSize).cube2Global(1, cubeSize);
+bool currentlyVisible(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const Coordinate & cubeSizeGlobal) {
+    const bool valid = insideCurrentSupercube(coord, center, cubesPerDimension, cubeSizeGlobal);
+    const auto c = center.cube(1, cubeSizeGlobal).cube2Global(1, cubeSizeGlobal);
     const bool xvalid = valid & inRange(coord.x, c.x, c.x + cubeSize.x);
     const bool yvalid = valid & inRange(coord.y, c.y, c.y + cubeSize.y);
     const bool zvalid = valid & inRange(coord.z, c.z, c.z + cubeSize.z);
