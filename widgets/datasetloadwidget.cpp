@@ -243,7 +243,7 @@ DatasetLoadWidget::DatasetLoadWidget(QWidget *parent) : DialogVisibilityNotify(D
     splitter.addWidget(&infoLabel);
     splitter.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    cubeEdgeSpin.setRange(1, 256);
+    cubeEdgeSpin.setRange(1, 2048);
     cubeEdgeSpin.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     fovSpin.setSuffix(" px");
     fovSpin.setAlignment(Qt::AlignLeft);
