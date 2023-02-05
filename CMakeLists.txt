@@ -152,8 +152,12 @@ add_custom_command(OUTPUT ${cheatsheet_dir}/cheatsheet.qrc
 )
 
 if(NOT MINGW) # msys2-lld __delayLoadHelper2 broken
+find_program(MOLD mold)
 find_program(LLD lld)
-if(LLD)
+if(MOLD)
+    message(STATUS "using MOLD linker")
+    add_link_options(-fuse-ld=mold)
+elseif(LLD)
     message(STATUS "using LLVM linker")
     # CMAKE_COLOR_DIAGNOSTICS doesn’t apply coloring to the compiler driver during linking
     add_link_options(-fuse-ld=lld LINKER:--color-diagnostics -fdiagnostics-color=always)
