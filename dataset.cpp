@@ -306,7 +306,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
     Dataset::list_t infos;
     for (auto && vit : toml::find(config, "Layer").as_array()) {
         Dataset info;
-        const auto & value = toml::find_or(vit, "ServerFormat", std::string{});
+        const auto & value = toml::find_or(vit, "ServerFormat", "");
         info.api = value == "knossos" ? API::Heidelbrain : value == "1" ? API::OpenConnectome : API::PyKnossos;
         info.url = QString::fromStdString(toml::find_or(vit, "URL", std::string{}));
         info.experimentname = QString::fromStdString(toml::find(vit, "Name").as_string());
