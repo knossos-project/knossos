@@ -304,17 +304,17 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
 //    auto config = toml::parse(file.fileName().toStdString());
     auto config = toml_parse(file.fileName().toStdString());
     Dataset::list_t infos;
-    for (auto && vit : toml::find(config, "Layer").as_array()) {
+    for (const auto & vit : toml::find(config, "Layer").as_array()) {
         Dataset info;
         const auto & value = toml::find_or(vit, "ServerFormat", "");
         info.api = value == "knossos" ? API::Heidelbrain : value == "1" ? API::OpenConnectome : API::PyKnossos;
         info.url = QString::fromStdString(toml::find_or(vit, "URL", std::string{}));
         info.experimentname = QString::fromStdString(toml::find(vit, "Name").as_string());
-        const auto extent = toml::find(vit, "Extent_px").as_array();
+        const auto & extent = toml::find(vit, "Extent_px").as_array();
         info.boundary = Coordinate(extent.at(0).as_integer(), extent.at(1).as_integer(), extent.at(2).as_integer());
-        const auto cube_shape = toml::find(vit, "CubeShape_px").as_array();
+        const auto & cube_shape = toml::find(vit, "CubeShape_px").as_array();
         info.cubeEdgeLength = cube_shape.at(0).as_integer();
-        const auto scales = toml::find(vit, "VoxelSize_nm").as_array();
+        const auto & scales = toml::find(vit, "VoxelSize_nm").as_array();
         for (const auto & scaleit : scales) {
             const auto scale = scaleit.as_array();
             const auto x = (scale.at(0).is_floating()) ? scale.at(0).as_floating() : scale.at(0).as_integer();
