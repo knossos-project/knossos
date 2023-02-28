@@ -48,6 +48,7 @@ for:
       - image: macos-bigsur
   environment:
     MACOSX_DEPLOYMENT_TARGET: 10.14 # mojave
+    HOMEBREW_NO_INSTALL_FROM_API: 1 # brew shinanigans
   install:
     - brew pin appveyor-build-agent # https://github.com/appveyor/ci/issues/3763#issuecomment-1003168277
     - time brew update
