@@ -145,7 +145,12 @@ int main(int argc, char *argv[]) try {
     std::cerr << "_GLIBCXX_DEBUG_PEDANTIC set" << std::endl;
 #endif
     qInstallMessageHandler(debugMessageHandler);
-    QtConcurrent::run([](){ QSslSocket::supportsSsl(); });// workaround until https://bugreports.qt.io/browse/QTBUG-59750
+    QtConcurrent::run([](){
+        qDebug() << "QSslSocket::supportsSsl()" << QSslSocket::supportsSsl();// workaround until https://bugreports.qt.io/browse/QTBUG-59750
+        qDebug() << "sslLibrary   BuildVersion" << QSslSocket::sslLibraryBuildVersionString() << QSslSocket::sslLibraryBuildVersionNumber();
+        qDebug() << "sslLibrary RuntimeVersion" << QSslSocket::sslLibraryVersionString() << QSslSocket::sslLibraryVersionNumber();
+        qDebug() << "QSslSocket::supportsSsl()" << QSslSocket::supportsSsl();// workaround until https://bugreports.qt.io/browse/QTBUG-59750
+    });
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);// explicitly enable sharing for undocked viewports
 
     QSurfaceFormat format{QSurfaceFormat::defaultFormat()};
@@ -207,6 +212,10 @@ int main(int argc, char *argv[]) try {
 
     qDebug() << QDateTime::currentDateTimeUtc().toString(Qt::ISODate).toUtf8().constData();
     qDebug() << KREVISION << " " << KREVISIONDATE;
+
+    qDebug() << "QSslSocket::supportsSsl" << QSslSocket::supportsSsl();
+    qDebug() << "QSslSocket::sslLibraryBuildVersionString" << QSslSocket::sslLibraryBuildVersionString();
+    qDebug() << "QSslSocket::sslLibraryVersionNumber" << QSslSocket::sslLibraryVersionNumber();
 
     stateInfo state;
     ::state = &state;
