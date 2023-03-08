@@ -848,8 +848,8 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
     const bool existingSegmentation = Segmentation::singleton().hasSegData();
     const bool existingSkeleton = !state->skeletonState->trees.empty();
     const bool existingExtraFiles = !Annotation::singleton().extraFiles.isEmpty();
-    const bool existingAll = existingSegmentation && existingSkeleton && existingExtraFiles;
-    if (!mergeAll && (existingSegmentation || existingSkeleton || existingExtraFiles)) {
+    const int existingCount = existingSegmentation + existingSkeleton + existingExtraFiles;
+    if (!mergeAll && existingCount > 0) {
         QMessageBox prompt{QApplication::activeWindow()};
         prompt.setIcon(QMessageBox::Question);
         prompt.setText(QObject::tr("Which action would you like to choose?"));
@@ -860,10 +860,11 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
             + tr("</ul>")
             + (existingSegmentation || existingSkeleton ? tr("which can be merged or overwritten.") : tr(""));
         prompt.setInformativeText(text);
-        const auto * overrideAllButton = prompt.addButton(QObject::tr("&Overwrite%1").arg(existingAll ? " Both" : ""), QMessageBox::AcceptRole);
-        const auto * keepAllButton = existingAll ? prompt.addButton(QObject::tr("&Keep All"), QMessageBox::AcceptRole) : nullptr;
-        const auto * segmenationKeepButton = existingSegmentation ? prompt.addButton(QObject::tr("Keep%1 Seg&menation").arg(existingAll ? " only" : ""), QMessageBox::AcceptRole) : nullptr;
-        const auto * skeletonKeepButton = existingSkeleton ? prompt.addButton(QObject::tr("Keep%1 &Skeleton").arg(existingAll ? " only" : ""), QMessageBox::AcceptRole) : nullptr;
+        const bool multiple = existingCount > 1;
+        const auto * overrideAllButton = prompt.addButton(QObject::tr("&Overwrite%1").arg(multiple ? " All" : ""), QMessageBox::AcceptRole);
+        const auto * keepAllButton = multiple ? prompt.addButton(QObject::tr("&Keep All"), QMessageBox::AcceptRole) : nullptr;
+        const auto * segmenationKeepButton = existingSegmentation ? prompt.addButton(QObject::tr("Keep%1 Seg&mentaion").arg(multiple ? " only" : ""), QMessageBox::AcceptRole) : nullptr;
+        const auto * skeletonKeepButton = existingSkeleton ? prompt.addButton(QObject::tr("Keep%1 &Skeleton").arg(multiple ? " only" : ""), QMessageBox::AcceptRole) : nullptr;
         const auto * cancelButton = prompt.addButton(QMessageBox::Cancel);
         prompt.exec();
         if (prompt.clickedButton() == cancelButton) {
