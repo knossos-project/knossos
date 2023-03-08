@@ -327,7 +327,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         info.highestAvailableMag = std::pow(2, scales.size() - 1);
         info.description = QString::fromStdString(toml::find(vit, "Description").as_string());
         info.renderSettings.visibleSetExplicitly = vit.contains("Visible");
-        info.allocationEnabled = info.loadingEnabled = info.renderSettings.visible = toml::find_or(vit, "Visible", true);
+        info.allocationEnabled = info.loadingEnabled = info.renderSettings.visible = toml::find_or(vit, "Visible", false);
         info.renderSettings.color = QColor{QString::fromStdString(toml::find_or(vit, "Color", "white"))};
 
         for (const auto & ext : toml::find(vit, "FileExtension").as_array()) {
@@ -343,8 +343,8 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         if (info.url.isEmpty()) {
             info.url = QUrl::fromLocalFile(QFileInfo(configUrl.toLocalFile()).absoluteDir().absolutePath());
         }
-        if (&info != &infos.front() && !info.renderSettings.visibleSetExplicitly && !info.isOverlay()) {// disable all non-seg layers expect the first TODO multi layer
-            info.allocationEnabled = info.loadingEnabled = info.renderSettings.visible = false;
+        if (!info.renderSettings.visibleSetExplicitly && (&info == &infos.front() || info.isOverlay())) {// disable all non-seg layers expect the first TODO multi layer
+            info.allocationEnabled = info.loadingEnabled = info.renderSettings.visible = true;
         }
     }
     return infos;
