@@ -145,7 +145,11 @@ int main(int argc, char *argv[]) try {
     std::cerr << "_GLIBCXX_DEBUG_PEDANTIC set" << std::endl;
 #endif
     qInstallMessageHandler(debugMessageHandler);
-    QtConcurrent::run([](){ QSslSocket::supportsSsl(); });// workaround until https://bugreports.qt.io/browse/QTBUG-59750
+    QtConcurrent::run([](){
+        qDebug() << "QSslSocket::supportsSsl()" << QSslSocket::supportsSsl();// workaround until https://bugreports.qt.io/browse/QTBUG-59750
+        qDebug() << "sslLibrary   BuildVersion" << QSslSocket::sslLibraryBuildVersionString() << QSslSocket::sslLibraryBuildVersionNumber();
+        qDebug() << "sslLibrary RuntimeVersion" << QSslSocket::sslLibraryVersionString() << QSslSocket::sslLibraryVersionNumber();
+    });
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);// explicitly enable sharing for undocked viewports
 
     QSurfaceFormat format{QSurfaceFormat::defaultFormat()};
