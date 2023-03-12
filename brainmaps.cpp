@@ -449,84 +449,89 @@ void fetchAgglo(const Dataset & dataset, const std::uint64_t soid, QElapsedTimer
     QObject::connect(reply, &QNetworkReply::finished, [reply, soid, &dataset, &downloadProgress = state->mainWindow->meshDownloadProgressBar, timer]() {
         resetBusyIfMatch(soid);
         reply->deleteLater();
-        if (reply->error() != QNetworkReply::NoError) {
-            qDebug() << reply->errorString() << reply->readAll();
-            Segmentation::singleton().clearObjectSelection();
-            Skeletonizer::singleton().select<treeListElement>({});
-            return;
-        }
-
-        const auto jdoc = QJsonDocument::fromJson(reply->readAll());
-
         auto & seg = Segmentation::singleton();
         QSignalBlocker bs{seg};
-        if (seg.selectedObjectsCount() == 0) {
-            qDebug() << "nothing selected";
-            return;
-        }
         const auto pos = seg.objects[seg.selectedObjectIndices.front()].location;
-        const auto bak = Segmentation::singleton().hovered_subobject_id;// drag
-        Segmentation::singleton().hovered_subobject_id = bak;
+        bool anchorLoadedForTheFirstTime{true};
+        int recomlod{3};
+        std::vector<quint64> anchors;
+        decltype(treeListElement::properties) properties;
+        if (reply->error() == QNetworkReply::NoError) {
+            const auto jdoc = QJsonDocument::fromJson(reply->readAll());
 
-        auto mergelistStr = jdoc["mergelist"].toString();
-        int recomlod = jdoc["recommended_lod"].toInt();
-        qDebug() << jdoc.object().keys() << jdoc["recommended_lod"].toInt() << timer.nsecsElapsed()/1e9 << "s";
-        mergelistStr.insert(mergelistStr.indexOf('\n')+1, QString("%1 %2 %3").arg(pos.x).arg(pos.y).arg(pos.z));
-        while (seg.subobjectExists(soid)) {
-            seg.removeObject(seg.objects[seg.subobjectFromId(soid, pos).objects.front()]);
+            if (seg.selectedObjectsCount() == 0) {
+                qDebug() << "nothing selected";
+                return;
+            }
+            const auto bak = Segmentation::singleton().hovered_subobject_id;// drag
+            Segmentation::singleton().hovered_subobject_id = bak;
+
+            auto mergelistStr = jdoc["mergelist"].toString();
+            recomlod = jdoc["recommended_lod"].toInt();
+            qDebug() << jdoc.object().keys() << jdoc["recommended_lod"].toInt() << timer.nsecsElapsed()/1e9 << "s";
+            mergelistStr.insert(mergelistStr.indexOf('\n')+1, QString("%1 %2 %3").arg(pos.x).arg(pos.y).arg(pos.z));
+            while (seg.subobjectExists(soid)) {
+                seg.removeObject(seg.objects[seg.subobjectFromId(soid, pos).objects.front()]);
+            }
+            seg.mergelistLoad(QTextStream{&mergelistStr});
+
+            {
+                auto anchorsObj = jdoc["anchor"].toObject();
+                auto timestampValue = jdoc["timestamp"];
+                auto user = jdoc["user"];
+                std::optional<QString> timestamp;
+                QString note;
+                std::optional<quint64> nuc;
+                if (!anchorsObj.empty()) {
+                    auto nucValue = anchorsObj.begin().value().toObject().value("nuc");
+                    if (!nucValue.isUndefined()) {
+                        nuc = nucValue.toVariant().toULongLong();
+                    }
+                    note = anchorsObj.begin().value().toObject().value("note").toString();
+                    for (auto iter = anchorsObj.begin(); iter != anchorsObj.end(); iter++) {
+                        anchors.push_back(iter.key().toULongLong());
+                    }
+                }
+                if (!user.isUndefined() && !user.isNull()) {
+                    timestamp = QString("%1 %2").arg(QDateTime::fromSecsSinceEpoch(timestampValue.toVariant().toULongLong()).toString("yyyy-MM-ddThh:mm"), user.toString());
+                }
+
+                if (!anchors.empty()) {
+                    properties["anchor"] = anchors[0];
+                    if (nuc.has_value()) {
+                        properties["nuc"] = nuc.value();
+                    }
+                    if (!note.isEmpty()) {
+                        properties["note"] = note;
+                    }
+                }
+                if (timestamp.has_value()) {
+                    properties["t"] = timestamp.value();
+                }
+                if (anchors.size() > 1) {
+                    for (std::size_t i = 1; i < anchors.size(); i++) {
+                        anchorLoadedForTheFirstTime = Skeletonizer::singleton().findTreeByTreeID(anchors[i]) == nullptr;
+                        properties[QString("×anchor%1").arg(i)] = anchors[i];
+                    }
+                }
+
+            }
+        } else {
+            qDebug() << reply->errorString() << reply->readAll();
+            if (reply->error() != QNetworkReply::ContentNotFoundError) {
+                Segmentation::singleton().clearObjectSelection();
+                Skeletonizer::singleton().select<treeListElement>({});
+                return;
+            }
         }
-        seg.mergelistLoad(QTextStream{&mergelistStr});
+        selectTrees(soid, properties);
+
         auto & obj = seg.objects[seg.largestObjectContainingSubobjectId(soid, pos)];
         qDebug() << "mergelist" << obj.id << obj.subobjects.size() << "subobjects";
         seg.clearObjectSelection();
 
         obj.immutable = true;
 
-        bool anchorLoadedForTheFirstTime{true};
-        std::vector<quint64> anchors;
-        {
-            auto anchorsObj = jdoc["anchor"].toObject();
-            auto timestampValue = jdoc["timestamp"];
-            auto user = jdoc["user"];
-            std::optional<QString> timestamp;
-            QString note;
-            std::optional<quint64> nuc;
-            if (!anchorsObj.empty()) {
-                auto nucValue = anchorsObj.begin().value().toObject().value("nuc");
-                if (!nucValue.isUndefined()) {
-                    nuc = nucValue.toVariant().toULongLong();
-                }
-                note = anchorsObj.begin().value().toObject().value("note").toString();
-                for (auto iter = anchorsObj.begin(); iter != anchorsObj.end(); iter++) {
-                    anchors.push_back(iter.key().toULongLong());
-                }
-            }
-            if (!user.isUndefined() && !user.isNull()) {
-                timestamp = QString("%1 %2").arg(QDateTime::fromSecsSinceEpoch(timestampValue.toVariant().toULongLong()).toString("yyyy-MM-ddThh:mm"), user.toString());
-            }
-
-            decltype(treeListElement::properties) properties;
-            if (!anchors.empty()) {
-                properties["anchor"] = anchors[0];
-                if (nuc.has_value()) {
-                    properties["nuc"] = nuc.value();
-                }
-                if (!note.isEmpty()) {
-                    properties["note"] = note;
-                }
-            }
-            if (timestamp.has_value()) {
-                properties["t"] = timestamp.value();
-            }
-            if (anchors.size() > 1) {
-                for (std::size_t i = 1; i < anchors.size(); i++) {
-                    anchorLoadedForTheFirstTime = Skeletonizer::singleton().findTreeByTreeID(anchors[i]) == nullptr;
-                    properties[QString("×anchor%1").arg(i)] = anchors[i];
-                }
-            }
-
-            selectTrees(soid, properties);
-        }
         Skeletonizer::singleton().resetData();
         seg.selectObject(obj);
         bs.unblock();
