@@ -113,10 +113,10 @@ public:
     PythonProxy pythonProxy;
     QMap<PyObject *, QString> runningPlugins;
     QMap<QString, QPair<QString, QString>> registeredPlugins;
+    QVariant evalScript(const QString & script, int start);
 private:
     boost::optional<QString> pluginOverwritePath;
     QStringList _customPathDirs;
-    QVariant evalScript(const QString & script, int start);
     QString pluginDir;
     QString workingDir;
     void initialize();

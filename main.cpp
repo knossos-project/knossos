@@ -186,6 +186,13 @@ int main(int argc, char *argv[]) try {
     QApplication app(argc, argv);
     if (argc == 2 && std::string(argv[1]) == "exit") {
         QTimer::singleShot(5000, &app, [](){
+            if (::state->scripting) {
+                qDebug() << QDir::currentPath();
+                for (const auto script : {"import ssl", "from PythonQt import QtGui", "from PythonQt.QtGui import QPushButton"}) {
+                    qDebug() << "testing" << script;
+                    ::state->scripting->evalScript(script, 257);
+                }
+            }
             Loader::Controller::singleton().suspendLoader();
             Loader::Controller::singleton().worker.reset();// have to make really sure loader is done
             QCoreApplication::quit();

@@ -360,7 +360,7 @@ void Scripting::runFile(const QString & filepath, bool runExistingFirst) {
 
 void Scripting::runFile(QIODevice & pyFile, const QString & filename, bool runExistingFirst) {
     if(!pyFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        throw std::runtime_error("runFile open failed");
+        throw std::runtime_error("runFile open failed " + filename.toStdString());
     }
     {
         QSignalBlocker blocker{Skeletonizer::singleton()}; // prevent spam-triggering of slots in plugin, before it is successfully registered
