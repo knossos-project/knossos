@@ -1,13 +1,13 @@
-version: 5.1-{branch}+{build}
+version: '{build} {branch}'
 
 image:
   - Visual Studio 2022 # Windows Server 2019
   - Visual Studio 2017 # Windows Server 2016
   - Visual Studio 2015 # Windows Server 2012 R2
-  - macos-bigsur   # 11.6.4
-  - macos-monterey # 12.2.1
-  - macos-catalina # 10.15.7
-  - macos-mojave   # 10.14
+  - macOS-bigsur   # 11.6.4
+  - macOS-monterey # 12.2.1
+  - macOS-catalina # 10.15.7
+  - macOS-mojave   # 10.14
   - Ubuntu2004
   - Ubuntu1804
   - Ubuntu1604
@@ -16,8 +16,12 @@ environment:
   MESA_DIST_WIN_VER: 23.0.1
 
 init:
+  - appveyor version
   - cmd: ver
   - cmd: systeminfo | findstr /B /C:"OS Name" /C:"OS Version"
+  - sh: type system_profiler && system_profiler SPSoftwareDataType SPHardwareDataType || true
+  - sh: type lsb_release && lsb_release -a || true
+  - sh: type uname && uname -a || true
 
 for:
 -
@@ -39,13 +43,13 @@ for:
       - image: Ubuntu1604
   build: off
   before_test:
-    - curl -C - -LO https://github.com/knossos-project/knossos/releases/download/nightly-dev/linux.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.AppImage
+    - curl --fail -JLO https://github.com/knossos-project/knossos/releases/download/nightly-dev/linux.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.AppImage
     - chmod +x linux.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.AppImage
   deploy: off
 -
   matrix:
     only:
-      - image: macos-bigsur
+      - image: macOS-bigsur
   environment:
     MACOSX_DEPLOYMENT_TARGET: 10.14 # mojave
     HOMEBREW_NO_INSTALL_FROM_API: 1 # brew shinanigans
@@ -68,11 +72,11 @@ for:
 -
   matrix:
     only:
-      - image: macos-monterey
-      - image: macos-catalina
-      - image: macos-mojave
+      - image: macOS-monterey
+      - image: macOS-catalina
+      - image: macOS-mojave
   before_test:
-    - curl -C - -LO https://github.com/knossos-project/knossos/releases/download/nightly-dev/macos.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.app.zip
+    - curl --fail -JLO https://github.com/knossos-project/knossos/releases/download/nightly-dev/macos.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.app.zip
     - unzip -q macos.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.app.zip
   build: off
   test_script:
@@ -96,11 +100,11 @@ for:
       - image: Visual Studio 2015
   build: off
   before_test:
-    - curl -C - -LO https://github.com/knossos-project/knossos/releases/download/nightly-dev/win.%APPVEYOR_REPO_BRANCH%-KNOSSOS.nightly.exe
+    - curl --fail -JLO https://github.com/knossos-project/knossos/releases/download/nightly-dev/win.%APPVEYOR_REPO_BRANCH%-KNOSSOS.nightly.exe
   deploy: off
 
 test_script:
-  - cmd: curl -C - -LO https://github.com/pal1000/mesa-dist-win/releases/download/%MESA_DIST_WIN_VER%/mesa3d-%MESA_DIST_WIN_VER%-release-msvc.7z
+  - cmd: curl --fail -JLO https://github.com/pal1000/mesa-dist-win/releases/download/%MESA_DIST_WIN_VER%/mesa3d-%MESA_DIST_WIN_VER%-release-msvc.7z
   - cmd: 7z e "-i!x64/*.dll" "-i!x64/*.json" "mesa3d-*-release-msvc.7z"
   - cmd: win.%APPVEYOR_REPO_BRANCH%-KNOSSOS.nightly.exe exit
   # custom screen specification is required for 1604, because the default used to be only 8 bit
