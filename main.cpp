@@ -145,6 +145,11 @@ int main(int argc, char *argv[]) try {
     std::cerr << "_GLIBCXX_DEBUG_PEDANTIC set" << std::endl;
 #endif
     qInstallMessageHandler(debugMessageHandler);
+    qDebug() << QDateTime::currentDateTimeUtc().toString(Qt::ISODate).toUtf8().constData();
+    qDebug() << KREVISION << " " << KREVISIONDATE;
+    qDebug() << QSysInfo::prettyProductName() << QSysInfo::productType() << QSysInfo::productVersion();
+    qDebug() << QSysInfo::kernelType() << QSysInfo::kernelVersion() << QSysInfo::buildAbi() << QSysInfo::buildCpuArchitecture() << QSysInfo::currentCpuArchitecture();
+    qDebug() << QSysInfo::machineHostName();
     QtConcurrent::run([](){
         qDebug() << "QSslSocket::supportsSsl()" << QSslSocket::supportsSsl();// workaround until https://bugreports.qt.io/browse/QTBUG-59750
         qDebug() << "sslLibrary   BuildVersion" << QSslSocket::sslLibraryBuildVersionString() << QSslSocket::sslLibraryBuildVersionNumber();
@@ -208,9 +213,6 @@ int main(int argc, char *argv[]) try {
     qRegisterMetaType<SnapshotOptions>();
     qRegisterMetaType<UserMoveType>();
     qRegisterMetaType<ViewportType>();
-
-    qDebug() << QDateTime::currentDateTimeUtc().toString(Qt::ISODate).toUtf8().constData();
-    qDebug() << KREVISION << " " << KREVISIONDATE;
 
     stateInfo state;
     ::state = &state;
