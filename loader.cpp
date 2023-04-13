@@ -626,9 +626,13 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         QMutexLocker locker(&state->protectCube2Pointer);
         for (auto && todo : Dcoi) {
             for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
-                // only queue downloads which are necessary
-                if (cubeQuery(state->cube2Pointer, layerId, datasets[layerId].magIndex, todo) == nullptr) {
-                    allCubes.emplace_back(layerId, todo);
+                if (datasets[layerId].loadingEnabled) {
+                    // only queue downloads which are necessary
+                    if (cubeQuery(state->cube2Pointer, layerId, datasets[layerId].magIndex, todo) == nullptr) {
+                        if (currentlyVisibleWrap(center, datasets[layerId])(todo)) {
+                            allCubes.emplace_back(layerId, todo);
+                        }
+                    }
                 }
             }
         }
@@ -852,11 +856,9 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     };
     for (auto [layerId, cubeCoord] : allCubes) {
         if (loadingNr == Loader::Controller::singleton().loadingNr) {
-            if (datasets[layerId].loadingEnabled) {
-                try {
-                    startDownload(layerId, datasets[layerId], cubeCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer.at(layerId).at(datasets[layerId].magIndex));
-                } catch (const std::out_of_range &) {}
-            }
+            try {
+                startDownload(layerId, datasets[layerId], cubeCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer.at(layerId).at(datasets[layerId].magIndex));
+            } catch (const std::out_of_range &) {}
         }
     }
 }
