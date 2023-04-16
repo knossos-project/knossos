@@ -173,7 +173,7 @@ constexpr CoordinateDerived operator*(const ComponentType scalar, const Coordina
 
 template<typename ComponentType, typename CoordinateDerived>
 QDebug operator<<(QDebug stream, const CoordinateBase<ComponentType, CoordinateDerived> & coord) {
-    return stream << coord.x << coord.y << coord.z;
+    return stream << "(" << coord.x << coord.y << coord.z << ")";
 }
 
 template<typename ComponentType = int, std::size_t tag = 0>
