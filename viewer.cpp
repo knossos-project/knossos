@@ -996,9 +996,10 @@ void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, 
     // This determines whether the server will broadcast the coordinate change
     // to its client or not.
     const auto fov = Dataset::current().cube2global({1,1,1}) * (state->M - 1);
-    const auto cornerPos = viewerState.currentPosition - fov / 2;
-    const auto lastPosition_dc = Dataset::current().global2cube(cornerPos);
-    const auto lastPosition_gpudc = cornerPos.cube(gpucubeedge, Dataset::current().scaleFactor);
+    const auto lastCorner = viewerState.currentPosition - fov / 2;
+    const auto lastCorner_dc = Dataset::current().global2cube(lastCorner);
+    const auto lastPosition_dc = Dataset::current().global2cube(viewerState.currentPosition);
+    const auto lastPosition_gpudc = lastCorner.cube(gpucubeedge, Dataset::current().scaleFactor);
 
     const Coordinate movement = step;
     auto newPos = viewerState.currentPosition + movement;
@@ -1011,11 +1012,12 @@ void Viewer::userMoveVoxels(const Coordinate & step, UserMoveType userMoveType, 
     viewerState.currentPosition = newPos.capped(min, max);
     recalcTextureOffsets();
 
-    const auto cornerPos_new = viewerState.currentPosition - fov / 2;
-    const auto newPosition_dc = Dataset::current().global2cube(cornerPos_new);
-    const auto newPosition_gpudc = cornerPos_new.cube(gpucubeedge, Dataset::current().scaleFactor);
+    const auto newCorner = viewerState.currentPosition - fov / 2;
+    const auto newCorner_dc = Dataset::current().global2cube(newCorner);
+    const auto newPosition_dc = Dataset::current().global2cube(viewerState.currentPosition);
+    const auto newPosition_gpudc = newCorner.cube(gpucubeedge, Dataset::current().scaleFactor);
 
-    if (newPosition_dc != lastPosition_dc) {
+    if (newPosition_dc != lastPosition_dc || newCorner_dc != lastCorner_dc) {
         reslice_notify();
         // userMoveType How user movement was generated
         // Direction of user movement in case of drilling,
