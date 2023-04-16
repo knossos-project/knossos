@@ -47,7 +47,7 @@ bool insideCurrentSupercube(const Coordinate & coord, const Coordinate & center,
 
 bool currentlyVisible(const Coordinate & coord, const Coordinate & center, const int & cubesPerDimension, const Coordinate & cubeSize) {
     const bool valid = insideCurrentSupercube(coord, center, cubesPerDimension, cubeSize);
-    const auto c = coord.cube(cubeSize.x, {1.f,1.f,1.f}).cube2Global(cubeSize.x, {1.f,1.f,1.f});
+    const auto c = center.cube(cubeSize.x, {1.f,1.f,1.f}).cube2Global(cubeSize.x, {1.f,1.f,1.f});
     const bool xvalid = valid & inRange(coord.x, c.x, c.x + cubeSize.x);
     const bool yvalid = valid & inRange(coord.y, c.y, c.y + cubeSize.y);
     const bool zvalid = valid & inRange(coord.z, c.z, c.z + cubeSize.z);
