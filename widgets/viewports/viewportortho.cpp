@@ -70,7 +70,8 @@ void ViewportOrtho::initializeGL() {
 }
 
 void ViewportOrtho::paintGL() {
-    glClearColor(0, 0, 0, 1);
+    glClearColor(.3843, .3647, .3647, 1);
+    glClearColor(.863, .863, .863, 1);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     glClearColor(0, 0, 0, 0);
     glEnable(GL_BLEND);
