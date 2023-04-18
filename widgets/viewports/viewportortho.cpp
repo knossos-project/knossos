@@ -82,7 +82,9 @@ void ViewportOrtho::initializeGL() {
 }
 
 void ViewportOrtho::paintGL() {
-    glClear(GL_DEPTH_BUFFER_BIT);
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    glClearColor(0, 0, 0, 0);
     glEnable(GL_BLEND);
     glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     if (state->gpuSlicer && state->viewer->gpuRendering) {
