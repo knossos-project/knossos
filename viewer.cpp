@@ -223,8 +223,8 @@ double Viewer::lowestScreenPxXPerDataPx() {
 
 std::size_t Viewer::calcMag(const std::size_t layerId, const float screenPxXPerDataPx) {
     for (std::size_t i{0}; i < Dataset::datasets[layerId].scales.size(); ++i) {
-        const float zoomed_f = ::screenPxXPerCoordForZoomFactor(layerId, Dataset::datasets[layerId].scales[i].x / Dataset::datasets[0].scales[0].x, 1);
-        if (screenPxXPerDataPx >= zoomed_f) {// double/float mix can be problematic here
+        if (std::nextafter(screenPxXPerDataPx, std::numeric_limits<decltype(screenPxXPerDataPx)>::infinity())
+                >= ::screenPxXPerCoordForZoomFactor(layerId, Dataset::datasets[layerId].scales[i].x / Dataset::datasets[0].scales[0].x, 1)) {
             return i;
         }
     }
