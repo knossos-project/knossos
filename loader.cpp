@@ -629,9 +629,9 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 if (datasets[layerId].loadingEnabled) {
                     // only queue downloads which are necessary
                     if (cubeQuery(state->cube2Pointer, layerId, datasets[layerId].magIndex, todo) == nullptr) {
-                        if (currentlyVisibleWrap(center, datasets[layerId])(todo)) {
+//                        if (currentlyVisibleWrap(center, datasets[layerId])(todo)) {
                             allCubes.emplace_back(layerId, todo);
-                        }
+//                        }
                     }
                 }
             }
