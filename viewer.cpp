@@ -768,8 +768,8 @@ void Viewer::calcLeftUpperTexAbsPx() {
             const auto xy = orthoVP.viewportType == VIEWPORT_XY;
             const auto xz = orthoVP.viewportType == VIEWPORT_XZ;
             const auto zy = orthoVP.viewportType == VIEWPORT_ZY;
-            const auto offset = Dataset::current().scaleFactor.componentMul(Coordinate{xy || xz, xy || zy, xz || zy}) * fov / 2;
-            const auto leftUpperDc = Dataset::current().global2cube(viewerState.currentPosition - offset);
+            const auto offset = layer.scaleFactor.componentMul(Coordinate{xy || xz, xy || zy, xz || zy}) * fov / 2;
+            const auto leftUpperDc = layer.global2cube(viewerState.currentPosition - offset);
             texture.leftUpperPxInAbsPx = layer.cube2global(leftUpperDc);
             if (orthoVP.viewportType == VIEWPORT_ARBITRARY) {
                 auto & arbVP = static_cast<ViewportArb&>(orthoVP);
