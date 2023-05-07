@@ -54,7 +54,7 @@
 
 //generalizing this needs polymorphic lambdas or return type deduction
 auto currentlyVisibleWrap = [](const Coordinate & center, const Dataset & dataset){
-    return [&center, &dataset](const CoordOfCube & coord){
+    return [center, dataset](const CoordOfCube & coord){
         return currentlyVisible(dataset.cube2global(coord), center, state->M, dataset.scaleFactor * dataset.cubeEdgeLength);
     };
 };
