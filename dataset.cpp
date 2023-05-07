@@ -326,6 +326,10 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         info.magnification = info.lowestAvailableMag = 1;
         info.highestAvailableMag = std::pow(2, scales.size() - 1);
         info.description = QString::fromStdString(toml::find(vit, "Description").as_string());
+        info.renderSettings.visibleSetExplicitly = vit.contains("Visible");
+        info.allocationEnabled = info.loadingEnabled = info.renderSettings.visible = toml::find_or(vit, "Visible", false);
+        info.renderSettings.color = QColor{QString::fromStdString(toml::find_or(vit, "Color", "white"))};
+
         for (const auto & ext : toml::find(vit, "FileExtension").as_array()) {
             info.fileextension = QString::fromStdString(ext.as_string());
             info.type = typeMap.left.at(info.fileextension);
