@@ -435,9 +435,10 @@ void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx,
                 slice += texNext;
                 continue;
             }
-            const bool selected = layerId == seg.layerId && ((subobjectIdCache == subobjectId) ? selectedCache : seg.isSubObjectIdSelected(subobjectId));
+
 
             const auto bm = Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps);
+            const bool selected = layerId == seg.layerId && ((subobjectIdCache == subobjectId) ? selectedCache : seg.isSubObjectIdSelected(subobjectId));
             const auto queryColor = [&](){
                 if (bm) {
                     return seg.brainmapsColor(subobjectId, selected);
