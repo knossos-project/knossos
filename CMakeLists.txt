@@ -238,8 +238,6 @@ target_compile_options(${PROJECT_NAME} PRIVATE "-Wall" "-Wextra")
 #target_compile_options(${PROJECT_NAME} PRIVATE "-gdwarf-aranges")
 target_compile_options(${PROJECT_NAME} PRIVATE "-fdiagnostics-show-template-tree")
 
-#list(APPEND CMAKE_CXX_FLAGS "-fsanitize=address")
-
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UPPER_CASE)
 if(CMAKE_BUILD_TYPE_UPPER_CASE MATCHES "DEBUG")
 #    target_compile_definitions(${PROJECT_NAME} PRIVATE "_GLIBCXX_DEBUG")
@@ -248,5 +246,5 @@ endif()
 
 include(cotire OPTIONAL)#https://github.com/sakra/cotire/releases/latest
 if(COMMAND cotire)
-#    cotire(${PROJECT_NAME})
+    cotire(${PROJECT_NAME})
 endif()
