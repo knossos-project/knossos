@@ -522,9 +522,9 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
         const CoordInCube currentPosition_inside_dc = (cpos + offset)
                 .capped(min, max)
                 .insideCube(cubeEdgeLen, Dataset::datasets[layerId].scaleFactor);
-        if (Annotation::singleton().outsideMovementArea(state->viewerState->currentPosition + offset) && !state->viewerState->showOnlyRawData) {
-            continue;
-        }
+//        if (Annotation::singleton().outsideMovementArea(state->viewerState->currentPosition + offset) && !state->viewerState->showOnlyRawData) {
+//            continue;
+//        }
 
         // We iterate over the texture with x and y being in a temporary coordinate
         // system local to this texture.
@@ -533,7 +533,7 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
         }
         const CoordOfCube upperLeftDc = Dataset::datasets[layerId].global2cube(vp.textures[layerId].leftUpperPxInAbsPx) + offsetCube;
         QFutureSynchronizer<void> sync;
-        for_each_resliced_cube_do(upperLeftDc, [this, cubeEdgeLen, layerId, &vp, &sync, currentPosition_inside_dc, first](auto, auto, auto currentDc, auto index){
+        for_each_resliced_cube_do(upperLeftDc, [this, cubeEdgeLen, layerId, &vp, &sync, currentPosition_inside_dc, first](auto x_dc, auto y_dc, auto currentDc, auto index){
             const int slicePositionWithinCube = vp.n.componentMul(currentPosition_inside_dc.componentMul(Coordinate(1, cubeEdgeLen, std::pow(cubeEdgeLen, 2)))).length();
             Coordinate offsetCubeGlobal = vp.n.componentMul(vp.n.componentMul(currentPosition_inside_dc));// ensure n is positive by multiplying with itself
 
@@ -543,6 +543,10 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
 
             // Take care of the data textures.
             Coordinate slicePosInAbsPx = Dataset::datasets[layerId].cube2global(currentDc) + Dataset::datasets[layerId].scaleFactor.componentMul(offsetCubeGlobal);
+
+            if (vp.viewportType == VIEWPORT_XY && x_dc == 0 && y_dc == 0 && layerId < 2) {
+                qDebug() << layerId << currentDc << index << vp.textures[layerId].leftUpperPxInAbsPx << slicePositionWithinCube << offsetCubeGlobal << slicePosInAbsPx << currentPosition_inside_dc;
+            }
             // This is used to index into the texture. overlayData[index] is the first
             // byte of the datacube slice at position (x_dc, y_dc) in the texture.
             sync.addFuture(QtConcurrent::run([this, &vp, cube, first, slicePositionWithinCube, slicePosInAbsPx, index, layerId, cubeEdgeLen]()  {
@@ -554,7 +558,7 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
                         dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.textures[layerId].texData.data() + index, vp, layerId, combine);
                     }
                 } else {
-                    std::fill(vp.textures[layerId].texData.data() + index, vp.textures[layerId].texData.data() + index + 4 * cubeEdgeLen * cubeEdgeLen, 0);
+                    std::fill(vp.textures[layerId].texData.data() + index, vp.textures[layerId].texData.data() + index + 4 * cubeEdgeLen * cubeEdgeLen, 77);
                 }
             }));
         });
@@ -564,6 +568,7 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
     vp.textures[layerId].texHandle.bind();
     const CoordOfCube upperLeftDc = Dataset::datasets[layerId].global2cube(vp.textures[layerId].leftUpperPxInAbsPx);
     for_each_resliced_cube_do(upperLeftDc, [cubeEdgeLen, layerId, &vp](auto x_dc, auto y_dc, auto, auto index){
+        index = 0;
         glTexSubImage2D(GL_TEXTURE_2D, 0, x_dc * cubeEdgeLen, y_dc * cubeEdgeLen, cubeEdgeLen, cubeEdgeLen, GL_RGBA, GL_UNSIGNED_BYTE, vp.textures[layerId].texData.data() + index);
     });
     vp.textures[layerId].texHandle.release();
@@ -851,6 +856,7 @@ void Viewer::updateDatasetMag() {
 }
 
 bool Viewer::updateDatasetMag(const std::size_t layerId, const boost::optional<std::size_t> mag) {
+    qDebug() << layerId << (mag ? mag.get() : -1);
     if (mag) {// change global mag after unloading
         if (mag >= Dataset::datasets[layerId].scales.size()) {
             return false;
@@ -1182,6 +1188,15 @@ void Viewer::recalcTextureOffsets() {
             texture.texRLy = midY - yFactor;
             texture.texLLx = texture.texLUx;
             texture.texLLy = texture.texRLy;
+
+            texture.texLUx = 0;
+            texture.texLUy = 1;
+            texture.texRUx = 1;
+            texture.texRUy = 1;
+            texture.texRLx = 1;
+            texture.texRLy = 0;
+            texture.texLLx = 0;
+            texture.texLLy = 0;
         }
     });
 }
@@ -1245,6 +1260,7 @@ void Viewer::resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge, co
         newTexEdgeLength *= 2;
     }
     if (newTexEdgeLength != state->viewerState->texEdgeLength || layerCount != viewportXY->textures.size()) {
+        qDebug() << std::pow(2, std::ceil(std::log2(cubeEdge * superCubeEdge)));
         qDebug() << QString("cubeEdge = %1 px, sCubeEdge = %2, newTex = %3× %4 tx (%5× %6 tx), size = %7 MiB")
                     .arg(cubeEdge).arg(superCubeEdge).arg(layerCount).arg(newTexEdgeLength).arg(viewportXY->textures.size()).arg(state->viewerState->texEdgeLength)
                     .arg(layerCount * newTexEdgeLength * newTexEdgeLength *4./*RGBA*/*2/*cpu+gpu*/*3/*vps*//(1<<20)).toStdString().c_str();
