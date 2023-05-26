@@ -121,7 +121,7 @@ void ViewportOrtho::resetTexture(const std::size_t layerCount) {
         elem = true;// can’t use vector init ctor for atomics
     }
     const bool changedLayerCount{layerCount != textures.size()};
-    const bool changedTextureSize{!textures.empty() && state->viewerState->texEdgeLength != textures[0].texHandle.width()};
+    const bool changedTextureSize{textures.empty() || state->viewerState->texEdgeLength != textures[0].texHandle.width()};
     makeCurrent();
     if (changedLayerCount || changedTextureSize) {
         textures = decltype(textures)(layerCount);
