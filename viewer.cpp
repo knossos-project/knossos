@@ -227,7 +227,7 @@ int Viewer::calcMag(const float screenPxXPerDataPx) {
 
 void Viewer::setMagnificationLock(const bool locked) {
     viewerState.datasetMagLock = locked;
-    if (!locked) {
+    if (!locked && viewportXY->screenPxXPerDataPx > 0) {// screenPxXPerDataPx ⋜ 0 results in -nan in calcMag (ubsan+debug)
         const auto newMag = calcMag(viewportXY->screenPxXPerDataPx);
         if (newMag != Dataset::current().magnification) {
             updateDatasetMag(newMag);
@@ -267,7 +267,7 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
     const std::size_t sliceIncrement = vp.viewportType == VIEWPORT_XY ? cubeEdgeLen : cubeEdgeLen * cubeEdgeLen;
     const std::size_t lineIncrement = vp.viewportType == VIEWPORT_ZY ? 0 : sliceIncrement - cubeEdgeLen;
     const std::size_t texNext = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen * 4 : 4;// RGBA per pixel
-    const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? 4 - 4 * cubeEdgeLen * cubeEdgeLen : 0;
+    const std::ptrdiff_t texNextLine = vp.viewportType == VIEWPORT_ZY ? 4 - 4 * cubeEdgeLen * cubeEdgeLen : 0;// don’t rely on unsigned overflow
 
     const bool isDatasetAdjustment = state->viewerState->datasetColortableOn || Dataset::datasets[layerId].renderSettings.bias > 0.0 || Dataset::datasets[layerId].renderSettings.rangeDelta < 1.0;
     for (int yzz = 0; yzz < cubeEdgeLen; ++yzz) {
@@ -378,7 +378,7 @@ void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx,
     const std::size_t sliceIncrement = vp.viewportType == VIEWPORT_XY ? cubeEdgeLen : cubeEdgeLen * cubeEdgeLen;
     const std::size_t lineIncrement = vp.viewportType == VIEWPORT_ZY ? 0 : sliceIncrement - cubeEdgeLen;
     const std::size_t texNext = vp.viewportType == VIEWPORT_ZY ? cubeEdgeLen * 4 : 4;// RGBA per pixel
-    const std::size_t texNextLine = vp.viewportType == VIEWPORT_ZY ? 4 - 4 * cubeEdgeLen * cubeEdgeLen : 0;
+    const std::ptrdiff_t texNextLine = vp.viewportType == VIEWPORT_ZY ? 4 - 4 * cubeEdgeLen * cubeEdgeLen : 0;// don’t rely on unsigned overflow
 
     const auto & seg = Segmentation::singleton();
     const auto bgid = layerId == seg.layerId ? seg.getBackgroundId() : 0;

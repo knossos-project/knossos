@@ -116,7 +116,7 @@ struct Dataset {
         bool combineSlicesXyOnly{true};
         enum : int {
             min, max
-        } combineSlicesType;
+        } combineSlicesType{};
         int combineSlices{4};
         QOpenGLTexture::Filter textureFilter{QOpenGLTexture::Nearest};
         QColor color{Qt::white};
