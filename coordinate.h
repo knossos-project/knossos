@@ -30,6 +30,7 @@
 
 #include <cmath>
 #include <cstddef>
+#include <type_traits>
 
 #include <boost/functional/hash.hpp>
 
@@ -63,12 +64,6 @@ public:
     }
     QVector<ComponentType> vector() const {
         return {x, y, z};
-    }
-    constexpr bool operator==(const CoordinateDerived & rhs) const {
-        return x == rhs.x && y == rhs.y && z == rhs.z;
-    }
-    constexpr bool operator!=(const CoordinateDerived & rhs) const {
-        return !(*this == rhs);
     }
 
     template<typename T>
@@ -191,6 +186,10 @@ public:
         return QVector3D{this->x, this->y, this->z};
     }
 };
+template<typename T, typename U, std::size_t tag2>
+inline constexpr bool operator==(const Coord<T, tag2> & lhs, const Coord<U, tag2> & rhs) {
+    return std::tie(lhs.x,lhs.y,lhs.z) == std::tie(rhs.x,rhs.y,rhs.z);
+}
 
 using Coordinate = Coord<int, 0>;
 using CoordOfCube = Coord<int, 1>;
@@ -257,8 +256,6 @@ struct hash<Coord<T, x>> {
         return boost::hash_value(std::make_tuple(cord.x, cord.y, cord.z));
     }
 };
-}
-namespace std {
 template<>
 struct hash<CoordOfGPUCube> {
     std::size_t operator()(const CoordOfGPUCube & cord) const {
@@ -266,3 +263,19 @@ struct hash<CoordOfGPUCube> {
     }
 };
 }
+
+template<typename T>
+struct has_valid_equality_comparison {
+    template<typename U> static auto test(U *) -> decltype(std::declval<T>() == std::declval<U>(), std::true_type());
+    template<typename U> static auto test(...) -> std::false_type;
+};
+template<typename T, typename U>
+constexpr auto has_valid_equality_comparison_v = decltype(has_valid_equality_comparison<T>::template test<U>(nullptr))::value;
+
+static_assert( has_valid_equality_comparison_v<Coordinate,Coordinate>);
+static_assert( has_valid_equality_comparison_v<Coordinate,floatCoordinate>);
+static_assert( has_valid_equality_comparison_v<Coord<int,1>,Coord<int,1>>);
+static_assert( has_valid_equality_comparison_v<Coord<int,1>,Coord<float,1>>);
+static_assert(!has_valid_equality_comparison_v<Coordinate,CoordOfCube>);
+static_assert(!has_valid_equality_comparison_v<CoordOfCube,CoordInCube>);
+static_assert(!has_valid_equality_comparison_v<Coord<int,0>,Coord<int,1>>);

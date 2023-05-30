@@ -55,7 +55,7 @@ set(SRC_LIST ${sources} ${sources2} ${headers} ${headers2} ${uis})
 set(cheatsheet_dir ${CMAKE_CURRENT_BINARY_DIR}/cheatsheet)
 list(APPEND SRC_LIST ${cheatsheet_dir}/cheatsheet.qrc)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_COLOR_DIAGNOSTICS ON)

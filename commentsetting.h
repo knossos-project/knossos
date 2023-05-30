@@ -39,7 +39,7 @@ public:
     static inline bool useCommentNodeRadius{false};
     static inline bool useCommentNodeColor{false};
     static inline bool appendComment{false};
-    static inline std::vector<CommentSetting> comments;
+    static std::vector<CommentSetting> comments;
 
     explicit CommentSetting(QString shortcut, QString text = "", QColor color = QColor(255, 255, 0, 255), const float nodeRadius = 1.5) :
         shortcut(shortcut), text(text), color(color), nodeRadius(nodeRadius) {}
@@ -47,3 +47,5 @@ public:
     static QColor getColor(const QString & comment);
     static float getRadius(const QString & comment);
 };
+
+inline decltype(CommentSetting::comments) CommentSetting::comments = {};
