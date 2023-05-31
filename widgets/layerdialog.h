@@ -78,6 +78,7 @@ public:
     QTreeView treeView;
     QColorDialog colorDialog;
 
+    QPushButton invisibleButton{"hide all"};
     QHBoxLayout controlButtonLayout;
     QToolButton moveUpButton;
     QToolButton moveDownButton;

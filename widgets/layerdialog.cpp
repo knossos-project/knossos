@@ -202,6 +202,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     moveUpButton.setText("up");
     moveDownButton.setText("down");
 
+    controlButtonLayout.addWidget(&invisibleButton);
     controlButtonLayout.addStretch();
     controlButtonLayout.addWidget(&moveUpButton);
     controlButtonLayout.addWidget(&moveDownButton);
@@ -214,7 +215,11 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     mainLayout.addWidget(&optionsSpoiler);
     setLayout(&mainLayout);
 
-
+    QObject::connect(&invisibleButton, &QToolButton::clicked, [](){
+        for (int i{0}; i < Dataset::datasets.size(); ++i) {
+            state->viewer->setLayerVisibility(i, false);
+        }
+    });
     QObject::connect(&dupLayerButton, &QToolButton::clicked, [this](){
         for (const auto & mindex : treeView.selectionModel()->selectedRows()) {
             const auto layeri = itemModel.ordered_i(mindex.row());
