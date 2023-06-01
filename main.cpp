@@ -144,7 +144,15 @@ int main(int argc, char *argv[]) try {
 #ifdef _GLIBCXX_DEBUG_PEDANTIC
     std::cerr << "_GLIBCXX_DEBUG_PEDANTIC set" << std::endl;
 #endif
-    qInstallMessageHandler(debugMessageHandler);
+    QCoreApplication::setOrganizationDomain("knossos.app");
+    QCoreApplication::setOrganizationName("MPIN");
+    QCoreApplication::setApplicationName("KNOSSOS");
+    QCoreApplication::setApplicationVersion(KREVISION);
+    QSettings::setDefaultFormat(QSettings::IniFormat);
+
+    QFile::copy(QSettings{QSettings::IniFormat, QSettings::UserScope, "MPIN", "KNOSSOS 5.0"}.fileName(), QSettings{}.fileName());// doesn’t overwrite
+
+    qInstallMessageHandler(debugMessageHandler);// needs application to be set for log path
     qDebug() << QDateTime::currentDateTimeUtc().toString(Qt::ISODate).toUtf8().constData();
     qDebug() << KREVISION << " " << KREVISIONDATE;
     qDebug() << QSysInfo::prettyProductName() << QSysInfo::productType() << QSysInfo::productVersion();
@@ -196,14 +204,6 @@ int main(int argc, char *argv[]) try {
 #ifdef NDEBUG
     Splash splash(qApp->primaryScreen()->devicePixelRatio() == 1.0 ? ":/resources/splash.png" : ":/resources/splash@2x.png");
 #endif
-    QCoreApplication::setOrganizationDomain("knossos.app");
-    QCoreApplication::setOrganizationName("MPIN");
-    QCoreApplication::setApplicationName("KNOSSOS");
-    QCoreApplication::setApplicationVersion(KREVISION);
-    QSettings::setDefaultFormat(QSettings::IniFormat);
-
-    QFile::copy(QSettings{QSettings::IniFormat, QSettings::UserScope, "MPIN", "KNOSSOS 5.0"}.fileName(), QSettings{}.fileName());// doesn’t overwrite
-
     qRegisterMetaType<std::string>();
     qRegisterMetaType<Coordinate>();
     qRegisterMetaType<CoordOfCube>();
