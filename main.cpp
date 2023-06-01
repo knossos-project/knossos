@@ -39,8 +39,11 @@
 #include <QSslSocket>
 #include <QStandardPaths>
 #include <QStyleFactory>
+#include <QTemporaryFile>
 #include <QtConcurrentRun>
 #include <QTimer>
+
+#include <boost/exception_ptr.hpp>
 
 #include <exception>
 #include <iostream>
@@ -191,11 +194,11 @@ int main(int argc, char *argv[]) try {
             QCoreApplication::quit();
         });
     }
-
+    {
     QFile file(":/resources/style.qss");
     file.open(QFile::ReadOnly);
     app.setStyleSheet(file.readAll());
-    file.close();
+    }
 #ifdef Q_OS_OSX
     if (!styleOverwrite) {// default to Fusion style on OSX if nothing contrary was specified (because the default theme looks bad)
         QApplication::setStyle(QStyleFactory::create("Fusion"));
@@ -229,6 +232,25 @@ int main(int argc, char *argv[]) try {
             splash.finish(state.mainWindow);
 #endif
         }
+        QTemporaryFile f;
+        if (f.open()) {
+            f.write(R"(
+from PythonQt.QtGui import QDialog,QVBoxLayout
+class QuerySynapses(QDialog):
+    def __init__(self):
+        super(QuerySynapses, self).__init__(0)
+        self.setLayout(QVBoxLayout(0))
+QuerySynapses()
+print("🎉")
+    )");
+            f.close();
+            qDebug() << f.fileName() << ::state->scripting;
+            if (::state->scripting) {
+                ::state->scripting->runFile(f.fileName());
+            }
+        } else {
+            qDebug() << "no temp file";
+        }
     });
     // ensure killed QNAM’s before QNetwork deinitializes
     std::unique_ptr<Loader::Controller> loader_deleter{&Loader::Controller::singleton()};
@@ -243,7 +265,7 @@ int main(int argc, char *argv[]) try {
 } catch (...) {
     std::cerr << "catch (...)" << std::endl;
     const auto text = QObject::tr("An unspecifiable problem occured which forced KNOSSOS to terminate.");
-    MessageHermit{QObject::tr("Unrecoverable Error"), text}
+    MessageHermit{QObject::tr("Unrecoverable Error"), text, QString::fromStdString(boost::current_exception_diagnostic_information())}
             .run(argc != 2 || std::string(argv[1]) != "exit");
     throw;
 }

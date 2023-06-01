@@ -37,6 +37,7 @@
 #include "widgets/preferences/treestab.h"
 
 #include <PythonQt/PythonQt.h>
+#include <exception>
 #ifdef QtAll
 #include <PythonQt/PythonQt_QtAll.h>
 #endif
@@ -145,6 +146,7 @@ void Scripting::initialize() {
     PythonQt::self()->registerClass(&EmitOnCtorDtor::staticMetaObject);
 
     evalScript("import sys");
+    evalScript("sys.version");
     evalScript("try: import site\nexcept ImportError: nosite = True\nelse:\n    nosite = False", Py_single_input);
     if (evalScript("nosite", Py_eval_input).toBool()) {
         QMessageBox box;
@@ -309,7 +311,9 @@ bool isNewer(const QString & v, const QString & otherV) {
 
 const auto Py_TYPE_name = [](auto ob){ return reinterpret_cast<PyObject*>(ob)->ob_type->tp_name; };
 
-void Scripting::registerPlugin(PyObject * plugin, const QString & version) {
+#include <boost/exception/diagnostic_information.hpp>
+
+void Scripting::registerPlugin(PyObject * plugin, const QString & version) try {
     if (!PyObject_TypeCheck(plugin, &PythonQtInstanceWrapper_Type)) {
         QMessageBox errorMsg;
         errorMsg.setIcon(QMessageBox::Warning);
@@ -348,6 +352,20 @@ void Scripting::registerPlugin(PyObject * plugin, const QString & version) {
         pluginOverwritePath = boost::none;
         PyObject_CallMethod(plugin, const_cast<char*>("delete"), const_cast<char*>(""));
     }
+} catch (std::exception & e) {
+    qDebug() << e.what();
+    QMessageBox errorMsg;
+    errorMsg.setIcon(QMessageBox::Warning);
+    errorMsg.setText(tr("catch (std::exception & e)"));
+    errorMsg.setDetailedText(e.what());
+    errorMsg.exec();
+} catch (...) {
+    qDebug() << "…" << QString::fromStdString(boost::current_exception_diagnostic_information());
+    QMessageBox errorMsg;
+    errorMsg.setIcon(QMessageBox::Warning);
+    errorMsg.setText(tr("…"));
+    errorMsg.setDetailedText(QString::fromStdString(boost::current_exception_diagnostic_information()));
+    errorMsg.exec();
 }
 
 void Scripting::runFile(const QString & filepath, bool runExistingFirst) {
