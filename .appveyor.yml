@@ -4,13 +4,6 @@ image:
   - Visual Studio 2022 # Windows Server 2019
   - Visual Studio 2017 # Windows Server 2016
   - Visual Studio 2015 # Windows Server 2012 R2
-  - macOS-bigsur   # 11.6.4
-  - macOS-monterey # 12.2.1
-  - macOS-catalina # 10.15.7
-  - macOS-mojave   # 10.14
-  - Ubuntu2004
-  - Ubuntu1804
-  - Ubuntu1604
 
 environment:
   MESA_DIST_WIN_VER: 22.0.3
@@ -106,6 +99,11 @@ for:
 test_script:
   - cmd: curl --fail -JLO https://github.com/pal1000/mesa-dist-win/releases/download/%MESA_DIST_WIN_VER%/mesa3d-%MESA_DIST_WIN_VER%-release-msvc.7z
   - cmd: 7z e "-i!x64/*.dll" "-i!x64/*.json" "mesa3d-*-release-msvc.7z"
+  - cmd: curl --fail -JLO https://github.com/LRN/ntldd/releases/download/0.2/i686-ntldd-0.2.tar.xz
+  - cmd: 7z e i686-ntldd-0.2.tar.xz -so | 7z e -si -ttar
+  - cmd: dir
+  - cmd: ntldd win.%APPVEYOR_REPO_BRANCH%-KNOSSOS.nightly.exe
+  - cmd: ldd win.%APPVEYOR_REPO_BRANCH%-KNOSSOS.nightly.exe
   - cmd: win.%APPVEYOR_REPO_BRANCH%-KNOSSOS.nightly.exe exit
   # custom screen specification is required for 1604, because the default used to be only 8 bit
   - sh: time xvfb-run -e /dev/stdout --auto-servernum -s '-screen 0 1024x768x24' ./linux.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.AppImage exit
