@@ -38,6 +38,8 @@
 
 #include <PythonQt/PythonQt.h>
 #include <exception>
+#include <stdexcept>
+#include <string>
 #ifdef QtAll
 #include <PythonQt/PythonQt_QtAll.h>
 #endif
@@ -81,7 +83,7 @@ void PythonQtInit() {
     PyConfig_Clear(&config);
     if (PyStatus_Exception(status)) {
         qWarning() << "Py_InitializeFromConfig failed";
-        throw status;
+        throw std::runtime_error(QObject::tr("%1: %2 (%3)").arg(status.func, status.err_msg).arg(status.exitcode).toStdString());
     }
     Py_FinalizeEx();// just uninit again here and give PythonQt the responsibility
 #endif
