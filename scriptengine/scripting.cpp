@@ -148,7 +148,7 @@ void Scripting::initialize() {
     PythonQt::self()->registerClass(&EmitOnCtorDtor::staticMetaObject);
 
     evalScript("import sys");
-    evalScript("sys.version");
+    evalScript("print(sys.version)");
     evalScript("try: import site\nexcept ImportError: nosite = True\nelse:\n    nosite = False", Py_single_input);
     if (evalScript("nosite", Py_eval_input).toBool()) {
         QMessageBox box;
@@ -361,6 +361,7 @@ void Scripting::registerPlugin(PyObject * plugin, const QString & version) try {
     errorMsg.setText(tr("catch (std::exception & e)"));
     errorMsg.setDetailedText(e.what());
     errorMsg.exec();
+    throw;
 } catch (...) {
     qDebug() << "…" << QString::fromStdString(boost::current_exception_diagnostic_information());
     QMessageBox errorMsg;
@@ -368,6 +369,7 @@ void Scripting::registerPlugin(PyObject * plugin, const QString & version) try {
     errorMsg.setText(tr("…"));
     errorMsg.setDetailedText(QString::fromStdString(boost::current_exception_diagnostic_information()));
     errorMsg.exec();
+    throw;
 }
 
 void Scripting::runFile(const QString & filepath, bool runExistingFirst) {
