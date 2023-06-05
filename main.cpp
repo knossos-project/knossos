@@ -43,7 +43,7 @@
 #include <QtConcurrentRun>
 #include <QTimer>
 
-#include <boost/exception_ptr.hpp>
+#include <boost/exception/diagnostic_information.hpp>
 
 #include <exception>
 #include <iostream>
@@ -256,16 +256,10 @@ print("🎉")
     std::unique_ptr<Loader::Controller> loader_deleter{&Loader::Controller::singleton()};
     std::unique_ptr<Network> network_deleter{&Network::singleton()};
     return app.exec();
-} catch (const std::exception & e) {
-    std::cerr << "catch (std::exception &)" << std::endl;
-    const auto text = QObject::tr("KNOSSOS will terminate due to a problem");
-    MessageHermit{QObject::tr("Unhandled Exception"), text, QString::fromStdString(e.what())}
-            .run(argc != 2 || std::string(argv[1]) != "exit");
-    throw;
 } catch (...) {
     std::cerr << "catch (...)" << std::endl;
-    const auto text = QObject::tr("An unspecifiable problem occured which forced KNOSSOS to terminate.");
-    MessageHermit{QObject::tr("Unrecoverable Error"), text, QString::fromStdString(boost::current_exception_diagnostic_information())}
+    const auto text = QObject::tr("KNOSSOS will terminate due to a problem");
+    MessageHermit{QObject::tr("Unhandled Exception"), text, QString::fromStdString(boost::current_exception_diagnostic_information())}
             .run(argc != 2 || std::string(argv[1]) != "exit");
     throw;
 }
