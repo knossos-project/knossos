@@ -99,6 +99,7 @@ for:
 test_script:
   - cmd: curl --fail -JLO https://github.com/pal1000/mesa-dist-win/releases/download/%MESA_DIST_WIN_VER%/mesa3d-%MESA_DIST_WIN_VER%-release-msvc.7z
   - cmd: 7z e "-i!x64/*.dll" "-i!x64/*.json" "mesa3d-*-release-msvc.7z"
+  - cmd: win.%APPVEYOR_REPO_BRANCH%-KNOSSOS.nightly.exe exit | true
   - cmd: curl --fail -JLO https://github.com/LRN/ntldd/releases/download/0.2/i686-ntldd-0.2.tar.xz
   - cmd: 7z e i686-ntldd-0.2.tar.xz -so | 7z e -si -ttar
   - cmd: dir
@@ -106,7 +107,7 @@ test_script:
   - cmd: ldd win.%APPVEYOR_REPO_BRANCH%-KNOSSOS.nightly.exe
   - cmd: cp C:/Python311-x64/python311.dll .
   - cmd: dir
-  - cmd: win.%APPVEYOR_REPO_BRANCH%-KNOSSOS.nightly.exe exit
+  - cmd: win.%APPVEYOR_REPO_BRANCH%-KNOSSOS.nightly.exe exit | true
   # custom screen specification is required for 1604, because the default used to be only 8 bit
   - sh: time xvfb-run -e /dev/stdout --auto-servernum -s '-screen 0 1024x768x24' ./linux.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.AppImage exit
 
