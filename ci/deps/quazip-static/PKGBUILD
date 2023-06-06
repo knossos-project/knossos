@@ -20,37 +20,35 @@ source=("https://github.com/stachenov/quazip/archive/v${pkgver}.zip")
 md5sums=('50aa70b2b802ec3f469b0e879b6c1505')
 
 build() {
-  mkdir -p "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-release"
-  cd "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-release"
   cmake -G Ninja \
+    -B "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-release" \
+    -DQUAZIP_ENABLE_TESTS=ON \
+    -DBZIP2_LIBRARY_RELEASE="/mingw64/lib/libbz2.a" \
     -DBUILD_SHARED_LIBS=OFF \
     -DCMAKE_BUILD_TYPE=RELEASE \
     -DCMAKE_PREFIX_PATH=$MINGW_PREFIX/qt5-static \
     -DCMAKE_INSTALL_PREFIX="$pkgdir$MINGW_PREFIX/qt5-static" \
-    "../quazip-${pkgver}"
-  ninja
+    -S "$srcdir/quazip-${pkgver}"
+  cmake --build "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-release"
 
-  mkdir -p "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-debug"
-  cd "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-debug"
   cmake -G Ninja \
+    -B "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-debug" \
+    -DQUAZIP_ENABLE_TESTS=ON \
+    -DBZIP2_LIBRARY_RELEASE="/mingw64/lib/libbz2.a" \
     -DBUILD_SHARED_LIBS=OFF \
     -DCMAKE_BUILD_TYPE=DEBUG \
     -DCMAKE_PREFIX_PATH=$MINGW_PREFIX/qt5-static \
     -DCMAKE_INSTALL_PREFIX="$pkgdir$MINGW_PREFIX/qt5-static" \
-    "../quazip-${pkgver}"
-  ninja
+    -S "$srcdir/quazip-${pkgver}"
+  cmake --build "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-debug"
 }
 
 check() {
-  cd "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-release"
-  ninja check
-  cd "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-debug"
-  ninja check
+  ctest --test-dir "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-release"
+  ctest --test-dir "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-debug"
 }
 
 package() {
-  cd "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-release"
-  ninja install
-  cd "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-debug"
-  ninja install
+  cmake --install "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-release"
+  cmake --install "$srcdir/quazip-$pkgver-$MINGW_PACKAGE_PREFIX-static-debug"
 }
