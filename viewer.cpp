@@ -71,6 +71,9 @@ Viewer::Viewer() : evilHack{[this](){ state->viewer = this; return true; }()} {
     static auto regVBuff = [](){
         state->viewerState->AllTreesBuffers.regenVertBuffer = true;
         state->viewerState->selectedTreesBuffers.regenVertBuffer = true;
+        state->mainWindow->forEachVPDo([](ViewportBase & vp) {
+            vp.update();
+        });
     };
 
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::guiModeLoaded, regVBuff);
