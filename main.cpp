@@ -25,6 +25,7 @@
 #include "dataset.h"
 #include "loader.h"
 #include "network.h"
+#include "qglobal.h"
 #include "scriptengine/scripting.h"
 #include "stateInfo.h"
 #include "viewer.h"
@@ -163,6 +164,7 @@ int main(int argc, char *argv[]) try {
         qDebug() << "sslLibrary   BuildVersion" << QSslSocket::sslLibraryBuildVersionString() << QSslSocket::sslLibraryBuildVersionNumber();
         qDebug() << "sslLibrary RuntimeVersion" << QSslSocket::sslLibraryVersionString() << QSslSocket::sslLibraryVersionNumber();
     });
+    qputenv("QT_OPENGL_DLL", "opengl32");
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);// explicitly enable sharing for undocked viewports
 
     QSurfaceFormat format{QSurfaceFormat::defaultFormat()};
