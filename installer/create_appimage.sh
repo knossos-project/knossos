@@ -25,7 +25,9 @@ cp -av /usr/lib/libfontconfig.so* usr/lib/
 #cp -av /usr/lib/libgcrypt.so* usr/lib/
 
 rm -vf usr/lib/libgcrypt.so* usr/lib/libxcb-shm.so*
-rm -vf usr/lib/libffi.so* # (process:2633): Gtk-WARNING **: Locale not supported by C library. # has GTK icons regardless of style
+
+# breaking after .so-version bump
+#rm -vf usr/lib/libffi.so* # (process:2633): Gtk-WARNING **: Locale not supported by C library. # has GTK icons regardless of style
 
 # Failed to finding matching FBConfig
 #The X11 connection broke: No error (code 0)
