@@ -106,7 +106,7 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext &
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 5, 0))
     case QtInfoMsg:     intro = QString("Info: ");     break;
 #endif
-    case QtDebugMsg:    intro = QString("Debug: ");    break;
+    case QtDebugMsg:    intro = QString();    break;// no intro spam
     case QtWarningMsg:  intro = QString("Warning: ");  break;
     case QtCriticalMsg: intro = QString("Critical: "); break;
     case QtFatalMsg:    intro = QString("Fatal: ");    break;
