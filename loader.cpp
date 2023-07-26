@@ -23,6 +23,7 @@
 #include "loader.h"
 
 #include "brainmaps.h"
+#include "buildinfo.h"
 #include "functions.h"
 #include "network.h"
 #include "segmentation/segmentation.h"
@@ -709,7 +710,10 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             }
 
             auto request = dataset.apiSwitch(cubeCoord);
-//            request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
+            request.setHeader(QNetworkRequest::UserAgentHeader, QString("KNOSSOS/%1 (%2)").arg(KREVISION, KREVISIONDATE));
+            request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);// HTTP/1.1
+//            request.setAttribute(QNetworkRequest::Http2AllowedAttribute, true);// Server stopped accepting new streams before this stream was established
+//            request.setAttribute(QNetworkRequest::Http2DirectAttribute, true);
 //            request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
 //            request.setAttribute(QNetworkRequest::BackgroundRequestAttribute, true);
 
