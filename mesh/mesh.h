@@ -1,7 +1,5 @@
 #pragma once
 
-#include "coordinate.h"
-
 #include <QObject>
 #include <QOpenGLBuffer>
 #include <QVector>
@@ -16,6 +14,7 @@ public:
     boost::optional<BufferSelection> pointCloudTriangleIDtoInformation(const uint32_t triangleID) const;
 
     explicit Mesh(treeListElement * tree, bool useTreeColor = true, GLenum render_mode = GL_POINTS);
+    ~Mesh();
 
     treeListElement * correspondingTree{nullptr};
 
