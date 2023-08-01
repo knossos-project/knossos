@@ -14,7 +14,9 @@ image:
   - Ubuntu1604
 
 environment:
-  MESA_DIST_WIN_VER: 23.0.1
+  MESA_DIST_WIN_VER: 22.0.3
+  # QT_OPENGL: angle # desktop angle software
+  QT_OPENGL_DLL: opengl32
 
 init:
   - appveyor version
