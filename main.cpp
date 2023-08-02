@@ -150,6 +150,8 @@ Q_DECLARE_METATYPE(std::string)
 #include "segmentation/cubeloader.h"
 #include "mesh/mesh_generation.h"
 
+#include "skeleton/skeletonizer.h"
+
 int main(int argc, char * argv[]) { boost::leaf::try_handle_all([argc, &argv]() mutable -> boost::leaf::result<int> {
     QElapsedTimer t;
     t.start();
@@ -233,6 +235,7 @@ int main(int argc, char * argv[]) { boost::leaf::try_handle_all([argc, &argv]() 
                         Loader::Controller::singleton().suspendLoader();
                         Loader::Controller::singleton().worker.reset();// have to make really sure loader is done
             //            throw std::runtime_error("sldkjgn");
+                        Skeletonizer::singleton().clearSkeleton();
                         QCoreApplication::quit();
                     });
                 });
