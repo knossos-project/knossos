@@ -746,19 +746,19 @@ static bool shouldRenderMesh(const treeListElement & tree, const ViewportType vi
 void ViewportOrtho::renderViewport(const RenderOptions &options) {
     QOpenGLVertexArrayObject::Binder vao(&meshVao);
     glEnable(GL_MULTISAMPLE);
-    {
-        const auto scale = Dataset::current().scale.componentMul(n).length();
-        const auto nears = -scale * state->viewerState->depthCutOff;
-        const auto fars = scale * state->viewerState->depthCutOff;
-        const auto nearVal = -nears;
-        const auto farVal = -fars;
-        //    glMatrixMode(GL_PROJECTION);
-        //    glLoadIdentity();
-        //    glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, nearVal, farVal);// gluLookAt relies on an unaltered cartesian Projection
-        p = QMatrix4x4{};
-        p.ortho(-displayedIsoPx, +displayedIsoPx, +displayedIsoPx, -displayedIsoPx, nearVal, farVal);
-    }
-    const auto isoCurPos = (Dataset::datasets.size() > 1 ? Dataset::datasets[1] : Dataset::current()).scales[0].componentMul(state->viewerState->currentPosition);
+
+    const auto scale = Dataset::current().scale.componentMul(n).length();
+    const auto nears = -scale * state->viewerState->depthCutOff;
+    const auto fars = scale * state->viewerState->depthCutOff;
+    const auto nearVal = -nears;
+    const auto farVal = -fars;
+//    glMatrixMode(GL_PROJECTION);
+//    glLoadIdentity();
+//    glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, nearVal, farVal);// gluLookAt relies on an unaltered cartesian Projection
+    p = QMatrix4x4{};
+    p.ortho(-displayedIsoPx, +displayedIsoPx, +displayedIsoPx, -displayedIsoPx, nearVal, farVal);
+
+    const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
     auto view = [&](){
 //        glLoadIdentity();
         // place eye at the center so the depth cutoff is applied correctly
@@ -1923,7 +1923,7 @@ void ViewportOrtho::renderArbitrarySlicePane(const RenderOptions & options,  QMa
                 }
             }
 
-            const auto isoCurPos = Dataset::datasets[0].scales[0].componentMul(state->viewerState->currentPosition);
+            const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
             const float dataPxX = displayedIsoPx;
             const float dataPxY = displayedIsoPx;
             std::vector<floatCoordinate> vertices{

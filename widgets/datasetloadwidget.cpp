@@ -48,7 +48,6 @@
 #include <QSignalBlocker>
 #include <QVBoxLayout>
 
-#include <algorithm>
 #include <functional>
 #include <stdexcept>
 
@@ -528,7 +527,7 @@ bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> lo
     qDebug() << changedBoundaryOrScale << layers.front().scale << Dataset::current().scale;
 
     // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
-    auto cubeEdgeLen = cubeEdgeSpin.text().toInt();
+    const auto cubeEdgeLen = cubeEdgeSpin.text().toInt();
     for (auto && layer : layers) {
         if (!(layer.api == Dataset::API::Heidelbrain || layer.api == Dataset::API::PyKnossos)) {
             layer.cubeEdgeLength = cubeEdgeLen;
@@ -556,9 +555,6 @@ bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> lo
         createChangeStack(layers[Segmentation::singleton().layerId]);
     }
 
-    cubeEdgeLen = std::max_element(std::begin(Dataset::datasets), std::end(Dataset::datasets), [](auto a, auto b){
-        return a.cubeEdgeLength < b.cubeEdgeLength;
-    })->cubeEdgeLength;
     state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M, Dataset::datasets.size());// resets textures
 
     emit updateDatasetCompression();
