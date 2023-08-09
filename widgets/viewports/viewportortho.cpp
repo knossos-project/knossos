@@ -121,9 +121,9 @@ void ViewportOrtho::resetTexture(const std::size_t layerCount) {
         elem = true;// can’t use vector init ctor for atomics
     }
     const bool changedLayerCount{layerCount != textures.size()};
-    const bool changedTextureSize{textures.empty() || state->viewerState->texEdgeLength != textures[0].texHandle.width()};
+    const bool changedTextureSize{!textures.empty() && state->viewerState->texEdgeLength != textures[0].texHandle.width()};
     makeCurrent();
-    if (changedLayerCount || changedTextureSize) {
+    if ((changedLayerCount || changedTextureSize)) {
         textures = decltype(textures)(layerCount);
         constexpr const QColor borderColor{0, 0, 255, 51};
         QImage image(state->viewerState->texEdgeLength, state->viewerState->texEdgeLength, QImage::Format_RGBA8888);
