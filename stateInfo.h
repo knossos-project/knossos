@@ -25,7 +25,7 @@
 #include "coordinate.h"
 
 #include <QElapsedTimer>
-#include <QMutex>
+#include <QReadWriteLock>
 #include <QString>
 #include <QWaitCondition>
 
@@ -70,7 +70,7 @@ public:
 
     // ANY access to the Dc2Pointer or Oc2Pointer tables has
     // to be locked by this mutex.
-    QMutex protectCube2Pointer;
+    QReadWriteLock protectCube2Pointer;
 
  //---  Info about the state of KNOSSOS in general. --------
 

@@ -230,7 +230,7 @@ endif(APPLE)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 
-#list(APPEND CMAKE_CXX_FLAGS "-fsanitize=address")
+list(APPEND CMAKE_CXX_FLAGS "-fsanitize=address")
 
 #target_compile_options(${PROJECT_NAME} PRIVATE "-ftime-report")
 target_compile_options(${PROJECT_NAME} PRIVATE "-pedantic-errors")
@@ -246,5 +246,5 @@ endif()
 
 include(cotire OPTIONAL)#https://github.com/sakra/cotire/releases/latest
 if(COMMAND cotire)
-    cotire(${PROJECT_NAME})
+#    cotire(${PROJECT_NAME})
 endif()

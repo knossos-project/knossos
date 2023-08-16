@@ -530,6 +530,7 @@ bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> lo
     const auto cubeEdgeLen = cubeEdgeSpin.text().toInt();
     for (auto && layer : layers) {
         if (!(layer.api == Dataset::API::Heidelbrain || layer.api == Dataset::API::PyKnossos)) {
+            qDebug() << cubeEdgeLen;
             layer.cubeEdgeLength = cubeEdgeLen;
         }
     }
