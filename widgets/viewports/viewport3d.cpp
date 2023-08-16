@@ -168,7 +168,7 @@ void Viewport3D::updateVolumeTexture() {
     GLubyte* colcube = new GLubyte[4*texLen*texLen*texLen];
     std::tuple<uint64_t, Segmentation::color_t> lastIdColor;
 
-    state->protectCube2Pointer.lock();
+    {QReadLocker locker{&state->protectCube2Pointer};
 
     dcfetch_profiler.start(); // ----------------------------------------------------------- profiling
     uint64_t** rawcubes = new uint64_t*[M*M*M];
@@ -225,8 +225,7 @@ void Viewport3D::updateVolumeTexture() {
     }
 
     delete[] rawcubes;
-
-    state->protectCube2Pointer.unlock();
+    }
 
     colorfetch_profiler.end(); // ----------------------------------------------------------- profiling
 

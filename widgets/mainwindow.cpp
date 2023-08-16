@@ -901,10 +901,10 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
             + (existingSkeleton ? tr("<li>Skeleton data</li>") : tr(""))
             + (existingExtraFiles ? tr("<li>Extra files</li>") : tr(""))
             + tr("</ul>")
-            + (existingSegmentation || existingSkeleton ? tr("which can be merged or overwritten.") : tr(""));
+            + (existingSegmentation || existingSkeleton ? tr("which can/should be cleared before loading. <br>Otherwise, for Segmentation overlapping data regions will be replaced, and conflicting objects will abort the loading.") : tr(""));
         prompt.setInformativeText(text);
         const bool multiple = existingCount > 1;
-        const auto * overrideAllButton = prompt.addButton(QObject::tr("&Overwrite%1").arg(multiple ? " All" : ""), QMessageBox::AcceptRole);
+        const auto * overrideAllButton = prompt.addButton(QObject::tr("&Clear%1").arg(multiple ? " All" : ""), QMessageBox::AcceptRole);
         const auto * keepAllButton = multiple ? prompt.addButton(QObject::tr("&Keep All"), QMessageBox::AcceptRole) : nullptr;
         const auto * segmenationKeepButton = existingSegmentation ? prompt.addButton(QObject::tr("Keep%1 Seg&mentaion").arg(multiple ? " only" : ""), QMessageBox::AcceptRole) : nullptr;
         const auto * skeletonKeepButton = existingSkeleton ? prompt.addButton(QObject::tr("Keep%1 &Skeleton").arg(multiple ? " only" : ""), QMessageBox::AcceptRole) : nullptr;

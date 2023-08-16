@@ -28,14 +28,14 @@
 #include "segmentationsplit.h"
 #include "stateInfo.h"
 
-#include <QMutex>
+#include <QWriteLocker>
 
 #include <boost/multi_array.hpp>
 
 #include <cstdint>
 
 std::pair<bool, void *> getRawCube(const Coordinate & pos, const std::size_t layerIdx = Segmentation::singleton().layerId) {
-    QMutexLocker locker(&state->protectCube2Pointer);
+    QWriteLocker locker(&state->protectCube2Pointer);
     auto * rawcube = cubeQuery(state->cube2Pointer, layerIdx, Dataset::datasets[layerIdx].magIndex, Dataset::datasets[layerIdx].global2cube(pos));
     return std::make_pair(rawcube != nullptr, rawcube);
 }

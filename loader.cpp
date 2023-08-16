@@ -231,7 +231,7 @@ Loader::Worker::~Worker() {
         return;//state is dead already
     }
 
-    QMutexLocker locker(&state->protectCube2Pointer);
+    QWriteLocker locker{&state->protectCube2Pointer};
     for (auto & layer : state->cube2Pointer) {
         for (auto & elem : layer) {
             elem.clear();
@@ -262,7 +262,7 @@ void Loader::Worker::unloadCurrentMagnification(const std::size_t layerId) {
         return;
     }
     abortDownloadsFinishDecompression(layerId, [](const CoordOfCube &){return false;});
-    QMutexLocker locker(&state->protectCube2Pointer);
+    QWriteLocker locker{&state->protectCube2Pointer};
     const auto loaderMagnification = datasets[layerId].magIndex;
     if (loaderMagnification >= state->cube2Pointer[layerId].size()) {
         return;
@@ -314,7 +314,7 @@ void Loader::Worker::snappyCacheSupplySnappy(const std::size_t layerId, const Co
         if (decompressionIt != std::end(slotDecompression[layerId])) {
             decompressionIt->second->waitForFinished();
         }
-        QMutexLocker locker(&state->protectCube2Pointer);
+        QWriteLocker locker{&state->protectCube2Pointer};
         auto cubePtr = cubeQuery(state->cube2Pointer, layerId, loaderMagnification, cubeCoord);
         if (cubePtr != nullptr) {
             freeSlots[layerId].emplace_back(cubePtr);
@@ -353,9 +353,8 @@ void Loader::Worker::flushIntoSnappyCache() {
     for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
         for (std::size_t mag = 0; mag < modifiedCacheQueue[layerId].size(); ++mag) {
             for (const auto & cubeCoord : modifiedCacheQueue[layerId][mag]) {
-                state->protectCube2Pointer.lock();
+                QWriteLocker locker{&state->protectCube2Pointer};
                 auto cube = cubeQuery(state->cube2Pointer, layerId, mag, {cubeCoord.x, cubeCoord.y, cubeCoord.z});
-                state->protectCube2Pointer.unlock();
                 if (cube != nullptr) {
                     snappyCacheBackupRaw(layerId, cubeCoord, cube);
                 }
@@ -490,9 +489,8 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
     }
 
     if (success) {
-        state->protectCube2Pointer.lock();
+        QWriteLocker locker{&state->protectCube2Pointer};
         cubeHash[cubeCoord] = currentSlot;
-        state->protectCube2Pointer.unlock();
         state->viewer->reslice_notify_all(layerId, cubeCoord);
     }
 
@@ -506,7 +504,7 @@ void Loader::Worker::cleanup(const Coordinate center) {
         if (loaderMagnification >= state->cube2Pointer[layerId].size()) {
             continue;
         }
-        QMutexLocker locker(&state->protectCube2Pointer);
+        QWriteLocker locker{&state->protectCube2Pointer};
         unloadCubes(state->cube2Pointer[layerId][loaderMagnification], freeSlots[layerId], insideCurrentSupercubeWrap(center, datasets[layerId])
                     , [this, layerId, loaderMagnification](const CoordOfCube & cubeCoord, void * remSlotPtr){
             if (datasets[layerId].isOverlay()) {// TODO is it the snappy layer?
@@ -565,7 +563,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         slotChunk.resize(changedDatasets.size());
         freeSlots.resize(changedDatasets.size());
         {
-            QMutexLocker locker(&state->protectCube2Pointer);
+            QWriteLocker locker{&state->protectCube2Pointer};
             state->cube2Pointer.resize(changedDatasets.size());
         }
         {
@@ -577,7 +575,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     for (std::size_t layerId{0}; layerId < changedDatasets.size(); ++layerId) {
         const auto magCount = static_cast<std::size_t>(changedDatasets[layerId].highestAvailableMagIndex + 1);
         {
-            QMutexLocker locker(&state->protectCube2Pointer);
+            QWriteLocker locker{&state->protectCube2Pointer};
             state->cube2Pointer[layerId].resize(magCount);
         }
         {
@@ -623,7 +621,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     std::vector<std::pair<std::size_t, CoordOfCube>> allCubes;
     {
         const auto Dcoi = DcoiFromPos(center, userMoveType, direction);//datacubes of interest prioritized around the current position
-        QMutexLocker locker(&state->protectCube2Pointer);
+        QReadLocker locker{&state->protectCube2Pointer};
         for (auto && todo : Dcoi) {
             for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
                 if (datasets[layerId].loadingEnabled) {
@@ -659,7 +657,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     if (decompressionIt != std::end(decompressions)) {
                         decompressionIt->second->waitForFinished();
                     }
-                    state->protectCube2Pointer.lock();
+                    state->protectCube2Pointer.lockForWrite();
                     const auto currentSlotIt = cubeHash.find(cubeCoord);
                     auto * currentSlot = currentSlotIt != std::end(cubeHash) ? currentSlotIt->second : freeSlots.front();
                     cubeHash.erase(cubeCoord);
@@ -670,9 +668,9 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     //directly uncompress snappy cube into the OC slot
                     const auto success = snappy::RawUncompress(snappyIt->second.c_str(), snappyIt->second.size(), reinterpret_cast<char*>(currentSlot));
                     if (success) {
-                        state->protectCube2Pointer.lock();
+                        {QWriteLocker locker{&state->protectCube2Pointer};
                         cubeHash[cubeCoord] = currentSlot;
-                        state->protectCube2Pointer.unlock();
+                        }
 
                         state->viewer->reslice_notify_all(layerId, cubeCoord);
                     } else {
@@ -685,7 +683,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 return;
             }
         }
-        state->protectCube2Pointer.lock();
+        state->protectCube2Pointer.lockForWrite();
         const bool cubeNotAlreadyLoaded = cubeHash.count(cubeCoord) == 0;
         state->protectCube2Pointer.unlock();
         const bool cubeNotDownloading = downloads.count(cubeCoord) == 0 && opens.count(cubeCoord) == 0;
@@ -698,9 +696,9 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     freeSlots.pop_front();
                     const std::size_t cubeBytes = std::pow(dataset.cubeEdgeLength, 3) * (dataset.isOverlay() ? OBJID_BYTES : 1);
                     std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeBytes, 0);
-                    state->protectCube2Pointer.lock();
+                    {QWriteLocker locker{&state->protectCube2Pointer};
                     cubeHash[cubeCoord] = currentSlot;
-                    state->protectCube2Pointer.unlock();
+                    }
                     state->viewer->reslice_notify_all(layerId, cubeCoord);
                 } else {
                     qCritical() << layerId << cubeCoord << "no slots for snappy extract" << cubeHash.size() << freeSlots.size();
@@ -768,9 +766,9 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                         freeSlots.pop_front();
                         const std::size_t cubeBytes = std::pow(dataset.cubeEdgeLength, 3) * (dataset.isOverlay() ? OBJID_BYTES : 1);
                         std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeBytes, 0);
-                        state->protectCube2Pointer.lock();
+                        {QWriteLocker locker{&state->protectCube2Pointer};
                         cubeHash[cubeCoord] = currentSlot;
-                        state->protectCube2Pointer.unlock();
+                        }
                         state->viewer->reslice_notify_all(layerId, cubeCoord);
                     } else {
                         if(maybeReply != nullptr && maybeReply->error() != QNetworkReply::OperationCanceledError) {

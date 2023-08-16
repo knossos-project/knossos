@@ -39,6 +39,7 @@
 #include <QElapsedTimer>
 #include <QFutureSynchronizer>
 #include <QMetaObject>
+#include <QReadLocker>
 #include <QtConcurrentRun>
 #include <QVector3D>
 
@@ -500,7 +501,7 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
             * ((vp.viewportType == VIEWPORT_XY) || !Dataset::datasets[layerId].renderSettings.combineSlicesXyOnly);
     bool first{true};
     const auto cubeEdgeLen = Dataset::datasets[layerId].cubeEdgeLength;
-    auto for_each_resliced_cube_do = [layerId, cubeEdgeLen, &vp](const CoordOfCube upperLeftDc, auto func){
+    auto for_each_resliced_cube_do = [layerId, &cubeEdgeLen, &vp](const CoordOfCube upperLeftDc, auto func){
         for (int x_dc = 0; x_dc < state->M; ++x_dc) {
             for (int y_dc = 0; y_dc < state->M; ++y_dc) {
                 const auto v1dc = vp.v1 * x_dc, v2dc = vp.v2 * -y_dc;// v2 is negative
@@ -533,19 +534,18 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
         }
         const CoordOfCube upperLeftDc = Dataset::datasets[layerId].global2cube(vp.textures[layerId].leftUpperPxInAbsPx) + offsetCube;
         QFutureSynchronizer<void> sync;
-        for_each_resliced_cube_do(upperLeftDc, [this, cubeEdgeLen, layerId, &vp, &sync, currentPosition_inside_dc, first](auto, auto, auto currentDc, auto index){
+        for_each_resliced_cube_do(upperLeftDc, [this, &cubeEdgeLen, layerId, &vp, &sync, currentPosition_inside_dc, first](auto, auto, auto currentDc, auto index){
             const int slicePositionWithinCube = vp.n.componentMul(currentPosition_inside_dc.componentMul(Coordinate(1, cubeEdgeLen, std::pow(cubeEdgeLen, 2)))).length();
             Coordinate offsetCubeGlobal = vp.n.componentMul(vp.n.componentMul(currentPosition_inside_dc));// ensure n is positive by multiplying with itself
 
-            state->protectCube2Pointer.lock();
+            QReadLocker lock{&state->protectCube2Pointer};
             void * const cube = cubeQuery(state->cube2Pointer, layerId, Dataset::datasets[layerId].magIndex, currentDc);
-            state->protectCube2Pointer.unlock();
 
             // Take care of the data textures.
             Coordinate slicePosInAbsPx = Dataset::datasets[layerId].cube2global(currentDc) + Dataset::datasets[layerId].scaleFactor.componentMul(offsetCubeGlobal);
             // This is used to index into the texture. overlayData[index] is the first
             // byte of the datacube slice at position (x_dc, y_dc) in the texture.
-            sync.addFuture(QtConcurrent::run([this, &vp, cube, first, slicePositionWithinCube, slicePosInAbsPx, index, layerId, cubeEdgeLen]()  {
+            sync.addFuture(QtConcurrent::run([this, &vp, cube, first, slicePositionWithinCube, slicePosInAbsPx, index, layerId, &cubeEdgeLen]()  {
                 if (cube != nullptr) {
                     if (Dataset::datasets[layerId].isOverlay()) {
                         ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.textures[layerId].texData.data() + index, vp, layerId);
@@ -554,19 +554,20 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
                         dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.textures[layerId].texData.data() + index, vp, layerId, combine);
                     }
                 } else {
-                    std::fill(vp.textures[layerId].texData.data() + index, vp.textures[layerId].texData.data() + index + 4 * cubeEdgeLen * cubeEdgeLen, 0);
+                    qDebug() << cubeEdgeLen;
+                    std::fill(vp.textures.at(layerId).texData.data() + index, vp.textures.at(layerId).texData.data() + index + 4 * cubeEdgeLen * cubeEdgeLen, 0);
                 }
             }));
         });
         sync.waitForFinished();
         first = false;
     }
-    vp.textures[layerId].texHandle.bind();
-    const CoordOfCube upperLeftDc = Dataset::datasets[layerId].global2cube(vp.textures[layerId].leftUpperPxInAbsPx);
-    for_each_resliced_cube_do(upperLeftDc, [cubeEdgeLen, layerId, &vp](auto x_dc, auto y_dc, auto, auto index){
-        glTexSubImage2D(GL_TEXTURE_2D, 0, x_dc * cubeEdgeLen, y_dc * cubeEdgeLen, cubeEdgeLen, cubeEdgeLen, GL_RGBA, GL_UNSIGNED_BYTE, vp.textures[layerId].texData.data() + index);
+    vp.textures.at(layerId).texHandle.bind();
+    const CoordOfCube upperLeftDc = Dataset::datasets[layerId].global2cube(vp.textures.at(layerId).leftUpperPxInAbsPx);
+    for_each_resliced_cube_do(upperLeftDc, [&cubeEdgeLen, layerId, &vp](auto x_dc, auto y_dc, auto, auto index){
+        glTexSubImage2D(GL_TEXTURE_2D, 0, x_dc * cubeEdgeLen, y_dc * cubeEdgeLen, cubeEdgeLen, cubeEdgeLen, GL_RGBA, GL_UNSIGNED_BYTE, vp.textures.at(layerId).texData.data() + index);
     });
-    vp.textures[layerId].texHandle.release();
+    vp.textures.at(layerId).texHandle.release();
     glBindTexture(GL_TEXTURE_2D, 0);
     vp.resliceNecessary[layerId] = false;
     vp.resliceNecessaryCubes[layerId].clear();
@@ -718,9 +719,8 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
             if(currentPx.y < 0) { currentDc.y -= 1; }
             if(currentPx.z < 0) { currentDc.z -= 1; }
 
-            state->protectCube2Pointer.lock();
+            QReadLocker locker{&state->protectCube2Pointer};
             void * const datacube = cubeQuery(state->cube2Pointer, layerId, Dataset::datasets[layerId].magIndex, {currentDc.x, currentDc.y, currentDc.z});
-            state->protectCube2Pointer.unlock();
 
             currentPxInDc_float = currentPx_float - currentDc * Dataset::datasets[layerId].cubeEdgeLength;
             t_old = t;
@@ -924,9 +924,8 @@ void Viewer::run() {
                 if (layer.textures.find(pair.first) == std::end(layer.textures)) {
                     const auto globalCoord = pair.first.cube2Global(gpucubeedge, Dataset::current().scaleFactor);
                     const auto cubeCoord = globalCoord.cube(Dataset::current().cubeEdgeLength, Dataset::current().scaleFactor);
-                    state->protectCube2Pointer.lock();
+                    QReadLocker locker{&state->protectCube2Pointer};
                     const auto * ptr = cubeQuery(state->cube2Pointer, layer.isOverlayData, Dataset::current().magIndex, cubeCoord);
-                    state->protectCube2Pointer.unlock();
                     if (ptr != nullptr) {
                         layer.cubeSubArray(ptr, Dataset::current().cubeEdgeLength, gpucubeedge, pair.first, pair.second);
                     }
