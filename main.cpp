@@ -273,7 +273,7 @@ int main(int argc, char * argv[]) { boost::leaf::try_handle_all([argc, &argv]() 
     Viewer viewer;
     QTimer::singleShot(0, state.mainWindow, [&](){// get into the event loop first
         state.mainWindow->loadSettings();// load settings after viewer and window are accessible through state and viewer
-        state.mainWindow->widgetContainer.datasetLoadWidget.loadDataset(true, {"file:///mnt/storage/raphe/datasets/miFF_272_roi1_NSCLC290_v2/miFF_272_roi1_NSCLC290_v2.streaming.k.toml"});// load last used dataset or show
+        state.mainWindow->widgetContainer.datasetLoadWidget.loadDataset();// load last used dataset or show
         viewer.timer.start(0);
         if (!(argc == 2 && std::string(argv[1]) == "exit")) {
 #ifdef NDEBUG
