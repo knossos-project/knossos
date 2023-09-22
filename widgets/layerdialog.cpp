@@ -399,6 +399,7 @@ void LayerDialogWidget::loadSettings() {
     QSettings settings;
     settings.beginGroup(LAYER_DIALOG_WIDGET);
     restoreGeometry(settings.value(GEOMETRY).toByteArray());
+    treeView.header()->restoreState(settings.value(HEADER).toByteArray());
     settings.endGroup();
 }
 
@@ -406,6 +407,7 @@ void LayerDialogWidget::saveSettings() {
     QSettings settings;
     settings.beginGroup(LAYER_DIALOG_WIDGET);
     settings.setValue(GEOMETRY, saveGeometry());
+    settings.setValue(HEADER, treeView.header()->saveState());
     settings.setValue(VISIBLE, isVisible());
     settings.endGroup();
 }

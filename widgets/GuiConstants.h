@@ -41,6 +41,7 @@ const QString ZOOM_WIDGET = "zoom_and_multires_widget";
 
 // General attributes appropriate for most widgets
 const QString GEOMETRY = "geometry";
+const QString HEADER = "header";
 const QString HEIGHT = "height";
 const QString WIDTH  = "width";
 const QString POS_X  = "x";
