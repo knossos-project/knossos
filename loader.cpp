@@ -603,7 +603,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             slotChunk[layerId].emplace_back(cubeBytes, 0);// zero init chunk of chars
             freeSlots[layerId].emplace_back(slotChunk[layerId].back().data());// append newest element
         }
-        qDebug() << "in" << time.nsecsElapsed()/1e9 << "s";
+        qDebug() << "in" << qSetRealNumberPrecision(2) << time.nsecsElapsed()/1e9 << "s";
     }
     datasets = changedDatasets;
     loaderCacheSize = cacheSize;

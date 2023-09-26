@@ -36,6 +36,7 @@
 #include <QApplication>
 #include <QDebug>
 #include <QDesktopWidget>
+#include <QElapsedTimer>
 #include <QFutureSynchronizer>
 #include <QMetaObject>
 #include <QtConcurrentRun>
@@ -1240,14 +1241,17 @@ void Viewer::resizeTexEdgeLength(const int cubeEdge, const int superCubeEdge, co
         newTexEdgeLength *= 2;
     }
     if (newTexEdgeLength != state->viewerState->texEdgeLength || layerCount != viewportXY->texture.texHandle.size()) {
-        qDebug() << QString("cubeEdge = %1, sCubeEdge = %2, newTex = %3 (%4), size = %5 MiB")
-                    .arg(cubeEdge).arg(superCubeEdge).arg(newTexEdgeLength).arg(state->viewerState->texEdgeLength)
+        qDebug() << QString("cubeEdge = %1 px, sCubeEdge = %2, newTex = %3× %4 tx (%5× %6 tx), size = %7 MiB")
+                    .arg(cubeEdge).arg(superCubeEdge).arg(layerCount).arg(newTexEdgeLength).arg(viewportXY->texture.texHandle.size()).arg(state->viewerState->texEdgeLength)
                     .arg(layerCount * newTexEdgeLength * newTexEdgeLength *4./*RGBA*/*2/*cpu+gpu*/*3/*vps*//(1<<20)).toStdString().c_str();
         viewerState.texEdgeLength = newTexEdgeLength;
         window->resetTextureProperties();
+        QElapsedTimer t;
+        t.start();
         window->forEachOrthoVPDo([layerCount](ViewportOrtho & vp) {
             vp.resetTexture(layerCount);
         });
+        qDebug() << "tex gen for" << qSetRealNumberPrecision(2) << t.nsecsElapsed()/1e9 << "s";
         recalcTextureOffsets();
     }
 }
