@@ -498,6 +498,7 @@ void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx,
 void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
     // Load the texture for a viewport by going through all relevant datacubes and copying slices
     // from those cubes into the texture.
+    vp.texture.texData[layerId].resize(4 * std::pow(vp.texture.size, 2));
     if (vp.viewportType == VIEWPORT_ARBITRARY) {
         vpGenerateTexture(static_cast<ViewportArb&>(vp), layerId);
         return;
