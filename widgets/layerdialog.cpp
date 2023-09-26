@@ -364,6 +364,15 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     QObject::connect(state->viewer, &Viewer::layerRenderSettingsChanged, this, &LayerDialogWidget::updateLayerProperties);
 
     QObject::connect(treeView.selectionModel(), &QItemSelectionModel::selectionChanged, this, &LayerDialogWidget::updateLayerProperties);
+    treeView.header()->setContextMenuPolicy(Qt::ActionsContextMenu);
+    auto action = new QAction("fit all columns to contents");
+    treeView.header()->addAction(action);
+    QObject::connect(action, &QAction::triggered, this, [this]{
+        for (int i{}; i < itemModel.rowCount(); ++i) {
+            treeView.resizeColumnToContents(i);
+        }
+    });
+    action->trigger();
     QObject::connect(&itemModel, &QAbstractItemModel::dataChanged, this, &LayerDialogWidget::updateLayerProperties);
 
     QObject::connect(&state->mainWindow->widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this]() {
