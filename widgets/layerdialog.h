@@ -1,7 +1,5 @@
 #pragma once
 
-#include "dataset.h"
-#include "widgets/datasetloadwidget.h"
 #include "widgets/DialogVisibilityNotify.h"
 #include "widgets/Spoiler.h"
 
@@ -14,8 +12,10 @@
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QLineEdit>
 #include <QListWidget>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QSlider>
 #include <QStyledItemDelegate>
 #include <QToolButton>
@@ -23,14 +23,16 @@
 #include <QVBoxLayout>
 #include <QSpinBox>
 
+
 class LayerItemModel : public QAbstractListModel {
 Q_OBJECT
 protected:
     const std::vector<QString> header{"visible", "opacity", "color", "description", "experiment", "mag", "cube shape", "cubetype", "api", "base", "job"};
+
+public:
     int base{};
     mutable std::vector<bool> jobs;
 
-public:
     LayerItemModel();
     virtual int rowCount(const QModelIndex & parent = QModelIndex()) const override;
     virtual int columnCount(const QModelIndex & parent = QModelIndex()) const override;
@@ -58,6 +60,13 @@ public:
     explicit LayerDialogWidget(QWidget * parent = nullptr);
 
     QVBoxLayout mainLayout;
+
+    Spoiler jobsSpoiler{"job options"};
+    QLineEdit hostEdit;
+    QComboBox typeCombo;
+    QComboBox modelCombo;
+    QPushButton button{"Let’s do it!"};
+    QFormLayout jobsLayout;
 
     Spoiler optionsSpoiler{"layer options"};
     QGridLayout optionsLayout;

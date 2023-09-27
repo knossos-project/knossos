@@ -2,13 +2,20 @@
 
 #include "dataset.h"
 #include "mainwindow.h"
+#include "network.h"
 #include "stateInfo.h"
 #include "viewer.h"
 
 #include <QHeaderView>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 #include <cstddef>
 #include <unordered_map>
+
 
 std::size_t LayerItemModel::ordered_i(std::size_t index) const {
     return state->viewerState->layerOrder[index];
@@ -186,6 +193,43 @@ Qt::ItemFlags LayerItemModel::flags(const QModelIndex &index) const {
 LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(PREFERENCES_WIDGET, parent), colorDialog(this) {
     setWindowTitle("Layers");
 
+    QObject::connect(&button, &QPushButton::clicked, this, [this]{
+        QNetworkRequest r(QUrl{hostEdit.text()});
+        r.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/json"));
+        QJsonArray targets;
+        for (std::size_t i{}; i < itemModel.jobs.size(); ++i) {
+            if (itemModel.jobs[i]) {
+                targets.append(Dataset::datasets[itemModel.ordered_i(i)].experimentname);
+            }
+        }
+        QJsonDocument jdoc{QJsonObject{{"subject", ""}, {"description", ""}, {"project_id", 190}
+                                       , {"custom_fields", QJsonArray{QJsonObject{
+            {"id", 7}, {"value", typeCombo.currentText()}}, QJsonObject{
+            {"id", 8}, {"value", Dataset::datasets[itemModel.ordered_i(itemModel.base)].experimentname}}, QJsonObject{
+            {"id", 9}, {"value", targets}}, QJsonObject{
+            //{"id", 10}, {"value", dataset}}, QJsonObject{
+            {"id", 11}, {"value", modelCombo.currentText()}}
+        }} }};//7+[Type,Source,Target,Dataset,Model]
+        auto * reply = Network::singleton().manager.post(r, jdoc.toJson());
+        QObject::connect(reply, &QNetworkReply::finished, [reply,jdoc]{
+            QMessageBox prompt{QApplication::activeWindow()};
+            prompt.setIcon(QMessageBox::Information);
+            prompt.setText(reply->error() == QNetworkReply::NoError ? "🎉" : reply->errorString());
+            prompt.setInformativeText(reply->readAll());
+            prompt.setDetailedText(jdoc.toJson());
+            reply->deleteLater();
+            prompt.exec();
+        });
+    });
+
+    jobsLayout.addRow("Host", &hostEdit);
+    typeCombo.addItems({"Cubing", "Segmentation", "Registration", "SpatialAnalysis", "Upload", "IntensityMapping"});
+    jobsLayout.addRow("Type", &typeCombo);
+    modelCombo.addItems({"Cell", "Omni"});
+    jobsLayout.addRow("Model", &modelCombo);
+    jobsLayout.addRow("", &button);
+    jobsSpoiler.setContentLayout(jobsLayout, true);
+
     int row = 0, col;
     opacitySlider.setMaximum(255);
     optionsLayout.addWidget(&opacitySliderLabel, row, col=0);
@@ -233,6 +277,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     controlButtonLayout.addWidget(&removeLayerButton);
 
     mainLayout.addWidget(&treeView);
+    mainLayout.addWidget(&jobsSpoiler);
     mainLayout.addLayout(&controlButtonLayout);
     mainLayout.addWidget(&optionsSpoiler);
     setLayout(&mainLayout);
@@ -431,6 +476,7 @@ void LayerDialogWidget::loadSettings() {
     settings.beginGroup(LAYER_DIALOG_WIDGET);
     restoreGeometry(settings.value(GEOMETRY).toByteArray());
     treeView.header()->restoreState(settings.value(HEADER).toByteArray());
+    hostEdit.setText(settings.value(HEIDELBRAIN_HOST).toString());
     settings.endGroup();
 }
 
@@ -439,6 +485,7 @@ void LayerDialogWidget::saveSettings() {
     settings.beginGroup(LAYER_DIALOG_WIDGET);
     settings.setValue(GEOMETRY, saveGeometry());
     settings.setValue(HEADER, treeView.header()->saveState());
+    settings.setValue(HEIDELBRAIN_HOST, hostEdit.text());
     settings.setValue(VISIBLE, isVisible());
     settings.endGroup();
 }
