@@ -121,9 +121,7 @@ void ViewportOrtho::resetTexture(const std::size_t layerCount) {
             for (const auto & dset : Dataset::datasets) {
                 state->viewer->layers.emplace_back(*context());
                 state->viewer->layers.back().isOverlayData = dset.isOverlay();
-                state->viewer->layers.back().createBogusCube(dset.cubeShape, dset.gpuCubeShape);
             }
-            makeCurrent();// reset the surface
         }
         applyTextureFilter();
     }

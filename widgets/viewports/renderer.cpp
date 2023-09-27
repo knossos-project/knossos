@@ -627,6 +627,10 @@ void ViewportOrtho::renderViewportFast(const Dataset & dset, TextureLayer & laye
             }
         };
         if (!arb) {
+            if (!layer.bogusCube) {
+                layer.createBogusCube(dset.cubeShape, dset.gpuCubeShape);
+                makeCurrent();// reset the surface
+            }
             const float halfsc = fov.componentMul(v1).length() * 0.5f / gpuCubeShape.x;
             const float offsetx = cpos.x / gpuCubeShape.x - halfsc * !zy;
             const float offsety = cpos.y / gpuCubeShape.y - halfsc * !xz;
