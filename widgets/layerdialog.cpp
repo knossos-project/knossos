@@ -51,10 +51,11 @@ QVariant LayerItemModel::headerData(int section, Qt::Orientation orientation, in
 
 QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
     if (index.isValid()) {
+        jobs.resize(state->viewerState->layerOrder.size());
         const auto& data = Dataset::datasets[ordered_i(index.row())];
         auto& layerSettings = Dataset::datasets[ordered_i(index.row())].renderSettings;
         if (role == Qt::DisplayRole || role == Qt::EditRole) {
-            return std::array<QVariant,9>{
+            return std::array<QVariant,11>{
                 QVariant{},
                 QString::number(layerSettings.opacity * 100.0f) + (role == Qt::EditRole ? "" : "%"),
                 layerSettings.color,
@@ -64,6 +65,8 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
                 QString{"%1, %2, %3"}.arg(data.cubeShape.x).arg(data.cubeShape.y).arg(data.cubeShape.z),
                 data.compressionString(),
                 data.apiString(),
+                {},
+                {},
             }[index.column()];
         } else if (role == Qt::CheckStateRole) {
             if (index.column() == 0) {
@@ -71,6 +74,10 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
                 return visible ? Qt::Checked : Qt::Unchecked;
             } else if (index.column() == 7) {
                 return Segmentation::singleton().enabled && ordered_i(index.row()) == Segmentation::singleton().layerId ? Qt::PartiallyChecked : data.isOverlay() ? Qt::Unchecked : QVariant{};
+            } else if (index.column() == 9) {
+                return index.row() == base ? Qt::PartiallyChecked : Qt::Unchecked;
+            } else if (index.column() == 10) {
+                return jobs[index.row()] ? Qt::Checked : Qt::Unchecked;
             }
         } else if (role == Qt::ForegroundRole) {
             if (index.column() == 2) {
@@ -120,6 +127,13 @@ bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, in
                 state->viewer->reslice_notify(Segmentation::singleton().layerId);
                 emit dataChanged(prevSegLayerModelIndex, prevSegLayerModelIndex, QVector<int>(role));
                 reloadLayers();
+            } else if (index.column() == 9) {
+                const auto pre = index.siblingAtRow(base);
+                base = index.row();
+                emit dataChanged(pre, pre, {role});
+            } else if (index.column() == 10) {
+                jobs.resize(state->viewerState->layerOrder.size());
+                jobs[index.row()] = value.toBool();
             }
         }
     }
@@ -158,6 +172,8 @@ Qt::ItemFlags LayerItemModel::flags(const QModelIndex &index) const {
             {2, Qt::ItemIsEditable},
             {3, Qt::ItemIsEditable},
             {8, Qt::ItemIsUserCheckable},
+            {9, Qt::ItemIsUserCheckable},
+            {10, Qt::ItemIsUserCheckable},
         };
         if (auto it = map.find(index.column()); it != std::end(map)) {
             return flags | it->second;
