@@ -213,7 +213,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     treeView.setModel(&itemModel);
     treeView.setRootIsDecorated(false);
     treeView.setUniformRowHeights(true); // for optimization
-    for (auto i : {0,1,2,5,7,8}) {
+    for (auto i : {0,1,2,5,6,7}) {
         treeView.resizeColumnToContents(i);
     }
 
