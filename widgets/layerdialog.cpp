@@ -113,7 +113,7 @@ bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, in
             } else if (index.column() == 8 && value.toBool()) {
                 const auto beginIt = std::cbegin(state->viewerState->layerOrder);
                 const auto segi = std::distance(beginIt, std::find(beginIt, std::cend(state->viewerState->layerOrder), Segmentation::singleton().layerId));
-                const auto prevSegLayerModelIndex = this->index(segi, 2);
+                const auto prevSegLayerModelIndex = index.siblingAtRow(segi);
                 const auto prevSegLayerId = Segmentation::singleton().layerId;
                 Segmentation::singleton().layerId = ordered_i(index.row());
                 state->viewer->reslice_notify(prevSegLayerId);
