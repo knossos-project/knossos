@@ -62,6 +62,15 @@ Q_OBJECT
     friend class SegmentationView;
     friend class SegmentationProxy;
 
+    friend void fetchAgglo(const struct Dataset & dataset, const std::uint64_t soid, class QElapsedTimer & timer, const bool dc);
+    friend void fetchDCFragments(const struct Dataset &, const std::uint64_t);
+    template<bool>
+    friend void fetchFragmentsSwitch(const struct Dataset &, const std::uint64_t, class QElapsedTimer &, const int);
+    friend void retrieveMeshes();
+
+    friend class MainWindow;
+    friend class ViewportOrtho;
+
     class Object;
     class SubObject {
         friend void connectedComponent(const Coordinate & seed);
@@ -69,6 +78,7 @@ Q_OBJECT
         friend class SegmentationObjectModel;
         friend class Segmentation;
         static inline uint64_t highestId{0};
+    public:
         std::vector<uint64_t> objects;
         std::size_t selectedObjectsCount = 0;
     public:
@@ -117,7 +127,7 @@ Q_OBJECT
         QString comment;
         bool selected = false;
 
-        explicit Object(std::vector<std::reference_wrapper<SubObject>> initialVolumes, const Coordinate & location, const uint64_t id = ++highestId, const bool & todo = false, const bool & immutable = false);
+        explicit Object(std::vector<std::reference_wrapper<SubObject>> initialVolumes = {}, const Coordinate & location = {}, const uint64_t id = ++highestId, const bool & todo = false, const bool & immutable = false);
         explicit Object(Object & first, Object & second);
         bool operator==(const Object & other) const;
         void addExistingSubObject(SubObject & sub);
@@ -125,17 +135,24 @@ Q_OBJECT
     };
 
     std::unordered_map<uint64_t, SubObject> subobjects;
+public:
     std::vector<Object> objects;
     std::unordered_map<uint64_t, uint64_t> objectIdToIndex;
     hash_list<uint64_t> selectedObjectIndices;
     const QSet<QString> prefixed_categories = {"", "cell", "cytoplasm", "ecs", "mito", "myelin", "neuron", "nucleus", "synapse"};
     QSet<QString> categories = prefixed_categories;
+public:
     uint64_t backgroundId = 0;
+private:
     uint64_t hovered_subobject_id = 0;
     // Selection via subobjects touches all objects containing the subobject.
     uint64_t touched_subobject_id = 0;
     // For segmentation job mode
     uint64_t lastTodoObject_id = 0;
+public:
+    std::uint64_t srcSvx;// brainmaps merge/split
+    bool bmRenderOnlySelectedObjs{true};
+private:
     bool lockNewObjects{false};
     QString defaultMergeClass;
     // This array holds the table for overlay coloring.
@@ -200,6 +217,7 @@ public:
     color_t colorOfSelectedObject() const;
     color_t colorOfSelectedObject(const SubObject & subobject) const;
     color_t colorObjectFromSubobjectId(const uint64_t subObjectID) const;
+    color_t brainmapsColor(const std::uint64_t subobjectId, const bool selected) const;
     //volume rendering
     bool volume_render_toggle = false;
     std::atomic_bool volume_update_required{false};
@@ -261,7 +279,7 @@ public:
     void mergelistSave(QIODevice & file) const;
     void mergelistSave(QTextStream & stream) const;
     void mergelistLoad(QIODevice & file);
-    void mergelistLoad(QTextStream & stream);
+    void mergelistLoad(QTextStream && stream);
     void loadOverlayLutFromFile(const QString & filename = ":/resources/color_palette/default.json");
     template<typename Func>
     void bulkOperation(Func func) {

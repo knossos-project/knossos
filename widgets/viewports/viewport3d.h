@@ -49,6 +49,9 @@ class Viewport3D : public ViewportBase {
 
     virtual void handleMouseMotionLeftHold(const QMouseEvent *event) override;
     virtual void handleMouseMotionRightHold(const QMouseEvent *event) override;
+    virtual void handleMouseButtonLeft(const QMouseEvent * event) override;
+    virtual void handleMouseButtonRight(const QMouseEvent * event) override;
+    virtual void handleMouseReleaseRight(const QMouseEvent * event) override;
     virtual void handleWheelEvent(const QWheelEvent *event) override;
     virtual void handleKeyPress(const QKeyEvent *event) override;
     virtual void handleKeyRelease(const QKeyEvent *event) override;

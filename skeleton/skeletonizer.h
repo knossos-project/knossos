@@ -245,7 +245,8 @@ public:
 
     QList<treeListElement *> findTreesContainingComment(const QString &comment);
 
-    boost::optional<nodeListElement &> addNode(boost::optional<decltype(nodeListElement::nodeID)> nodeId, const decltype(nodeListElement::position) & position, const treeListElement & tree, const decltype(nodeListElement::properties) & properties);
+    boost::optional<nodeListElement &> addNode(boost::optional<decltype(nodeListElement::nodeID)> nodeId, const decltype(nodeListElement::position) & position, const treeListElement & tree, const decltype(nodeListElement::properties) & properties = {});
+    treeListElement & addTreeAndActivate(boost::optional<decltype(treeListElement::treeID)> treeID = boost::none, boost::optional<decltype(treeListElement::color)> color = boost::none, const decltype(treeListElement::properties) & properties = {});
     treeListElement & addTree(boost::optional<decltype(treeListElement::treeID)> treeID = boost::none, boost::optional<decltype(treeListElement::color)> color = boost::none, const decltype(treeListElement::properties) & properties = {});
 
     template<typename T>

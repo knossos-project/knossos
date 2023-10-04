@@ -21,6 +21,7 @@
  */
 
 #include "annotation/annotation.h"
+#include "brainmaps.h"
 #include "dataset.h"
 #include "functions.h"
 #include "widgets/viewports/viewportarb.h"
@@ -207,7 +208,7 @@ void ViewportBase::renderNode(const nodeListElement & node, const RenderOptions 
 void ViewportOrtho::renderNode(const nodeListElement & node, const RenderOptions & options) {
     ViewportBase::renderNode(node, options);
     if (1.5f <  Skeletonizer::singleton().radius(node)) { // draw node center to make large nodes visible and clickable in ortho vps
-        renderSphere(node.position, 1.5, state->viewer->getNodeColor(node));
+        renderSphere(node.position, 1.5, options.nodePicking ? getPickingColor(node, options.selectionPass) : state->viewer->getNodeColor(node));
     }
     if (!options.nodePicking) {
         // Render the node description
@@ -678,6 +679,8 @@ void ViewportOrtho::renderViewportFast() {
 //    qDebug() << "render time: " << times.waitForIntervals();
 }
 
+#include <QApplication>
+
 static bool shouldRenderMesh(const treeListElement & tree, const ViewportType viewportType);
 void ViewportOrtho::renderViewport(const RenderOptions &options) {
     glEnable(GL_MULTISAMPLE);
@@ -851,6 +854,23 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
         glPushMatrix();
         view();
         renderBrush(getMouseCoordinate());
+        glPopMatrix();
+    }
+    if (dstPos) {
+        glPushMatrix();
+        view();
+        const auto srcPos2 = Dataset::current().scales[0].componentMul(srcPos);
+        const auto dstPos2 = Dataset::current().scales[0].componentMul(*dstPos);
+        const auto srcSvx = Segmentation::singleton().srcSvx;
+        const auto dstSvx = readVoxel(*dstPos);
+        const auto erase = Annotation::singleton().annotationMode.testFlag(AnnotationMode::SubObjectSplit);
+        const auto darken = bminvalid(erase, srcSvx, dstSvx);
+        glLineWidth(3.);
+        glBegin(GL_LINES);
+        glColor4f(erase, !erase, 0, 1 - 0.8 * darken);
+            glVertex3f(srcPos2.x, srcPos2.y, srcPos2.z);
+            glVertex3f(dstPos2.x, dstPos2.y, dstPos2.z);
+        glEnd();
         glPopMatrix();
     }
 }
@@ -1044,6 +1064,9 @@ void ViewportBase::renderMeshBuffer(Mesh & buf, boost::optional<QOpenGLShaderPro
     if (state->viewerState->highlightActiveTree && buf.correspondingTree == state->skeletonState->activeTree) {
         color = Qt::red;
     }
+    if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps)) {
+        color = brainmapsMeshColor(buf.correspondingTree->treeID);
+    }
     color.setAlpha(color.alpha() * alphaFactor);
     meshShader.setUniformValue("tree_color", color);
 
@@ -1089,7 +1112,12 @@ void ViewportBase::renderMeshBuffer(Mesh & buf, boost::optional<QOpenGLShaderPro
 
 static bool shouldRenderMesh(const treeListElement & tree, const ViewportType viewportType) {
     const bool validMesh = tree.mesh && tree.mesh->vertex_count > 0;
-    const auto displayFlags = (viewportType == VIEWPORT_SKELETON) ? state->viewerState->skeletonDisplayVP3D : state->viewerState->skeletonDisplayVPOrtho;
+    auto displayFlags = (viewportType == VIEWPORT_SKELETON) ? state->viewerState->skeletonDisplayVP3D : state->viewerState->skeletonDisplayVPOrtho;
+    if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps)) {
+        displayFlags.setFlag(TreeDisplay::ShowInOrthoVPs, false);
+        displayFlags.setFlag(TreeDisplay::ShowIn3DVP);
+        displayFlags.setFlag(TreeDisplay::OnlySelected);
+    }
     const bool showFilter = ((viewportType == VIEWPORT_SKELETON) && displayFlags.testFlag(TreeDisplay::ShowIn3DVP)) || displayFlags.testFlag(TreeDisplay::ShowInOrthoVPs);
     const bool selectionFilter = !displayFlags.testFlag(TreeDisplay::OnlySelected) || tree.selected;
     return tree.render && showFilter && selectionFilter && validMesh;
@@ -1227,10 +1255,12 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
     auto rotateMe = [this, scaledBoundary](auto x, auto y){
         floatCoordinate rotationCenter{Dataset::current().scales[0].componentMul(state->viewerState->currentPosition)};
-        if (state->viewerState->rotationCenter == RotationCenter::ActiveNode && state->skeletonState->activeNode != nullptr) {
-            rotationCenter = Dataset::current().scales[0].componentMul(state->skeletonState->activeNode->position);
-        } else if (state->viewerState->rotationCenter == RotationCenter::DatasetCenter) {
-            rotationCenter = scaledBoundary / 2;
+        if (!Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps)) { // brainmaps forces current position as rotation center
+            if (state->viewerState->rotationCenter == RotationCenter::ActiveNode && state->skeletonState->activeNode != nullptr) {
+                rotationCenter = Dataset::current().scales[0].componentMul(state->skeletonState->activeNode->position);
+            } else if (state->viewerState->rotationCenter == RotationCenter::DatasetCenter) {
+                rotationCenter = scaledBoundary / 2;
+            }
         }
         // calculate inverted rotation
         std::array<float, 16> inverseRotation;
@@ -1337,7 +1367,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
 
     if (options.drawViewportPlanes) { // Draw the slice planes for orientation inside the data stack
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        if (state->viewerState->showVpPlanes) {
+        if (state->viewerState->showVpPlanes && !Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps)) {
             glPushMatrix();
             if (state->viewerState->showXYplane && state->viewer->window->viewportXY->isVisible()) {
                 state->viewer->window->viewportXY->renderArbitrarySlicePane(options);
@@ -1696,11 +1726,17 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
         }
 
     };
-    const auto objColor = seg.colorOfSelectedObject();
-    if (seg.brush.isInverse()) {
-        drawCursor(1.f, 0.f, 0.f);
-    } else {
-        drawCursor(std::get<0>(objColor)/255., std::get<1>(objColor)/255., std::get<2>(objColor)/255.);
+    const auto objColor = Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps) ? seg.subobjectColor(seg.hovered_subobject_id) : seg.colorOfSelectedObject();
+    const auto hover_condition = !dstPos && seg.hovered_subobject_id != Segmentation::singleton().backgroundId && !seg.isSubObjectIdSelected(seg.hovered_subobject_id) && !Annotation::singleton().annotationMode.testFlag(AnnotationMode::SubObjectSplit);
+    const auto move_condition = !bminvalid(Annotation::singleton().annotationMode.testFlag(AnnotationMode::SubObjectSplit), seg.srcSvx, seg.hovered_subobject_id);
+    const bool inverse = (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps) && Annotation::singleton().annotationMode.testFlag(AnnotationMode::SubObjectSplit))
+            || (!Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps) && seg.brush.isInverse());
+    if (!Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps) || hover_condition || move_condition) {
+        if (inverse) {
+            drawCursor(1.f, 0.f, 0.f);
+        } else {
+            drawCursor(std::get<0>(objColor)/255., std::get<1>(objColor)/255., std::get<2>(objColor)/255.);
+        }
     }
     glPopMatrix();
 }

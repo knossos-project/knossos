@@ -690,10 +690,11 @@ margin-top: 8px;
 }
 &lt;/style&gt;
 &lt;ul&gt;
+&lt;li&gt;Boost, Boost Software License: &lt;a href=&quot;https://www.boost.org/&quot;&gt;https://www.boost.org&lt;/a&gt;
+&lt;li&gt;jwt-cpp, MIT: &lt;a href=&quot;https://github.com/Thalhammer/jwt-cpp&quot;&gt;https://github.com/Thalhammer/jwt-cpp&lt;/a&gt;
+&lt;li&gt;PythonQt, LGPLv2.1: &lt;a href=&quot;https://github.com/mevislab/pythonqt&quot;&gt;https://github.com/mevislab/pythonqt&lt;/a&gt;
 &lt;li&gt;Qt5, LGPLv3: &lt;a href=&quot;https://www.qt.io/&quot;&gt;https://www.qt.io&lt;/a&gt;
 &lt;li&gt;QuaZIP, LGPLv2.1: &lt;a href=&quot;https://github.com/stachenov/quazip&quot;&gt;https://github.com/stachenov/quazip&lt;/a&gt;
-&lt;li&gt;Boost, Boost Software License: &lt;a href=&quot;https://www.boost.org/&quot;&gt;https://www.boost.org&lt;/a&gt;
-&lt;li&gt;PythonQt, LGPLv2.1: &lt;a href=&quot;https://github.com/mevislab/pythonqt&quot;&gt;https://github.com/mevislab/pythonqt&lt;/a&gt;
 &lt;li&gt;Snappy, New BSD: &lt;a href=&quot;https://github.com/google/snappy&quot;&gt;https://github.com/google/snappy&lt;/a&gt;
 &lt;/ul&gt;</string>
                </property>

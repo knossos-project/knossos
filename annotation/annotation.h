@@ -38,25 +38,29 @@ enum class GUIMode {
 
 enum AnnotationMode {
     NodeSelection = 1 << 0,
-    NodeEditing = 1 << 1 | NodeSelection,
-    LinkedNodes = 1 << 2,
-    SkeletonCycles = 1 << 3,
-    Brush = 1 << 4,
-    ObjectSelection = 1 << 5,
-    ObjectMerge = 1 << 6,
+    LinkedNodes = 1 << 1,
+    SkeletonCycles = 1 << 2,
+    Brush = 1 << 3,
+    ObjectSelection = 1 << 4,
+    ObjectMerge = 1 << 5,
+    SubObjectSplit = 1 << 6,
+    BranchPointPop = 1 << 7,
+    NodeEditing = 1 << 8 | NodeSelection | BranchPointPop,
 
-    Mode_Tracing = (1 << 7) | NodeEditing,
-    Mode_TracingAdvanced = (1 << 8) | NodeEditing | SkeletonCycles,
+    Mode_Tracing = (1 << 9) | NodeEditing,
+    Mode_TracingAdvanced = (1 << 10) | NodeEditing | SkeletonCycles,
 
-    Mode_Paint = (1 << 9) | Brush | ObjectSelection,
-    Mode_OverPaint = (1 << 10) | Brush | ObjectSelection,
-    Mode_Merge = (1 << 11) | Brush | ObjectSelection | ObjectMerge,
-    Mode_MergeSimple = (1 << 12) | Brush | ObjectMerge,
+    Mode_Paint = (1 << 11) | Brush | ObjectSelection,
+    Mode_OverPaint = (1 << 12) | Brush | ObjectSelection,
+    Mode_Merge = (1 << 13) | Brush | ObjectSelection | ObjectMerge,
+    Mode_MergeSimple = (1 << 14) | Brush | ObjectMerge,
 
-    Mode_MergeTracing = (1 << 13) | NodeEditing | LinkedNodes | SkeletonCycles,
+    Mode_MergeTracing = (1 << 15) | NodeEditing | LinkedNodes | SkeletonCycles,
 
-    Mode_Selection = (1 << 14) | NodeSelection | ObjectSelection,
-    Mode_CellSegmentation = (1 << 15) | Mode_Paint
+    Mode_Selection = (1 << 16) | NodeSelection | ObjectSelection,
+    Mode_CellSegmentation = (1 << 17) | Mode_Paint,
+
+    Mode_Brainmaps = (1 << 18) | Brush | ObjectSelection | BranchPointPop | NodeEditing,
 };
 
 struct AAMTask {

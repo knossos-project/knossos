@@ -407,6 +407,7 @@ void DatasetLoadWidget::processButtonClicked() {
  */
 bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUrl path, const bool silent) {
     WidgetDisabler d{*this};// don’t allow widget interaction while Network has an event loop running
+    WidgetDisabler d2{*state->mainWindow};// brainmaps downloads reentrancy
     if (path.isEmpty() && datasetUrl.isEmpty()) {//no dataset available to load
         open();
         return false;
@@ -454,35 +455,6 @@ bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> lo
         }
         keepAnnotation = question.clickedButton() == keepButton;
     }
-    QString token;
-    if (Dataset::isGoogleBrainmaps(path)) {
-        const auto pair = getBrainmapsToken();
-        if (!pair.first) {
-            qDebug() << "getBrainmapsToken failed";
-            return false;
-        }
-        token = pair.second;
-
-        auto googleRequest = [&token](auto path){
-            QNetworkRequest request(path);
-            request.setRawHeader("Authorization", (QString("Bearer ") + token).toUtf8());
-            return request;
-        };
-
-        auto * reply = Network::singleton().manager.get(googleRequest(QUrl("https://brainmaps.googleapis.com/v1/volumes")));
-        const auto datasets = blockDownloadExtractData(*reply);
-        qDebug() << datasets.second;
-
-        reply = Network::singleton().manager.get(googleRequest(path));
-        const auto config = blockDownloadExtractData(*reply);
-
-        if (config.first) {
-            data = config.second;
-        } else {
-            qDebug() << "download failed";
-            return false;
-        }
-    }
     auto layers = [this, &path, &data, &loadOverlay, &silent]() {
         try {
             return Dataset::parse(path, data, loadOverlay.get_value_or(segmentationOverlayCheckbox.isChecked()));
@@ -527,10 +499,6 @@ bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> lo
             qDebug() << "no mags";
             return false;
         }
-    } else if (Dataset::isGoogleBrainmaps(path)) {
-        for (auto & layer : layers) {
-            layer.token = token;
-        }
     }
     if (std::any_of(std::next(std::cbegin(layers)), std::cend(layers), [&layers](auto & layer){ return layer.cubeEdgeLength != layers[0].cubeEdgeLength; })) {
         QMessageBox warning{QApplication::activeWindow()};
@@ -560,6 +528,16 @@ bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> lo
         }
     }
     updateDatasetInfo(layers);// updates FOV
+    for (auto && ds : layers) {
+        if (ds.useAlternativebrainmapsChangeServer) {
+            for (auto && name : {"apandey","ayadav","mdarji","arajput","atailor","dkansara","hjoshi","kgaekwad","kshah","kviramgama","mjain","mpatel","ndhokiya","spoorkar","swagat","traininguser","vtrivedi","Yuvaraju"}) {
+                if (datasetUrl.path().contains(name)) {
+                    fovSpin.setRange(ds.cubeEdgeLength, ds.cubeEdgeLength * 2);
+                    break;
+                }
+            }
+        }
+    }
     state->M = (fovSpin.value() + cubeEdgeLen) / cubeEdgeLen;
     if (loadOverlay != boost::none) {
         segmentationOverlayCheckbox.setChecked(loadOverlay.get());
@@ -567,7 +545,9 @@ bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> lo
     Segmentation::singleton().enabled = segmentationOverlayCheckbox.isChecked();
     for (std::size_t i = 0; i < layers.size(); ++i) {// determine segmentation layer
         if (layers[i].isOverlay()) {
+            layers[i].allocationEnabled = layers[i].loadingEnabled = true;
             Segmentation::singleton().layerId = i;
+            Segmentation::singleton().enabled = true;
             break;// only enable the first overlay layer by default
         }
     }
@@ -575,6 +555,9 @@ bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> lo
         layers.front().magIndex = Dataset::current().magIndex;
     }
     Dataset::datasets = layers;
+    if (Segmentation::singleton().enabled && layers[Segmentation::singleton().layerId].api == Dataset::API::GoogleBrainmaps) {
+        createChangeStack(layers[Segmentation::singleton().layerId]);
+    }
 
     state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M, Dataset::datasets.size());// resets textures
 
@@ -587,7 +570,7 @@ bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> lo
     }
     state->viewer->applyTextureFilterSetting(state->viewerState->textureFilter);// set filter for all layers
     state->viewer->datasetColorAdjustmentsChanged();// set range delta and bias for all layers
-    Annotation::singleton().authenticatedByConf = path.url().endsWith(".auth.conf");
+    Annotation::singleton().authenticatedByConf = path.url().endsWith(".auth.conf") || path.url().endsWith(".auth.pyk.conf") || path.url().endsWith(".auth.k.toml");
     if (Annotation::singleton().embeddedDataset && QUrl{Annotation::singleton().embeddedDataset.value()} != path) {
         Annotation::singleton().embeddedDataset.reset();
     }

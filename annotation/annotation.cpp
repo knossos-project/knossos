@@ -57,9 +57,9 @@ Annotation::Annotation() : annotationMode(AnnotationMode::Mode_Tracing) {
 
     autoSaveTimer.setTimerType(Qt::PreciseTimer);
     QObject::connect(&autoSaveTimer, &QTimer::timeout, this, [this]() {
-       if (unsavedChanges) {
-           emit autoSaveSignal();
-       }
+        if (unsavedChanges && !Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Selection)) {
+            emit autoSaveSignal();
+        }
     });
     boost::fusion::for_each(boost::fusion::make_vector(
                                 &Skeletonizer::nodeAddedSignal

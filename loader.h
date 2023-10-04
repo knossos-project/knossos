@@ -124,11 +124,12 @@ public://matsch
     void markCubeAsModified(const std::size_t layerId, const CoordOfCube &cubeCoord, const std::size_t magIndex);
     void snappyCacheSupplySnappy(const std::size_t layerId, const CoordOfCube, const quint64 cubeMagnification, const std::string cube);
     void flushIntoSnappyCache();
-    void broadcastProgress(bool startup = false);
+    void broadcastProgress(bool startup = false, bool failed = false);
     Worker();
     virtual ~Worker() override;
 signals:
-    void progress(bool incremented, int count);
+    void progress(bool incremented, int count, int failed);
+    void retoken(const std::size_t layerId, const Coordinate & center, const UserMoveType userMoveType, const floatCoordinate & direction);
 public slots:
     void cleanup(const Coordinate center);
     void downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, Dataset::list_t changedDatasets, const size_t cacheSize);
@@ -149,7 +150,8 @@ public:
     Controller();
     virtual ~Controller() override;
 
-    void startLoading(const Coordinate & center, const UserMoveType userMoveType, const floatCoordinate &direction);
+    void retoken(const std::size_t layerId, const Coordinate & center, const UserMoveType userMoveType, const floatCoordinate & direction);
+    void startLoading(const Coordinate & center, const UserMoveType userMoveType, const floatCoordinate & direction);
     template<typename... Args>
     void snappyCacheSupplySnappy(Args&&... args) {
         emit snappyCacheSupplySnappySignal(std::forward<Args>(args)...);
@@ -172,7 +174,7 @@ public slots:
     bool isFinished();
     bool hasSnappyCache();
 signals:
-    void progress(int count);
+    void progress(int count, int failed);
     void refCountChange(bool isIncrement, int refCount);
     void loadSignal(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset::list_t & changedDatasets, const quint64 cacheSize);
     void markCubeAsModifiedSignal(const std::size_t layerId, const CoordOfCube &cubeCoord, const std::size_t magIndex);

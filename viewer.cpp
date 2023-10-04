@@ -364,6 +364,8 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxI
     }
 }
 
+#include "brainmaps.h"
+
 /**
  * @brief Viewer::ocSliceExtract extracts subObject IDs from datacube
  *      and paints slice at the corresponding position with a color depending on the ID.
@@ -433,8 +435,13 @@ void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx,
                 slice += texNext;
                 continue;
             }
+            const bool selected = layerId == seg.layerId && ((subobjectIdCache == subobjectId) ? selectedCache : seg.isSubObjectIdSelected(subobjectId));
 
+            const auto bm = Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps);
             const auto queryColor = [&](){
+                if (bm) {
+                    return seg.brainmapsColor(subobjectId, selected);
+                }
                 if ((layerId == seg.layerId) && Segmentation::singleton().segmentationColor != SegmentationColor::SubObject) {// apply mergelist
                     return seg.colorObjectFromSubobjectId(subobjectId);
                 } else {
@@ -447,14 +454,13 @@ void Viewer::ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx,
             slice[2] = std::get<2>(color);
             slice[3] = std::get<3>(color);
 
-            const bool selected = layerId == seg.layerId && ((subobjectIdCache == subobjectId) ? selectedCache : seg.isSubObjectIdSelected(subobjectId));
             const bool isPastFirstRow = counter >= min;
             const bool isBeforeLastRow = counter < max;
             const bool isNotFirstColumn = counter % cubeEdgeLen != 0;
             const bool isNotLastColumn = (counter + 1) % cubeEdgeLen != 0;
 
             // highlight edges where needed
-            if(seg.highlightBorder) {
+            if(seg.highlightBorder && !bm) {
                 if(seg.hoverVersion) {
                     uint64_t objectId = seg.tryLargestObjectContainingSubobject(subobjectId);
                     if (selected && seg.mouseFocusedObjectId == objectId) {

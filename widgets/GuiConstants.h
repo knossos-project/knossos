@@ -154,6 +154,9 @@ const QString WALK_FRAMES = "walk_frames";
 const QString SEARCH_FOR_NODE = "search_for_node";
 const QString SEARCH_FOR_TREE = "search_for_tree";
 
+// segmentation view
+const QString MESH_LOD = "mesh_lod";
+
 // Comments Highlighting
 const QString CUSTOM_COMMENT_APPEND = "append_comment";
 const QString CUSTOM_COMMENT_NODECOLOR = "use_custom_comment_node_color";
