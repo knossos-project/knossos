@@ -89,9 +89,7 @@ public:
     double screenPxYPerMag1Px;
 
     char * viewPortData;
-    viewportTexture texture;
-    float screenPxXPerDataPxForZoomFactor(const float zoomFactor) const { return edgeLength / (displayedEdgeLenghtXForZoomFactor(zoomFactor) / texture.texUnitsPerDataPx); }
-    virtual float displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const;
+    std::vector<viewportTexture> textures;
 
     void renderArbitrarySlicePane(const RenderOptions & options, float orthoFactor = 1, bool breakFirst = false);
 

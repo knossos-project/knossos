@@ -60,7 +60,7 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
                 layerSettings.color,
                 data.description,
                 data.experimentname,
-                data.magnification,
+                QString("mag%1").arg(data.toMag(data.magIndex)),
                 data.cubeEdgeLength,
                 data.compressionString(),
                 data.apiString(),
@@ -361,7 +361,11 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
         }
     });
 
-    QObject::connect(state->viewer, &Viewer::layerRenderSettingsChanged, this, &LayerDialogWidget::updateLayerProperties);
+    QObject::connect(state->viewer, &Viewer::layerRenderSettingsChanged, [this](){
+        if (const auto & currentIndex = treeView.selectionModel()->currentIndex(); currentIndex.isValid()) {
+            emit itemModel.dataChanged(currentIndex.siblingAtColumn(0), currentIndex.siblingAtColumn(itemModel.columnCount()-1));
+        }
+    });
 
     QObject::connect(treeView.selectionModel(), &QItemSelectionModel::selectionChanged, this, &LayerDialogWidget::updateLayerProperties);
     treeView.header()->setContextMenuPolicy(Qt::ActionsContextMenu);

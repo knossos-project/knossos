@@ -72,10 +72,11 @@ bool writeVoxel(const Coordinate & pos, const uint64_t value, bool isMarkChanged
     if (Annotation::singleton().outsideMovementArea(pos) || !cubeIt.first) {
         return false;
     }
-    const auto inCube = pos.insideCube(Dataset::current().cubeEdgeLength, Dataset::current().scaleFactor);
+    const auto segLayer = Dataset::datasets[Segmentation::singleton().layerId];
+    const auto inCube = pos.insideCube(segLayer.cubeEdgeLength, segLayer.scaleFactor);
     getCubeRef<std::uint64_t>(cubeIt.second)[inCube.z][inCube.y][inCube.x] = value;
     if (isMarkChanged) {
-        Loader::Controller::singleton().markCubeAsModified(Segmentation::singleton().layerId, pos.cube(Dataset::current().cubeEdgeLength, Dataset::current().scaleFactor), Dataset::current().magnification);
+        Loader::Controller::singleton().markCubeAsModified(Segmentation::singleton().layerId, segLayer.global2cube(pos), segLayer.magIndex);
     }
     return true;
 }
@@ -111,20 +112,21 @@ std::pair<Coordinate, Coordinate> getRegion(const floatCoordinate & centerPos, c
 
 void coordCubesMarkChanged(const CubeCoordSet & cubeChangeSet) {
     for (auto &cubeCoord : cubeChangeSet) {
-        Loader::Controller::singleton().markCubeAsModified(Segmentation::singleton().layerId, cubeCoord, Dataset::current().magnification);
+        Loader::Controller::singleton().markCubeAsModified(Segmentation::singleton().layerId, cubeCoord, Dataset::datasets[Segmentation::singleton().layerId].magIndex);
     }
 }
 
 auto wholeCubes = [](const Coordinate & globalFirst, const Coordinate & globalLast, const uint64_t value, CubeCoordSet & cubeChangeSet) {
-    const auto wholeCubeBegin = Dataset::current().global2cube(globalFirst + Dataset::current().cubeEdgeLength - 1);
-    const auto wholeCubeEnd = Dataset::current().global2cube(globalLast);
+    const auto segLayer = Dataset::datasets[Segmentation::singleton().layerId];
+    const auto wholeCubeBegin = segLayer.global2cube(globalFirst + segLayer.cubeEdgeLength - 1);
+    const auto wholeCubeEnd = segLayer.global2cube(globalLast);
 
     //fill all whole cubes
     for (int z = wholeCubeBegin.z; z < wholeCubeEnd.z; ++z)
     for (int y = wholeCubeBegin.y; y < wholeCubeEnd.y; ++y)
     for (int x = wholeCubeBegin.x; x < wholeCubeEnd.x; ++x) {
         const auto cubeCoord = CoordOfCube(x, y, z);
-        const auto globalCoord = Dataset::current().cube2global(cubeCoord);
+        const auto globalCoord = segLayer.cube2global(cubeCoord);
         auto rawcube = getRawCube(globalCoord);
         if (rawcube.first) {
             auto cubeRef = getCubeRef(rawcube.second);
@@ -144,9 +146,10 @@ auto wholeCubes = [](const Coordinate & globalFirst, const Coordinate & globalLa
 
 template<typename Func, typename Skip>
 CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  globalLast, Func func, Skip skip) {
-    const auto & cubeEdgeLen = Dataset::current().cubeEdgeLength;
-    const auto cubeBegin = Dataset::current().global2cube(globalFirst);
-    const auto cubeEnd = Dataset::current().global2cube(globalLast) + 1;
+    const auto segLayer = Dataset::datasets[Segmentation::singleton().layerId];
+    const auto & cubeEdgeLen = segLayer.cubeEdgeLength;
+    const auto cubeBegin = segLayer.global2cube(globalFirst);
+    const auto cubeEnd = segLayer.global2cube(globalLast) + 1;
     CubeCoordSet cubeCoords;
 
     //traverse all remaining cubes
@@ -155,18 +158,18 @@ CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  g
     for (int x = cubeBegin.x; x < cubeEnd.x; ++x) {
         skip(x, y, z);//skip cubes which got processed before
         const auto cubeCoord = CoordOfCube(x, y, z);
-        const auto globalCubeBegin = Dataset::current().cube2global(cubeCoord);
+        const auto globalCubeBegin = segLayer.cube2global(cubeCoord);
         auto rawcube = getRawCube(globalCubeBegin);
         if (rawcube.first) {
             auto cubeRef = getCubeRef(rawcube.second);
-            const auto globalCubeEnd = globalCubeBegin + Dataset::current().scaleFactor * cubeEdgeLen;
-            const auto localStart = globalFirst.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeEdgeLen, Dataset::current().scaleFactor);
-            const auto localEnd = globalLast.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeEdgeLen, Dataset::current().scaleFactor);
+            const auto globalCubeEnd = globalCubeBegin + segLayer.scaleFactor * cubeEdgeLen;
+            const auto localStart = globalFirst.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeEdgeLen, segLayer.scaleFactor);
+            const auto localEnd = globalLast.capped(globalCubeBegin, globalCubeEnd).insideCube(cubeEdgeLen, segLayer.scaleFactor);
 
             for (int z = localStart.z; z <= localEnd.z; ++z)
             for (int y = localStart.y; y <= localEnd.y; ++y)
             for (int x = localStart.x; x <= localEnd.x; ++x) {
-                const Coordinate globalFromVoxelCoord{globalCubeBegin + Dataset::current().scaleFactor.componentMul(Coordinate{x, y, z})};
+                const Coordinate globalFromVoxelCoord{globalCubeBegin + segLayer.scaleFactor.componentMul(Coordinate{x, y, z})};
                 const auto adjustedGlobalCoord = globalFromVoxelCoord.capped(globalFirst, globalLast + 1);// fit to region boundaries that don’t exactly match mag2+ voxel coords
                 func(cubeRef[z][y][x], adjustedGlobalCoord);
             }

@@ -145,7 +145,7 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
         auto & obj2points = obj2totalpoints[id];
         auto & obj2faces = obj2totalfaces[id];
         std::unordered_map<std::uint64_t, std::size_t> obj2idCounter;
-        const std::size_t cubeEdgeLen = Dataset::current().cubeEdgeLength;
+        const std::size_t cubeEdgeLen = Dataset::datasets[Segmentation::singleton().layerId].cubeEdgeLength;
         const std::size_t size = std::pow(cubeEdgeLen, 3);
 
         std::unordered_map<CoordOfCube, std::vector<std::uint64_t>> extractedCubes;// local lookup
@@ -165,7 +165,7 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
             return cube;
         };
 
-        const auto scale = Dataset::current().scale;
+        const auto scale = Dataset::datasets[Segmentation::singleton().layerId].scale;
         const auto inMagCoord = Coordinate{pair.first.x, pair.first.y, pair.first.z} * cubeEdgeLen;
         const auto cubeCoord = scale.componentMul(inMagCoord);
 
@@ -300,10 +300,11 @@ auto generateMeshForSubobjectID(const std::unordered_map<std::uint64_t, std::uin
 
 void generateMeshesForSubobjectsOfSelectedObjects() {
     const auto guard = Loader::Controller::singleton().getAllModifiedCubes(Segmentation::singleton().layerId);
+    const auto & segLayer = Dataset::datasets[Segmentation::singleton().layerId];
     const auto & cubes = guard.cubes;
 
     const auto count = Segmentation::singleton().selectedObjectsCount();
-    const auto msg = QObject::tr("Generating meshes for %1 objects over %2 cubes").arg(count == 0 ? QObject::tr("all") : QString::number(count)).arg(cubes[Dataset::current().magIndex].size());
+    const auto msg = QObject::tr("Generating meshes for %1 objects over %2 cubes").arg(count == 0 ? QObject::tr("all") : QString::number(count)).arg(cubes[segLayer.magIndex].size());
     QProgressDialog progress(msg, "Cancel", 0, Segmentation::singleton().selectedObjectsCount() * cubes[0].size(), QApplication::activeWindow());
     progress.setWindowModality(Qt::WindowModal);
     qDebug() << msg.toUtf8().constData();
@@ -316,5 +317,5 @@ void generateMeshesForSubobjectsOfSelectedObjects() {
         }
         oids.emplace_back(objectIndex);
     }
-    generateMeshForSubobjectID(soids, oids, cubes[Dataset::current().magIndex], progress);
+    generateMeshForSubobjectID(soids, oids, cubes[segLayer.magIndex], progress);
 }
