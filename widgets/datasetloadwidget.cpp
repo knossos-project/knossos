@@ -356,12 +356,11 @@ void DatasetLoadWidget::updateDatasetInfo(const Dataset::list_t & datas) {
     } else {
         infotext = infotext.arg("Local").arg("URL: <a href=\"%1\">%1</a><br />").arg(datasetinfo.url.toString());
     }
-    infotext += QString("Name: %1<br/>Boundary (x y z): %2 %3 %4<br />Compression: %5<br/>cubeEdgeLength: %6<br/>Magnification: %7<br/>Scale (x y z): %8 %9 %10<br/>Description: %11")
+    infotext += QString("Name: %1<br/>Boundary (x y z): %2 %3 %4<br />Compression: %5<br/>cubeEdgeLength: %6<br/>Scale (x y z): %8 %9 %10<br/>Description: %11")
         .arg(datasetinfo.experimentname)
         .arg(datasetinfo.boundary.x).arg(datasetinfo.boundary.y).arg(datasetinfo.boundary.z)
         .arg(datasetinfo.compressionString())
         .arg(datasetinfo.cubeEdgeLength)
-        .arg(datasetinfo.magnification)
         .arg(datasetinfo.scale.x)
         .arg(datasetinfo.scale.y)
         .arg(datasetinfo.scale.z)
@@ -507,13 +506,12 @@ bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> lo
         try {
             layers.front().checkMagnifications();
             for (auto & layer : layers) {// apply discovered mags to all layers
-                layer.magnification = layers.front().magnification;
-                layer.lowestAvailableMag = layers.front().lowestAvailableMag;
-                layer.highestAvailableMag = layers.front().highestAvailableMag;
-                for (int mag = 1; mag <= layer.highestAvailableMag; mag *= 2) {
-                    layer.scales.emplace_back(layer.scale * mag);
+                layer.magIndex = layers.front().magIndex;
+                layer.lowestAvailableMagIndex = layers.front().lowestAvailableMagIndex;
+                layer.highestAvailableMagIndex = layers.front().highestAvailableMagIndex;
+                for (std::size_t magIndex = 0; magIndex <= layer.highestAvailableMagIndex; magIndex += 1) {
+                    layer.scales.emplace_back(layer.scale * std::pow(2, magIndex));
                 }
-                layer.magIndex = static_cast<std::size_t>(std::log2(layer.magnification));
                 layer.scale = layer.scales[layer.magIndex];
                 layer.scaleFactor = layer.scale / layer.scales[0];
             }
@@ -550,7 +548,9 @@ bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> lo
         datasetUrl = {path};//remember config url
     }
     Loader::Controller::singleton().suspendLoader();//we change variables the loader uses
-    const bool changedBoundaryOrScale = layers.front().boundary != Dataset::current().boundary || layers.front().scale != Dataset::current().scale;
+    const bool changedBoundaryOrScale = layers.front().boundary != Dataset::current().boundary || layers.front().scales != Dataset::current().scales;
+
+    qDebug() << changedBoundaryOrScale << layers.front().scale << Dataset::current().scale;
 
     // check if a fundamental geometry variable has changed. If so, the loader requires reinitialization
     const auto cubeEdgeLen = cubeEdgeSpin.text().toInt();
@@ -571,19 +571,12 @@ bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> lo
             break;// only enable the first overlay layer by default
         }
     }
+    if (!changedBoundaryOrScale) {
+        layers.front().magIndex = Dataset::current().magIndex;
+    }
     Dataset::datasets = layers;
 
     state->viewer->resizeTexEdgeLength(cubeEdgeLen, state->M, Dataset::datasets.size());// resets textures
-
-    state->mainWindow->resetTextureProperties();
-
-    if (changedBoundaryOrScale || !keepAnnotation) {
-        emit datasetSwitchZoomDefaults();
-        // reset skeleton viewport
-        if (state->skeletonState->rotationcounter == 0) {
-            state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
-        }
-    }
 
     emit updateDatasetCompression();
 
@@ -594,13 +587,23 @@ bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> lo
     }
     state->viewer->applyTextureFilterSetting(state->viewerState->textureFilter);// set filter for all layers
     state->viewer->datasetColorAdjustmentsChanged();// set range delta and bias for all layers
-    state->viewer->updateDatasetMag();// clear vps and notify loader
     Annotation::singleton().authenticatedByConf = path.url().endsWith(".auth.conf");
     if (Annotation::singleton().embeddedDataset && QUrl{Annotation::singleton().embeddedDataset.value()} != path) {
         Annotation::singleton().embeddedDataset.reset();
     }
 
+    state->viewer->updateDatasetMag();// clear vps and notify loader
+
     emit datasetChanged();
+
+    if (changedBoundaryOrScale || !keepAnnotation) {
+        emit datasetSwitchZoomDefaults();
+        // reset skeleton viewport
+        if (state->skeletonState->rotationcounter == 0) {
+            state->skeletonState->definedSkeletonVpView = SKELVP_RESET;
+        }
+    }
+    state->viewer->zoomRelative(1);
 
     return true;
 }
@@ -675,5 +678,4 @@ void DatasetLoadWidget::loadSettings() {
     fovSpin.setValue(cubeEdgeLen * (state->M - 1));
     adaptMemoryConsumption();
     settings.endGroup();
-    state->mainWindow->resetTextureProperties();
 }

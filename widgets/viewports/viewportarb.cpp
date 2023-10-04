@@ -36,11 +36,6 @@ ViewportArb::ViewportArb(QWidget *parent, ViewportType viewportType) : ViewportO
     });
 }
 
-float ViewportArb::displayedEdgeLenghtXForZoomFactor(const float zoomFactor) const {
-    float result = displayedIsoPx / static_cast<float>(texture.size);
-    return (std::floor((result * zoomFactor) / 2. / texture.texUnitsPerDataPx) * texture.texUnitsPerDataPx)*2;
-}
-
 void ViewportArb::hideVP() {
     ViewportBase::hideVP();
     state->viewer->setEnableArbVP(false);
@@ -63,7 +58,7 @@ void ViewportArb::updateOverlayTexture() {
     const int width = (state->M - 1) * Dataset::current().cubeEdgeLength / std::sqrt(2);
     const int height = width;
     const auto begin = leftUpperPxInAbsPx_float;
-    auto & texData = texture.texData[Segmentation::singleton().layerId];
+    auto & texData = textures[Segmentation::singleton().layerId].texData;
     texData.resize(4 * width * height, 0);
     boost::multi_array_ref<uint8_t, 3> viewportView(texData.data(), boost::extents[width][height][4]);
     // cache
@@ -71,7 +66,7 @@ void ViewportArb::updateOverlayTexture() {
     auto colorCache = Segmentation::singleton().colorObjectFromSubobjectId(subobjectIdCache);
     for (int y = 0; y < height; ++y)
     for (int x = 0; x < width; ++x) {
-        const auto dataPos = static_cast<Coordinate>(begin + v1 * Dataset::current().magnification * x - v2 * Dataset::current().magnification * y);
+        const auto dataPos = static_cast<Coordinate>(begin + Dataset::current().scaleFactor.componentMul(v1) * x - Dataset::current().scaleFactor.componentMul(v2) * y);
         if (dataPos.x < 0 || dataPos.y < 0 || dataPos.z < 0) {
             viewportView[y][x][0] = viewportView[y][x][1] = viewportView[y][x][2] = viewportView[y][x][3] = 0;
         } else {
@@ -85,7 +80,7 @@ void ViewportArb::updateOverlayTexture() {
             viewportView[y][x][3] = std::get<3>(color);
         }
     }
-    texture.texHandle[Segmentation::singleton().layerId].bind();
+    textures[Segmentation::singleton().layerId].texHandle.bind();
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
-    texture.texHandle[Segmentation::singleton().layerId].release();
+    textures[Segmentation::singleton().layerId].texHandle.release();
 }

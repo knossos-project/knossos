@@ -67,6 +67,9 @@ struct Dataset {
 
     bool isOverlay() const;
 
+    std::size_t toMagIndex(const int mag) const;
+    int toMag(const std::size_t magIndex) const;
+
     CoordOfCube global2cube(const Coordinate & globalCoord) const {
         return globalCoord.cube(cubeEdgeLength, scaleFactor);
     }
@@ -81,16 +84,9 @@ struct Dataset {
     // pixel-to-nanometer scale
     floatCoordinate scale{1.f, 1.f, 1.f};
     boost::container::small_vector<floatCoordinate, 4> scales;
-    // stores the currently active magnification;
-    // it is set by magnification = 2^MAGx
-    // Dataset::current().magnification should only be used by the viewer,
-    // but its value is copied over to loaderMagnification.
-    // This is locked for thread safety.
-    // do not change to uint, it causes bugs in the display of higher mag datasets
     std::size_t magIndex{0};
-    int magnification{1};
-    int lowestAvailableMag{1};
-    int highestAvailableMag{1};
+    std::size_t lowestAvailableMagIndex{0};
+    std::size_t highestAvailableMagIndex{0};
     floatCoordinate scaleFactor{1,1,1};
     // The edge length of a datacube is 2^N, which makes the size of a
     // datacube in bytes 2^3N which has to be <= 2^32 - 1 (unsigned int).
