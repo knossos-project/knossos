@@ -870,8 +870,8 @@ bool MainWindow::openFileDispatch(QStringList fileNames, const bool mergeAll, co
         if (prompt.clickedButton() == cancelButton) {
             return false;
         }
-        const auto mergeSegmentation = prompt.clickedButton() == keepAllButton || prompt.clickedButton() == segmenationKeepButton;
-        const auto mergeSkeleton = prompt.clickedButton() == keepAllButton || prompt.clickedButton() == skeletonKeepButton;
+        mergeSegmentation = prompt.clickedButton() == keepAllButton || prompt.clickedButton() == segmenationKeepButton;
+        mergeSkeleton = prompt.clickedButton() == keepAllButton || prompt.clickedButton() == skeletonKeepButton;
         if (prompt.clickedButton() == overrideAllButton) {
             Annotation::singleton().clearAnnotation();
             updateTitlebar();
