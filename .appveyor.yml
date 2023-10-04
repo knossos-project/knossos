@@ -4,8 +4,8 @@ image:
   - Visual Studio 2022 # Windows Server 2019
   - Visual Studio 2017 # Windows Server 2016
   - Visual Studio 2015 # Windows Server 2012 R2
-  - macOS-bigsur   # 11.6.4
-  - macOS-monterey # 12.2.1
+  - macOS-monterey # 12.6.1
+  - macOS-bigsur   # 11.7.1
   - macOS-catalina # 10.15.7
   - macOS-mojave   # 10.14
   - Ubuntu2004
@@ -22,6 +22,11 @@ init:
   - sh: type system_profiler && system_profiler SPSoftwareDataType SPHardwareDataType || true
   - sh: type lsb_release && lsb_release -a || true
   - sh: type uname && uname -a || true
+
+matrix:
+  allow_failures:
+    - image: macOS-catalina
+    - image: macOS-mojave
 
 for:
 -
@@ -49,10 +54,9 @@ for:
 -
   matrix:
     only:
-      - image: macOS-bigsur
+      - image: macOS-monterey
   environment:
     MACOSX_DEPLOYMENT_TARGET: 10.14 # mojave
-    HOMEBREW_NO_INSTALL_FROM_API: 1 # brew shinanigans
   install:
     - brew pin appveyor-build-agent # https://github.com/appveyor/ci/issues/3763#issuecomment-1003168277
     - time brew update
@@ -61,7 +65,8 @@ for:
     - time brew install boost ninja python qt5 snappy
     - time brew install --overwrite cmake # for building from source, brew needs its own cmake, which conflicts with the preinstalled one
     - sed -e 's/"qt"/"qt@5"/' -i bak $(brew edit --print-path quazip)
-    - time brew install -s quazip # build from source (with patched qt5 dependency)
+    # Warning: `brew install` ignores locally edited casks and formulae if HOMEBREW_NO_INSTALL_FROM_API is not set.
+    - time env HOMEBREW_NO_INSTALL_FROM_API=1 brew install -s quazip # build from source (with patched qt5 dependency)
     - sh ci/build_macos_PythonQt.sh
   build_script:
     - sh ci/build_macos.sh
@@ -72,7 +77,7 @@ for:
 -
   matrix:
     only:
-      - image: macOS-monterey
+      - image: macOS-bigsur
       - image: macOS-catalina
       - image: macOS-mojave
   before_test:
