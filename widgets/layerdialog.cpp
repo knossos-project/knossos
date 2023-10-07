@@ -1,13 +1,14 @@
 #include "layerdialog.h"
 
 #include "dataset.h"
-#include "loader.h"
 #include "mainwindow.h"
-#include "network.h"
 #include "stateInfo.h"
 #include "viewer.h"
 
 #include <QHeaderView>
+
+#include <cstddef>
+#include <unordered_map>
 
 std::size_t LayerItemModel::ordered_i(std::size_t index) const {
     return state->viewerState->layerOrder[index];
@@ -53,31 +54,32 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
         const auto& data = Dataset::datasets[ordered_i(index.row())];
         auto& layerSettings = Dataset::datasets[ordered_i(index.row())].renderSettings;
         if (role == Qt::DisplayRole || role == Qt::EditRole) {
-            switch(index.column()) {
-            case 1: return QString::number(layerSettings.opacity * 100.0f) + (role == Qt::EditRole ? "" : "%");
-            case 2: return data.compressionString();
-            case 3: return data.apiString();
-            case 4: return data.magnification;
-            case 5: return data.cubeEdgeLength;
-            case 6: return data.experimentname;
-            case 7: return data.description;
-            case 8: return layerSettings.color;
-            }
+            return std::array<QVariant,9>{
+                QVariant{},
+                QString::number(layerSettings.opacity * 100.0f) + (role == Qt::EditRole ? "" : "%"),
+                layerSettings.color,
+                data.description,
+                data.experimentname,
+                data.magnification,
+                data.cubeEdgeLength,
+                data.compressionString(),
+                data.apiString(),
+            }[index.column()];
         } else if (role == Qt::CheckStateRole) {
             if (index.column() == 0) {
                 auto visible = Dataset::datasets[ordered_i(index.row())].renderSettings.visible;
                 return visible ? Qt::Checked : Qt::Unchecked;
-            } else if (index.column() == 2) {
+            } else if (index.column() == 7) {
                 return Segmentation::singleton().enabled && ordered_i(index.row()) == Segmentation::singleton().layerId ? Qt::PartiallyChecked : data.isOverlay() ? Qt::Unchecked : QVariant{};
             }
         } else if (role == Qt::ForegroundRole) {
-            if (index.column() == 8) {
+            if (index.column() == 2) {
                 const auto color = layerSettings.color;
                 const auto luminance = 0.299 * color.redF() + 0.587 * color.greenF() + 0.114 * color.blueF();
                 return QColor((luminance > 0.5) ? Qt::black : Qt::white);
             }
         } else if (role == Qt::BackgroundRole) {
-            if (index.column() == 8) {
+            if (index.column() == 2) {
                 return layerSettings.color;
             }
         }
@@ -101,17 +103,17 @@ bool LayerItemModel::setData(const QModelIndex &index, const QVariant &value, in
             case 1:
                 layerSettings.opacity = std::min(value.toFloat() / 100.0f, 1.0f);
                 break;
-            case 8:
+            case 2:
                 layerSettings.color = value.value<QColor>();
                 break;
             }
         } else if(role == Qt::CheckStateRole) {
             if(index.column() == 0) {
                 state->viewer->setLayerVisibility(ordered_i(index.row()), value.toBool());
-            } else if (index.column() == 2 && value.toBool()) {
+            } else if (index.column() == 7 && value.toBool()) {
                 const auto beginIt = std::cbegin(state->viewerState->layerOrder);
                 const auto segi = std::distance(beginIt, std::find(beginIt, std::cend(state->viewerState->layerOrder), Segmentation::singleton().layerId));
-                const auto prevSegLayerModelIndex = this->index(segi, 2);
+                const auto prevSegLayerModelIndex = index.siblingAtRow(segi);
                 const auto prevSegLayerId = Segmentation::singleton().layerId;
                 Segmentation::singleton().layerId = ordered_i(index.row());
                 state->viewer->reslice_notify(prevSegLayerId);
@@ -148,14 +150,17 @@ void LayerItemModel::reset() {
 }
 
 Qt::ItemFlags LayerItemModel::flags(const QModelIndex &index) const {
-    if(index.isValid()) {
+    if (index.isValid()) {
         Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled;
-        switch(index.column()) {
-        case 0: flags |= Qt::ItemIsUserCheckable; break;
-        case 1: flags |= Qt::ItemIsEditable; break;
-        case 2: flags |= Qt::ItemIsUserCheckable; break;
-        case 7: flags |= Qt::ItemIsEditable; break;
-        case 8: flags |= Qt::ItemIsEditable; break;
+        const std::unordered_map<int,Qt::ItemFlags> map{
+            {0, Qt::ItemIsUserCheckable},
+            {1, Qt::ItemIsEditable},
+            {2, Qt::ItemIsEditable},
+            {3, Qt::ItemIsEditable},
+            {7, Qt::ItemIsUserCheckable},
+        };
+        if (auto it = map.find(index.column()); it != std::end(map)) {
+            return flags | it->second;
         }
         return flags;
     }
@@ -190,10 +195,11 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     optionsSpoiler.setContentLayout(optionsLayout, true);
 
     treeView.setModel(&itemModel);
-    treeView.resizeColumnToContents(0);
-    treeView.resizeColumnToContents(1);
     treeView.setRootIsDecorated(false);
     treeView.setUniformRowHeights(true); // for optimization
+    for (auto i : {0,1,2,5,7,8}) {
+        treeView.resizeColumnToContents(i);
+    }
 
     dupLayerButton.setText("duplicate");
     addLayerButton.setText("add");
@@ -216,7 +222,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
     setLayout(&mainLayout);
 
     QObject::connect(&invisibleButton, &QToolButton::clicked, [](){
-        for (int i{0}; i < Dataset::datasets.size(); ++i) {
+        for (std::size_t i{0}; i < Dataset::datasets.size(); ++i) {
             state->viewer->setLayerVisibility(i, false);
         }
     });
@@ -347,7 +353,7 @@ LayerDialogWidget::LayerDialogWidget(QWidget *parent) : DialogVisibilityNotify(P
 
 
     QObject::connect(&treeView, &QTreeView::doubleClicked, [this](const QModelIndex & index) {
-        if (index.column() == 8) {
+        if (index.column() == 2) {
             colorDialog.setCurrentColor(treeView.model()->data(index, Qt::BackgroundRole).value<QColor>());
             if (state->viewer->suspend([this]{ return colorDialog.exec(); }) == QColorDialog::Accepted) {
                 treeView.model()->setData(index, colorDialog.currentColor());
