@@ -8,6 +8,7 @@
 #include <QHeaderView>
 
 #include <cstddef>
+#include <iterator>
 #include <unordered_map>
 
 std::size_t LayerItemModel::ordered_i(std::size_t index) const {
@@ -25,10 +26,9 @@ LayerItemModel::LayerItemModel() {
 
     QObject::connect(state->viewer, &Viewer::layerVisibilityChanged, this, [this](const std::size_t idx) {
         const auto & layerOrder = state->viewerState->layerOrder;
-        auto it = std::find(std::begin(layerOrder), std::end(layerOrder), idx);
-        if (it != std::end(layerOrder)) {
-            auto modelIndex = index(it - std::begin(layerOrder));
-            emit dataChanged(modelIndex, modelIndex);
+        if (const auto it = std::find(std::cbegin(layerOrder), std::cend(layerOrder), idx); it != std::cend(layerOrder)) {
+            const auto modelIndex = index(std::distance(std::begin(layerOrder), it));
+            emit dataChanged(modelIndex, modelIndex.siblingAtColumn(columnCount()));// +seg layer mark
         }
     });
 }
