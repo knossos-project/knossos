@@ -216,7 +216,7 @@ int main(int argc, char * argv[]) { boost::leaf::try_handle_all([argc, &argv]() 
             Dataset::datasets[1].type = Dataset::CubeType::SNAPPY;
             Segmentation::singleton().enabled = true;
             Segmentation::singleton().layerId = 1;
-            ::state->viewer->resizeTexEdgeLength(128, 3, Dataset::datasets.size());// resets textures
+            ::state->viewer->resizeTexEdgeLength(Dataset::current().cubeEdgeLength, 3, Dataset::datasets.size());// resets textures
             emit ::state->mainWindow->widgetContainer.datasetLoadWidget.datasetChanged();
 
             const auto coord = Dataset::current().boundary / 2;
