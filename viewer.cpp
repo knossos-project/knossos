@@ -26,6 +26,7 @@
 #include "annotation/file_io.h"
 #include "functions.h"
 #include "loader.h"
+#include "qsemaphore.h"
 #include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
@@ -533,8 +534,9 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
             return;
         }
         const CoordOfCube upperLeftDc = Dataset::datasets[layerId].global2cube(vp.textures[layerId].leftUpperPxInAbsPx) + offsetCube;
+        QSemaphore s;
         QFutureSynchronizer<void> sync;
-        for_each_resliced_cube_do(upperLeftDc, [this, &cubeEdgeLen, layerId, &vp, &sync, currentPosition_inside_dc, first](auto, auto, auto currentDc, auto index){
+        for_each_resliced_cube_do(upperLeftDc, [this, &s, &cubeEdgeLen, layerId, &vp, &sync, currentPosition_inside_dc, first](auto, auto, auto currentDc, auto index){
             const int slicePositionWithinCube = vp.n.componentMul(currentPosition_inside_dc.componentMul(Coordinate(1, cubeEdgeLen, std::pow(cubeEdgeLen, 2)))).length();
             Coordinate offsetCubeGlobal = vp.n.componentMul(vp.n.componentMul(currentPosition_inside_dc));// ensure n is positive by multiplying with itself
 
@@ -545,7 +547,8 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
             Coordinate slicePosInAbsPx = Dataset::datasets[layerId].cube2global(currentDc) + Dataset::datasets[layerId].scaleFactor.componentMul(offsetCubeGlobal);
             // This is used to index into the texture. overlayData[index] is the first
             // byte of the datacube slice at position (x_dc, y_dc) in the texture.
-            sync.addFuture(QtConcurrent::run([this, &vp, cube, first, slicePositionWithinCube, slicePosInAbsPx, index, layerId, &cubeEdgeLen]()  {
+            sync.addFuture(QtConcurrent::run([this, &s, &vp, cube, first, slicePositionWithinCube, slicePosInAbsPx, index, layerId, &cubeEdgeLen](){
+//                QSemaphoreReleaser releaser{&s};
                 if (cube != nullptr) {
                     if (Dataset::datasets[layerId].isOverlay()) {
                         ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.textures[layerId].texData.data() + index, vp, layerId);
@@ -554,12 +557,14 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
                         dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.textures[layerId].texData.data() + index, vp, layerId, combine);
                     }
                 } else {
-                    qDebug() << cubeEdgeLen;
+                    qDebug() << cubeEdgeLen << Dataset::datasets[layerId].cubeEdgeLength << vp.textures.at(layerId).texHandle.width() << vp.textures.at(layerId).texHandle.height() << vp.textures.at(layerId).texData.size();
                     std::fill(vp.textures.at(layerId).texData.data() + index, vp.textures.at(layerId).texData.data() + index + 4 * cubeEdgeLen * cubeEdgeLen, 0);
                 }
             }));
         });
+//        s.acquire(sync.futures().size());
         sync.waitForFinished();
+//        sync.clearFutures();
         first = false;
     }
     vp.textures.at(layerId).texHandle.bind();
