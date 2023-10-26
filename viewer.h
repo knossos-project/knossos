@@ -37,6 +37,7 @@
 #include <QLineEdit>
 #include <QObject>
 #include <QQuaternion>
+#include <QSemaphore>
 #include <QTimer>
 
 #include <vector>
