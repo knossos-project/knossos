@@ -199,6 +199,7 @@ target_link_libraries(${PROJECT_NAME}
     Snappy::Snappy
     toml11::toml11
     $<$<AND:$<PLATFORM_ID:Windows>,$<NOT:$<CONFIG:Debug>>>:-Wl,--dynamicbase># use ASLR, required by the »Windows security features test« for »Windows Desktop App Certification«
+    $<$<AND:$<PLATFORM_ID:Windows>,$<CXX_COMPILER_ID:Clang>,$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>>:-Wl,--allow-multiple-definition>
 )
 
 find_program(LSBRELEASE lsb_release)
