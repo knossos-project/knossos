@@ -201,6 +201,7 @@ target_link_libraries(${PROJECT_NAME}
     $<$<AND:$<PLATFORM_ID:Windows>,$<NOT:$<CONFIG:Debug>>>:-Wl,--dynamicbase># use ASLR, required by the »Windows security features test« for »Windows Desktop App Certification«
     $<$<AND:$<PLATFORM_ID:Windows>,$<CXX_COMPILER_ID:Clang>,$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>>:-Wl,--allow-multiple-definition>
 )
+target_compile_definitions(${PROJECT_NAME} PRIVATE $<$<PLATFORM_ID:Darwin>:BOOST_STACKTRACE_GNU_SOURCE_NOT_REQUIRED>)
 
 find_program(LSBRELEASE lsb_release)
 if(LSBRELEASE)

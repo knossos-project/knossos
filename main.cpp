@@ -42,10 +42,14 @@
 #include <QtConcurrentRun>
 #include <QTimer>
 
+#include <boost/stacktrace.hpp>
+#include <boost/leaf.hpp>
+
 #include <exception>
 #include <iostream>
 #include <fstream>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 
 // obsolete with CMAKE_AUTOSTATICPLUGINS in msys2
@@ -80,10 +84,10 @@ struct MessageHermit {
         std::cerr << detail.toStdString() << std::endl;
         formatter << "→ app:" << &a << "→ qApp:" << qApp;
         std::cerr << formattedOutput.toStdString() << std::endl;
-        qDebug() << title.toUtf8();
-        qDebug() << info.toUtf8();
-        qDebug() << detail.toUtf8();
-        qDebug() << formattedOutput.toUtf8();
+        qDebug() << title;
+        qDebug() << info;
+        qDebug().noquote() << detail;
+        qDebug().noquote() << formattedOutput;
         if (!exec) {
             return;
         }
@@ -137,7 +141,7 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext &
 
 Q_DECLARE_METATYPE(std::string)
 
-int main(int argc, char *argv[]) try {
+int main(int argc, char * argv[]) { boost::leaf::try_handle_all([argc, &argv]() mutable -> boost::leaf::result<int> {
 #ifdef _GLIBCXX_DEBUG
     std::cerr << "_GLIBCXX_DEBUG set → debug stdlib in use, which might result in crashes from mismatching ABI" << std::endl;
 #endif
@@ -241,16 +245,13 @@ int main(int argc, char *argv[]) try {
     std::unique_ptr<Loader::Controller> loader_deleter{&Loader::Controller::singleton()};
     std::unique_ptr<Network> network_deleter{&Network::singleton()};
     return app.exec();
-} catch (const std::exception & e) {
-    std::cerr << "catch (std::exception &)" << std::endl;
-    const auto text = QObject::tr("KNOSSOS will terminate due to a problem");
-    MessageHermit{QObject::tr("Unhandled Exception"), text, QString::fromStdString(e.what())}
+},
+    [argc, &argv](const boost::leaf::verbose_diagnostic_info & info) -> int {
+        const auto text = QObject::tr("KNOSSOS will terminate due to a problem.    ");// a little padding to increase the mbox width
+        const auto details = (std::ostringstream{} << boost::stacktrace::stacktrace{}).str();
+        MessageHermit{text, QString::fromStdString((std::ostringstream{} << info).str()), QString::fromStdString(details)}
             .run(argc != 2 || std::string(argv[1]) != "exit");
-    throw;
-} catch (...) {
-    std::cerr << "catch (...)" << std::endl;
-    const auto text = QObject::tr("An unspecifiable problem occured which forced KNOSSOS to terminate.");
-    MessageHermit{QObject::tr("Unrecoverable Error"), text}
-            .run(argc != 2 || std::string(argv[1]) != "exit");
-    throw;
+        throw;
+    }
+);
 }
