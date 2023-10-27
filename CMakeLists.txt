@@ -235,6 +235,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 
 #list(APPEND CMAKE_CXX_FLAGS "-fsanitize=address")
 
+target_compile_options(${PROJECT_NAME} PUBLIC "-fnon-call-exceptions")
+
 #target_compile_options(${PROJECT_NAME} PRIVATE "-ftime-report")
 target_compile_options(${PROJECT_NAME} PRIVATE "-pedantic-errors")
 target_compile_options(${PROJECT_NAME} PRIVATE "-Wall" "-Wextra")
