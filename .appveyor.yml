@@ -8,6 +8,7 @@ image:
   - macOS-bigsur   # 11.7.1
   - macOS-catalina # 10.15.7
   - macOS-mojave   # 10.14
+  - Ubuntu2204
   - Ubuntu2004
   - Ubuntu1804
   - Ubuntu1604
@@ -32,7 +33,9 @@ for:
 -
   matrix:
     only:
-      - image: Ubuntu2004
+      - image: Ubuntu2204
+  environment:
+    APPIMAGE_EXTRACT_AND_RUN: 1 # 2204 doesn’t have libfuse2
   services:
     - docker
   install:
@@ -44,6 +47,7 @@ for:
 -
   matrix:
     only:
+      - image: Ubuntu2004
       - image: Ubuntu1804
       - image: Ubuntu1604
   build: off
