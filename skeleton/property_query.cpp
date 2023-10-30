@@ -22,10 +22,16 @@
 
 #include "property_query.h"
 
+static QString c{"comment"};
+
+bool PropertyQuery::hasComment() const {
+    return properties.count(c);
+}
+
 QString PropertyQuery::getComment() const {
-    return properties.value("comment").toString();
+    return properties.value(c).toString();
 }
 
 void PropertyQuery::setComment(const QString & comment) {
-    properties.insert("comment", comment);
+    properties.insert(c, comment);
 }

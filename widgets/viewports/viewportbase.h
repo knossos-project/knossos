@@ -28,13 +28,17 @@
 
 #include <QAction>
 #include <QDialog>
+#include <QMatrix4x4>
 #include <QMenu>
+#include <QOffscreenSurface>
 #include <QOpenGLBuffer>
+#include <QOpenGLContext>
 #include <QOpenGLDebugLogger>
 #include <QOpenGLFramebufferObject>
-#include <QOpenGLFunctions_1_4>
+#include <QOpenGLFunctions_3_2_Core>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLTexture>
+#include <QOpenGLVertexArrayObject>
 #include <QOpenGLWidget>
 #include <QPushButton>
 #include <QToolButton>
@@ -126,13 +130,12 @@ struct BufferSelection {
     floatCoordinate coord;
 };
 
-constexpr int defaultFontSize = 10;
 class nodeListElement;
 class segmentListElement;
 class Mesh;
 class ViewportOrtho;
 Coordinate getCoordinateFromOrthogonalClick(const QPointF pos, ViewportOrtho & vp);
-class ViewportBase : public QOpenGLWidget, protected QOpenGLFunctions_1_4 { // glBlendFuncSeparate requires 1.4
+class ViewportBase : public QOpenGLWidget, public QOpenGLFunctions_3_2_Core { // glBlendFuncSeparate requires 1.4
     Q_OBJECT
 protected:
     friend class MainWindow;// brainmaps branchpoints
@@ -144,7 +147,7 @@ protected:
 
     QAction *zoomEndSeparator;
     QOpenGLTexture emptyMask{QOpenGLTexture::Target2D};
-    QOpenGLBuffer screenVertexBuf{QOpenGLBuffer::VertexBuffer};
+    QOpenGLBuffer screenVertexBuf{QOpenGLBuffer::VertexBuffer}, orthoVBuf{QOpenGLBuffer::VertexBuffer}, texPosBuf{QOpenGLBuffer::VertexBuffer}, boundaryBuf{QOpenGLBuffer::VertexBuffer}, boundaryGridBuf{QOpenGLBuffer::VertexBuffer}, crosshairBuf{QOpenGLBuffer::VertexBuffer}, vpBorderBuf{QOpenGLBuffer::VertexBuffer}, brushBuf{QOpenGLBuffer::VertexBuffer}, scalebarBuf{QOpenGLBuffer::VertexBuffer}, selectionSquareBuf{QOpenGLBuffer::VertexBuffer};
 private:
     QOpenGLDebugLogger oglLogger;
     QWidget *dockParent;
@@ -165,19 +168,28 @@ private:
 
 protected:
     void renderMeshBuffer(Mesh & buf, boost::optional<QOpenGLShaderProgram&> prog = boost::none);
+    QOpenGLShaderProgram lineShader;
+    QOpenGLShaderProgram sphereShader;
+    QOpenGLShaderProgram cylinderShader;
     QOpenGLShaderProgram meshShader;
     QOpenGLShaderProgram meshTreeColorShader;
     QOpenGLShaderProgram meshIdShader;
     QOpenGLShaderProgram meshSlicingCreateMaskShader;
     QOpenGLShaderProgram meshSlicingWithMaskShader;
     QOpenGLShaderProgram meshSlicingIdShader;
-    QOpenGLShaderProgram shaderTextureQuad;
+    QOpenGLShaderProgram shaderTextureQuad, shaderTextureQuad2;
 
     QOpenGLShaderProgram raw_data_shader;
     QOpenGLShaderProgram overlay_data_shader;
 
+    QOpenGLVertexArrayObject meshVao;
+    QOffscreenSurface meshPickingSurface;
+    QOpenGLContext meshPickingCtx;
+    QPaintDevice * pd{this};
+    QOpenGLVertexArrayObject meshPickingVao;
+    QMatrix4x4 mv, p;
     boost::optional<BufferSelection> pickMesh(const QPoint pos);
-    void pickMeshIdAtPosition();
+    virtual void pickMeshIdAtPosition();
 
     virtual void zoom(const float zoomStep) = 0;
     virtual float zoomStep() const = 0;
@@ -188,7 +200,6 @@ protected:
     void setFrontFacePerspective();
     void renderScaleBar();
     virtual void renderViewport(const RenderOptions & options = RenderOptions()) = 0;
-    void renderText(const Coordinate &pos, const QString &str, const bool fontScaling, const bool centered = false, const QColor color = Qt::black);
     void renderSphere(const Coordinate &pos, float radius, const QColor &color, const RenderOptions & options = RenderOptions());
     void renderCylinder(const Coordinate &base, float baseRadius, const Coordinate &top, float topRadius, const QColor &color, const RenderOptions & options = RenderOptions());
     void renderSkeleton(const RenderOptions & options = RenderOptions());

@@ -1,10 +1,10 @@
-#version 110
+#version 150
 
-attribute vec3 vertex;
+in vec3 vertex;
 
-varying vec2 frag_tex;
+out vec2 ftex;
 
 void main() {
     gl_Position = vec4(vertex, 1);
-    frag_tex = vertex.xy;
+    ftex = 0.5 * (vertex.xy + 1.0);
 }

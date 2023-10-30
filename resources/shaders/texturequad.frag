@@ -1,10 +1,13 @@
-#version 110
+#version 150
 
 uniform sampler2D sampler;
+uniform vec4 color_factor = vec4(1);
 
-varying vec2 frag_tex;
+in vec2 ftex;
+
+out vec4 fragOut;
 
 void main() {
-    vec4 val = texture2D(sampler, 0.5*(frag_tex+1.0));// texture(…) in 130+
-    gl_FragColor = val;
+    vec4 val = color_factor * texture(sampler, ftex);// texture(…) in 130+
+    fragOut = val;
 }

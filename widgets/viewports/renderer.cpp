@@ -38,6 +38,7 @@
 #include "stateInfo.h"
 #include "viewer.h"
 
+#include <GL/gl.h>
 #include <QMatrix4x4>
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLPaintDevice>
@@ -45,6 +46,7 @@
 #include <QPainter>
 #include <QQuaternion>
 #include <QVector3D>
+#include <QVector4D>
 
 #ifdef Q_OS_MAC
     #include <glu.h>
@@ -217,7 +219,7 @@ void ViewportOrtho::renderNode(const nodeListElement & node, const RenderOptions
         auto comment = node.getComment();
         comment = (ViewportOrtho::showNodeComments && comment.isEmpty() == false)? QString(":%1").arg(comment) : "";
         if (nodeID.isEmpty() == false || comment.isEmpty() == false) {
-            renderText(Dataset::current().scales[0].componentMul(node.position), nodeID.append(comment), options.enableTextScaling);
+//            renderText(Dataset::current().scales[0].componentMul(node.position), nodeID.append(comment), options.enableTextScaling);
         }
     }
 }
@@ -228,50 +230,49 @@ void Viewport3D::renderNode(const nodeListElement & node, const RenderOptions & 
         // Render the node description
         if (state->viewerState->idDisplay.testFlag(IdDisplay::AllNodes) || (state->viewerState->idDisplay.testFlag(IdDisplay::ActiveNode) && state->skeletonState->activeNode == &node)) {
             glColor4f(0.f, 0.f, 0.f, 1.f);
-            renderText(Dataset::current().scales[0].componentMul(node.position), QString::number(node.nodeID), options.enableTextScaling);
+//            renderText(Dataset::current().scales[0].componentMul(node.position), QString::number(node.nodeID), options.enableTextScaling);
         }
     }
 }
 
-static void backup_gl_state() {
-    glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
-    glPushAttrib(GL_ALL_ATTRIB_BITS | GL_MULTISAMPLE_BIT);// http://mesa-dev.freedesktop.narkive.com/4FYSpYiY/patch-mesa-change-gl-all-attrib-bits-to-0xffffffff
-    glMatrixMode(GL_TEXTURE);
-    glPushMatrix();
-    glLoadIdentity();
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-}
+#include <QPaintEngine>
 
-static void restore_gl_state() {
-    glMatrixMode(GL_TEXTURE);
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-    glPopAttrib();
-    glPopClientAttrib();
-}
-
-void ViewportBase::renderText(const Coordinate & pos, const QString & str, const bool fontScaling, bool centered, const QColor color) {
-    GLfloat modelview_mat[4][4], projection_mat[4][4],  gl_viewport[4];
-    glGetFloatv(GL_MODELVIEW_MATRIX, &modelview_mat[0][0]);
-    glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
-    glGetFloatv(GL_VIEWPORT, &gl_viewport[0]);
-    //retrieve 2d screen position from coordinate
-    backup_gl_state();
-    QOpenGLPaintDevice paintDevice(gl_viewport[2], gl_viewport[3]);//create paint device from viewport size and current context
-    QPainter painter(&paintDevice);
-    painter.setFont(QFont(painter.font().family(), (fontScaling ? std::ceil(0.02*gl_viewport[2]) : defaultFontSize) * devicePixelRatio()));
-    const auto pos2d = QVector3D(pos.x, pos.y, pos.z).project({&modelview_mat[0][0],4,4}, {&projection_mat[0][0],4,4}, {{0, 0}, paintDevice.size()});
-    painter.setPen(color);
-    painter.drawText(centered ? pos2d.x() - QFontMetrics(painter.font()).horizontalAdvance(str)/2. : pos2d.x(), gl_viewport[3] - pos2d.y(), str);//inverse y coordinate, extract height from gl viewport
-    painter.end();//would otherwise fiddle with the gl state in the dtor
-    restore_gl_state();
-}
+struct painterBinder {
+    QOpenGLVertexArrayObject & rebindVao;
+    QPainter painter;
+    GLint gl_viewport[4];
+    int fontSize = -1;
+    bool d;
+    painterBinder(QPaintDevice & pd, QOpenGLVertexArrayObject & vao, const bool fontScaling) : rebindVao{vao}, d(glIsEnabled(GL_DEPTH_TEST)) {
+        pd.paintEngine()->setActive(true);// nv fix
+        painter.begin(&pd);
+        glGetIntegerv(GL_VIEWPORT, &gl_viewport[0]);
+        painter.setFont(QFont(painter.font().family(), (fontScaling ? std::ceil(0.02*gl_viewport[2]) : fontSize) * pd.devicePixelRatioF()));
+    }
+    template<typename T>
+    void write(const T & mv, const T & p, const floatCoordinate & pos, const QString & str, bool centered = false, const QColor color = Qt::black) {
+        // retrieve 2d screen position from coordinate
+        const auto pos2d = QVector3D(pos.x, pos.y, pos.z).project(mv, p, {gl_viewport[0], gl_viewport[1], gl_viewport[2], gl_viewport[3]}).toPointF();
+        if (pos2d.x() < 0 || pos2d.y() < 0 || pos2d.x() > gl_viewport[2] || pos2d.y() > gl_viewport[3]) {
+            return;
+        }
+        painter.setPen(color);
+        // inverse y coordinate, extract height from gl viewport
+        painter.drawText(centered ? pos2d.x() - QFontMetrics(painter.font()).horizontalAdvance(str)/2. : pos2d.x(), gl_viewport[3] - pos2d.y(), str);
+    }
+    ~painterBinder() {
+//        auto & funcs = dynamic_cast<QOpenGLFunctions_3_2_Core &>(dynamic_cast<ViewportBase &>(*painter.device()));// breaks for QOpenGLPaintDevice
+        painter.end();// would otherwise fiddle with the gl state in the dtor
+        rebindVao.bind();
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);//, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+//        funcs.glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+        if (d) {
+            glEnable(GL_DEPTH_TEST);
+            glDepthFunc(GL_LEQUAL);
+        }
+    }
+};
 
 void ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segment) {
     float p[2][3], a, currentAngle, length, radius, distSourceInter;
@@ -379,13 +380,9 @@ void ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segmen
 }
 
 void ViewportBase::setFrontFacePerspective() {
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    /* define coordinate system for our viewport: left right bottom top near far */
-    glOrtho(0, edgeLength, edgeLength, 0, 25, -25);
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    p.setToIdentity();
+    p.ortho(0, edgeLength, edgeLength, 0, 25, -25);
+    mv.setToIdentity();
 }
 
 void ViewportBase::renderViewportFrontFace() {
@@ -394,50 +391,89 @@ void ViewportBase::renderViewportFrontFace() {
     if (state->viewerState->nodeSelectSquareData.first == static_cast<int>(viewportType)) {
         Coordinate leftUpper = state->viewerState->nodeSelectionSquare.first;
         Coordinate rightLower = state->viewerState->nodeSelectionSquare.second;
+        std::vector<floatCoordinate> vertices{
+            floatCoordinate(leftUpper.x, leftUpper.y, 0.f), // line
+            floatCoordinate(leftUpper.x, rightLower.y, 0.f), // line
+            floatCoordinate(rightLower.x, rightLower.y, 0.f), // line, rect
+            floatCoordinate(rightLower.x, leftUpper.y, 0.f), // line, rect
+            floatCoordinate(leftUpper.x, rightLower.y, 0.f), // rect
+            floatCoordinate(leftUpper.x, leftUpper.y, 0.f) // rect
+        };
 
-        glLineWidth(1.);
-        glBegin(GL_QUADS);
-        glColor4f(0, 1., 0, 0.2);
-            glVertex3f(leftUpper.x, leftUpper.y, 0.f);
-            glVertex3f(leftUpper.x, rightLower.y, 0.f);
-            glVertex3f(rightLower.x, rightLower.y, 0.f);
-            glVertex3f(rightLower.x, leftUpper.y, 0.f);
-        glEnd();
-        glBegin(GL_LINE_LOOP);
-        glColor4f(0, 1., 0, 1);
-            glVertex3f(leftUpper.x, leftUpper.y, 0.f);
-            glVertex3f(leftUpper.x, rightLower.y, 0.f);
-            glVertex3f(rightLower.x, rightLower.y, 0.f);
-            glVertex3f(rightLower.x, leftUpper.y, 0.f);
-        glEnd();
+        int vertexLocation = lineShader.attributeLocation("vertex");
+        lineShader.enableAttributeArray(vertexLocation);
+        selectionSquareBuf.bind();
+        if (selectionSquareBuf.size() == 0) {
+            selectionSquareBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
+        } else {
+            glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
+        }
+        lineShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+        selectionSquareBuf.release();
+
+        lineShader.bind();
+        QVector4D color{0, 1., 0, 1};
+        lineShader.setUniformValue("color", color);
+        lineShader.setUniformValue("modelview_matrix", mv);
+        lineShader.setUniformValue("projection_matrix", p);
+        glDrawArrays(GL_LINE_LOOP, 0, 4);
+
+        color = {0, 1., 0, 0.2};
+        lineShader.setUniformValue("color", color);
+        glDrawArrays(GL_TRIANGLE_STRIP, 2, 4);
+        lineShader.release();
+        lineShader.disableAttributeArray(vertexLocation);
     }
 }
 
 void ViewportOrtho::renderViewportFrontFace() {
+    QOpenGLVertexArrayObject::Binder vao{&meshVao};
     ViewportBase::renderViewportFrontFace();
-    glColor4f(0.7f * std::abs(n.z), 0.7f * std::abs(n.y), 0.7f * std::abs(n.x), 1);
-    glLineWidth(2.);
-    glBegin(GL_LINES);
-        glVertex3d(1, 1, -1);
-        glVertex3d(edgeLength - 1, 1, -1);
-        glVertex3d(edgeLength - 1, 1, -1);
-        glVertex3d(edgeLength - 1, edgeLength - 1, -1);
-        glVertex3d(edgeLength - 1, edgeLength - 1, -1);
-        glVertex3d(1, edgeLength - 1, -1);
-        glVertex3d(1, edgeLength - 1, -1);
-        glVertex3d(1, 1, -1);
-    glEnd();
-
-    if (viewportType == state->viewerState->highlightVp) {
-        // Draw an orange border to highlight the viewport.
-        glColor4f(1., 0.3, 0., 1.);
-        glBegin(GL_LINE_LOOP);
-            glVertex3f(3, 3, -1);
-            glVertex3f(edgeLength - 3, 3, -1);
-            glVertex3f(edgeLength - 3, edgeLength - 3, -1);
-            glVertex3f(3, edgeLength - 3, -1);
-        glEnd();
+    std::vector<floatCoordinate> vertices{
+        floatCoordinate(1, 1, -1),
+        floatCoordinate(edgeLength - 1, 1, -1),
+        floatCoordinate(edgeLength - 1, 1, -1),
+        floatCoordinate(edgeLength - 1, edgeLength - 1, -1),
+        floatCoordinate(edgeLength - 1, edgeLength - 1, -1),
+        floatCoordinate(1, edgeLength - 1, -1),
+        floatCoordinate(1, edgeLength - 1, -1),
+        floatCoordinate(1, 1, -1)
+    };
+    const int vertexLocation = lineShader.attributeLocation("vertex");
+    lineShader.enableAttributeArray(vertexLocation);
+    vpBorderBuf.bind();
+    if (vpBorderBuf.size() == 0) {
+        vpBorderBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
+    } else {
+        glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
     }
+    lineShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+    vpBorderBuf.release();
+
+    lineShader.bind();
+    QVector4D color{0.7f * std::abs(n.z), 0.7f * std::abs(n.y), 0.7f * std::abs(n.x), 1};
+    lineShader.setUniformValue("color", color);
+    lineShader.setUniformValue("modelview_matrix", mv);
+    lineShader.setUniformValue("projection_matrix", p);
+
+    glLineWidth(2.f);
+    glDisable(GL_MULTISAMPLE);
+    glDrawArrays(GL_LINE_LOOP, 0, vertices.size());
+    glEnable(GL_MULTISAMPLE);
+    glLineWidth(1.f);
+    lineShader.release();
+    lineShader.disableAttributeArray(vertexLocation);
+
+//    if (viewportType == state->viewerState->highlightVp) {
+//        // Draw an orange border to highlight the viewport.
+//        glColor4f(1., 0.3, 0., 1.);
+//        glBegin(GL_LINE_LOOP);
+//            glVertex3f(3, 3, -1);
+//            glVertex3f(edgeLength - 3, 3, -1);
+//            glVertex3f(edgeLength - 3, edgeLength - 3, -1);
+//            glVertex3f(3, edgeLength - 3, -1);
+//        glEnd();
+//    }
 
     if (state->viewerState->showScalebar) {
         renderScaleBar();
@@ -445,22 +481,26 @@ void ViewportOrtho::renderViewportFrontFace() {
 }
 
 void Viewport3D::renderViewportFrontFace() {
+    QOpenGLVertexArrayObject::Binder vao{&meshVao};
+    auto mv2 = mv, p2 = p;
     ViewportBase::renderViewportFrontFace();
-    glColor4f(0, 0, 0, 1.);
-    glLineWidth(2.);
-    glBegin(GL_LINES);
-        glVertex3d(1, 1, -1);
-        glVertex3d(edgeLength - 1, 1, -1);
-        glVertex3d(edgeLength - 1, 1, -1);
-        glVertex3d(edgeLength - 1, edgeLength - 1, -1);
-        glVertex3d(edgeLength - 1, edgeLength - 1, -1);
-        glVertex3d(1, edgeLength - 1, -1);
-        glVertex3d(1, edgeLength - 1, -1);
-        glVertex3d(1, 1, -1);
-    glEnd();
+//    glColor4f(0, 0, 0, 1.);
+//    glLineWidth(2.);
+//    glBegin(GL_LINES);
+//        glVertex3d(1, 1, -1);
+//        glVertex3d(edgeLength - 1, 1, -1);
+//        glVertex3d(edgeLength - 1, 1, -1);
+//        glVertex3d(edgeLength - 1, edgeLength - 1, -1);
+//        glVertex3d(edgeLength - 1, edgeLength - 1, -1);
+//        glVertex3d(1, edgeLength - 1, -1);
+//        glVertex3d(1, edgeLength - 1, -1);
+//        glVertex3d(1, 1, -1);
+//    glEnd();
     if (Segmentation::singleton().volume_render_toggle == false && state->viewerState->showScalebar) {
         renderScaleBar();
     }
+    mv = mv2;
+    p = p2;
 }
 
 auto getScaleBarLabelNmAndPx(double vpLenNm, int edgeLength) {
@@ -488,6 +528,10 @@ auto getScaleBarLabelNmAndPx(double vpLenNm, int edgeLength) {
 }
 
 void ViewportBase::renderScaleBar() {
+    QOpenGLVertexArrayObject::Binder vao{&meshVao};
+    QMatrix4x4 p2, mv2;
+    p2.ortho(0, edgeLength, edgeLength, 0, 25, -25);
+
     QString sizeLabel;
     int scalebarLenPx{};
     std::tie(sizeLabel, std::ignore, scalebarLenPx) = getScaleBarLabelNmAndPx(displayedlengthInNmX, edgeLength);
@@ -497,15 +541,33 @@ void ViewportBase::renderScaleBar() {
     Coordinate min(margin,  edgeLength - margin - height, -1);
     Coordinate max(min.x + scalebarLenPx, min.y + height, -1);
     const QColor color{state->viewerState->showScalebar == 1 ? Qt::black : Qt::white};
-    glColor3f(color.redF(), color.greenF(), color.blueF());
-    glBegin(GL_POLYGON);
-    glVertex3d(min.x, min.y, min.z);
-    glVertex3d(max.x, min.y, min.z);
-    glVertex3d(max.x, max.y, min.z);
-    glVertex3d(min.x, max.y, min.z);
-    glEnd();
+    std::vector<floatCoordinate> vertices{
+        Coordinate{min.x, min.y, min.z},
+        Coordinate{min.x, max.y, min.z},
+        Coordinate{max.x, min.y, min.z},
+        Coordinate{max.x, max.y, min.z},
+    };
+    const int vertexLocation = lineShader.attributeLocation("vertex");
+    lineShader.enableAttributeArray(vertexLocation);
+    scalebarBuf.bind();
+    if (scalebarBuf.size() == 0) {
+        scalebarBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
+    } else {
+        glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
+    }
+    lineShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+    scalebarBuf.release();
 
-    renderText(Coordinate(min.x + scalebarLenPx / 2, min.y - 0.01*edgeLength, min.z), sizeLabel, true, true, color);
+    lineShader.bind();
+    lineShader.setUniformValue("color", color);
+    lineShader.setUniformValue("modelview_matrix", mv2);
+    lineShader.setUniformValue("projection_matrix", p2);
+
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, vertices.size());
+    lineShader.release();
+    lineShader.disableAttributeArray(vertexLocation);
+
+    painterBinder{*pd, meshVao, true}.write(mv2, p2, Coordinate(min.x + scalebarLenPx / 2, min.y - 0.01*edgeLength, min.z), sizeLabel, true, color);
 }
 
 void ViewportOrtho::renderViewportFast() {
@@ -683,100 +745,132 @@ void ViewportOrtho::renderViewportFast() {
 
 static bool shouldRenderMesh(const treeListElement & tree, const ViewportType viewportType);
 void ViewportOrtho::renderViewport(const RenderOptions &options) {
+    QOpenGLVertexArrayObject::Binder vao(&meshVao);
     glEnable(GL_MULTISAMPLE);
 
     const auto scale = Dataset::current().scale.componentMul(n).length();
-    const auto nears = scale * state->viewerState->depthCutOff;
-    const auto fars = -scale * state->viewerState->depthCutOff;
+    const auto nears = -scale * state->viewerState->depthCutOff;
+    const auto fars = scale * state->viewerState->depthCutOff;
     const auto nearVal = -nears;
     const auto farVal = -fars;
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, nearVal, farVal);// gluLookAt relies on an unaltered cartesian Projection
+//    glMatrixMode(GL_PROJECTION);
+//    glLoadIdentity();
+//    glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, nearVal, farVal);// gluLookAt relies on an unaltered cartesian Projection
+    p = QMatrix4x4{};
+    p.ortho(-displayedIsoPx, +displayedIsoPx, +displayedIsoPx, -displayedIsoPx, nearVal, farVal);
 
     const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
     auto view = [&](){
-        glLoadIdentity();
+//        glLoadIdentity();
         // place eye at the center so the depth cutoff is applied correctly
         const auto eye = Coord<double>(isoCurPos);
         // offset center with n at the same magnitude as the current position
         // gluLookAt only uses it to calculate the focal direction via center - camera
         // which suffers heavy loss of precision if the magnitudes differ substantially
-        const auto center =  Coord<double>(isoCurPos) - Coord<double>(n) * std::max(1., static_cast<double>(isoCurPos.length()));
+        // n points to where the vp is »looking«, so we have to _add_ to place center in that direction
+        const auto center =  Coord<double>(isoCurPos) + Coord<double>(n) * std::max(1., static_cast<double>(isoCurPos.length()));
         const auto v2 = Coord<double>(this->v2);
-        gluLookAt(eye.x, eye.y, eye.z
-                  , center.x, center.y, center.z
-                  , v2.x, v2.y, v2.z);// negative up vectors, because origin is at the top
+//        gluLookAt(eye.x, eye.y, eye.z
+//                  , center.x, center.y, center.z
+//                  , v2.x, v2.y, v2.z);// negative up vectors, because origin is at the top
+        mv = QMatrix4x4{};
+        mv.lookAt(QVector3D(eye.x, eye.y, eye.z)
+                  , QVector3D(center.x, center.y, center.z)
+                  , QVector3D(-v2.x, -v2.y, -v2.z));
     };
-    glMatrixMode(GL_MODELVIEW);
+//    glMatrixMode(GL_MODELVIEW);
     view();
-    updateFrustumClippingPlanes();
+//    updateFrustumClippingPlanes();
 
-    glPolygonMode(GL_FRONT, GL_FILL);
+//    glPolygonMode(GL_FRONT, GL_FILL);
     glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     glDisable(GL_DEPTH_TEST);// don’t clip the skeleton
     if (!options.nodePicking) {
         // data that’s visible through the skeleton (e.g. halo)
-        renderArbitrarySlicePane(options, 1.0, true);
+        renderArbitrarySlicePane(options, mv, p, 1.0, true);
     }
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
 
-    glColor4f(1, 1, 1, 1);
+//    glColor4f(1, 1, 1, 1);
     if (options.drawSkeleton && state->viewerState->skeletonDisplayVPOrtho.testFlag(TreeDisplay::ShowInOrthoVPs)) {
-        glPushMatrix();
+//        glPushMatrix();
+        const auto halfPixelOffset = 0.5 * (v1 - v2) * Dataset::current().scale;
         if (viewportType != VIEWPORT_ARBITRARY) {// arb already is at the pixel center
-            const auto halfPixelOffset = 0.5 * (v1 - v2) * Dataset::current().scale;
-            glTranslatef(halfPixelOffset.x(), halfPixelOffset.y(), halfPixelOffset.z());
+            mv.translate(halfPixelOffset);
         }
         renderSkeleton(options);
-        glPopMatrix();
+        if (viewportType != VIEWPORT_ARBITRARY) {
+            mv.translate(-halfPixelOffset);
+        }
+//        glPopMatrix();
     }
 
     if (!options.nodePicking) {
-        renderArbitrarySlicePane(options, 0.6);
+        renderArbitrarySlicePane(options, mv, p, 0.6);
     }
 
-    glColor4f(1, 1, 1, 1);
+//    glColor4f(1, 1, 1, 1);
     glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     glDisable(GL_DEPTH_TEST);// don’t render skeleton above crosshairs
-    if (options.drawCrosshairs) {
-        glPushMatrix();
-        glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
-        glLineWidth(1);
+    if (options.drawCrosshairs != CrosshairDisplay::HIDDEN) {
+        auto mv2 = mv;
+        mv2.translate(isoCurPos.x, isoCurPos.y, isoCurPos.z);
         float dataPxX = displayedIsoPx;
         float dataPxY = displayedIsoPx;
-        const auto hOffset = viewportType == VIEWPORT_ARBITRARY ? QVector3D{} : 0.5 * v1 * Dataset::current().scale;
-        const auto vOffset = viewportType == VIEWPORT_ARBITRARY ? QVector3D{} : 0.5 * v2 * Dataset::current().scale;
-        glBegin(GL_LINES);
-            glColor4f(std::abs(v2.z), std::abs(v2.y), std::abs(v2.x), 0.3);
-            const auto halfLength = dataPxX * v1;
-            const auto left = -halfLength - vOffset;
-            const auto right = halfLength - vOffset;
-            glVertex3f(left.x(), left.y(), left.z());
-            glVertex3f(right.x(), right.y(), right.z());
+        const auto halfLength = dataPxX * v1;
+        const auto hOffset = viewportType == VIEWPORT_ARBITRARY ? floatCoordinate{} : v1.componentMul(Dataset::current().scale) * 0.5;
+        const auto vOffset = viewportType == VIEWPORT_ARBITRARY ? floatCoordinate{} : v2.componentMul(Dataset::current().scale) * 0.5;
+        const auto left = vOffset * -1 - halfLength;
+        const auto right = halfLength - vOffset;
 
-            glColor4f(std::abs(v1.z), std::abs(v1.y), std::abs(v1.x), 0.3);
-            const auto halfHeight = dataPxY * v2;
-            const auto top = -halfHeight + hOffset;
-            const auto bottom = halfHeight + hOffset;
-            glVertex3f(top.x(), top.y(), top.z());
-            glVertex3f(bottom.x(), bottom.y(), bottom.z());
-        glEnd();
-        glPopMatrix();
-        glColor4f(1, 1, 1, 1);
+        const auto halfHeight = dataPxY * v2;
+        const auto top = hOffset - halfHeight;
+        const auto bottom = halfHeight + hOffset;
+
+        std::vector<floatCoordinate> vertices = { left, right, top, bottom };
+        const int vertexLocation = lineShader.attributeLocation("vertex");
+        lineShader.enableAttributeArray(vertexLocation);
+        crosshairBuf.bind();
+        if (crosshairBuf.size() == 0) {
+            crosshairBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
+        } else {
+            glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
+        }
+        lineShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+        crosshairBuf.release();
+        const auto opacity = options.drawCrosshairs == CrosshairDisplay::SUBTLE ? 0.3f : 1.f;
+        lineShader.bind();
+        QVector4D color{std::abs(v2.z), std::abs(v2.y), std::abs(v2.x), opacity};
+        lineShader.setUniformValue("color", color);
+        lineShader.setUniformValue("modelview_matrix", mv2);
+        lineShader.setUniformValue("projection_matrix", p);
+
+        glDisable(GL_MULTISAMPLE);
+
+        glDrawArrays(GL_LINES, 0, 2);
+        color = {std::abs(v1.z), std::abs(v1.y), std::abs(v1.x), opacity};
+        lineShader.setUniformValue("color", color);
+        glDrawArrays(GL_LINES, 2, 2);
+        lineShader.disableAttributeArray(vertexLocation);
+        lineShader.release();
+
+        glEnable(GL_MULTISAMPLE);
     }
+
     auto setStateAndRenderMesh = [this](auto func){
-        glMatrixMode(GL_PROJECTION);
-        glPushMatrix();
-        glLoadIdentity();
+//        glMatrixMode(GL_PROJECTION);
+//        glPushMatrix();
+//        glLoadIdentity();
         // since the mesh is offset the slicing/clipping plane has to be offset as well
         const auto meshVoxelCenterOffset = 0.5 * Dataset::current().scales[0].componentMul(n).dot(floatCoordinate{1,1,1});
-        glOrtho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, -(meshVoxelCenterOffset), -(-state->skeletonState->volBoundary()));
-        glMatrixMode(GL_MODELVIEW);
+//        glOrtho(-displayedIsoPx, +displayedIsoPx, +displayedIsoPx, -displayedIsoPx, (meshVoxelCenterOffset), (-state->skeletonState->volBoundary()));
+        p = QMatrix4x4{};
+        p.ortho(-displayedIsoPx, +displayedIsoPx, +displayedIsoPx, -displayedIsoPx, (meshVoxelCenterOffset), (-state->skeletonState->volBoundary()));
+//        glMatrixMode(GL_MODELVIEW);
 
         glEnable(GL_DEPTH_TEST);
         const auto blendState = glIsEnabled(GL_BLEND);
@@ -788,14 +882,9 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
             glDisable(GL_BLEND);
         }
         glDisable(GL_DEPTH_TEST);
-
-        glMatrixMode(GL_PROJECTION);
-        glPopMatrix();
-        glMatrixMode(GL_MODELVIEW);
     };
-    if (options.meshPicking) {
-        setStateAndRenderMesh([this](){ pickMeshIdAtPosition(); });
-    } else if (state->viewerState->meshDisplay.testFlag(TreeDisplay::ShowInOrthoVPs) && options.drawMesh) {
+    if (state->viewerState->meshDisplay.testFlag(TreeDisplay::ShowInOrthoVPs) && options.drawMesh) {
+        QOpenGLVertexArrayObject::Binder vao(&meshVao);
         QOpenGLFramebufferObjectFormat format;
         format.setSamples(0);//state->viewerState->sampleBuffers
         format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
@@ -810,7 +899,7 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
             if (!shouldRenderMesh(tree, viewportType)) {
                 continue;
             }
-            glEnable(GL_TEXTURE_2D);
+//            glEnable(GL_TEXTURE_2D);
             setStateAndRenderMesh([this, &fbo, &maskfbo, &tree](){
                 maskfbo.bind();
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -834,27 +923,26 @@ void ViewportOrtho::renderViewport(const RenderOptions &options) {
 
         shaderTextureQuad.bind();
 
-        glEnable(GL_TEXTURE_2D);
+//        glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, fbo.texture());
 
-        screenVertexBuf.bind();
-        int vertexLocation = shaderTextureQuad.attributeLocation("vertex");
+        const int vertexLocation = shaderTextureQuad.attributeLocation("vertex");
         shaderTextureQuad.enableAttributeArray(vertexLocation);
-        shaderTextureQuad.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+        screenVertexBuf.bind();
+        shaderTextureQuad.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);//
         screenVertexBuf.release();
 
-        glDrawArrays(GL_QUADS, 0, 4);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
         shaderTextureQuad.disableAttributeArray(vertexLocation);
         shaderTextureQuad.release();
 
-        glDisable(GL_TEXTURE_2D);
+//        glDisable(GL_TEXTURE_2D);
     }
+
     if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Brush) && hasCursor) {
-        glPushMatrix();
         view();
         renderBrush(getMouseCoordinate());
-        glPopMatrix();
     }
     if (dstPos) {
         glPushMatrix();
@@ -1016,6 +1104,7 @@ void Viewport3D::renderVolumeVP() {
 }
 
 void Viewport3D::renderViewport(const RenderOptions &options) {
+    QOpenGLVertexArrayObject::Binder vao(&meshVao);
     auto& seg = Segmentation::singleton();
     if (seg.volume_render_toggle) {
         if (!options.nodePicking) {
@@ -1031,27 +1120,20 @@ void Viewport3D::renderViewport(const RenderOptions &options) {
 }
 
 void ViewportBase::renderMeshBuffer(Mesh & buf, boost::optional<QOpenGLShaderProgram&> prog) {
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    // align with pixel center, but 1% off in 3dvp to prevent z fighting
-    const auto meshVoxelCenterOffset = Dataset::current().scales[0] * 0.5 * (viewportType == VIEWPORT_SKELETON ? 0.99 : 1);
-    glTranslatef(meshVoxelCenterOffset.x, meshVoxelCenterOffset.y, meshVoxelCenterOffset.z);
-    // get modelview and projection matrices
-    GLfloat modelview_mat[4][4];
-    glGetFloatv(GL_MODELVIEW_MATRIX, &modelview_mat[0][0]);
-    GLfloat projection_mat[4][4];
-    glGetFloatv(GL_PROJECTION_MATRIX, &projection_mat[0][0]);
-    glPopMatrix();
-
     auto & meshShader = prog ? prog.get() : buf.useTreeColor ? meshTreeColorShader : this->meshShader;
 
     if (!meshShader.isLinked()) {
         return;
     }
 
+    auto mv2 = mv;
+    if (viewportType != VIEWPORT_SKELETON) {
+        mv2.translate(0.5 * Dataset::current().scale);
+    }
+
     meshShader.bind();
-    meshShader.setUniformValue("modelview_matrix", modelview_mat);
-    meshShader.setUniformValue("projection_matrix", projection_mat);
+    meshShader.setUniformValue("modelview_matrix", mv2);
+    meshShader.setUniformValue("projection_matrix", p);
     floatCoordinate normal = state->mainWindow->viewportOrtho(viewportType)->n;
     meshShader.setUniformValue("vp_normal", normal.x, normal.y, normal.z);
     std::array<GLint, 4> vp;
@@ -1164,24 +1246,24 @@ std::array<unsigned char, 4> meshIdToColor(uint32_t id) {
 }
 
 boost::optional<BufferSelection> ViewportBase::pickMesh(const QPoint pos) {
-    makeCurrent();
-    glPushAttrib(GL_VIEWPORT_BIT);
-    glViewport(0, 0, this->width(), this->height());
+    meshPickingCtx.makeCurrent(&meshPickingSurface);
+    glViewport(0, 0, width(), height());
     QOpenGLFramebufferObject fbo(width(), height(), QOpenGLFramebufferObject::CombinedDepthStencil);
     fbo.bind();
     glClearColor(1, 1, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
-    renderViewport(RenderOptions::meshPickingRenderOptions());
+    meshPickingVao.bind();
+    pickMeshIdAtPosition();
     fbo.release();
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT);
-    glPopAttrib();
     // read color and translate to id
     QImage fboImage(fbo.toImage());
     // Need to specify image format with no premultiplied alpha.
     // Otherwise the image is automatically unpremultiplied on pixel read even though it was never premultiplied in the first place. See https://doc.qt.io/qt-5/qopenglframebufferobject.html#toImage
     QImage image(fboImage.constBits(), fboImage.width(), fboImage.height(), QImage::Format_ARGB32);
     const auto triangleID = meshColorToId(image.pixelColor(pos));
+    meshPickingVao.release();
     boost::optional<treeListElement&> treeIt;
     for (auto & tree : state->skeletonState->trees) {// find tree with appropriate triangle range
         if (tree.mesh && tree.mesh->pickingIdOffset + tree.mesh->vertex_count > triangleID) {
@@ -1215,6 +1297,8 @@ void ViewportBase::pickMeshIdAtPosition() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);//the depth thing buffer clear is the important part
     const auto blendState = glIsEnabled(GL_BLEND);
     glDisable(GL_BLEND);
+    bool depthTesting = glIsEnabled(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
 
     // create id map
     std::uint32_t id_counter = 1;
@@ -1247,6 +1331,9 @@ void ViewportBase::pickMeshIdAtPosition() {
     } else {
         glDisable(GL_BLEND);
     }
+    if (!depthTesting) {
+        glDisable(GL_DEPTH_TEST);
+    }
 }
 
 void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
@@ -1266,21 +1353,28 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         std::array<float, 16> inverseRotation;
         rotation.inverted().copyDataTo(inverseRotation.data());
         // invert rotation
-        glMatrixMode(GL_MODELVIEW);
-        glLoadMatrixf(state->skeletonState->skeletonVpModelView);
-        glTranslatef(rotationCenter.x, rotationCenter.y, rotationCenter.z);
-        glMultMatrixf(inverseRotation.data());
+//        glMatrixMode(GL_MODELVIEW);
+//        glLoadMatrixf(state->skeletonState->skeletonVpModelView);
+//        glTranslatef(rotationCenter.x, rotationCenter.y, rotationCenter.z);
+//        glMultMatrixf(inverseRotation.data());
         // add new rotation
         QMatrix4x4 singleRotation;
         singleRotation.rotate(y, {0, 1, 0});
         singleRotation.rotate(x, {1, 0, 0});
         std::array<float, 16> rotationState;
-        (rotation *= singleRotation).copyDataTo(rotationState.data()); // transforms to row-major matrix
+        (rotation * singleRotation).copyDataTo(rotationState.data()); // transforms to row-major matrix
         // apply complete rotation
-        glMultMatrixf(rotationState.data());
-        glTranslatef(-rotationCenter.x, -rotationCenter.y, -rotationCenter.z);
+//        glMultMatrixf(rotationState.data());
+//        glTranslatef(-rotationCenter.x, -rotationCenter.y, -rotationCenter.z);
         // save the modified basic model view matrix
         glGetFloatv(GL_MODELVIEW_MATRIX, state->skeletonState->skeletonVpModelView);
+
+        mv.translate(rotationCenter.x, rotationCenter.y, rotationCenter.z);
+        mv *= rotation.inverted().transposed();
+        mv *= (rotation * singleRotation).transposed();
+        mv.translate(-rotationCenter.x, -rotationCenter.y, -rotationCenter.z);
+
+        rotation *= singleRotation;
     };
 
     // perform user defined coordinate system rotations. use single matrix multiplication as opt.! TDitem
@@ -1296,6 +1390,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         state->skeletonState->definedSkeletonVpView = SKELVP_CUSTOM;
 
         rotation.setToIdentity();
+        mv.setToIdentity();
         QMatrix4x4{}.copyDataTo(state->skeletonState->skeletonVpModelView);
         const auto previousRotation = state->viewerState->rotationCenter;
         state->viewerState->rotationCenter = RotationCenter::CurrentPosition;
@@ -1322,6 +1417,7 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
         emit updateZoomWidget();
 
         rotation.setToIdentity();
+        mv.setToIdentity();
         QMatrix4x4{}.copyDataTo(state->skeletonState->skeletonVpModelView);
         const auto previousRotationCenter = state->viewerState->rotationCenter;
         state->viewerState->rotationCenter = RotationCenter::DatasetCenter;
@@ -1348,231 +1444,283 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
     const auto fars = state->skeletonState->volBoundary();
     const auto nearVal = -nears;
     const auto farVal = -fars;
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(left, right, bottom, top, nearVal, farVal);
+//    glMatrixMode(GL_PROJECTION);
+//    glLoadIdentity();
+//    glOrtho(left, right, bottom, top, nearVal, farVal);
+    p = QMatrix4x4{};
+    p.ortho(left, right, bottom, top, nearVal, farVal);
 
     // Now we set up the view on the skeleton and draw some very basic VP stuff like the gray background
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+//    glMatrixMode(GL_MODELVIEW);
+//    glLoadIdentity();
     // load model view matrix that stores rotation state!
-    glLoadMatrixf(state->skeletonState->skeletonVpModelView);
+//    glLoadMatrixf(state->skeletonState->skeletonVpModelView);
+//    mv = QMatrix4x4{QMatrix4x4{state->skeletonState->skeletonVpModelView}.constData()};
     if (!options.nodePicking) {
         // Now we draw the  background of our skeleton VP
         glClearColor(1, 1, 1, 1);// white
         glClear(GL_COLOR_BUFFER_BIT);
     }
+    if (options.drawSkeleton && state->viewerState->skeletonDisplayVP3D.testFlag(TreeDisplay::ShowIn3DVP)) {
+//        glPushMatrix();
+//        updateFrustumClippingPlanes();// should update on vp view translate, rotate or scale
+        renderSkeleton(options);
+//        glPopMatrix();
+    }
+
+    if (state->viewerState->meshDisplay.testFlag(TreeDisplay::ShowIn3DVP) && options.drawMesh) {
+        renderMesh();
+    }
 
     if (options.drawViewportPlanes) { // Draw the slice planes for orientation inside the data stack
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         if (state->viewerState->showVpPlanes && !Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps)) {
-            glPushMatrix();
+//            glPushMatrix();
             if (state->viewerState->showXYplane && state->viewer->window->viewportXY->isVisible()) {
-                state->viewer->window->viewportXY->renderArbitrarySlicePane(options);
+                auto mv2 = mv;
+                const auto & vp = *state->viewer->window->viewportXY;
+                mv2.translate(0.5 * Dataset::current().scale.componentMul(vp.v2 - vp.v1));
+                state->viewer->window->viewportXY->renderArbitrarySlicePane(options, mv2, p);
             }
             if (state->viewerState->showXZplane && state->viewer->window->viewportXZ->isVisible()) {
-                state->viewer->window->viewportXZ->renderArbitrarySlicePane(options);
+                auto mv2 = mv;
+                const auto & vp = *state->viewer->window->viewportXZ;
+                mv2.translate(0.5 * (vp.v2 - vp.v1) * Dataset::current().scale);
+                state->viewer->window->viewportXZ->renderArbitrarySlicePane(options, mv2, p);
             }
             if (state->viewerState->showZYplane && state->viewer->window->viewportZY->isVisible()) {
-                state->viewer->window->viewportZY->renderArbitrarySlicePane(options);
+                auto mv2 = mv;
+                const auto & vp = *state->viewer->window->viewportZY;
+                mv2.translate(0.5 * (vp.v2 - vp.v1) * Dataset::current().scale);
+                state->viewer->window->viewportZY->renderArbitrarySlicePane(options, mv2, p);
             }
             if (state->viewerState->showArbplane && state->viewer->window->viewportArb->isVisible()) {
-                state->viewer->window->viewportArb->renderArbitrarySlicePane(options);
+                state->viewer->window->viewportArb->renderArbitrarySlicePane(options, mv, p);
             }
-            glPopMatrix();
+//            glPopMatrix();
         }
-        glPushMatrix();
-
-        const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
-        glTranslatef(isoCurPos.x, isoCurPos.y, isoCurPos.z);
-        glColor4f(1., 1., 1., 1.);
-        // colored slice boundaries
         if (options.vp3dSliceBoundaries) {
-            state->viewer->window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
+            const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
+            auto mv2 = mv;
+            mv2.translate(isoCurPos);
+            std::vector<floatCoordinate> vertices;
+            state->viewer->window->forEachOrthoVPDo([&vertices](ViewportOrtho & orthoVP) {
+                const float dataPxX = orthoVP.displayedIsoPx;
+                const float dataPxY = orthoVP.displayedIsoPx;
+                std::vector<floatCoordinate> this_vertices = {
+                        floatCoordinate(-dataPxX * orthoVP.v1.x - dataPxY * orthoVP.v2.x,
+                                        -dataPxX * orthoVP.v1.y - dataPxY * orthoVP.v2.y,
+                                        -dataPxX * orthoVP.v1.z - dataPxY * orthoVP.v2.z),
+                        floatCoordinate( dataPxX * orthoVP.v1.x - dataPxY * orthoVP.v2.x,
+                                        dataPxX * orthoVP.v1.y - dataPxY * orthoVP.v2.y,
+                                        dataPxX * orthoVP.v1.z - dataPxY * orthoVP.v2.z),
+                        floatCoordinate( dataPxX * orthoVP.v1.x + dataPxY * orthoVP.v2.x,
+                                        dataPxX * orthoVP.v1.y + dataPxY * orthoVP.v2.y,
+                                        dataPxX * orthoVP.v1.z + dataPxY * orthoVP.v2.z),
+                        floatCoordinate(-dataPxX * orthoVP.v1.x + dataPxY * orthoVP.v2.x,
+                                        -dataPxX * orthoVP.v1.y + dataPxY * orthoVP.v2.y,
+                                        -dataPxX * orthoVP.v1.z + dataPxY * orthoVP.v2.z)
+                };
+                vertices.insert(vertices.end(), this_vertices.begin(), this_vertices.end());
+            });
+            const int vertexLocation = lineShader.attributeLocation("vertex");
+            lineShader.enableAttributeArray(vertexLocation);
+            vpBorderBuf.bind();
+            if (vpBorderBuf.size() == 0) {
+                vpBorderBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
+            } else {
+                glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
+            }
+            lineShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+            vpBorderBuf.release();
+
+            glEnable(GL_LINE_SMOOTH);
+            lineShader.bind();
+            lineShader.setUniformValue("projection_matrix", p);
+            state->viewer->window->forEachOrthoVPDo([this, mv2](ViewportOrtho & orthoVP) {
                 if (orthoVP.isVisible()) {
-                    const float dataPxX = orthoVP.displayedIsoPx;
-                    const float dataPxY = orthoVP.displayedIsoPx;
-                    glColor4f(0.7 * std::abs(orthoVP.n.z), 0.7 * std::abs(orthoVP.n.y), 0.7 * std::abs(orthoVP.n.x), 1.);
-                    glBegin(GL_LINE_LOOP);
-                        glVertex3f(-dataPxX * orthoVP.v1.x - dataPxY * orthoVP.v2.x,
-                                   -dataPxX * orthoVP.v1.y - dataPxY * orthoVP.v2.y,
-                                   -dataPxX * orthoVP.v1.z - dataPxY * orthoVP.v2.z);
-                        glVertex3f( dataPxX * orthoVP.v1.x - dataPxY * orthoVP.v2.x,
-                                    dataPxX * orthoVP.v1.y - dataPxY * orthoVP.v2.y,
-                                    dataPxX * orthoVP.v1.z - dataPxY * orthoVP.v2.z);
-                        glVertex3f( dataPxX * orthoVP.v1.x + dataPxY * orthoVP.v2.x,
-                                    dataPxX * orthoVP.v1.y + dataPxY * orthoVP.v2.y,
-                                    dataPxX * orthoVP.v1.z + dataPxY * orthoVP.v2.z);
-                        glVertex3f(-dataPxX * orthoVP.v1.x + dataPxY * orthoVP.v2.x,
-                                   -dataPxX * orthoVP.v1.y + dataPxY * orthoVP.v2.y,
-                                   -dataPxX * orthoVP.v1.z + dataPxY * orthoVP.v2.z);
-                    glEnd();
+                    auto mv3 = mv2;
+                    if (orthoVP.viewportType != VIEWPORT_ARBITRARY) {
+                        mv3.translate(0.5 * Dataset::current().scale.componentMul(orthoVP.v2 - orthoVP.v1));
+                    }
+                    lineShader.setUniformValue("modelview_matrix", mv3);
+                    QVector4D color{0.7f * std::abs(orthoVP.n.z), 0.7f * std::abs(orthoVP.n.y), 0.7f * std::abs(orthoVP.n.x), 1.f};
+                    lineShader.setUniformValue("color", color);
+                    const int idx = static_cast<int>(orthoVP.viewportType);
+                    glDrawArrays(GL_LINE_LOOP, idx*4, 4);
                 }
             });
+            if (options.vp3dSliceIntersections) {
+                 const auto size = state->viewer->window->viewportXY->displayedIsoPx;
+                 const auto offset = Dataset::current().scale * 0.5;
+                 std::vector<floatCoordinate> vertices = {
+                    floatCoordinate(-size - offset.x, 0, 0),
+                    floatCoordinate( size - offset.x, 0, 0),
+                    floatCoordinate(0, -size - offset.y, 0),
+                    floatCoordinate(0,  size - offset.y, 0),
+                    floatCoordinate(0, 0, -size - offset.z),
+                    floatCoordinate(0, 0,  size - offset.z)
+                };
+
+                 crosshairBuf.bind();
+                 if (crosshairBuf.size() == 0) {
+                     crosshairBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
+                 } else {
+                     glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
+                 }
+                 lineShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+                 crosshairBuf.release();
+                 QVector4D color{0, 0, 0, 1};
+                 lineShader.setUniformValue("modelview_matrix", mv2);
+                 lineShader.setUniformValue("color", color);
+                 if (!state->viewerState->showXYplane || !state->viewerState->showXZplane) {
+                    glDrawArrays(GL_LINES, 0, 2);
+                 }
+                 if (!state->viewerState->showXYplane || !state->viewerState->showZYplane) {
+                    glDrawArrays(GL_LINES, 2, 2);
+                 }
+                 if (!state->viewerState->showXZplane || !state->viewerState->showZYplane) {
+                    glDrawArrays(GL_LINES, 4, 2);
+                 }
+            }
+            lineShader.release();
+            glDisable(GL_LINE_SMOOTH);
+            lineShader.disableAttributeArray(vertexLocation);
         }
-        // intersection lines
-        if (options.vp3dSliceIntersections) {
-            const auto size = state->viewer->window->viewportXY->displayedIsoPx;
-            glColor4f(0., 0., 0., 1.);
-            if (!state->viewerState->showXYplane || !state->viewerState->showXZplane) {
-                glBegin(GL_LINES);
-                    glVertex3f(-size, 0, 0);
-                    glVertex3f( size, 0, 0);
-                glEnd();
-            }
-            if (!state->viewerState->showXYplane || !state->viewerState->showZYplane) {
-                glBegin(GL_LINES);
-                    glVertex3f(0, -size, 0);
-                    glVertex3f(0,  size, 0);
-                glEnd();
-            }
-            if (!state->viewerState->showXZplane || !state->viewerState->showZYplane) {
-                glBegin(GL_LINES);
-                    glVertex3f(0, 0, -size);
-                    glVertex3f(0, 0,  size);
-                glEnd();
-            }
-        }
-        glPopMatrix();
     }
 
     if (options.drawBoundaryBox || options.drawBoundaryAxes) {
         // Now we draw the dataset corresponding stuff (volume box of right size, axis descriptions...)
         if(options.drawBoundaryBox) {
-            glPushMatrix();
-            glScalef(scaledBoundary.x, scaledBoundary.y, scaledBoundary.z);
+            std::vector<floatCoordinate> vertices{
+                floatCoordinate(0, scaledBoundary.y,  0),
+                floatCoordinate(0, 0, 0),
+                floatCoordinate(scaledBoundary.x,  0, 0),
+                floatCoordinate(scaledBoundary.x,  scaledBoundary.y,  0),
+                floatCoordinate(scaledBoundary.x,  scaledBoundary.y, scaledBoundary.z),
+                floatCoordinate(scaledBoundary.x, 0,  scaledBoundary.z),
+                floatCoordinate(0, 0, scaledBoundary.z),
+                floatCoordinate(0, scaledBoundary.y, scaledBoundary.z),
+                floatCoordinate(0, scaledBoundary.y, 0),
+                floatCoordinate(scaledBoundary.x, scaledBoundary.y, 0),
+                floatCoordinate(scaledBoundary.x,  scaledBoundary.y,  scaledBoundary.z),
+                floatCoordinate(0, scaledBoundary.y, scaledBoundary.z),
+                floatCoordinate(0, 0,  scaledBoundary.z),
+                floatCoordinate(0, 0,  0),
+                floatCoordinate(scaledBoundary.x, 0,  0),
+                floatCoordinate(scaledBoundary.x, 0,  scaledBoundary.z)
+            };
+            int vertexLocation = lineShader.attributeLocation("vertex");
+            lineShader.enableAttributeArray(vertexLocation);
+            boundaryBuf.bind();
+            if (boundaryBuf.size() == 0) {
+                boundaryBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
+            } else {
+                glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
+            }
+            lineShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+            boundaryBuf.release();
 
-            glColor4f(0.8, 0.8, 0.8, 1.0);
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glBegin(GL_QUADS);
-                glNormal3i(0, 0, 1);// low z
-                glVertex3i(0, 0, 0);
-                glVertex3i(1, 0, 0);
+            QVector4D color{0.8, 0.8, 0.8, 1};
+            glEnable(GL_LINE_SMOOTH);
+            lineShader.bind();
+            lineShader.setUniformValue("color", color);
+            lineShader.setUniformValue("modelview_matrix", mv);
+            lineShader.setUniformValue("projection_matrix", p);
 
-                glVertex3i(1, 1, 0);
-                glVertex3i(0, 1, 0);
-
-                glNormal3i(0, 0, 1);// high z
-                glVertex3i(0, 0, 1);
-                glVertex3i(1, 0, 1);
-
-                glVertex3i(1, 1, 1);
-                glVertex3i(0, 1, 1);
-
-                glNormal3i(0, 1, 0);// low y
-                glVertex3i(0, 0, 0);
-                glVertex3i(0, 0, 1);
-
-                glVertex3i(1, 0, 1);
-                glVertex3i(1, 0, 0);
-
-                glNormal3i(0, 1, 0);// high y
-                glVertex3i(0, 1, 0);
-                glVertex3i(0, 1, 1);
-
-                glVertex3i(1, 1, 1);
-                glVertex3i(1, 1, 0);
-
-                glNormal3i(1, 0, 0);// low x
-                glVertex3i(0, 0, 0);
-                glVertex3i(0, 0, 1);
-
-                glVertex3i(0, 1, 1);
-                glVertex3i(0, 1, 0);
-
-                glNormal3i(1, 0, 0);// high x
-                glVertex3i(1, 0, 0);
-                glVertex3i(1, 0, 1);
-
-                glVertex3i(1, 1, 1);
-                glVertex3i(1, 1, 0);
-            glEnd();
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-            glPopMatrix();
-        }
-
-        // draw ground grid
-        if(options.drawBoundaryBox) {
+            glLineWidth(2.f);
+            glDrawArrays(GL_LINE_STRIP, 0, vertices.size());
+            glLineWidth(1.f);
+            // draw ground grid
             auto scalebarLenNm = std::get<1>(getScaleBarLabelNmAndPx(displayedlengthInNmX, edgeLength));
             if (scalebarLenNm == 0.0) {
-                scalebarLenNm = Dataset::current().boundary.x * Dataset::current().scales[0].x / 10.0;
+                scalebarLenNm = scaledBoundary.x / 10.0;
             }
-            const auto grid_max_x = Dataset::current().boundary.x * Dataset::current().scales[0].x;
+            const auto grid_max_x = scaledBoundary.x;
             const auto grid_spacing_x = scalebarLenNm;
-            const auto grid_max_y = Dataset::current().boundary.y * Dataset::current().scales[0].y;
+            const auto grid_max_y = scaledBoundary.y;
             const auto grid_spacing_y = scalebarLenNm;
+            std::vector<floatCoordinate> gridVertices;
+            for(float i = 0; i < grid_max_x; i += grid_spacing_x) {
+                gridVertices.emplace_back(i / grid_max_x * scaledBoundary.x, 0, scaledBoundary.z);
+                gridVertices.emplace_back(i / grid_max_x * scaledBoundary.x, scaledBoundary.y, scaledBoundary.z);
+            }
+            for(float i = 0; i < grid_max_y; i += grid_spacing_y) {
+                gridVertices.emplace_back(0, i / grid_max_y * scaledBoundary.y, scaledBoundary.z);
+                gridVertices.emplace_back(scaledBoundary.x, i / grid_max_y * scaledBoundary.y, scaledBoundary.z);
+            }
+            vertexLocation = lineShader.attributeLocation("vertex");
+            boundaryGridBuf.bind();
+            if (boundaryGridBuf.size() != gridVertices.size() * sizeof(gridVertices.front())) {
+                boundaryGridBuf.allocate(gridVertices.data(), gridVertices.size() * sizeof(gridVertices.front()));
+            } else {
+                glBufferSubData(GL_ARRAY_BUFFER, 0, gridVertices.size() * sizeof(gridVertices.front()), gridVertices.data());
+            }
+            lineShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+            boundaryGridBuf.release();
 
-            glPushMatrix();
-            glScalef(scaledBoundary.x, scaledBoundary.y, scaledBoundary.z);
+            const auto gridColor = QColor::fromRgbF(0.85, 0.85, 0.85, 1.0);
+            lineShader.setUniformValue("color", gridColor);
+            lineShader.setUniformValue("modelview_matrix", mv);
+            lineShader.setUniformValue("projection_matrix", p);
 
-            glColor4d(0.85, 0.85, 0.85, 1.0);
-
-            glLineWidth(1.0f);
-            glBegin(GL_LINES);
-                glNormal3i(0, 0, 1);// high z
-                for(float i = 0; i < grid_max_x; i += grid_spacing_x) {
-                    glVertex3f(i / grid_max_x, 0, 1);
-                    glVertex3f(i / grid_max_x, 1, 1);
-                }
-
-                for(float i = 0; i < grid_max_y; i += grid_spacing_y) {
-                    glVertex3f(0, i / grid_max_y, 1);
-                    glVertex3f(1, i / grid_max_y, 1);
-                }
-            glEnd();
-
-            glPopMatrix();
+            glDrawArrays(GL_LINES, 0, gridVertices.size());
+            lineShader.release();
+            glDisable(GL_LINE_SMOOTH);
+            lineShader.disableAttributeArray(vertexLocation);
         }
 
         // draw axes
-        auto renderAxis = [this, options](const floatCoordinate & targetView, const QString label) {
-            glPushMatrix();
-
-            floatCoordinate currentView = {0, 0, 1};
-            const auto angle = std::acos(currentView.dot(targetView));
-            auto axis = currentView.cross(targetView);
-            if (axis.normalize()) {
-                glRotatef(angle * 180/boost::math::constants::pi<float>(), axis.x, axis.y, axis.z);
-            }
-            const auto diameter = (state->skeletonState->volBoundary() / zoomFactor) * 5e-3;
-            const auto coneDiameter = 3 * diameter;
-            const auto coneLength = 6 * diameter;
-            const auto length = targetView.length() - coneLength;
-            // axis cylinder lid
-            GLUquadricObj * gluFloorObj = gluNewQuadric();
-            gluQuadricNormals(gluFloorObj, GLU_SMOOTH);
-            gluDisk(gluFloorObj, 0, diameter, 10, 1);
-            gluDeleteQuadric(gluFloorObj);
-            // axis cylinder
-            GLUquadricObj * gluCylObj = gluNewQuadric();
-            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-            gluCylinder(gluCylObj, diameter, diameter, length, 10, 1);
-            gluDeleteQuadric(gluCylObj);
-
-            glTranslatef(0, 0, length);
-            // cone lid
-            GLUquadricObj * gluLidObj = gluNewQuadric();
-            gluQuadricNormals(gluLidObj, GLU_SMOOTH);
-            gluDisk(gluLidObj, 0, coneDiameter, 10, 1);
-            gluDeleteQuadric(gluLidObj);
-            // cone
-            gluCylObj = gluNewQuadric();
-            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
-            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
-            gluCylinder(gluCylObj, coneDiameter, 0., coneLength, 10, 5);
-            gluDeleteQuadric(gluCylObj);
-
-            glPopMatrix();
-
-            const auto offset = targetView + std::ceil(3 * diameter);
-            renderText(offset, label, options.enableTextScaling);
-        };
-        glColor4f(0, 0, 0, 1);
         if (options.drawBoundaryAxes) {
+            painterBinder pb{*pd, meshVao, options.enableTextScaling};
+            pb.fontSize = 10;
+            auto renderAxis = [this, options, &pb](const floatCoordinate & targetView, const QString label) {
+    //            glPushMatrix();
+
+    //            floatCoordinate currentView = {0, 0, 1};
+    //            const auto angle = std::acos(currentView.dot(targetView));
+    //            auto axis = currentView.cross(targetView);
+    //            if (axis.normalize()) {
+    //                glRotatef(angle * 180/boost::math::constants::pi<float>(), axis.x, axis.y, axis.z);
+    //            }
+                const auto diameter = (state->skeletonState->volBoundary() / zoomFactor) * 5e-3;
+    //            const auto coneDiameter = 3 * diameter;
+    //            const auto coneLength = 6 * diameter;
+    //            const auto length = targetView.length() - coneLength;
+    //            // axis cylinder lid
+    //            GLUquadricObj * gluFloorObj = gluNewQuadric();
+    //            gluQuadricNormals(gluFloorObj, GLU_SMOOTH);
+    //            gluDisk(gluFloorObj, 0, diameter, 10, 1);
+    //            gluDeleteQuadric(gluFloorObj);
+    //            // axis cylinder
+    //            GLUquadricObj * gluCylObj = gluNewQuadric();
+    //            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+    //            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+    //            gluCylinder(gluCylObj, diameter, diameter, length, 10, 1);
+    //            gluDeleteQuadric(gluCylObj);
+
+    //            glTranslatef(0, 0, length);
+    //            // cone lid
+    //            GLUquadricObj * gluLidObj = gluNewQuadric();
+    //            gluQuadricNormals(gluLidObj, GLU_SMOOTH);
+    //            gluDisk(gluLidObj, 0, coneDiameter, 10, 1);
+    //            gluDeleteQuadric(gluLidObj);
+    //            // cone
+    //            gluCylObj = gluNewQuadric();
+    //            gluQuadricNormals(gluCylObj, GLU_SMOOTH);
+    //            gluQuadricOrientation(gluCylObj, GLU_OUTSIDE);
+    //            gluCylinder(gluCylObj, coneDiameter, 0., coneLength, 10, 5);
+    //            gluDeleteQuadric(gluCylObj);
+
+    //            glPopMatrix();
+
+                const auto offset = targetView + std::ceil(3 * diameter);
+                pb.write(mv, p, offset, label);
+                pb.painter.drawLine(0, 1, 0, 1);
+            };
+//            glColor4f(0, 0, 0, 1);
             if (Viewport3D::showBoundariesInUm) {
                 renderAxis(floatCoordinate(scaledBoundary.x, 0, 0), QString("x: %1 µm").arg(scaledBoundary.x * 1e-3));
                 renderAxis(floatCoordinate(0, scaledBoundary.y, 0), QString("y: %1 µm").arg(scaledBoundary.y * 1e-3));
@@ -1584,30 +1732,9 @@ void Viewport3D::renderSkeletonVP(const RenderOptions &options) {
             }
         }
     }
-
-    if (options.drawSkeleton && state->viewerState->skeletonDisplayVP3D.testFlag(TreeDisplay::ShowIn3DVP)) {
-        glPushMatrix();
-        updateFrustumClippingPlanes();// should update on vp view translate, rotate or scale
-        renderSkeleton(options);
-        glPopMatrix();
-    }
-
-    if (options.meshPicking) {
-        pickMeshIdAtPosition();
-    } else if (state->viewerState->meshDisplay.testFlag(TreeDisplay::ShowIn3DVP) && options.drawMesh) {
-        renderMesh();
-    }
-
-    // Reset previously changed OGL parameters
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glDisable(GL_DEPTH_TEST);
-    glLoadIdentity();
 }
 
 void ViewportOrtho::renderBrush(const Coordinate coord) {
-    glPushMatrix();
-    glLineWidth(2.0f);
-
     auto & seg = Segmentation::singleton();
     auto drawCursor = [this, &seg, coord](const float r, const float g, const float b) {
         const auto bradius = seg.brush.getRadius();
@@ -1617,13 +1744,13 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
         const auto zsize = bradius / Dataset::current().scales[0].z;
 
         //move from center to cursor
-        glTranslatef(Dataset::current().scales[0].x * coord.x, Dataset::current().scales[0].y * coord.y, Dataset::current().scales[0].z * coord.z);
+        mv.translate(Dataset::current().scales[0].x * coord.x, Dataset::current().scales[0].y * coord.y, Dataset::current().scales[0].z * coord.z);
         if (viewportType == VIEWPORT_XZ && bview == brush_t::view_t::xz) {
-            glTranslatef(0, 0, Dataset::current().scale.z / Dataset::current().scaleFactor.z);//move origin to other corner of voxel, idrk why that’s necessary
-            glRotatef(-90, 1, 0, 0);
+            mv.translate(0, 0, Dataset::current().scale.z / Dataset::current().scaleFactor.z);
+            mv.rotate(-90, 1, 0, 0);
         } else if(viewportType == VIEWPORT_ZY && bview == brush_t::view_t::zy) {
-            glTranslatef(0, 0, Dataset::current().scale.z  / Dataset::current().scaleFactor.z);//move origin to other corner of voxel, idrk why that’s necessary
-            glRotatef( 90, 0, 1, 0);
+            mv.translate(0, 0, Dataset::current().scale.z  / Dataset::current().scaleFactor.z);
+            mv.rotate(90, 0, 1, 0);
         } else if (viewportType != VIEWPORT_XY || bview != brush_t::view_t::xy) {
             return;
         }
@@ -1708,23 +1835,40 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
             const auto lineRhs = rhs - center;
             return std::atan2(start.x * lineLhs.y - start.y * lineLhs.x, start.dot(lineLhs)) < std::atan2(start.x * lineRhs.y - start.y * lineRhs.x, start.dot(lineRhs));
         });
-        glBegin(GL_LINE_LOOP);
-        glColor4f(r, g, b, 1.);
-        for (const auto & point : vertices) {
-            glVertex3f(point.x, point.y, point.z);
+        vertices.emplace_back(vertices[1]);
+        vertices.emplace(std::begin(vertices), center);
+        QOpenGLVertexArrayObject::Binder vao(&meshVao);
+        const int vertexLocation = lineShader.attributeLocation("vertex");
+        lineShader.enableAttributeArray(vertexLocation);
+        brushBuf.bind();
+        if (brushBuf.size() != vertices.size() * sizeof(vertices.front())) {
+            brushBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
+        } else {
+            glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
         }
-        glEnd();
-        if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint) && Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_OverPaint)) { // fill brush with object color
-            glBegin(GL_TRIANGLE_FAN);
-            glColor4f(r, g, b, .25);
-            glVertex3f(center.x, center.y, center.z);
-            for (const auto & point : vertices) {
-                glVertex3f(point.x, point.y, point.z);
-            }
-            glVertex3f(vertices.front().x, vertices.front().y, vertices.front().z); // close triangle fan
-            glEnd();
-        }
+        lineShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+        brushBuf.release();
 
+        lineShader.bind();
+        QVector4D color{r, g, b, 1};
+        lineShader.setUniformValue("color", color);
+        lineShader.setUniformValue("modelview_matrix", mv);
+        lineShader.setUniformValue("projection_matrix", p);
+
+        glEnable(GL_LINE_SMOOTH);
+//        glDisable(GL_DEPTH_TEST);
+        glLineWidth(2.f);
+        glDrawArrays(GL_LINE_LOOP, 1, vertices.size()-1-1);
+        glLineWidth(1.f);
+        glDisable(GL_LINE_SMOOTH);
+
+        if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Paint) || Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_OverPaint)) { // fill brush with object color
+            color.setW(0.25);
+            lineShader.setUniformValue("color", color);
+            glDrawArrays(GL_TRIANGLE_FAN, 0, vertices.size());
+        }
+        lineShader.release();
+        lineShader.disableAttributeArray(vertexLocation);
     };
     const auto objColor = Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps) ? seg.subobjectColor(seg.hovered_subobject_id) : seg.colorOfSelectedObject();
     const auto hover_condition = !dstPos && seg.hovered_subobject_id != Segmentation::singleton().backgroundId && !seg.isSubObjectIdSelected(seg.hovered_subobject_id) && !Annotation::singleton().annotationMode.testFlag(AnnotationMode::SubObjectSplit);
@@ -1738,10 +1882,9 @@ void ViewportOrtho::renderBrush(const Coordinate coord) {
             drawCursor(std::get<0>(objColor)/255., std::get<1>(objColor)/255., std::get<2>(objColor)/255.);
         }
     }
-    glPopMatrix();
 }
 
-void ViewportOrtho::renderArbitrarySlicePane(const RenderOptions & options, float orthoFactor, bool breakFirst) {
+void ViewportOrtho::renderArbitrarySlicePane(const RenderOptions & options,  QMatrix4x4 mv, QMatrix4x4 p, float orthoFactor, bool breakFirst) {
     bool first{true};
     for (std::size_t i{0}; i < Dataset::datasets.size(); ++i) {
         const auto layerId = state->viewerState->layerOrder[i];
@@ -1750,16 +1893,15 @@ void ViewportOrtho::renderArbitrarySlicePane(const RenderOptions & options, floa
             state->viewer->vpGenerateTexture(*this, layerId);// update texture before use
             // raw slice image
             glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+            QColor color = layerSettings.color;
+            color.setAlphaF(layerSettings.opacity);
             if (!Dataset::datasets[layerId].isOverlay()) {
                 if (first) {// first raw layer rendered can be semi transparent with orthoFactor, letting the skeleton show through (blending) in one direction
-                    glColor4f(layerSettings.color.redF(), layerSettings.color.greenF(), layerSettings.color.blueF(), orthoFactor * layerSettings.opacity);
-                    first = false;
+                    color.setAlphaF(orthoFactor * layerSettings.opacity);
                 } else {
-                    glColor4f(layerSettings.color.redF() * layerSettings.opacity, layerSettings.color.greenF() * layerSettings.opacity, layerSettings.color.blueF() * layerSettings.opacity, layerSettings.opacity);
+                    color = color.darker(100. / layerSettings.opacity);
                     glBlendFunc(GL_ONE, GL_ONE);// mix all non overlay channels
                 }
-            } else {
-                glColor4f(layerSettings.color.redF(), layerSettings.color.greenF(), layerSettings.color.blueF(), layerSettings.opacity);
             }
 
             const auto isoCurPos = Dataset::current().scales[0].componentMul(state->viewerState->currentPosition);
@@ -1774,25 +1916,46 @@ void ViewportOrtho::renderArbitrarySlicePane(const RenderOptions & options, floa
             auto & texture = textures[layerId];
             std::vector<float> texCoordComponents{texture.texLUx, texture.texLUy, texture.texRUx, texture.texRUy, texture.texRLx, texture.texRLy, texture.texLLx, texture.texLLy};
 
-            glEnable(GL_TEXTURE_2D);
-            glEnableClientState(GL_VERTEX_ARRAY);
-            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            const int vertexLocation = shaderTextureQuad2.attributeLocation("vertex");
+            shaderTextureQuad2.enableAttributeArray(vertexLocation);
+            orthoVBuf.bind();
+            if (orthoVBuf.size() == 0) {
+                orthoVBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
+            } else {
+                glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(vertices.front()), vertices.data());
+            }
+            shaderTextureQuad2.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+            orthoVBuf.release();
+            const int texLocation = shaderTextureQuad2.attributeLocation("tex");
+            shaderTextureQuad2.enableAttributeArray(texLocation);
+            texPosBuf.bind();
+            if (texPosBuf.size() == 0) {
+                texPosBuf.allocate(texCoordComponents.data(), texCoordComponents.size() * sizeof(texCoordComponents.front()));
+            } else {
+                glBufferSubData(GL_ARRAY_BUFFER, 0, texCoordComponents.size() * sizeof(texCoordComponents.front()), texCoordComponents.data());
+            }
+            shaderTextureQuad2.setAttributeBuffer(texLocation, GL_FLOAT, 0, 2);
+            texPosBuf.release();
 
-            texture.texHandle.bind();
-            glVertexPointer(3, GL_FLOAT, 0, vertices.data());
-            glTexCoordPointer(2, GL_FLOAT, 0, texCoordComponents.data());
+            shaderTextureQuad2.bind();
+            shaderTextureQuad2.setUniformValue("color_factor", color);
+            shaderTextureQuad2.setUniformValue("modelview_matrix", mv);
+            shaderTextureQuad2.setUniformValue("projection_matrix", p);
 
-            glDrawArrays(GL_QUADS, 0, 4);
+//            glEnable(GL_TEXTURE_2D);
+            texture.texHandle[layerId].bind();
+            glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+            shaderTextureQuad2.release();
+            texture.texHandle[layerId].release();
+//            glDisable(GL_TEXTURE_2D);
 
-            texture.texHandle.release();
-
-            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-            glDisableClientState(GL_VERTEX_ARRAY);
-            glDisable(GL_TEXTURE_2D);
+            shaderTextureQuad2.disableAttributeArray(texLocation);
+            shaderTextureQuad2.disableAttributeArray(vertexLocation);
 
             if (breakFirst) {
                 break;
             }
+            first = false;
         }
     }
     glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -1890,42 +2053,90 @@ void synapseLoop(Func func, const ViewportType vpType){
 }
 
 void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &options, const ViewportType viewportType) {
+    constexpr const static auto arrayFromQColor = [](QColor color){
+        return decltype(glBuffers.lineVertBuffer.colors)::value_type{{static_cast<std::uint8_t>(color.red()), static_cast<std::uint8_t>(color.green()), static_cast<std::uint8_t>(color.blue()), static_cast<std::uint8_t>(color.alpha())}};
+    };
+    const static auto uploadVertexData = [](auto & buf, const auto & vertices){
+        buf.destroy();
+        buf.create();
+        buf.bind();
+        buf.allocate(vertices.data(), static_cast<int>(vertices.size() * sizeof(vertices.front())));
+        buf.release();
+    };
+    if (glBuffers.regenHaloBuffer || glBuffers.regenVertBuffer) {
+        glBuffers.regenHaloBuffer = false;
+        glBuffers.haloBuffer.clear();
+
+        std::vector<float> haloRadii;
+        auto addHalo = [&glBuffers, &haloRadii](auto & node, auto haloColor){
+            const float radius = Skeletonizer::singleton().radius(node);
+            // halo only 10% bigger then node or
+            // scale the halo size from 10% up to 100% bigger then the node size
+            // otherwise, the halo won't be visible on very small node sizes (=1.0)
+            // (x - x_0) * (f_1 - f_0)/(x_1 - x_0)  //Linear interpolation
+            const float mp = radius > 30.0f ? 1.1 : (radius - 1.0) * (1.1 - 2.0)/(30.0 - 1.0) + 2.0;
+            haloColor.setAlphaF(0.5);
+            glBuffers.haloBuffer.emplace_back(Dataset::current().scales[0].componentMul(node.position), arrayFromQColor(haloColor));
+            haloRadii.emplace_back(mp * Dataset::current().scales[0].x * radius);
+        };
+        if (options.highlightSelection) {
+            for (const auto * nodePtr : Skeletonizer::singleton().skeletonState.selectedNodes) {
+                addHalo(*nodePtr, QColor(Qt::green));
+            }
+        }
+        if (auto * node = state->skeletonState->activeNode; options.highlightActiveNode && node != nullptr && !node->selected) {
+            addHalo(*node, state->viewer->getNodeColor(*node));
+        }
+        uploadVertexData(glBuffers.haloBuffer.vertex_buffer, glBuffers.haloBuffer.vertices);
+        uploadVertexData(glBuffers.haloBuffer.color_buffer, glBuffers.haloBuffer.colors);
+        uploadVertexData(glBuffers.haloRadiusBuffer, haloRadii);
+    }
+    if (!glBuffers.regenVertBuffer) {
+        return;
+    }
     glBuffers.regenVertBuffer = false;
     glBuffers.lineVertBuffer.clear();
+    glBuffers.cylinderBuffer.clear();
     glBuffers.pointVertBuffer.clear();
     glBuffers.colorPickingBuffer24.clear();
     glBuffers.colorPickingBuffer48.clear();
     glBuffers.colorPickingBuffer64.clear();
+    std::vector<floatCoordinate> segments;
+    std::vector<float> radii, cradii;
+    std::vector<int8_t> cvid, cvid2;
 
-    auto arrayFromQColor = [](QColor color){
-        return decltype(glBuffers.lineVertBuffer.colors)::value_type{{static_cast<std::uint8_t>(color.red()), static_cast<std::uint8_t>(color.green()), static_cast<std::uint8_t>(color.blue()), static_cast<std::uint8_t>(color.alpha())}};
-    };
-
-    auto addSegment = [arrayFromQColor, &glBuffers](const segmentListElement & segment, const QColor & color) {
+    auto addSegment = [&cradii, &cvid, &cvid2, &glBuffers, &segments](const segmentListElement & segment, const QColor & color) {
         const auto isoBase = Dataset::current().scales[0].componentMul(segment.source.position);
         const auto isoTop = Dataset::current().scales[0].componentMul(segment.target.position);
 
         glBuffers.lineVertBuffer.emplace_back(isoBase, arrayFromQColor(color));
         glBuffers.lineVertBuffer.emplace_back(isoTop, arrayFromQColor(color));
+        const auto rbase = Dataset::current().scales[0].x * Skeletonizer::singleton().radius(segment.source) * state->viewerState->segRadiusToNodeRadius;
+        const auto rtop  = Dataset::current().scales[0].x * Skeletonizer::singleton().radius(segment.target) * state->viewerState->segRadiusToNodeRadius;
+
+        const auto ccc = [&, isoBase, isoTop](auto isBase, auto sd){
+            const auto & [pos, pos2] = std::forward_as_tuple(isBase ? isoBase : isoTop, !isBase ? isoBase : isoTop);
+            glBuffers.cylinderBuffer.emplace_back(pos, arrayFromQColor(color));
+            segments.emplace_back(pos2 - pos);
+            cradii.emplace_back(isBase ? rbase : rtop);
+            cvid.emplace_back(sd);
+            cvid2.emplace_back(sd == 0);
+        };
+        ccc(1,  0);
+        ccc(0,  0);
+        ccc(0,  1);
+
+        ccc(1,  0);
+        ccc(1,  1);
+        ccc(0, -1);
     };
 
-    auto addNode = [arrayFromQColor, options, &glBuffers](const nodeListElement & node) {
-        auto color = state->viewer->getNodeColor(node);
-
-        if (node.selected && options.highlightSelection) {// highlight selected nodes
-            auto selectedNodeColor = QColor(Qt::green);
-//            selectedNodeColor.setAlphaF(0.5f);// results in half-transparent nodes in low mode
-            color = selectedNodeColor;
-            glBuffers.pointVertBuffer.lastSelectedNode = node.nodeID;
-        }
-
-        const auto isoPos = Dataset::current().scales[0].componentMul(node.position);
-
+    auto addNode = [&glBuffers, &radii](const nodeListElement & node) {
         glBuffers.colorPickingBuffer24.emplace_back(arrayFromQColor(getPickingColor(node, RenderOptions::SelectionPass::NodeID0_24Bits)));
         glBuffers.colorPickingBuffer48.emplace_back(arrayFromQColor(getPickingColor(node, RenderOptions::SelectionPass::NodeID24_48Bits)));
         glBuffers.colorPickingBuffer64.emplace_back(arrayFromQColor(getPickingColor(node, RenderOptions::SelectionPass::NodeID48_64Bits)));
-        glBuffers.pointVertBuffer.emplace_back(isoPos, arrayFromQColor(color));
-        glBuffers.pointVertBuffer.colorBufferOffset[node.nodeID] = static_cast<unsigned int>(glBuffers.pointVertBuffer.vertices.size()-1);
+        glBuffers.pointVertBuffer.emplace_back(Dataset::current().scales[0].componentMul(node.position), arrayFromQColor(state->viewer->getNodeColor(node)));
+        radii.emplace_back(Dataset::current().scales[0].x * Skeletonizer::singleton().radius(node));
     };
 
     for (auto & currentTree : Skeletonizer::singleton().skeletonState.trees) {
@@ -1960,18 +2171,21 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
         addSegment(virtualSegment, color);
     }, viewportType);
 
-    const auto uploadVertexData = [](auto & buf, const auto & vertices){
-        buf.destroy();
-        buf.create();
-        buf.bind();
-        buf.allocate(vertices.data(), static_cast<int>(vertices.size() * sizeof(vertices.front())));
-        buf.release();
-    };
     uploadVertexData(glBuffers.pointVertBuffer.color_buffer, glBuffers.pointVertBuffer.colors);
     uploadVertexData(glBuffers.pointVertBuffer.vertex_buffer, glBuffers.pointVertBuffer.vertices);
+    uploadVertexData(glBuffers.radius_buffer, radii);
 
     uploadVertexData(glBuffers.lineVertBuffer.color_buffer, glBuffers.lineVertBuffer.colors);
     uploadVertexData(glBuffers.lineVertBuffer.vertex_buffer, glBuffers.lineVertBuffer.vertices);
+
+    uploadVertexData(glBuffers.cylinderBuffer.vertex_buffer, glBuffers.cylinderBuffer.vertices);
+    uploadVertexData(glBuffers.segment_vector_buffer, segments);
+    uploadVertexData(glBuffers.cylinder_radius_buffer, cradii);
+    uploadVertexData(glBuffers.cylinder_shift_buffer, cvid);
+    uploadVertexData(glBuffers.cylinder_raised_buffer, cvid2);
+    uploadVertexData(glBuffers.cylinderBuffer.color_buffer, glBuffers.cylinderBuffer.colors);
+    glBuffers.color_picking_buffer.destroy();
+    glBuffers.color_picking_buffer.create();
 }
 
 /*
@@ -1986,217 +2200,160 @@ void generateSkeletonGeometry(GLBuffers & glBuffers, const RenderOptions &option
  * Ugly code, not nice to read, should be simplified...
  */
 void ViewportBase::renderSkeleton(const RenderOptions &options) {
-    if (!options.nodePicking && state->viewerState->lightOnOff) {
-        // Configure light
-        glEnable(GL_LIGHTING);
-        GLfloat ambientLight[] = {0.5, 0.5, 0.5, 0.8};
-        GLfloat diffuseLight[] = {1., 1., 1., 1.};
-        GLfloat lightPos[] = {0, Dataset::current().boundary.y * Dataset::current().scales[0].y, 0, 1.};
+    QVector4D global_ambient{0.3, 0.3, 0.3, 1};
+    QVector4D ambientLight{0.2, 0.2, 0.2, 1};
+    QVector4D diffuseLight{0.5, 0.5, 0.5, 1};
+    QVector4D lightPos{0, Dataset::current().boundary.y * Dataset::current().scales[0].y, 0, 1.};
 
-        glLightfv(GL_LIGHT0,GL_AMBIENT,ambientLight);
-        glLightfv(GL_LIGHT0,GL_DIFFUSE,diffuseLight);
-        glLightfv(GL_LIGHT0,GL_POSITION,lightPos);
-        glEnable(GL_LIGHT0);
-
-        GLfloat global_ambient[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_ambient);
-
-        // Enable materials with automatic color tracking
-        glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-        glEnable(GL_COLOR_MATERIAL);
-        glShadeModel(GL_SMOOTH);
-    } else {
-        glDisable(GL_LIGHTING);
-        glDisable(GL_COLOR_MATERIAL);
-    }
-
-    //tdItem: test culling under different conditions!
-    //if(viewportType == VIEWPORT_SKELETON) glEnable(GL_CULL_FACE);
-
-    glPushMatrix();
     const auto displayFlag = (viewportType == VIEWPORT_SKELETON) ? state->viewerState->skeletonDisplayVP3D : state->viewerState->skeletonDisplayVPOrtho;
     auto & glBuffers = displayFlag.testFlag(TreeDisplay::OnlySelected) ? state->viewerState->selectedTreesBuffers : state->viewerState->AllTreesBuffers;
-    if(glBuffers.regenVertBuffer) {
-        generateSkeletonGeometry(glBuffers, options, viewportType);
+    generateSkeletonGeometry(glBuffers, options, viewportType);
+
+    QVector<float> v;
+    for (auto arg : {GL_LINE_WIDTH, GL_ALIASED_LINE_WIDTH_RANGE, GL_SMOOTH_LINE_WIDTH_RANGE, GL_SMOOTH_LINE_WIDTH_GRANULARITY}) {
+        v.push_front(-1);
+        v.push_front(-1);
+        glGetFloatv(arg, &v.front());
     }
-    if(!state->viewerState->onlyLinesAndPoints) {
-        for (auto & currentTree : Skeletonizer::singleton().skeletonState.trees) {
-            // focus on synapses, darken rest of skeleton
-            bool darken, hide;
-            std::tie(darken, hide) = darkenOrHideTree(currentTree, viewportType);
-            if (hide) {
-                continue;
-            }
-            nodeListElement * previousNode = nullptr;
-            nodeListElement * lastRenderedNode = nullptr;
-            float cumDistToLastRenderedNode = 0.f;
+//    qDebug() << v << glIsEnabled(GL_LINE_SMOOTH);
+//    glEnable(GL_LINE_SMOOTH);
+//    qDebug() << lineSize(width()/displayedlengthInNmX) << smallestVisibleNodeSize();
 
-            for (auto nodeIt = std::begin(currentTree.nodes); nodeIt != std::end(currentTree.nodes); ++nodeIt) {
-                /* We start with frustum culling:
-                 * all nodes that are not in the current viewing frustum for the
-                 * currently rendered viewports are discarded. This is very fast. */
-
-                /* For frustum culling. These values should be stored, mem <-> cpu tradeoff  */
-
-                /* Every node is tested based on a precomputed circumsphere
-                that includes its segments. */
-
-                if (!sphereInFrustum(Dataset::current().scales[0].componentMul(nodeIt->position), nodeIt->circRadius)) {
-                    previousNode = lastRenderedNode = nullptr;
-                    continue;
-                }
-
-                bool virtualSegRendered = false;
-                bool nodeVisible = true;
-
-                /* First test whether this node is actually connected to the next,
-                i.e. whether the implicit sorting is not broken here. */
-                bool allowHeuristic = false;
-                if (std::next(nodeIt) != std::end(currentTree.nodes) && nodeIt->segments.size() <= 2) {
-                    for (const auto & currentSegment : std::next(nodeIt)->segments) {
-                        if (currentSegment.target == *nodeIt || currentSegment.source == *nodeIt) {
-                            /* Connected, heuristic is allowed */
-                            allowHeuristic = true;
-                            break;
-                        }
-                    }
-                }
-                allowHeuristic = allowHeuristic && !options.nodePicking;
-                if (previousNode != nullptr && allowHeuristic) {
-                    for (auto & currentSegment : nodeIt->segments) {
-                        //isBranchNode tells you only whether the node is on the branch point stack,
-                        //not whether it is actually a node connected to more than two other nodes!
-                        const bool mustBeRendered = nodeIt->getComment().isEmpty() == false || nodeIt->isBranchNode || nodeIt->segments.size() > 2 || nodeIt->radius * screenPxXPerDataPx > 5.f;
-                        const bool cullingCandidate = currentSegment.target == *previousNode || (currentSegment.source == *previousNode && !mustBeRendered);
-                        if (cullingCandidate) {
-                            //Node is a candidate for LOD culling
-                            //Do we really skip this node? Test cum dist. to last rendered node!
-                            cumDistToLastRenderedNode += currentSegment.length * screenPxXPerDataPx;
-                            if ((cumDistToLastRenderedNode <= state->viewerState->cumDistRenderThres) && options.enableLoddingAndLinesAndPoints) {
-                                nodeVisible = false;
-                            }
-                            break;
-                        }
-                    }
-                }
-
-                if (nodeVisible) {
-                    //This sets the current color for the segment rendering
-                    QColor currentColor = currentTree.color;
-                    if((currentTree.treeID == state->skeletonState->activeTree->treeID)
-                        && (state->viewerState->highlightActiveTree)) {
-                        currentColor = Qt::red;
-                    }
-                    if (darken) {
-                        currentColor.setAlpha(Synapse::darkenedAlpha);
-                    }
-
-                    cumDistToLastRenderedNode = 0.f;
-
-                    if (!options.nodePicking) {// don’t pick segments
-                        if (previousNode != lastRenderedNode) {
-                            virtualSegRendered = true;
-                            // We need a "virtual" segment now
-                            segmentListElement virtualSegment(*lastRenderedNode, *nodeIt, false);
-                            renderSegment(virtualSegment, currentColor, options);
-                        }
-                        /* Second pass over segments needed... But only if node is actually rendered! */
-                        for (const auto & currentSegment : nodeIt->segments) {
-                            if (currentSegment.forward || (virtualSegRendered && (currentSegment.source == *previousNode || currentSegment.target == *previousNode))) {
-                                continue;
-                            }
-                            renderSegment(currentSegment, currentColor, options);
-                        }
-                    }
-
-                    renderNode(*nodeIt, options);
-                    lastRenderedNode = &*nodeIt;
-                }
-                previousNode = &*nodeIt;
-            }
-        }
-
-        /* Connect all synapses */
-        if (!options.nodePicking) {
-            synapseLoop([this, &options](const auto & synapse, const auto & virtualSegment, const auto & color){
-                renderSegment(virtualSegment, color, options);
-
-                auto post = synapse.getPostSynapse()->position;
-                auto pre = synapse.getPreSynapse()->position;
-                const auto offset = (post - pre)/10;
-                Coordinate arrowbase = post - offset;
-
-                renderCylinder(arrowbase, Skeletonizer::singleton().radius(*synapse.getPreSynapse()) * 3.0f
-                    , synapse.getPostSynapse()->position
-                    , Skeletonizer::singleton().radius(*synapse.getPostSynapse()) * state->viewerState->segRadiusToNodeRadius, color, options);
-            }, viewportType);
-        }
-    }
-
-    // lighting isn’t really applicable to lines and points
-    glDisable(GL_LIGHTING);
-    glDisable(GL_COLOR_MATERIAL);
-    if (viewportType != ViewportType::VIEWPORT_SKELETON) {
-        // without shader lines and points have no thickness and therefore need an offset to appear above the (see-through) slices
-        const auto offset = state->viewerState->onlyLinesAndPoints * Dataset::current().scale * static_cast<ViewportOrtho&>(*this).n * 0.25;
-        glTranslatef(offset.x(), offset.y(), offset.z());
-    }
-    const auto alwaysLinesAndPoints = state->viewerState->cumDistRenderThres > 19.f && options.enableLoddingAndLinesAndPoints;
-    // higher render qualities only use lines and points if node < smallestVisibleSize
-    glLineWidth(alwaysLinesAndPoints ? lineSize(width()/displayedlengthInNmX) : smallestVisibleNodeSize());
     /* Render line geometry batch if it contains data and we don’t pick nodes */
-    if (!options.nodePicking) {
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_COLOR_ARRAY);
+    if (!options.nodePicking && !glBuffers.cylinderBuffer.vertices.empty()) {
+        std::vector<int> locations;
+        const auto bbb = [this, &locations, &shader=cylinderShader](auto & buffer, auto name, auto size, GLenum type = GL_FLOAT){
+            const int vertexLocation = locations.emplace_back(shader.attributeLocation(name));
+            buffer.bind();
+            if (type == GL_BYTE) {
+                glVertexAttribIPointer(vertexLocation, size, type, 0, nullptr);
+            } else {
+                shader.setAttributeBuffer(vertexLocation, type, 0, size);
+            }
+            buffer.release();
+            shader.enableAttributeArray(vertexLocation);
+        };
+        bbb(glBuffers.cylinderBuffer.vertex_buffer, "vertex", 3);
+        bbb(glBuffers.segment_vector_buffer, "segment", 3);
+        bbb(glBuffers.cylinder_radius_buffer, "radius", 1);
+        bbb(glBuffers.cylinder_shift_buffer, "shift", 1, GL_BYTE);
+        bbb(glBuffers.cylinder_raised_buffer, "raised", 1, GL_BYTE);
+        bbb(glBuffers.cylinderBuffer.color_buffer, "color", 4, GL_UNSIGNED_BYTE);
 
-        /* draw all segments */
-        glBuffers.lineVertBuffer.vertex_buffer.bind();
-        glVertexPointer(3, GL_FLOAT, 0, nullptr);
-        glBuffers.lineVertBuffer.vertex_buffer.release();
+        cylinderShader.bind();
+        cylinderShader.setUniformValue("modelview_matrix", mv);
+        cylinderShader.setUniformValue("projection_matrix", p);
+        cylinderShader.setUniformValue("light_pos", lightPos);
+        cylinderShader.setUniformValue("light_bg", global_ambient);
+        cylinderShader.setUniformValue("light_front", diffuseLight);
+        cylinderShader.setUniformValue("light_back", ambientLight);
 
-        glBuffers.lineVertBuffer.color_buffer.bind();
-        glColorPointer(4, GL_UNSIGNED_BYTE, 0, nullptr);
-        glBuffers.lineVertBuffer.color_buffer.release();
+        cylinderShader.setUniformValue("side_flip",  1.0f);
+        glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(glBuffers.cylinderBuffer.vertices.size()));
+        cylinderShader.setUniformValue("side_flip", -1.0f);
+        glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(glBuffers.cylinderBuffer.vertices.size()));
 
-        glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(glBuffers.lineVertBuffer.vertices.size()));
-
-        glDisableClientState(GL_COLOR_ARRAY);
-        glDisableClientState(GL_VERTEX_ARRAY);
+        for (const auto & location : locations) {
+            cylinderShader.disableAttributeArray(location);
+        }
+        cylinderShader.release();
     }
-    glLineWidth(2.f);
-
-    glPointSize(alwaysLinesAndPoints ? pointSize(width()/displayedlengthInNmX) : smallestVisibleNodeSize());
-    /* Render point geometry batch if it contains data */
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_COLOR_ARRAY);
 
     /* draw all nodes */
+    glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);// GL_PROGRAM_POINT_SIZE gl3+
+//        glEnable(GL_POINT_SPRITE);// only gl2
     glBuffers.pointVertBuffer.vertex_buffer.bind();
-    glVertexPointer(3, GL_FLOAT, 0, nullptr);
+    const int vertexLocation = sphereShader.attributeLocation("vertex");
+    sphereShader.enableAttributeArray(vertexLocation);
+    sphereShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
     glBuffers.pointVertBuffer.vertex_buffer.release();
 
-    if(options.nodePicking) {
+    auto & colorBuffer = options.nodePicking ? glBuffers.color_picking_buffer : glBuffers.pointVertBuffer.color_buffer;
+    colorBuffer.bind();
+    if (options.nodePicking) {
+        const auto size = sizeof(glBuffers.colorPickingBuffer24.front());
         if(options.selectionPass == RenderOptions::SelectionPass::NodeID0_24Bits) {
-            glColorPointer(4, GL_UNSIGNED_BYTE, 0, glBuffers.colorPickingBuffer24.data());
+            colorBuffer.allocate(glBuffers.colorPickingBuffer24.data(), glBuffers.colorPickingBuffer24.size() * size);
         } else if(options.selectionPass == RenderOptions::SelectionPass::NodeID24_48Bits) {
-            glColorPointer(4, GL_UNSIGNED_BYTE, 0, glBuffers.colorPickingBuffer48.data());
+            colorBuffer.allocate(glBuffers.colorPickingBuffer48.data(), glBuffers.colorPickingBuffer48.size() * size);
         } else if(options.selectionPass == RenderOptions::SelectionPass::NodeID48_64Bits) {
-            glColorPointer(4, GL_UNSIGNED_BYTE, 0, glBuffers.colorPickingBuffer64.data());
+            colorBuffer.allocate(glBuffers.colorPickingBuffer64.data(), glBuffers.colorPickingBuffer64.size() * size);
         }
-    } else {
-        glBuffers.pointVertBuffer.color_buffer.bind();
-        glColorPointer(4, GL_UNSIGNED_BYTE, 0, nullptr);
-        glBuffers.pointVertBuffer.color_buffer.release();
     }
+    const int colorLocation = sphereShader.attributeLocation("color");
+    sphereShader.enableAttributeArray(colorLocation);
+    sphereShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
+    colorBuffer.release();
+
+    glBuffers.radius_buffer.bind();
+    const int radiusLocation = sphereShader.attributeLocation("radius");
+    sphereShader.enableAttributeArray(radiusLocation);
+    sphereShader.setAttributeBuffer(radiusLocation, GL_FLOAT, 0, 1);
+    glBuffers.radius_buffer.release();
+    sphereShader.bind();
+    sphereShader.setUniformValue("modelview_matrix", mv);
+    sphereShader.setUniformValue("projection_matrix", p);
+    sphereShader.setUniformValue("light_bg", global_ambient);
+    sphereShader.setUniformValue("light_pos", lightPos);
+    sphereShader.setUniformValue("light_front", diffuseLight);
+    sphereShader.setUniformValue("light_back", ambientLight);
+    sphereShader.setUniformValue("picking", options.nodePicking || !state->viewerState->lightOnOff);
+    GLfloat mviewport[4];
+    glGetFloatv(GL_VIEWPORT, &mviewport[0]);
+    QVector4D tmp(mviewport[0], mviewport[1], mviewport[2], mviewport[3]);
+    sphereShader.setUniformValue("viewport", tmp);
+    float zoom = screenPxXPerDataPx;
+    if (viewportType != VIEWPORT_SKELETON) {
+    zoom /= Dataset::current().scales[0].componentMul(static_cast<ViewportOrtho&>(*this).v1).length();
+    } else {
+        zoom /= Dataset::current().scales[0].x;
+    }
+    sphereShader.setUniformValue("zoom", zoom);
 
     glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.pointVertBuffer.vertices.size()));
 
-    glDisableClientState(GL_COLOR_ARRAY);
-    glDisableClientState(GL_VERTEX_ARRAY);
+    if (!options.nodePicking) {
+        glBuffers.haloBuffer.vertex_buffer.bind();
+        sphereShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+        glBuffers.haloBuffer.vertex_buffer.release();
+        glBuffers.haloBuffer.color_buffer.bind();
+        sphereShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
+        glBuffers.haloBuffer.color_buffer.release();
+        glBuffers.haloRadiusBuffer.bind();
+        sphereShader.setAttributeBuffer(radiusLocation, GL_FLOAT, 0, 1);
+        glBuffers.haloRadiusBuffer.release();
+        sphereShader.setUniformValue("light_bg", QVector4D{0.25,0.25,0.25,1});
+        sphereShader.setUniformValue("light_front", QVector4D{0.5,0.5,0.5,1});
+        sphereShader.setUniformValue("light_back", QVector4D{0,0,0,1});
+        sphereShader.setUniformValue("invert", -1.0f);
+        glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.haloBuffer.vertices.size()));
+        sphereShader.setUniformValue("light_bg", QVector4D{0.5,0.5,0.5,1});
+        sphereShader.setUniformValue("light_front", QVector4D{1,1,1,1});
+        sphereShader.setUniformValue("light_back", QVector4D{0,0,0,1});
+        sphereShader.setUniformValue("invert", 1.0f);
+        glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(glBuffers.haloBuffer.vertices.size()));
+    }
 
-    glPointSize(1.f);
+    sphereShader.disableAttributeArray(vertexLocation);
+    sphereShader.disableAttributeArray(colorLocation);
+    sphereShader.disableAttributeArray(radiusLocation);
 
-    glPopMatrix(); // Restore modelview matrix
+    sphereShader.release();
+    glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
+
+    if (!options.nodePicking && (!state->viewerState->idDisplay.testFlag(IdDisplay::None) || ViewportOrtho::showNodeComments)) {
+        painterBinder pb{*pd, meshVao, options.enableTextScaling};
+        for (auto elem : state->skeletonState->nodesByNodeID) {
+            const auto & node = *elem.second;
+            const auto acti = state->viewerState->idDisplay.testFlag(IdDisplay::ActiveNode) && state->skeletonState->activeNode != nullptr && *state->skeletonState->activeNode == node;
+            auto nodeID = state->viewerState->idDisplay.testFlag(IdDisplay::AllNodes) || acti ? QString::number(node.nodeID) : QString{};
+            const auto comment = (ViewportOrtho::showNodeComments && node.hasComment()) ? QString("%1%2").arg(nodeID.isEmpty() ? "" : ":", node.getComment()) : QString{};
+            if (nodeID.isEmpty() == false || comment.isEmpty() == false) {
+                const auto pos = Dataset::current().scales[0].componentMul(node.position) + Dataset::current().scales[0] * 0.5 * Skeletonizer::singleton().radius(node);
+                pb.write(mv, p, pos, nodeID.append(comment), false, Qt::darkGray);
+            }
+        }
+    }
 }
 
 bool ViewportBase::updateFrustumClippingPlanes() {

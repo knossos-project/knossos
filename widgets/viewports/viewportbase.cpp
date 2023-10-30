@@ -30,9 +30,14 @@
 #include "viewer.h"
 
 #include <QApplication>
+#include <QDebug>
 #include <QHBoxLayout>
 #include <QMenu>
 #include <QMessageBox>
+#include <QOpenGLContext>
+#include <QOpenGLPaintDevice>
+#include <QPainter>
+#include <QSurfaceFormat>
 
 // init here to avoid massive recompile
 #ifndef NDEBUG
@@ -250,7 +255,35 @@ void ViewportBase::initializeGL() {
     if (!printed) {
         qDebug() << QString("%1, %2, %3").arg(glversion).arg(glvendor).arg(glrenderer);
         printed = true;
+
+        QSurfaceFormat f;
+        auto f2 = QSurfaceFormat::defaultFormat();
+        QOpenGLContext ctx;
+        auto f3 = ctx.format();
+        qDebug() << f.version() << f.profile() << f.options() << "QSurfaceFormat{}";
+        qDebug() << f.version() << f.profile() << f.options() << "QSurfaceFormat::defaultFormat()";
+        qDebug() << f.version() << f.profile() << f.options() << "ctx.format()";
+
+        QSurfaceFormat::FormatOptions o, dep{QSurfaceFormat::DeprecatedFunctions};
+        for (auto o : {o,dep})
+        for (auto [ma, mi] : {std::tuple{0,0}, {1,0}, {2,0}, {3,0}, {3,1}, {3,2}, {3,3}}) {
+            QOpenGLContext ctx;
+            f = ctx.format();
+            f.setVersion(ma, mi);
+            f.setOptions(o);
+            ctx.setFormat(f);
+            ctx.create();
+            std::array<const char *,3> a;
+            a[QSurfaceFormat::NoProfile] = "  none";
+            a[QSurfaceFormat::CoreProfile] = "  core";
+            a[QSurfaceFormat::CompatibilityProfile] = "compat";
+            auto x = [](auto f){ return f.options().testFlag(QSurfaceFormat::DeprecatedFunctions) ? "+ dep" : "     "; };
+            qDebug() << f.version() << a[f.profile()] << x(f) << ";;;"
+                     << ctx.format().version() << a[ctx.format().profile()] << x(ctx.format());
+        }
     }
+
+
     if (!initializeOpenGLFunctions()) {
         QMessageBox msgBox{QApplication::activeWindow()}; //use property based api
         msgBox.setIcon(QMessageBox::Critical);
@@ -272,6 +305,20 @@ void ViewportBase::initializeGL() {
     if (oglDebug && oglLogger.initialize()) {
         oglLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
     }
+    meshVao.create();
+
+//    auto format = meshPickingSurface.format();
+//    if (this->format().version() < QPair(3, 0) || this->format().version() >= QPair(3, 2)) {
+//        format.setVersion(3, 2);
+//        format.setProfile(QSurfaceFormat::CoreProfile);
+//        format.setOption(QSurfaceFormat::DeprecatedFunctions, false);
+//    }
+//    meshPickingSurface.setFormat(format);
+    meshPickingSurface.create();
+    meshPickingCtx.setFormat(meshPickingSurface.format());
+    meshPickingCtx.setShareContext(context());
+    meshPickingCtx.create();
+    meshPickingCtx.makeCurrent(&meshPickingSurface);
 
     const QString prefix{":/resources/shaders/"};
     QList<QOpenGLShaderProgram*> shaders;
@@ -289,15 +336,27 @@ void ViewportBase::initializeGL() {
         shaders.append(&shader);
         return enabled && shader.link();
     };
+    createShader(lineShader, {"line.vert"}, {"line.frag"});
+    createShader(sphereShader, {"sphere.vert"}, {"sphere.frag"});
+    createShader(cylinderShader, {"cylinder.vert"}, {"cylinder.frag"});
     createShader(meshShader, {"color.vert"}, {"functions/diffuse.frag", "color vertexcolor.frag"});
     createShader(meshTreeColorShader, {"normal.vert"}, {"functions/diffuse.frag", "normal treecolor.frag"});
-    state->viewerState->MeshPickingEnabled = createShader(meshIdShader, {"idcolor.vert"}, {"functions/diffuse.frag", "idcolor.frag"});
+    state->viewerState->MeshPickingEnabled = !meshPickingVao.isCreated() && meshPickingVao.create() && createShader(meshIdShader, {"idcolor.vert"}, {"functions/diffuse.frag", "idcolor.frag"});
     createShader(meshSlicingCreateMaskShader, {"mvp.vert"}, {"mvp slicingmask.frag"});
-    createShader(meshSlicingWithMaskShader, {"normal.vert"}, {"functions/meshslicing.frag", "normal slicingapply.frag"});
+    createShader(meshSlicingWithMaskShader, {"mvp.vert"}, {"mvp slicingapply.frag"});
     createShader(meshSlicingIdShader, {"idcolor.vert"}, {"idcolor slicing.frag"});
     createShader(raw_data_shader, {"3DTexture.vert"}, {"3DTexture.frag"});
     createShader(overlay_data_shader, {"3DTexture.vert"}, {"3DTextureLUT.frag"});
     createShader(shaderTextureQuad, {"texturequad.vert"}, {"texturequad.frag"});
+    createShader(shaderTextureQuad2, {"texturequad2.vert"}, {"texturequad.frag"});
+    static bool printed2 = false;
+    if (!printed2) {
+        const auto glversion  = reinterpret_cast<const char*>(::glGetString(GL_VERSION));
+        const auto glvendor   = reinterpret_cast<const char*>(::glGetString(GL_VENDOR));
+        const auto glrenderer = reinterpret_cast<const char*>(::glGetString(GL_RENDERER));
+        qDebug() << tr("picking ctx is %1functional").arg(!meshIdShader.isLinked() ? tr("dys") : tr("")).toUtf8().constData() << QString("%1, %2, %3").arg(glversion).arg(glvendor).arg(glrenderer);
+        printed2 = true;
+    }
     for (auto * shader : shaders) {
         if (!shader->log().isEmpty() && viewportType == VIEWPORT_SKELETON) {
             qDebug().noquote() << shader->log();
@@ -313,17 +372,18 @@ void ViewportBase::initializeGL() {
     screenVertexBuf.bind();
     screenVertexBuf.allocate(vertices.data(), vertices.size() * sizeof(vertices.front()));
     screenVertexBuf.release();
+
+    for (auto * buf : {&orthoVBuf, &texPosBuf, &boundaryBuf, &boundaryGridBuf, &crosshairBuf, &vpBorderBuf, &brushBuf, &scalebarBuf, &selectionSquareBuf}) {
+        buf->create();
+        buf->setUsagePattern(QOpenGLBuffer::DynamicDraw);
+    }
 }
 
 void ViewportBase::resizeGL(int width, int height) {
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    GLfloat x = (GLfloat)width / height;
-
-    glFrustum(-x, +x, -1.0, + 1.0, 0.1, 10.0);
-    glMatrixMode(GL_MODELVIEW);
+//    p.setToIdentity();
 
     edgeLength = width;
+    qDebug() << "resize" << viewportType << edgeLength;
     state->viewer->recalcTextureOffsets();
 
     emptyMask.destroy();
@@ -516,29 +576,31 @@ void ViewportBase::takeSnapshot(const SnapshotOptions & o) {
         }
     }
     makeCurrent();
-    glEnable(GL_MULTISAMPLE);
-    glPushAttrib(GL_VIEWPORT_BIT); // remember viewport setting
-    glViewport(0, 0, o.size, o.size);
+    GLint gl_viewport[4];
+    glGetIntegerv(GL_VIEWPORT, &gl_viewport[0]);
+    QImage fboImage;
+    { // fbo scope
+    QOpenGLPaintDevice pd(o.size, o.size);
     QOpenGLFramebufferObjectFormat format;
     format.setSamples(state->viewerState->sampleBuffers);
     format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
-    QImage fboImage;
-    { // fbo scope
     auto fbo = std::make_shared<QOpenGLFramebufferObject>(o.size, o.size, format);
-    snapshotFbo = fbo;
-    const auto options = RenderOptions::snapshotRenderOptions(o.withAxes, o.withBox, o.withOverlay, o.withMesh, o.withSkeleton, o.withVpPlanes);
     fbo->bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Qt does not clear it?
-    bool tmpLinesAndPoints = state->viewerState->onlyLinesAndPoints;
-    state->viewerState->onlyLinesAndPoints = false;
+    snapshotFbo = fbo;
+    const auto options = RenderOptions::snapshotRenderOptions(o.withAxes, o.withBox, o.withOverlay, o.withMesh, o.withSkeleton, o.withVpPlanes);
+
+    glViewport(0, 0, o.size, o.size);
+    this->pd = &pd;
+
     renderViewport(options);
-    state->viewerState->onlyLinesAndPoints = tmpLinesAndPoints;
-    if(o.withScale) {
-        setFrontFacePerspective();
+    if (o.withScale) {
         renderScaleBar();
     }
-    glPopAttrib(); // restore viewport setting
-    fbo->release();
+
+    this->pd = this;
+    glViewport(gl_viewport[0], gl_viewport[1], gl_viewport[2], gl_viewport[3]);
+
     fboImage = fbo->toImage();
     }
     // Need to specify image format with no premultiplied alpha.
