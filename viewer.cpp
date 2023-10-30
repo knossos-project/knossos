@@ -557,7 +557,7 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
                         dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.textures[layerId].texData.data() + index, vp, layerId, combine);
                     }
                 } else {
-                    qDebug() << cubeEdgeLen << Dataset::datasets[layerId].cubeEdgeLength << vp.textures.at(layerId).texHandle.width() << vp.textures.at(layerId).texHandle.height() << vp.textures.at(layerId).texData.size();
+//                    qDebug() << cubeEdgeLen << Dataset::datasets[layerId].cubeEdgeLength << vp.textures.at(layerId).texHandle.width() << vp.textures.at(layerId).texHandle.height() << vp.textures.at(layerId).texData.size();
                     std::fill(vp.textures.at(layerId).texData.data() + index, vp.textures.at(layerId).texData.data() + index + 4 * cubeEdgeLen * cubeEdgeLen, 0);
                 }
             }));
