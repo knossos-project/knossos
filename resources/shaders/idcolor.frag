@@ -1,4 +1,4 @@
-#version 130
+#version 150
 
 flat in vec4 frag_color;
 

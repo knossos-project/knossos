@@ -92,7 +92,16 @@ void ViewportOrtho::paintGL() {
     } else {
         renderViewport();
     }
+
     renderViewportFrontFace();
+}
+
+#include <skeleton/skeletonizer.h>
+
+void ViewportOrtho::pickMeshIdAtPosition() {
+    p = QMatrix4x4{};
+    p.ortho(-displayedIsoPx, +displayedIsoPx, -displayedIsoPx, +displayedIsoPx, -(0.5), -(-state->skeletonState->volBoundary()));
+    ViewportBase::pickMeshIdAtPosition();
 }
 
 void ViewportOrtho::mouseMoveEvent(QMouseEvent *event) {

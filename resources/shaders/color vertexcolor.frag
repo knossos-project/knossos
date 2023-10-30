@@ -1,10 +1,12 @@
-#version 110
+#version 150
 
-varying vec3 frag_normal;
-varying vec4 frag_color;
+in vec3 frag_normal;
+out vec4 frag_color;
 
 vec4 diffuse(vec3, vec4);
 
+out vec4 fragOut;
+
 void main() {
-    gl_FragColor = diffuse(frag_normal, frag_color);
+    fragOut = diffuse(frag_normal, frag_color);
 }

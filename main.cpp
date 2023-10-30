@@ -25,8 +25,12 @@
 #include "dataset.h"
 #include "loader.h"
 #include "network.h"
+#include "qelapsedtimer.h"
+#include "qurl.h"
 #include "scriptengine/scripting.h"
+#include "segmentation/segmentationsplit.h"
 #include "stateInfo.h"
+#include "usermove.h"
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 #include "widgets/viewports/viewportbase.h"
@@ -52,6 +56,7 @@
 #include <memory>
 #include <sstream>
 #include <stdexcept>
+#include <unistd.h>
 
 // obsolete with CMAKE_AUTOSTATICPLUGINS in msys2
 //#if defined(Q_OS_WIN) && defined(QT_STATIC)
@@ -116,7 +121,7 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext &
     case QtCriticalMsg: intro = QString("Critical: "); break;
     case QtFatalMsg:    intro = QString("Fatal: ");    break;
     }
-    auto txt = QString("%4%5").arg(intro).arg(msg);
+    auto txt = QString("%4%5").arg(intro, msg);
 #ifdef QT_MESSAGELOGCONTEXT
     if (context.file && context.line) {
         txt.prepend(QString("[%1:%2] \t").arg(QFileInfo(context.file).fileName()).arg(context.line));
@@ -142,7 +147,12 @@ void debugMessageHandler(QtMsgType type, const QMessageLogContext &
 
 Q_DECLARE_METATYPE(std::string)
 
+#include "segmentation/cubeloader.h"
+#include "mesh/mesh_generation.h"
+
 int main(int argc, char * argv[]) { boost::leaf::try_handle_all([argc, &argv]() mutable -> boost::leaf::result<int> {
+    QElapsedTimer t;
+    t.start();
 #ifdef _GLIBCXX_DEBUG
     std::cerr << "_GLIBCXX_DEBUG set → debug stdlib in use, which might result in crashes from mismatching ABI" << std::endl;
 #endif
@@ -171,12 +181,12 @@ int main(int argc, char * argv[]) { boost::leaf::try_handle_all([argc, &argv]() 
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);// explicitly enable sharing for undocked viewports
 
     QSurfaceFormat format{QSurfaceFormat::defaultFormat()};
-    format.setVersion(2, 0);
+    format.setVersion(3, 2);
     format.setDepthBufferSize(24);
     format.setSamples(8);// set it here to the most common value (the default) so it doesn’t complain unnecessarily later
 //    format.setSwapInterval(0);
 //    format.setSwapBehavior(QSurfaceFormat::SingleBuffer);
-    format.setProfile(QSurfaceFormat::CompatibilityProfile);
+    format.setProfile(QSurfaceFormat::CoreProfile);
     format.setOption(QSurfaceFormat::DeprecatedFunctions);
     if (ViewportBase::oglDebug) {
         format.setOption(QSurfaceFormat::DebugContext);
@@ -199,9 +209,34 @@ int main(int argc, char * argv[]) { boost::leaf::try_handle_all([argc, &argv]() 
                     ::state->scripting->evalScript(script, 257);
                 }
             }
-            Loader::Controller::singleton().suspendLoader();
-            Loader::Controller::singleton().worker.reset();// have to make really sure loader is done
-            QCoreApplication::quit();
+            Dataset::current().url = QUrl::fromLocalFile("/asdf");
+            Dataset::datasets = {Dataset::current(), Dataset::current()};
+            Dataset::datasets[1].type = Dataset::CubeType::SNAPPY;
+            Segmentation::singleton().enabled = true;
+            Segmentation::singleton().layerId = 1;
+            ::state->viewer->resizeTexEdgeLength(128, 3, Dataset::datasets.size());// resets textures
+            emit ::state->mainWindow->widgetContainer.datasetLoadWidget.datasetChanged();
+
+            const auto coord = Dataset::current().boundary / 2;
+            ::state->viewer->setPosition(coord);
+            ::state->viewer->updateDatasetMag();// clear vps and notify loader
+
+            ::state->mainWindow->setWorkMode(AnnotationMode::Mode_Paint);
+            auto & seg = Segmentation::singleton();
+            seg.createAndSelectObject(coord);
+            uint64_t soid = seg.subobjectIdOfFirstSelectedObject(coord);
+            QTimer::singleShot(500, ::state->mainWindow, [coord, soid](){
+                writeVoxels(coord, soid, brush_t{});
+                QTimer::singleShot(500, ::state->mainWindow, [](){
+                    generateMeshesForSubobjectsOfSelectedObjects();
+                    QTimer::singleShot(500, ::state->mainWindow, [](){
+                        Loader::Controller::singleton().suspendLoader();
+                        Loader::Controller::singleton().worker.reset();// have to make really sure loader is done
+            //            throw std::runtime_error("sldkjgn");
+                        QCoreApplication::quit();
+                    });
+                });
+            });
         });
     }
 
@@ -233,7 +268,7 @@ int main(int argc, char * argv[]) { boost::leaf::try_handle_all([argc, &argv]() 
     SignalRelay signalRelay;
     Scripting scripts;
     Viewer viewer;
-    QTimer::singleShot(0, [&](){// get into the event loop first
+    QTimer::singleShot(0, state.mainWindow, [&](){// get into the event loop first
         state.mainWindow->loadSettings();// load settings after viewer and window are accessible through state and viewer
         state.mainWindow->widgetContainer.datasetLoadWidget.loadDataset();// load last used dataset or show
         viewer.timer.start(0);
@@ -242,6 +277,8 @@ int main(int argc, char * argv[]) { boost::leaf::try_handle_all([argc, &argv]() 
             splash.finish(state.mainWindow);
 #endif
         }
+//        qFatal("asdf");
+        qDebug() << t.nsecsElapsed()/1e9;
     });
     // ensure killed QNAM’s before QNetwork deinitializes
     std::unique_ptr<Loader::Controller> loader_deleter{&Loader::Controller::singleton()};

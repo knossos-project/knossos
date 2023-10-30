@@ -4,7 +4,7 @@
 #include "viewer.h"
 
 RenderOptions::RenderOptions()
-    : drawCrosshairs(state->viewerState->drawVPCrosshairs && state->viewerState->showOnlyRawData == false)
+    : drawCrosshairs(state->viewerState->showOnlyRawData ? CrosshairDisplay::HIDDEN : state->viewerState->crosshairDisplay)
         , drawMesh{state->viewerState->showOnlyRawData == false}
         , drawOverlay(Segmentation::singleton().enabled && state->viewerState->showOnlyRawData == false)
         , drawSkeleton{state->viewerState->showOnlyRawData == false}
@@ -13,17 +13,11 @@ RenderOptions::RenderOptions()
 
 RenderOptions RenderOptions::nodePickingRenderOptions(RenderOptions::SelectionPass pass) {
     RenderOptions options;
-    options.drawBoundaryAxes = options.drawBoundaryBox = options.drawCrosshairs = options.drawOverlay = options.drawMesh = false;
+    options.drawBoundaryAxes = options.drawBoundaryBox = options.drawOverlay = options.drawMesh = false;
+    options.drawCrosshairs = CrosshairDisplay::HIDDEN;
     options.drawViewportPlanes = options.highlightActiveNode = options.highlightSelection = false;
     options.nodePicking = true;
     options.selectionPass = pass;
-    return options;
-}
-
-RenderOptions RenderOptions::meshPickingRenderOptions() {
-    RenderOptions options;
-    options.drawBoundaryAxes = options.drawBoundaryBox = options.drawCrosshairs = options.drawOverlay = options.drawSkeleton = options.drawViewportPlanes = false;
-    options.drawMesh = options.meshPicking = true;
     return options;
 }
 
@@ -31,7 +25,7 @@ RenderOptions RenderOptions::snapshotRenderOptions(const bool drawBoundaryAxes, 
     RenderOptions options;
     options.drawBoundaryAxes = drawBoundaryAxes;
     options.drawBoundaryBox = drawBoundaryBox;
-    options.drawCrosshairs = false;
+    options.drawCrosshairs = CrosshairDisplay::HIDDEN;
     options.drawOverlay = drawOverlay;
     options.drawMesh = drawMesh;
     options.drawSkeleton = drawSkeleton;

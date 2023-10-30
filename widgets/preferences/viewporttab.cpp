@@ -36,7 +36,12 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
     rotationCenterGroup.addButton(&rotateAroundCurrentPositionRadioBtn, static_cast<int>(RotationCenter::CurrentPosition));
     generalLayout.addWidget(&showScalebarCheckBox);
     generalLayout.addWidget(&showVPDecorationCheckBox);
-    generalLayout.addWidget(&drawIntersectionsCrossHairCheckBox);
+
+    crosshairDropdown.addItems({tr("Subtle"), tr("Strong"), tr("Hidden")});
+    crosshairLayout.addWidget(&crosshairLabel);
+    crosshairLayout.addWidget(&crosshairDropdown);
+
+    generalLayout.addLayout(&crosshairLayout);
     generalLayout.addWidget(&addArbVPCheckBox);
     generalLayout.setAlignment(Qt::AlignTop);
     generalBox.setLayout(&generalLayout);
@@ -70,8 +75,10 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
         state->viewerState->showVpDecorations = checked;
         state->viewer->mainWindow.forEachVPDo([&checked](ViewportBase & vp) { vp.showHideButtons(checked); });
     });
-    QObject::connect(&drawIntersectionsCrossHairCheckBox, &QCheckBox::clicked, [](const bool on) { state->viewerState->drawVPCrosshairs = on; });
-    QObject::connect(&addArbVPCheckBox, &QCheckBox::clicked, [this](const bool on){
+    QObject::connect(&crosshairDropdown, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [](const int index) {
+        state->viewerState->crosshairDisplay = static_cast<CrosshairDisplay>(index);
+    });
+    QObject::connect(&addArbVPCheckBox, &QCheckBox::clicked, [this](const bool on) {
         showArbPlaneCheckBox.setEnabled(on);
         // HACK register arb box to group (doesn’t toggle otherwise)
         planesBox.setChecked(!planesBox.isChecked());
@@ -103,7 +110,7 @@ ViewportTab::ViewportTab(QWidget *parent) : QWidget(parent) {
 void ViewportTab::saveSettings(QSettings & settings) const {
     settings.setValue(SHOW_SCALEBAR, showScalebarCheckBox.checkState());
     settings.setValue(SHOW_VP_DECORATION, showVPDecorationCheckBox.isChecked());
-    settings.setValue(DRAW_INTERSECTIONS_CROSSHAIRS, drawIntersectionsCrossHairCheckBox.isChecked());
+    settings.setValue(CROSSHAIR_DISPLAY, crosshairDropdown.currentIndex());
     settings.setValue(ADD_ARB_VP, addArbVPCheckBox.isChecked());
     settings.setValue(SHOW_VP_PLANES, planesBox.isChecked());
     settings.setValue(SHOW_XY_PLANE, showXYPlaneCheckBox.isChecked());
@@ -123,8 +130,7 @@ void ViewportTab::loadSettings(const QSettings & settings) {
     showScalebarCheckBox.setCheckState(static_cast<Qt::CheckState>(scaleBarSetting));
     showVPDecorationCheckBox.setChecked(settings.value(SHOW_VP_DECORATION, true).toBool());
     showVPDecorationCheckBox.clicked(showVPDecorationCheckBox.isChecked());
-    drawIntersectionsCrossHairCheckBox.setChecked(settings.value(DRAW_INTERSECTIONS_CROSSHAIRS, true).toBool());
-    drawIntersectionsCrossHairCheckBox.clicked(drawIntersectionsCrossHairCheckBox.isChecked());
+    crosshairDropdown.setCurrentIndex(settings.value(CROSSHAIR_DISPLAY, static_cast<int>(devicePixelRatio() > 1 ? CrosshairDisplay::STRONG : CrosshairDisplay::SUBTLE)).toInt());
     addArbVPCheckBox.setChecked(settings.value(ADD_ARB_VP, false).toBool());
     addArbVPCheckBox.clicked(addArbVPCheckBox.isChecked());
     planesBox.setChecked(settings.value(SHOW_VP_PLANES, true).toBool());

@@ -27,6 +27,7 @@
 #include "usermove.h"
 #include "widgets/preferences/navigationtab.h"
 #include "widgets/mainwindow.h"
+#include "widgets/viewports/renderoptions.h"
 #include "widgets/viewports/viewportbase.h"
 
 #include <QColor>
@@ -60,21 +61,18 @@ enum class RotationCenter {
 
 struct GLBuffers {
     bool regenVertBuffer{true};
+    bool regenHaloBuffer{true};
 
     // vertex buffers that are available for rendering
     struct RenderBuffer {
         std::vector<floatCoordinate> vertices;
         std::vector<std::array<std::uint8_t, 4>> colors;
-        std::unordered_map<size_t, unsigned int> colorBufferOffset;
         QOpenGLBuffer vertex_buffer{QOpenGLBuffer::VertexBuffer};
         QOpenGLBuffer color_buffer{QOpenGLBuffer::VertexBuffer};
-
-        size_t lastSelectedNode{0};
 
         void clear() {
             vertices.clear();
             colors.clear();
-            colorBufferOffset.clear();
         }
 
         template<typename T, typename U>
@@ -82,7 +80,14 @@ struct GLBuffers {
             vertices.emplace_back(std::forward<T>(coord));
             colors.emplace_back(std::forward<U>(color));
         }
-    } lineVertBuffer, pointVertBuffer;
+    } lineVertBuffer, cylinderBuffer, pointVertBuffer, haloBuffer;
+    QOpenGLBuffer radius_buffer{QOpenGLBuffer::VertexBuffer};
+    QOpenGLBuffer haloRadiusBuffer{QOpenGLBuffer::VertexBuffer};
+    QOpenGLBuffer segment_vector_buffer{QOpenGLBuffer::VertexBuffer};
+    QOpenGLBuffer cylinder_radius_buffer{QOpenGLBuffer::VertexBuffer};
+    QOpenGLBuffer cylinder_shift_buffer{QOpenGLBuffer::VertexBuffer};
+    QOpenGLBuffer cylinder_raised_buffer{QOpenGLBuffer::VertexBuffer};
+    QOpenGLBuffer color_picking_buffer{QOpenGLBuffer::VertexBuffer};
     std::vector<std::array<std::uint8_t, 4>> colorPickingBuffer24, colorPickingBuffer48, colorPickingBuffer64;
 };
 
@@ -156,7 +161,7 @@ struct ViewerState {
     // viewport rendering options
     float FOVmin{0.5};
     float FOVmax{1};
-    bool drawVPCrosshairs{true};
+    CrosshairDisplay crosshairDisplay{CrosshairDisplay::SUBTLE};
     RotationCenter rotationCenter{RotationCenter::ActiveNode};
     int showIntersections{false};
     int showScalebar{false};

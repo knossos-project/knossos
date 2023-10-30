@@ -30,6 +30,8 @@
 #include <atomic>
 #include <unordered_set>
 
+#include <QMatrix4x4>
+
 class ViewportOrtho : public ViewportBase {
     Q_OBJECT
     Coordinate srcPos;
@@ -48,6 +50,8 @@ class ViewportOrtho : public ViewportBase {
     virtual void renderNode(const nodeListElement & node, const RenderOptions & options = RenderOptions()) override;
     void renderBrush(const Coordinate coord);
     virtual void renderViewportFrontFace() override;
+
+    virtual void pickMeshIdAtPosition() override;
 
     floatCoordinate arbNodeDragCache = {};
     class nodeListElement *draggedNode = nullptr;
@@ -94,7 +98,7 @@ public:
     char * viewPortData;
     std::vector<viewportTexture> textures;
 
-    void renderArbitrarySlicePane(const RenderOptions & options, float orthoFactor = 1, bool breakFirst = false);
+    void renderArbitrarySlicePane(const RenderOptions & options, QMatrix4x4 mv, QMatrix4x4 p, float orthoFactor = 1, bool breakFirst = false);
 
 public slots:
     void takeSnapshotDatasetSize(SnapshotOptions o);
