@@ -617,14 +617,15 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         const auto & selectedTrees = state->skeletonState->selectedTrees;
         const auto nodeEditing = Annotation::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing);
         const auto tracingAdvanced = Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_TracingAdvanced);
-        const auto bmAnchors = selectedTrees.size() > 0
-                               && Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps)
-                               && selectedTrees.front()->properties.contains("anchor");
+        const auto bm = selectedTrees.size() > 0 && Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps);
+        const auto bmAnchors = bm && selectedTrees.front()->properties.contains("anchor");
         const auto meshExport = Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps);
         mergeAction->setVisible(tracingAdvanced || meshExport);
         moveNodesAction->setVisible(tracingAdvanced);
 
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() == 1);//show
+        treeContextMenu.actions().at(i++)->setVisible(bm); // separator
+        treeContextMenu.actions().at(i++)->setVisible(bm); // agglo lock
         treeContextMenu.actions().at(i++)->setVisible(bmAnchors); // separator
         treeContextMenu.actions().at(i++)->setVisible(bmAnchors); // copy anchor ID
         treeContextMenu.actions().at(i++)->setVisible(bmAnchors && selectedTrees.front()->properties.contains("nuc")); // copy nucleus ID
@@ -712,6 +713,10 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         if (!tree->nodes.empty()) {
             Skeletonizer::singleton().jumpToNode(tree->nodes.front());
         }
+    });
+    addDisabledSeparator(treeContextMenu);
+    QObject::connect(treeContextMenu.addAction("Agglo lock"), &QAction::triggered, [](){
+        agglo_lock(state->skeletonState->selectedTrees.front()->treeID);
     });
     addDisabledSeparator(treeContextMenu);
     QObject::connect(treeContextMenu.addAction("Copy Anchor ID"), &QAction::triggered, [](){
