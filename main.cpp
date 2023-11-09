@@ -39,6 +39,7 @@
 #include <QSslSocket>
 #include <QStandardPaths>
 #include <QStyleFactory>
+#include <QTextCodec>
 #include <QtConcurrentRun>
 #include <QTimer>
 
@@ -187,6 +188,7 @@ int main(int argc, char * argv[]) { boost::leaf::try_handle_all([argc, &argv]() 
         return QString::fromUtf8(argvv).contains("-style");
     }) != end;
 #endif
+    QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
     QApplication app(argc, argv);
     if (argc == 2 && std::string(argv[1]) == "exit") {
         QTimer::singleShot(5000, &app, [](){
