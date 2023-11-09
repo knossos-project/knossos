@@ -1306,3 +1306,12 @@ void splitHightlightToSelection() {
     Skeletonizer::singleton().select(treeSelection);
     split0ids.clear();
 }
+
+void agglo_lock(const std::size_t soid) {
+    const auto & dataset = Dataset::datasets[Segmentation::singleton().layerId];
+    const auto res = Network::singleton().refresh(dataset.aggloServer.toString() + QString{"/lock/%1"}.arg(soid));
+    QMessageBox info{qApp->activeWindow()};
+    info.setIcon(QMessageBox::Information);
+    info.setText(res.second);
+    info.exec();
+}

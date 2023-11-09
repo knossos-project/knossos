@@ -52,3 +52,4 @@ void anchorSetNoteRequest(const std::uint64_t anchorid, const QString & note);
 void anchorRequest(const std::uint64_t anchorid, const bool add);
 void selectAnchorObjects();
 void explodeRequest(const std::uint64_t svId);
+void agglo_lock(const std::size_t soid);
