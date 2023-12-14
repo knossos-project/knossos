@@ -1,6 +1,6 @@
 # Maintainer: Norbert Pfeiler <norbert.pfeiler@gmail.com>
 
-_pyver=312
+_pyver=311
 _realname=pythonqt-qt5-optpy$_pyver
 pkgname="$MINGW_PACKAGE_PREFIX-$_realname"-static
 pkgver=3.2+126.ga476ceb
