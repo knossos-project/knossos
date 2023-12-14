@@ -132,7 +132,7 @@ public:
         setRange(cubeEdge, cubeEdge * 1024);
         setSingleStep(cubeEdge);
         auto val = QString::number(value());
-        fixup(val);
+        FOVSpinBox::fixup(val);// no vdispatch from ctor
         setValue(val.toInt());
     }
     virtual QValidator::State validate(QString &input, int &pos) const override {
