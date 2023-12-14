@@ -34,6 +34,9 @@
 
 #include <boost/container/small_vector.hpp>
 
+#include <optional>
+
+
 struct Dataset {
     using list_t = boost::container::small_vector<Dataset, 2>;
     enum class API {
@@ -93,6 +96,7 @@ struct Dataset {
     // So N cannot be larger than 10.
     // Edge length of one cube in pixels: 2^N
     int cubeEdgeLength{128};
+    std::optional<int> fovLimit;
     QString description;
     // Current dataset identifier string
     QString experimentname;

@@ -347,6 +347,12 @@ void DatasetLoadWidget::updateDatasetInfo(const Dataset::list_t & datas) {
     const auto supercubeedge = (fovSpin.value() + cubeEdgeSpin.value()) / datasetinfo.cubeEdgeLength;
     fovSpin.setCubeEdge(datasetinfo.cubeEdgeLength);
     fovSpin.setValue((supercubeedge - 1) * datasetinfo.cubeEdgeLength);
+    for (const auto & ds : datas) {
+        if (ds.fovLimit) {
+            fovSpin.setRange(ds.cubeEdgeLength, ds.fovLimit.value());
+            break;
+        }
+    }
     cubeEdgeSpin.setValue(datasetinfo.cubeEdgeLength);
     adaptMemoryConsumption();
 
@@ -528,16 +534,6 @@ bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> lo
         }
     }
     updateDatasetInfo(layers);// updates FOV
-    for (auto && ds : layers) {
-        if (ds.useAlternativebrainmapsChangeServer) {
-            for (auto && name : {"apandey","ayadav","mdarji","arajput","atailor","dkansara","hjoshi","kgaekwad","kshah","kviramgama","mjain","mpatel","ndhokiya","spoorkar","swagat","traininguser","vtrivedi","Yuvaraju"}) {
-                if (datasetUrl.path().contains(name)) {
-                    fovSpin.setRange(ds.cubeEdgeLength, ds.cubeEdgeLength * 2);
-                    break;
-                }
-            }
-        }
-    }
     state->M = (fovSpin.value() + cubeEdgeLen) / cubeEdgeLen;
     if (loadOverlay != boost::none) {
         segmentationOverlayCheckbox.setChecked(loadOverlay.get());
