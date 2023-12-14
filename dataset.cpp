@@ -125,6 +125,9 @@ Dataset::list_t Dataset::parse(const QUrl & url, const QString & data, bool add_
     if (infos.empty()) {
         throw std::runtime_error("Missing [Dataset] header in config.");
     }
+    if (url.isLocalFile() && std::any_of(std::begin(infos), std::end(infos), [](auto & layer){ return layer.useAlternativebrainmapsChangeServer; })) {
+        throw std::runtime_error("This dataset doesn’t support downloaded config files.\nPlease use its original URL directly!");
+    }
     if (add_snappy) {
         bool overlayPresent{false};
         for (std::size_t i = 0; i < infos.size(); ++i) {// determine segmentation layer
@@ -266,6 +269,8 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
             } else {
                 throw std::runtime_error(("Could not load Service Account from " + value).toStdString());
             }
+        } else if (token == "_FoVLimit") {
+            info.fovLimit = value.toInt();
         } else if (!token.isEmpty() && token != "_NumberofCubes" && token != "_Origin") {
             qDebug() << "Skipping unknown parameter" << token;
         }
@@ -345,6 +350,9 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         info.renderSettings.visibleSetExplicitly = vit.contains("Visible");
         info.allocationEnabled = info.loadingEnabled = info.renderSettings.visible = toml::find_or(vit, "Visible", true);
         info.renderSettings.color = QColor{QString::fromStdString(toml::find_or(vit, "Color", "white"))};
+        if (const auto & table = vit.as_table(); table.count("FoVLimit")) {
+            info.fovLimit = table.at("FoVLimit").as_integer();
+        }
 
         info.aggloServer = QString::fromStdString(toml::find_or(vit, "AgglomerationServer", std::string{}));
         info.meshServer  = QString::fromStdString(toml::find_or(vit, "MeshServer", std::string{}));
