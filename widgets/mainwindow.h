@@ -285,7 +285,8 @@ public slots:
     void coordinateEditingFinished();
     void updateCoordinateBar(const Coordinate & pos);
     // viewports
-    void resetViewports();
+    void defaultViewports();
+    void adjustViewports();
 
     // from the event handler
     void newTreeSlot();

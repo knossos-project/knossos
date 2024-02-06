@@ -122,6 +122,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
     QObject::connect(&Skeletonizer::singleton(), &Skeletonizer::unlockedNode, [this]() { nodeLockingLabel.hide(); });
     QObject::connect(&widgetContainer.datasetLoadWidget, &DatasetLoadWidget::datasetChanged, [this]() {
         resetWorkModes();
+        adjustViewports();// apply 2d/3d default
         widgetContainer.annotationWidget.setSegmentationVisibility(Segmentation::singleton().enabled);
 
         const auto scale = Dataset::current().scales[0];
@@ -277,7 +278,7 @@ void MainWindow::resetTextureProperties() {
         orthoVP.texture.size = state->viewerState->texEdgeLength;
         orthoVP.texture.texUnitsPerDataPx = (1.0 / orthoVP.texture.size) / Dataset::current().magnification;
         orthoVP.texture.FOV = 1;
-        orthoVP.texture.usedSizeInCubePixels = (state->M - 1) * Dataset::current().cubeEdgeLength;
+        orthoVP.texture.usedSizeInCubePixels = (state->M - 1) * Dataset::current().cubeShape.componentMul(orthoVP.v1).length();
         if (orthoVP.viewportType == VIEWPORT_ARBITRARY) {
             orthoVP.texture.usedSizeInCubePixels /= std::sqrt(2);
         }
@@ -406,7 +407,7 @@ void MainWindow::createToolbars() {
     auto resetVPsButton = new QPushButton("Reset vp positions", this);
     resetVPsButton->setToolTip("Reset viewport positions and sizes");
     defaultToolbar.addWidget(resetVPsButton);
-    QObject::connect(resetVPsButton, &QPushButton::clicked, this, &MainWindow::resetViewports);
+    QObject::connect(resetVPsButton, &QPushButton::clicked, this, &MainWindow::defaultViewports);
 
     defaultToolbar.addWidget(new QLabel(" Loader pending: "));
     loaderProgress = new QLabel();
@@ -468,7 +469,7 @@ void MainWindow::setProofReadingUI(const bool on) {
     resetWorkModes();
     if (on) {
         state->viewer->saveSettings();
-        resetViewports();
+        defaultViewports();
     } else {
         state->viewer->loadSettings();
     }
@@ -497,7 +498,7 @@ void MainWindow::setJobModeUI(bool enabled) {
         removeToolBar(&segJobModeToolbar);
         addToolBar(&defaultToolbar);
         defaultToolbar.show();
-        resetViewports();
+        defaultViewports();
         QObject::disconnect(&Segmentation::singleton(), &Segmentation::todosLeftChanged, this, &MainWindow::updateTodosLeft);
         QObject::disconnect(&Segmentation::singleton(), &Segmentation::resetData, this, &MainWindow::updateTodosLeft);
     }
@@ -1430,7 +1431,7 @@ void MainWindow::updateCoordinateBar(const Coordinate & pos) {
 void MainWindow::resizeEvent(QResizeEvent *) {
     if(state->viewerState->defaultVPSizeAndPos) {
         // don't resize viewports when user positioned and resized them manually
-        resetViewports();
+        adjustViewports();
     } else {//ensure viewports fit the window
         forEachVPDo([](ViewportBase & vp) {
             vp.posAdapt();
@@ -1473,22 +1474,33 @@ void MainWindow::dragEnterEvent(QDragEnterEvent * event) {
     }
 }
 
-void MainWindow::resetViewports() {
-    if (Annotation::singleton().guiMode == GUIMode::ProofReading) {
-        viewportXY->setDock(true);
+void MainWindow::defaultViewports() {
+    state->viewerState->defaultVPSizeAndPos = true;
+    adjustViewports();
+}
+
+void MainWindow::adjustViewports() {
+    if (Annotation::singleton().guiMode == GUIMode::ProofReading || Dataset::current().boundary.z == 1) {
+        if (state->viewerState->defaultVPSizeAndPos) {
+            viewportXY->setDock(true);
+        }
         viewportXY->show();
         viewportXZ->setHidden(true);
         viewportZY->setHidden(true);
         viewportArb->setHidden(true);
-        viewport3D->setHidden(true);
+        viewport3D->setHidden(Annotation::singleton().guiMode == GUIMode::ProofReading);
     } else {
         forEachVPDo([](ViewportBase & vp) {
-            vp.setDock(true);
+            if (state->viewerState->defaultVPSizeAndPos) {
+                vp.setDock(true);
+            }
             vp.setVisible(state->viewerState->enableArbVP || vp.viewportType != VIEWPORT_ARBITRARY);
         });
     }
-    resizeToFitViewports(centralWidget()->width(), centralWidget()->height());
-    state->viewer->setDefaultVPSizeAndPos(true);
+    if (state->viewerState->defaultVPSizeAndPos) {
+        resizeToFitViewports(centralWidget()->width(), centralWidget()->height());
+        state->viewer->setDefaultVPSizeAndPos(true);
+    }
 }
 
 void MainWindow::newTreeSlot() {
@@ -1535,8 +1547,10 @@ void MainWindow::resizeToFitViewports(int width, int height) {
     width = (width - DEFAULT_VP_MARGIN);
     height = (height - DEFAULT_VP_MARGIN);
     int mindim = std::min(width, height);
-    if (Annotation::singleton().guiMode == GUIMode::ProofReading) {
+    if (Annotation::singleton().guiMode == GUIMode::ProofReading || Dataset::current().boundary.z == 1) {
         viewportXY->setGeometry(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN, mindim - DEFAULT_VP_MARGIN, mindim - DEFAULT_VP_MARGIN);
+        viewport3D->move(mindim + DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN);
+        viewport3D->sizeAdapt({mindim, mindim});
     } else {
         mindim /= 2;
         viewportXY->move(DEFAULT_VP_MARGIN, DEFAULT_VP_MARGIN);
