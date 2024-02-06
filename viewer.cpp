@@ -164,9 +164,8 @@ void Viewer::loadSettings() {
     QSettings settings;
     settings.beginGroup(VIEWER);
     state->viewerState->defaultVPSizeAndPos = settings.value(VP_DEFAULT_POS_SIZE, true).toBool();
-    if (state->viewerState->defaultVPSizeAndPos) {
-        mainWindow.resetViewports();
-    } else {
+    mainWindow.adjustViewports();
+    if (!state->viewerState->defaultVPSizeAndPos) {
         mainWindow.forEachVPDo([&settings](ViewportBase & vp) {
             const auto docked = settings.value(VP_I_DOCKED.arg(vp.viewportType), true).toBool();
             vp.isDocked = docked;
