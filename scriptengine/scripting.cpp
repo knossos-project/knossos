@@ -145,6 +145,8 @@ void Scripting::initialize() {
     PythonQt::self()->registerClass(&EmitOnCtorDtor::staticMetaObject);
 
     evalScript("import sys");
+    const auto versionS = evalScript("sys.version", Py_eval_input).toString();
+    qDebug() << "python version" << versionS;
     evalScript("try: import site\nexcept ImportError: nosite = True\nelse:\n    nosite = False", Py_single_input);
     if (evalScript("nosite", Py_eval_input).toBool()) {
         QMessageBox box;
@@ -155,7 +157,7 @@ void Scripting::initialize() {
                                "\n"
                                "Un- and reinstallation of a system wide Python is advised. \n"
                                "(Alternatively try to fix it manually: registry, environment variables)");
-        box.setDetailedText(evalScript("sys.version", Py_eval_input).toString());
+        box.setDetailedText(versionS);
         box.addButton("Ignore", QMessageBox::AcceptRole);
         box.exec();
     }
