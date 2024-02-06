@@ -462,6 +462,9 @@ void MainWindow::updateLoaderProgress(int refCount) {
 }
 
 void MainWindow::setProofReadingUI(const bool on) {
+    if (modeSwitchSeparator->isVisible() == on) {// leave settings untouched
+        return;
+    }
     resetWorkModes();
     if (on) {
         state->viewer->saveSettings();
