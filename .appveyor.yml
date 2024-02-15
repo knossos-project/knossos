@@ -4,10 +4,12 @@ image:
   - Visual Studio 2022 # Windows Server 2019
   - Visual Studio 2017 # Windows Server 2016
   - Visual Studio 2015 # Windows Server 2012 R2
-  - macOS-monterey # 12.6.1
+  - macOS-sonoma   # 14.2.1
+  - macOS-ventura  # 13.6.4
+  - macOS-monterey # 12.7.3
   - macOS-bigsur   # 11.7.1
   - macOS-catalina # 10.15.7
-  - macOS-mojave   # 10.14
+  - macOS-mojave   # 10.14.6
   - Ubuntu2204
   - Ubuntu2004
   - Ubuntu1804
@@ -58,9 +60,11 @@ for:
 -
   matrix:
     only:
+      - image: macOS-sonoma
+      - image: macOS-ventura
       - image: macOS-monterey
   environment:
-    MACOSX_DEPLOYMENT_TARGET: 10.14 # mojave
+    MACOSX_DEPLOYMENT_TARGET: 11.7 # bigsur
   install:
     - brew pin appveyor-build-agent # https://github.com/appveyor/ci/issues/3763#issuecomment-1003168277
     - time brew update
