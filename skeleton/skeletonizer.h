@@ -315,7 +315,7 @@ public:
     const QSet<QString> getTextProperties() const { return textProperties; }
     void convertToNumberProperty(const QString & property);
 
-    void loadMesh(QIODevice &, const boost::optional<decltype(treeListElement::treeID)> treeID, const QString & filename);
+    void loadMesh(QIODevice &, boost::optional<decltype(treeListElement::treeID)> treeID, const QString & filename);
     std::tuple<QVector<GLfloat>, QVector<std::uint8_t>, QVector<GLuint>> getMesh(const treeListElement & tree);
     void saveMesh(QIODevice & file, const treeListElement & tree);
     void saveMesh(QIODevice & file, const treeListElement & tree, QVector<GLfloat> vertex_components, QVector<std::uint8_t> colors, QVector<GLuint> indices);

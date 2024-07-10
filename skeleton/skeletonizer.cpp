@@ -1965,7 +1965,7 @@ QSet<nodeListElement *> Skeletonizer::getPath(std::vector<nodeListElement *> & n
     return {};
 }
 
-void Skeletonizer::loadMesh(QIODevice & file, const boost::optional<decltype(treeListElement::treeID)> treeID, const QString & filename) {
+void Skeletonizer::loadMesh(QIODevice & file, boost::optional<decltype(treeListElement::treeID)> treeID, const QString & filename) {
     if (!file.open(QIODevice::ReadOnly)) {
         throw std::runtime_error("loadMesh open failed");
     }
@@ -2006,6 +2006,9 @@ void Skeletonizer::loadMesh(QIODevice & file, const boost::optional<decltype(tre
             ply.read(file);
             qDebug() << tr("Parsing .ply file took %1 ms. #vertices: %2, normals %3, #colors: %4, #triangles: %5.")
                         .arg(t.elapsed()).arg(vertexCount).arg(normalCount).arg(colorCount).arg(faceCount);
+            if (!treeID) {
+                treeID = addTree(boost::none, boost::none, {{"comment",QFileInfo{filename}.fileName()}}).treeID;
+            }
             addMeshToTree(treeID, vertices, normals, indices, colors, GL_TRIANGLES);
         } catch (const std::invalid_argument & e) {
             warning = e.what();
