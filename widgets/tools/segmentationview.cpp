@@ -96,8 +96,8 @@ static const auto lockToolTip = "Locked objects remain unmodified when merged.";
 QVariant SegmentationObjectModel::headerData(int section, Qt::Orientation orientation, int role) const {
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
         return header[section];
-    } else if (section == 2 && role == Qt::ToolTipRole) {
-        return lockToolTip;
+    } else if (role == Qt::ToolTipRole) {
+        return (section == 2 ? lockToolTip + tr("\n\n") : "") + tr("Sorting disables upon loading a large number of objects");
     }
     return QVariant();//return invalid QVariant
 }
@@ -415,6 +415,9 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     });
     QObject::connect(&Segmentation::singleton(), &Segmentation::resetData, [this](){
         touchedObjectModel.recreate();
+        if (Segmentation::singleton().objects.size() > 1e6) {
+            objectsTable.sortByColumn(-1, Qt::AscendingOrder);
+        }
         objectModel.recreate();
         updateSelection();
         updateTouchedObjSelection();
