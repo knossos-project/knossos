@@ -1140,7 +1140,10 @@ void Viewport3D::renderViewport(const RenderOptions &options) {
 
 void ViewportBase::renderMeshBuffer(Mesh & buf, boost::optional<QOpenGLShaderProgram&> prog) {
     auto & meshShader = prog ? prog.get() : buf.useTreeColor ? meshTreeColorShader : this->meshShader;
+    renderMeshBuffers({buf}, meshShader);
+}
 
+void ViewportBase::renderMeshBuffers(const std::vector<std::reference_wrapper<Mesh>> & bufs, QOpenGLShaderProgram & meshShader) {
     if (!meshShader.isLinked()) {
         return;
     }
@@ -1161,45 +1164,53 @@ void ViewportBase::renderMeshBuffer(Mesh & buf, boost::optional<QOpenGLShaderPro
     const float alphaFactor = viewportType == VIEWPORT_SKELETON ? state->viewerState->meshAlphaFactor3d : state->viewerState->meshAlphaFactorSlicing;
     meshShader.setUniformValue("alpha_factor", alphaFactor);
     meshShader.setUniformValue("samplerColor", 0);// GL_TEXTURE0
-    QColor color = buf.correspondingTree->color;
-    if (state->viewerState->highlightActiveTree && buf.correspondingTree == state->skeletonState->activeTree) {
-        color = Qt::red;
-    }
-    if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps)) {
-        color = brainmapsMeshColor(buf.correspondingTree->treeID);
-    }
-    color.setAlpha(color.alpha() * alphaFactor);
-    meshShader.setUniformValue("tree_color", color);
 
     int vertexLocation = meshShader.attributeLocation("vertex");
-    meshShader.enableAttributeArray(vertexLocation);
-    buf.position_buf.bind();
-    meshShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
-    buf.position_buf.release();
-
     int normalLocation = meshShader.attributeLocation("normal");
+    int  colorLocation = meshShader.attributeLocation("color");
+    meshShader.enableAttributeArray(vertexLocation);
     if (normalLocation != -1) {
         meshShader.enableAttributeArray(normalLocation);
-        buf.normal_buf.bind();
-        meshShader.setAttributeBuffer(normalLocation, GL_FLOAT, 0, 3);
-        buf.normal_buf.release();
     }
-    int colorLocation = meshShader.attributeLocation("color");
     if (colorLocation != -1) {
-        bool picking = meshShader.programId() == meshIdShader.programId() || meshShader.programId() == meshSlicingIdShader.programId();
-        auto & correct_color_buf = picking ? buf.picking_color_buf : buf.color_buf;
         meshShader.enableAttributeArray(colorLocation);
-        correct_color_buf.bind();
-        meshShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
-        correct_color_buf.release();
     }
+    for (auto bufref : bufs) {
+        auto & buf = bufref.get();
+        QColor color = buf.correspondingTree->color;
+        if (state->viewerState->highlightActiveTree && buf.correspondingTree == state->skeletonState->activeTree) {
+            color = Qt::red;
+        }
+        if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps)) {
+            color = brainmapsMeshColor(buf.correspondingTree->treeID);
+        }
+        color.setAlpha(color.alpha() * alphaFactor);
+        meshShader.setUniformValue("tree_color", color);
 
-    if (buf.index_count != 0) {
-        buf.index_buf.bind();
-        glDrawElements(buf.render_mode, buf.index_count, GL_UNSIGNED_INT, 0);
-        buf.index_buf.release();
-    } else {
-        glDrawArrays(buf.render_mode, 0, buf.vertex_count);
+        buf.position_buf.bind();
+        meshShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
+        buf.position_buf.release();
+
+        if (normalLocation != -1) {
+            buf.normal_buf.bind();
+            meshShader.setAttributeBuffer(normalLocation, GL_FLOAT, 0, 3);
+            buf.normal_buf.release();
+        }
+        if (colorLocation != -1) {
+            bool picking = meshShader.programId() == meshIdShader.programId() || meshShader.programId() == meshSlicingIdShader.programId();
+            auto & correct_color_buf = picking ? buf.picking_color_buf : buf.color_buf;
+            correct_color_buf.bind();
+            meshShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
+            correct_color_buf.release();
+        }
+
+        if (buf.index_count != 0) {
+            buf.index_buf.bind();
+            glDrawElements(buf.render_mode, buf.index_count, GL_UNSIGNED_INT, 0);
+            buf.index_buf.release();
+        } else {
+            glDrawArrays(buf.render_mode, 0, buf.vertex_count);
+        }
     }
     if (colorLocation != -1) {
         meshShader.disableAttributeArray(colorLocation);
@@ -1225,7 +1236,7 @@ static bool shouldRenderMesh(const treeListElement & tree, const ViewportType vi
 }
 
 void ViewportBase::renderMesh() {
-    std::vector<std::reference_wrapper<Mesh>> translucentMeshes;
+    std::vector<std::reference_wrapper<Mesh>> uniColorMeshes, multiColorMeshes, translucentMeshes;
     for (const auto & tree : state->skeletonState->trees) {
         if (shouldRenderMesh(tree, viewportType)) {
             const auto hasTranslucentFirstVertexColor = [](Mesh & mesh){
@@ -1240,16 +1251,18 @@ void ViewportBase::renderMesh() {
             };
             if (state->viewerState->meshAlphaFactor3d != 1.0 || (tree.mesh->useTreeColor && tree.color.alphaF() < 1.0) || (!tree.mesh->useTreeColor && hasTranslucentFirstVertexColor(*(tree.mesh)))) {
                 translucentMeshes.emplace_back(*(tree.mesh));
+            } else if (tree.mesh->useTreeColor) {
+                uniColorMeshes.emplace_back(*(tree.mesh));
             } else {
-                renderMeshBuffer(*(tree.mesh));
+                multiColorMeshes.emplace_back(*(tree.mesh));
             }
         }
     }
+    renderMeshBuffers(uniColorMeshes, meshTreeColorShader);
+    renderMeshBuffers(multiColorMeshes, meshShader);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-    for (const auto & mesh : translucentMeshes) {// render translucent after opaque meshes
-        renderMeshBuffer(mesh);
-    }
+    renderMeshBuffers(translucentMeshes, meshShader);// render translucent after opaque meshes
     glDisable(GL_CULL_FACE);
 }
 

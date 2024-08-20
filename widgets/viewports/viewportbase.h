@@ -167,6 +167,7 @@ private:
     bool sphereInFrustum(floatCoordinate pos, float radius);
 
 protected:
+    void renderMeshBuffers(const std::vector<std::reference_wrapper<Mesh>> & buf, QOpenGLShaderProgram &meshShader);
     void renderMeshBuffer(Mesh & buf, boost::optional<QOpenGLShaderProgram&> prog = boost::none);
     QOpenGLShaderProgram lineShader;
     QOpenGLShaderProgram sphereShader;
