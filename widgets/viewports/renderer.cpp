@@ -38,6 +38,7 @@
 #include "stateInfo.h"
 #include "viewer.h"
 
+#include <QElapsedTimer>
 #include <QMatrix4x4>
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLPaintDevice>
@@ -46,6 +47,8 @@
 #include <QQuaternion>
 #include <QVector3D>
 #include <QVector4D>
+#include <cstddef>
+#include <qvector.h>
 
 #ifdef Q_OS_MAC
     #include <glu.h>
@@ -1175,6 +1178,97 @@ void ViewportBase::renderMeshBuffers(const std::vector<std::reference_wrapper<Me
     if (colorLocation != -1) {
         meshShader.enableAttributeArray(colorLocation);
     }
+    bool doit{false};
+    for (auto bufref : bufs) {
+        if (!bufref.get().verts.empty()) {
+            doit = true;
+            auto & verts = bufref.get().verts;
+            bufref.get().position_buf = Mesh::unibufoffset;
+            Mesh::unibufoffset += verts.size() * sizeof (verts.front());
+        }
+        if (!bufref.get().normals.empty()) {
+            doit = true;
+            auto & normals = bufref.get().normals;
+            bufref.get().normal_buf = Mesh::unibufoffset;
+            Mesh::unibufoffset += normals.size() * sizeof (normals.front());
+        }
+        if (!bufref.get().colors.empty()) {
+            doit = true;
+            auto & colors = bufref.get().colors;
+            bufref.get().color_buf = Mesh::unibufoffset;
+            Mesh::unibufoffset += colors.size() * sizeof (colors.front());
+        }
+        if (!bufref.get().indices.empty()) {
+            doit = true;
+            auto & indices = bufref.get().indices;
+            bufref.get().index_buf = Mesh::unibufindexoffset;
+            Mesh::unibufindexoffset += indices.size() * sizeof (indices.front());
+        }
+    }
+    if (doit) {
+        Mesh::unibuf.bind();
+        QVector<float> data, data2;
+        if (Mesh::unibuf.size() > 0) {
+            data.resize(Mesh::unibuf.size() * sizeof (float));
+            Mesh::unibuf.read(0, data.data(), Mesh::unibuf.size());
+        }
+        Mesh::uniindexbuf.bind();
+        if (Mesh::uniindexbuf.size() > 0) {
+            data2.resize(Mesh::uniindexbuf.size() * sizeof (unsigned int));
+            Mesh::uniindexbuf.read(0, data2.data(), Mesh::uniindexbuf.size());
+        }
+
+        QOpenGLBuffer unibuf2, unibufindex2{QOpenGLBuffer::IndexBuffer};
+        unibuf2.create();
+        unibuf2.bind();
+        unibuf2.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+        unibuf2.allocate(Mesh::unibufoffset);
+        if (!data.empty()) {
+            unibuf2.write(0, data.data(), data.size() * sizeof (data[0]));
+        }
+
+        unibufindex2.create();
+        unibufindex2.bind();
+        unibufindex2.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+        unibufindex2.allocate(Mesh::unibufindexoffset);
+        if (!data2.empty()) {
+            unibufindex2.write(0, data2.data(), data2.size() * sizeof (data2[0]));
+        }
+
+        for (auto bufref : bufs) {
+            if (!bufref.get().verts.empty()) {
+                unibuf2.write(bufref.get().position_buf, bufref.get().verts.data(), bufref.get().verts.size() * sizeof (bufref.get().verts[0]));
+                bufref.get().verts.clear();
+                bufref.get().verts.shrink_to_fit();
+            }
+            if (!bufref.get().normals.empty()) {
+                unibuf2.write(bufref.get().normal_buf, bufref.get().normals.data(), bufref.get().normals.size() * sizeof (bufref.get().normals[0]));
+                bufref.get().normals.clear();
+                bufref.get().normals.shrink_to_fit();
+            }
+            if (!bufref.get().colors.empty()) {
+                unibuf2.write(bufref.get().color_buf, bufref.get().colors.data(), bufref.get().colors.size() * sizeof (bufref.get().colors[0]));
+                bufref.get().colors.clear();
+                bufref.get().colors.shrink_to_fit();
+            }
+            if (!bufref.get().indices.empty()) {
+                unibufindex2.write(bufref.get().index_buf, bufref.get().indices.data(), bufref.get().indices.size() * sizeof (bufref.get().indices[0]));
+                bufref.get().indices.clear();
+                bufref.get().indices.shrink_to_fit();
+            }
+        }
+        std::swap(Mesh::unibuf, unibuf2);
+        std::swap(Mesh::uniindexbuf, unibufindex2);
+        unibuf2.destroy();
+        unibufindex2.destroy();
+    }
+    Mesh::unibuf.bind();
+    Mesh::uniindexbuf.bind();
+    QVector<float> data(10);
+    // if (Mesh::unibuf.size() > 0) {
+    //     Mesh::unibuf.read(0, data.data(), 10*sizeof (float));
+    //     qDebug() << Mesh::unibuf.size() << Mesh::uniindexbuf.size() << data << std::string("dfklöjn").c_str();
+    // }
     for (auto bufref : bufs) {
         auto & buf = bufref.get();
         QColor color = buf.correspondingTree->color;
@@ -1187,27 +1281,19 @@ void ViewportBase::renderMeshBuffers(const std::vector<std::reference_wrapper<Me
         color.setAlpha(color.alpha() * alphaFactor);
         meshShader.setUniformValue("tree_color", color);
 
-        buf.position_buf.bind();
-        meshShader.setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
-        buf.position_buf.release();
+        meshShader.setAttributeBuffer(vertexLocation, GL_FLOAT, buf.position_buf, 3);
 
         if (normalLocation != -1) {
-            buf.normal_buf.bind();
-            meshShader.setAttributeBuffer(normalLocation, GL_FLOAT, 0, 3);
-            buf.normal_buf.release();
+            meshShader.setAttributeBuffer(normalLocation, GL_FLOAT, buf.normal_buf, 3);
         }
         if (colorLocation != -1) {
             bool picking = meshShader.programId() == meshIdShader.programId() || meshShader.programId() == meshSlicingIdShader.programId();
             auto & correct_color_buf = picking ? buf.picking_color_buf : buf.color_buf;
-            correct_color_buf.bind();
-            meshShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, 0, 4);
-            correct_color_buf.release();
+            meshShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, correct_color_buf, 4);
         }
 
         if (buf.index_count != 0) {
-            buf.index_buf.bind();
-            glDrawElements(buf.render_mode, buf.index_count, GL_UNSIGNED_INT, 0);
-            buf.index_buf.release();
+            glDrawElements(buf.render_mode, buf.index_count, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid*>(buf.index_buf));
         } else {
             glDrawArrays(buf.render_mode, 0, buf.vertex_count);
         }
@@ -1219,6 +1305,8 @@ void ViewportBase::renderMeshBuffers(const std::vector<std::reference_wrapper<Me
         meshShader.disableAttributeArray(normalLocation);
     }
     meshShader.disableAttributeArray(vertexLocation);
+    Mesh::unibuf.release();
+    Mesh::uniindexbuf.release();// HACK
     meshShader.release();
 }
 
@@ -1236,18 +1324,23 @@ static bool shouldRenderMesh(const treeListElement & tree, const ViewportType vi
 }
 
 void ViewportBase::renderMesh() {
+    static QElapsedTimer t;
+    qDebug() << t.nsecsElapsed()/1e6 << "mspf";
+    t.restart();
+
     std::vector<std::reference_wrapper<Mesh>> uniColorMeshes, multiColorMeshes, translucentMeshes;
     for (const auto & tree : state->skeletonState->trees) {
         if (shouldRenderMesh(tree, viewportType)) {
             const auto hasTranslucentFirstVertexColor = [](Mesh & mesh){
-                mesh.color_buf.bind();
-                if (mesh.color_buf.size() < 4) {
-                    throw std::runtime_error("non tree color mesh has no colors");
-                }
-                std::uint8_t buffer;
-                mesh.color_buf.read(3, &buffer, sizeof (buffer));
-                mesh.color_buf.release();
-                return buffer < 255;
+                // mesh.color_buf.bind();
+                // if (mesh.color_buf.size() < 4) {
+                //     throw std::runtime_error("non tree color mesh has no colors");
+                // }
+                // std::uint8_t buffer;
+                // mesh.color_buf.read(3, &buffer, sizeof (buffer));
+                // mesh.color_buf.release();
+                // return buffer < 255;
+                return false;
             };
             if (state->viewerState->meshAlphaFactor3d != 1.0 || (tree.mesh->useTreeColor && tree.color.alphaF() < 1.0) || (!tree.mesh->useTreeColor && hasTranslucentFirstVertexColor(*(tree.mesh)))) {
                 translucentMeshes.emplace_back(*(tree.mesh));
@@ -1308,9 +1401,9 @@ boost::optional<BufferSelection> ViewportBase::pickMesh(const QPoint pos) {
         const auto index = triangleID - treeIt->mesh->pickingIdOffset;
 
         std::array<GLfloat, 3> vertex_components;
-        treeIt->mesh->position_buf.bind();
-        treeIt->mesh->position_buf.read(index * sizeof(vertex_components), vertex_components.data(), vertex_components.size() * sizeof(vertex_components[0]));
-        treeIt->mesh->position_buf.release();
+        // treeIt->mesh->position_buf.bind();
+        // treeIt->mesh->position_buf.read(index * sizeof(vertex_components), vertex_components.data(), vertex_components.size() * sizeof(vertex_components[0]));
+        // treeIt->mesh->position_buf.release();
 
         coord = floatCoordinate{vertex_components[0], vertex_components[1], vertex_components[2]};
         coord  /= Dataset::current().scales[0];
@@ -1338,25 +1431,25 @@ void ViewportBase::pickMeshIdAtPosition() {
         if (!tree.mesh || tree.mesh->render_mode != GL_TRIANGLES) {// can’t pick GL_POINTS
             continue;
         }
-        tree.mesh->picking_color_buf.bind();
-        const auto pickingBufferFilled = tree.mesh->picking_color_buf.size() == static_cast<int>(tree.mesh->vertex_count * 4 * sizeof(GLubyte)); // > 0 not sufficient, e.g. after a merge we have fewer colors than vertices
-        const auto pickingMeshValid = id_counter == tree.mesh->pickingIdOffset && pickingBufferFilled;
-        if (pickingMeshValid) {// increment
-            id_counter += tree.mesh->vertex_count;
-        } else {// create picking color buf and increment
-            tree.mesh->pickingIdOffset = id_counter;
+        // tree.mesh->picking_color_buf.bind();
+        // const auto pickingBufferFilled = tree.mesh->picking_color_buf.size() == static_cast<int>(tree.mesh->vertex_count * 4 * sizeof(GLubyte)); // > 0 not sufficient, e.g. after a merge we have fewer colors than vertices
+        // const auto pickingMeshValid = id_counter == tree.mesh->pickingIdOffset && pickingBufferFilled;
+        // if (pickingMeshValid) {// increment
+        //     id_counter += tree.mesh->vertex_count;
+        // } else {// create picking color buf and increment
+        //     tree.mesh->pickingIdOffset = id_counter;
 
-            std::vector<std::array<GLubyte, 4>> picking_colors;
-            for (std::size_t i{0}; i < tree.mesh->vertex_count; ++i) {// for each vertex
-                picking_colors.emplace_back(meshIdToColor(id_counter++));
-            }
-            tree.mesh->picking_color_buf.allocate(picking_colors.data(), picking_colors.size() * sizeof(picking_colors[0]));
-        }
-        tree.mesh->picking_color_buf.release();
-        if (shouldRenderMesh(tree, viewportType)) {
-            const bool isMeshSlicing = viewportType != VIEWPORT_SKELETON;
-            renderMeshBuffer(*tree.mesh, isMeshSlicing ? meshSlicingIdShader : meshIdShader);
-        }
+        //     std::vector<std::array<GLubyte, 4>> picking_colors;
+        //     for (std::size_t i{0}; i < tree.mesh->vertex_count; ++i) {// for each vertex
+        //         picking_colors.emplace_back(meshIdToColor(id_counter++));
+        //     }
+        //     tree.mesh->picking_color_buf.allocate(picking_colors.data(), picking_colors.size() * sizeof(picking_colors[0]));
+        // }
+        // tree.mesh->picking_color_buf.release();
+        // if (shouldRenderMesh(tree, viewportType)) {
+        //     const bool isMeshSlicing = viewportType != VIEWPORT_SKELETON;
+        //     renderMeshBuffer(*tree.mesh, isMeshSlicing ? meshSlicingIdShader : meshIdShader);
+        // }
     }
     if (blendState) {
         glEnable(GL_BLEND);

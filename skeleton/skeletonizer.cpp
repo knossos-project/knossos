@@ -1324,34 +1324,34 @@ auto mergeBuffers = [](QOpenGLBuffer & buf1, QOpenGLBuffer & buf2, boost::option
 };
 
 void Skeletonizer::mergeMeshes(Mesh & mesh1, Mesh & mesh2) {
-    mergeBuffers<float>(mesh1.position_buf, mesh2.position_buf);
-    mergeBuffers<float>(mesh1.normal_buf, mesh2.normal_buf);
-    mergeBuffers<unsigned int>(mesh1.index_buf, mesh2.index_buf, mesh1.vertex_count);
+    // mergeBuffers<float>(mesh1.position_buf, mesh2.position_buf);
+    // mergeBuffers<float>(mesh1.normal_buf, mesh2.normal_buf);
+    // mergeBuffers<unsigned int>(mesh1.index_buf, mesh2.index_buf, mesh1.vertex_count);
 
-    std::vector<std::array<std::uint8_t, 4>> colors(mesh1.vertex_count + mesh2.vertex_count);
-    const auto copyMesh = [&colors](auto & mesh, const auto meshOffset) {
-        if (mesh.useTreeColor) {
-            const auto & treeCol = mesh.correspondingTree->color.rgba64();
-            const decltype(colors)::value_type treeColor{{treeCol.red8(), treeCol.green8(), treeCol.blue8(), treeCol.alpha8()}};
-            std::fill_n(std::begin(colors) + meshOffset, mesh.vertex_count, treeColor);
-        } else {
-            mesh.color_buf.bind();
-            mesh.color_buf.read(0, colors.data() + meshOffset, mesh.color_buf.size());
-            mesh.color_buf.release();
-        }
-    };
-    const auto atLeastOneTreeHasPerVertexColors = !mesh1.useTreeColor || !mesh2.useTreeColor;
-    if (atLeastOneTreeHasPerVertexColors) {
-        copyMesh(mesh1, 0);
-        copyMesh(mesh2, mesh1.vertex_count);
-        mesh1.color_buf.bind();
-        mesh1.color_buf.allocate(colors.data(), colors.size() * sizeof(colors[0]));
-        mesh1.color_buf.release();
-    }
+    // std::vector<std::array<std::uint8_t, 4>> colors(mesh1.vertex_count + mesh2.vertex_count);
+    // const auto copyMesh = [&colors](auto & mesh, const auto meshOffset) {
+    //     if (mesh.useTreeColor) {
+    //         const auto & treeCol = mesh.correspondingTree->color.rgba64();
+    //         const decltype(colors)::value_type treeColor{{treeCol.red8(), treeCol.green8(), treeCol.blue8(), treeCol.alpha8()}};
+    //         std::fill_n(std::begin(colors) + meshOffset, mesh.vertex_count, treeColor);
+    //     } else {
+    //         mesh.color_buf.bind();
+    //         mesh.color_buf.read(0, colors.data() + meshOffset, mesh.color_buf.size());
+    //         mesh.color_buf.release();
+    //     }
+    // };
+    // const auto atLeastOneTreeHasPerVertexColors = !mesh1.useTreeColor || !mesh2.useTreeColor;
+    // if (atLeastOneTreeHasPerVertexColors) {
+    //     copyMesh(mesh1, 0);
+    //     copyMesh(mesh2, mesh1.vertex_count);
+    //     mesh1.color_buf.bind();
+    //     mesh1.color_buf.allocate(colors.data(), colors.size() * sizeof(colors[0]));
+    //     mesh1.color_buf.release();
+    // }
 
-    mesh1.useTreeColor = !atLeastOneTreeHasPerVertexColors;
-    mesh1.vertex_count += mesh2.vertex_count;
-    mesh1.index_count += mesh2.index_count;
+    // mesh1.useTreeColor = !atLeastOneTreeHasPerVertexColors;
+    // mesh1.vertex_count += mesh2.vertex_count;
+    // mesh1.index_count += mesh2.index_count;
 }
 
 template<typename Func>
@@ -2041,15 +2041,15 @@ std::tuple<QVector<GLfloat>, QVector<std::uint8_t>, QVector<GLuint>> Skeletonize
     QVector<GLfloat> vertex_components(tree.mesh->vertex_count * 3);
     QVector<std::uint8_t> colors(tree.mesh->vertex_count * 4);
     QVector<GLuint> indices(tree.mesh->index_count);
-    tree.mesh->position_buf.bind();
-    tree.mesh->position_buf.read(0, vertex_components.data(), vertex_components.size() * sizeof(vertex_components[0]));
-    tree.mesh->position_buf.release();
-    tree.mesh->color_buf.bind();
-    tree.mesh->color_buf.read(0, colors.data(), colors.size() * sizeof(colors[0]));
-    tree.mesh->color_buf.release();
-    tree.mesh->index_buf.bind();
-    tree.mesh->index_buf.read(0, indices.data(), indices.size() * sizeof(indices[0]));
-    tree.mesh->index_buf.release();
+    // tree.mesh->position_buf.bind();
+    // tree.mesh->position_buf.read(0, vertex_components.data(), vertex_components.size() * sizeof(vertex_components[0]));
+    // tree.mesh->position_buf.release();
+    // tree.mesh->color_buf.bind();
+    // tree.mesh->color_buf.read(0, colors.data(), colors.size() * sizeof(colors[0]));
+    // tree.mesh->color_buf.release();
+    // tree.mesh->index_buf.bind();
+    // tree.mesh->index_buf.read(0, indices.data(), indices.size() * sizeof(indices[0]));
+    // tree.mesh->index_buf.release();
     return std::make_tuple(std::move(vertex_components), std::move(colors), std::move(indices));
 }
 
@@ -2125,18 +2125,12 @@ void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeI
     auto mesh = std::make_unique<Mesh>(tree, colors.empty(), static_cast<GLenum>(draw_mode));
     mesh->vertex_count = verts.size() / 3;
     mesh->index_count = indices.size();
-    mesh->position_buf.bind();
-    mesh->position_buf.allocate(verts.data(), verts.size() * sizeof (verts.front()));
-    mesh->position_buf.release();
-    mesh->normal_buf.bind();
-    mesh->normal_buf.allocate(normals.data(), normals.size() * sizeof (normals.front()));
-    mesh->normal_buf.release();
-    mesh->color_buf.bind();
-    mesh->color_buf.allocate(colors.data(), colors.size() * sizeof (colors.front()));
-    mesh->color_buf.release();
-    mesh->index_buf.bind();
-    mesh->index_buf.allocate(indices.data(), indices.size() * sizeof (indices.front()));
-    mesh->index_buf.release();
+    Mesh::unibuf.bind();
+
+    mesh->verts = verts;
+    mesh->normals = normals;
+    mesh->colors = colors;
+    mesh->indices = indices;
 
     std::swap(tree->mesh, mesh);
 

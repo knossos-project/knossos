@@ -1,9 +1,11 @@
 #include "mesh.h"
 
 Mesh::Mesh(treeListElement * tree, bool useTreeColor, GLenum render_mode) : correspondingTree(tree), useTreeColor(useTreeColor), render_mode(render_mode) {
-    for (auto * buf : {&position_buf, &normal_buf, &color_buf, &index_buf, &picking_color_buf}) {
-        buf->create();
-    }
+    // for (auto * buf : {&unibuf, &uniindexbuf}) {
+        // if (!buf->isCreated()) {
+            // buf->create();
+        // }
+    // }
 }
 
 #include "stateInfo.h"

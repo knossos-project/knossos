@@ -763,12 +763,12 @@ void MainWindow::createMenus() {
         } else if (meshPriority) {
             if (state->skeletonState->meshLastClickInformation && activeTree && state->skeletonState->meshLastClickInformation.get().treeId == activeTree->treeID) {
                 pos = state->skeletonState->meshLastClickInformation.get().coord;
-            } else if (activeTree && activeTree->mesh && activeTree->mesh->position_buf.bind() && (activeTree->mesh->position_buf.size() > static_cast<int>(3 * sizeof(float)))) {
+            }/* else if (activeTree && activeTree->mesh && activeTree->mesh->position_buf.bind() && (activeTree->mesh->position_buf.size() > static_cast<int>(3 * sizeof(float)))) {
                 pos = floatCoordinate{};
                 activeTree->mesh->position_buf.read(0, &pos.get(), 3 * sizeof(float));
                 activeTree->mesh->position_buf.release();
                 pos.get() /= Dataset::current().scales[0];
-            }
+            }*/
         }
         if (pos) {
             state->viewer->setPosition(pos.get());

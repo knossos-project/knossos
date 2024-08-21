@@ -1148,27 +1148,27 @@ auto retrieveGraph(std::uint64_t soid) {
     auto life = std::make_unique<Skeletonizer>();
     auto & graph = *life;
     for (auto edge : QJsonDocument::fromJson({pair.second})["edge"].toArray()) {
-        const auto n0id = edge.toObject()["first"].toString().toULongLong();
-        const auto n1id = edge.toObject()["second"].toString().toULongLong();
-        auto x = [&dataset, &graph](auto nid){
-            auto * n = graph.findNodeByNodeID(nid);
-            if (!n) {
-                auto * tree = Skeletonizer::singleton().findTreeByTreeID(nid);
-                auto pos = floatCoordinate{};
-                tree->mesh->position_buf.bind();
-                tree->mesh->position_buf.read(0, &pos, 3 * sizeof(float));
-                tree->mesh->position_buf.release();
-                pos /= dataset.scales[0];
+        // const auto n0id = edge.toObject()["first"].toString().toULongLong();
+        // const auto n1id = edge.toObject()["second"].toString().toULongLong();
+        // auto x = [&dataset, &graph](auto nid){
+        //     auto * n = graph.findNodeByNodeID(nid);
+        //     if (!n) {
+        //         auto * tree = Skeletonizer::singleton().findTreeByTreeID(nid);
+        //         auto pos = floatCoordinate{};
+        //         tree->mesh->position_buf.bind();
+        //         tree->mesh->position_buf.read(0, &pos, 3 * sizeof(float));
+        //         tree->mesh->position_buf.release();
+        //         pos /= dataset.scales[0];
 
-                tree = graph.findTreeByTreeID(nid);
-                if (!tree) {
-                    tree = &graph.addTree(nid);
-                }
-                return &graph.addNode(nid, pos, *tree).get();
-            }
-            return n;
-        };
-        graph.addSegment(*x(n0id), *x(n1id));
+        //         tree = graph.findTreeByTreeID(nid);
+        //         if (!tree) {
+        //             tree = &graph.addTree(nid);
+        //         }
+        //         return &graph.addNode(nid, pos, *tree).get();
+        //     }
+        //     return n;
+        // };
+        // graph.addSegment(*x(n0id), *x(n1id));
     }
     return life;
     }
@@ -1200,24 +1200,24 @@ void splitMe() {
         Coordinate min;
         treeListElement * minTree{nullptr};
         for (auto & tree : state->skeletonState->trees) {
-            if (!tree.mesh || !tree.mesh->vertex_count || !tree.mesh->position_buf.bind()) {
-                qDebug() << "tree unsuitable for splitting" << tree.treeID << tree.mesh->vertex_count;
-                continue;
-            }
-            QVector<floatCoordinate> vertices(tree.mesh->vertex_count);
-            if (tree.mesh->position_buf.read(0, vertices.data(), vertices.size() * sizeof (vertices[0]))) {
-                qDebug() << "read" << tree.treeID << tree.mesh->vertex_count << tree.mesh->position_buf.size();
-                for (auto & pos : vertices) {
-                    pos /= dataset.scales[0];
-                    if ((ref - pos).length() < (ref - min).length()) {
-                        min = pos;
-                        minTree = &tree;
-                    }
-                }
-            } else {
-                qDebug() << "no read" << tree.treeID << tree.mesh->vertex_count << tree.mesh->position_buf.size();
-            }
-            tree.mesh->position_buf.release();
+            // if (!tree.mesh || !tree.mesh->vertex_count || !tree.mesh->position_buf.bind()) {
+            //     qDebug() << "tree unsuitable for splitting" << tree.treeID << tree.mesh->vertex_count;
+            //     continue;
+            // }
+            // QVector<floatCoordinate> vertices(tree.mesh->vertex_count);
+            // if (tree.mesh->position_buf.read(0, vertices.data(), vertices.size() * sizeof (vertices[0]))) {
+            //     qDebug() << "read" << tree.treeID << tree.mesh->vertex_count << tree.mesh->position_buf.size();
+            //     for (auto & pos : vertices) {
+            //         pos /= dataset.scales[0];
+            //         if ((ref - pos).length() < (ref - min).length()) {
+            //             min = pos;
+            //             minTree = &tree;
+            //         }
+            //     }
+            // } else {
+            //     qDebug() << "no read" << tree.treeID << tree.mesh->vertex_count << tree.mesh->position_buf.size();
+            // }
+            // tree.mesh->position_buf.release();
         }
         if (!minTree) {
             throw std::runtime_error{"no min tree for splitting"};

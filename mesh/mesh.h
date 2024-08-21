@@ -5,7 +5,8 @@
 #include <QVector>
 
 #include <boost/optional.hpp>
-#include <unordered_map>
+#include <cstdint>
+#include <qopenglbuffer.h>
 
 class treeListElement;
 struct BufferSelection;
@@ -20,14 +21,18 @@ public:
 
     bool useTreeColor{true};
 
-    std::size_t vertex_count{0};
-    std::size_t index_count{0};
-    QOpenGLBuffer position_buf{QOpenGLBuffer::VertexBuffer};
-    QOpenGLBuffer normal_buf{QOpenGLBuffer::VertexBuffer};
-    QOpenGLBuffer color_buf{QOpenGLBuffer::VertexBuffer};
-    QOpenGLBuffer index_buf{QOpenGLBuffer::IndexBuffer};
+    std::size_t vertex_count{};
+    std::size_t index_count{};
+    static inline QOpenGLBuffer unibuf, uniindexbuf{QOpenGLBuffer::IndexBuffer};
+    static inline std::size_t unibufoffset{}, unibufindexoffset{};
+    std::size_t position_buf{}, normal_buf{}, color_buf{}, index_buf{};
     GLenum render_mode{GL_POINTS};
 
-    std::size_t pickingIdOffset;
-    QOpenGLBuffer picking_color_buf{QOpenGLBuffer::VertexBuffer};
+    std::size_t pickingIdOffset{};
+    std::size_t picking_color_buf{};
+
+    QVector<float> verts;
+    QVector<float> normals;
+    QVector<std::uint8_t> colors;
+    QVector<unsigned int> indices;
 };
