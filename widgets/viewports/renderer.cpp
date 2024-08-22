@@ -1180,95 +1180,63 @@ void ViewportBase::renderMeshBuffers(const std::vector<std::reference_wrapper<Me
     }
     bool doit{false};
     for (auto bufref : bufs) {
-        if (!bufref.get().verts.empty()) {
-            doit = true;
-            auto & verts = bufref.get().verts;
-            bufref.get().position_buf = Mesh::unibufoffset;
-            Mesh::unibufoffset += verts.size() * sizeof (verts.front());
-        }
-        if (!bufref.get().normals.empty()) {
-            doit = true;
-            auto & normals = bufref.get().normals;
-            bufref.get().normal_buf = Mesh::unibufoffset;
-            Mesh::unibufoffset += normals.size() * sizeof (normals.front());
-        }
-        if (!bufref.get().colors.empty()) {
-            doit = true;
-            auto & colors = bufref.get().colors;
-            bufref.get().color_buf = Mesh::unibufoffset;
-            Mesh::unibufoffset += colors.size() * sizeof (colors.front());
-        }
-        if (!bufref.get().indices.empty()) {
-            doit = true;
-            auto & indices = bufref.get().indices;
-            bufref.get().index_buf = Mesh::unibufindexoffset;
-            Mesh::unibufindexoffset += indices.size() * sizeof (indices.front());
-        }
+        const auto cp = [&doit](auto & elems, auto & offset0, auto & offset1) {
+            if (!elems.empty()) {
+                doit = true;
+                offset0 = offset1;
+                offset1 += elems.size() * sizeof (elems.front());
+            }
+        };
+        auto & buf = bufref.get();
+        cp(buf.verts  , buf.position_buf, Mesh::unibufoffset);
+        cp(buf.normals, buf.normal_buf  , Mesh::unibufoffset);
+        cp(buf.colors , buf.color_buf   , Mesh::unibufoffset);
+        cp(buf.indices, buf.index_buf   , Mesh::unibufindexoffset);
     }
     if (doit) {
-        Mesh::unibuf.bind();
-        QVector<float> data, data2;
-        if (Mesh::unibuf.size() > 0) {
-            data.resize(Mesh::unibuf.size() * sizeof (float));
-            Mesh::unibuf.read(0, data.data(), Mesh::unibuf.size());
-        }
-        Mesh::uniindexbuf.bind();
-        if (Mesh::uniindexbuf.size() > 0) {
-            data2.resize(Mesh::uniindexbuf.size() * sizeof (unsigned int));
-            Mesh::uniindexbuf.read(0, data2.data(), Mesh::uniindexbuf.size());
-        }
+        QVector<std::byte> data, data2;
+        const auto cp = [](auto & unibuf, auto & data){
+            unibuf.bind();
+            if (unibuf.size() > 0) {
+                data.resize(unibuf.size());
+                unibuf.read(0, data.data(), unibuf.size());
+            }
+            unibuf.destroy();
+        };
+        cp(Mesh::unibuf     , data);
+        cp(Mesh::uniindexbuf, data2);
 
         QOpenGLBuffer unibuf2, unibufindex2{QOpenGLBuffer::IndexBuffer};
-        unibuf2.create();
-        unibuf2.bind();
-        unibuf2.setUsagePattern(QOpenGLBuffer::DynamicDraw);
-        unibuf2.allocate(Mesh::unibufoffset);
-        if (!data.empty()) {
-            unibuf2.write(0, data.data(), data.size() * sizeof (data[0]));
-        }
-
-        unibufindex2.create();
-        unibufindex2.bind();
-        unibufindex2.setUsagePattern(QOpenGLBuffer::DynamicDraw);
-        unibufindex2.allocate(Mesh::unibufindexoffset);
-        if (!data2.empty()) {
-            unibufindex2.write(0, data2.data(), data2.size() * sizeof (data2[0]));
-        }
+        const auto cr = [](auto & unibuf, const auto size, const auto & data){
+            unibuf.create();
+            unibuf.bind();
+            unibuf.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+            unibuf.allocate(size);
+            if (!data.empty()) {
+                unibuf.write(0, data.data(), data.size());
+            }
+        };
+        cr(unibuf2     , Mesh::unibufoffset     , data);
+        cr(unibufindex2, Mesh::unibufindexoffset, data2);
 
         for (auto bufref : bufs) {
-            if (!bufref.get().verts.empty()) {
-                unibuf2.write(bufref.get().position_buf, bufref.get().verts.data(), bufref.get().verts.size() * sizeof (bufref.get().verts[0]));
-                bufref.get().verts.clear();
-                bufref.get().verts.shrink_to_fit();
-            }
-            if (!bufref.get().normals.empty()) {
-                unibuf2.write(bufref.get().normal_buf, bufref.get().normals.data(), bufref.get().normals.size() * sizeof (bufref.get().normals[0]));
-                bufref.get().normals.clear();
-                bufref.get().normals.shrink_to_fit();
-            }
-            if (!bufref.get().colors.empty()) {
-                unibuf2.write(bufref.get().color_buf, bufref.get().colors.data(), bufref.get().colors.size() * sizeof (bufref.get().colors[0]));
-                bufref.get().colors.clear();
-                bufref.get().colors.shrink_to_fit();
-            }
-            if (!bufref.get().indices.empty()) {
-                unibufindex2.write(bufref.get().index_buf, bufref.get().indices.data(), bufref.get().indices.size() * sizeof (bufref.get().indices[0]));
-                bufref.get().indices.clear();
-                bufref.get().indices.shrink_to_fit();
-            }
+            const auto cp = [](auto & elems, auto & unibuf, const auto offset) {
+                if (!elems.empty()) {
+                    unibuf.write(offset, elems.data(), elems.size() * sizeof (elems[0]));
+                    elems = {};
+                }
+            };
+            auto & buf = bufref.get();
+            cp(buf.verts  , unibuf2, buf.position_buf);
+            cp(buf.normals, unibuf2, buf.normal_buf);
+            cp(buf.colors , unibuf2, buf.color_buf);
+            cp(buf.indices, unibufindex2, buf.index_buf);
         }
-        std::swap(Mesh::unibuf, unibuf2);
+        std::swap(Mesh::unibuf     , unibuf2);
         std::swap(Mesh::uniindexbuf, unibufindex2);
-        unibuf2.destroy();
-        unibufindex2.destroy();
     }
     Mesh::unibuf.bind();
     Mesh::uniindexbuf.bind();
-    QVector<float> data(10);
-    // if (Mesh::unibuf.size() > 0) {
-    //     Mesh::unibuf.read(0, data.data(), 10*sizeof (float));
-    //     qDebug() << Mesh::unibuf.size() << Mesh::uniindexbuf.size() << data << std::string("dfklöjn").c_str();
-    // }
     for (auto bufref : bufs) {
         auto & buf = bufref.get();
         QColor color = buf.correspondingTree->color;
