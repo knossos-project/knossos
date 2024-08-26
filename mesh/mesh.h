@@ -5,8 +5,10 @@
 #include <QVector>
 
 #include <boost/optional.hpp>
+
 #include <cstdint>
-#include <qopenglbuffer.h>
+#include <optional>
+#include <vector>
 
 class treeListElement;
 struct BufferSelection;
@@ -25,14 +27,15 @@ public:
     std::size_t index_count{};
     static inline QOpenGLBuffer unibuf, uniindexbuf{QOpenGLBuffer::IndexBuffer};
     static inline std::size_t unibufoffset{}, unibufindexoffset{};
-    std::size_t position_buf{}, normal_buf{}, color_buf{}, index_buf{};
+    std::optional<std::size_t> position_buf, normal_buf, color_buf, picking_color_buf, index_buf;
     GLenum render_mode{GL_POINTS};
 
+    static inline std::size_t pickingIdCount{1};
     std::size_t pickingIdOffset{};
-    std::size_t picking_color_buf{};
 
     QVector<float> verts;
     QVector<float> normals;
     QVector<std::uint8_t> colors;
+    std::vector<std::array<GLubyte, 4>> picking_colors;
     QVector<unsigned int> indices;
 };

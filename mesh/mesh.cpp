@@ -1,12 +1,6 @@
 #include "mesh.h"
 
-Mesh::Mesh(treeListElement * tree, bool useTreeColor, GLenum render_mode) : correspondingTree(tree), useTreeColor(useTreeColor), render_mode(render_mode) {
-    // for (auto * buf : {&unibuf, &uniindexbuf}) {
-        // if (!buf->isCreated()) {
-            // buf->create();
-        // }
-    // }
-}
+Mesh::Mesh(treeListElement * tree, bool useTreeColor, GLenum render_mode) : correspondingTree(tree), useTreeColor(useTreeColor), render_mode(render_mode) {}
 
 #include "stateInfo.h"
 #include "widgets/mainwindow.h"

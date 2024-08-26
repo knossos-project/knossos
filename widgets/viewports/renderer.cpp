@@ -1191,6 +1191,7 @@ void ViewportBase::renderMeshBuffers(const std::vector<std::reference_wrapper<Me
         cp(buf.verts  , buf.position_buf, Mesh::unibufoffset);
         cp(buf.normals, buf.normal_buf  , Mesh::unibufoffset);
         cp(buf.colors , buf.color_buf   , Mesh::unibufoffset);
+        cp(buf.picking_colors, buf.picking_color_buf, Mesh::unibufoffset);
         cp(buf.indices, buf.index_buf   , Mesh::unibufindexoffset);
     }
     if (doit) {
@@ -1222,7 +1223,7 @@ void ViewportBase::renderMeshBuffers(const std::vector<std::reference_wrapper<Me
         for (auto bufref : bufs) {
             const auto cp = [](auto & elems, auto & unibuf, const auto offset) {
                 if (!elems.empty()) {
-                    unibuf.write(offset, elems.data(), elems.size() * sizeof (elems[0]));
+                    unibuf.write(*offset, elems.data(), elems.size() * sizeof (elems[0]));
                     elems = {};
                 }
             };
@@ -1230,6 +1231,7 @@ void ViewportBase::renderMeshBuffers(const std::vector<std::reference_wrapper<Me
             cp(buf.verts  , unibuf2, buf.position_buf);
             cp(buf.normals, unibuf2, buf.normal_buf);
             cp(buf.colors , unibuf2, buf.color_buf);
+            cp(buf.picking_colors, unibuf2, buf.picking_color_buf);
             cp(buf.indices, unibufindex2, buf.index_buf);
         }
         std::swap(Mesh::unibuf     , unibuf2);
@@ -1249,19 +1251,19 @@ void ViewportBase::renderMeshBuffers(const std::vector<std::reference_wrapper<Me
         color.setAlpha(color.alpha() * alphaFactor);
         meshShader.setUniformValue("tree_color", color);
 
-        meshShader.setAttributeBuffer(vertexLocation, GL_FLOAT, buf.position_buf, 3);
+        meshShader.setAttributeBuffer(vertexLocation, GL_FLOAT, *buf.position_buf, 3);
 
         if (normalLocation != -1) {
-            meshShader.setAttributeBuffer(normalLocation, GL_FLOAT, buf.normal_buf, 3);
+            meshShader.setAttributeBuffer(normalLocation, GL_FLOAT, *buf.normal_buf, 3);
         }
         if (colorLocation != -1) {
             bool picking = meshShader.programId() == meshIdShader.programId() || meshShader.programId() == meshSlicingIdShader.programId();
             auto & correct_color_buf = picking ? buf.picking_color_buf : buf.color_buf;
-            meshShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, correct_color_buf, 4);
+            meshShader.setAttributeBuffer(colorLocation, GL_UNSIGNED_BYTE, *correct_color_buf, 4);
         }
 
         if (buf.index_count != 0) {
-            glDrawElements(buf.render_mode, buf.index_count, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid*>(buf.index_buf));
+            glDrawElements(buf.render_mode, buf.index_count, GL_UNSIGNED_INT, reinterpret_cast<const GLvoid*>(*buf.index_buf));
         } else {
             glDrawArrays(buf.render_mode, 0, buf.vertex_count);
         }
@@ -1297,20 +1299,18 @@ void ViewportBase::renderMesh() {
     t.restart();
 
     std::vector<std::reference_wrapper<Mesh>> uniColorMeshes, multiColorMeshes, translucentMeshes;
+    Mesh::unibuf.bind();
     for (const auto & tree : state->skeletonState->trees) {
         if (shouldRenderMesh(tree, viewportType)) {
             const auto hasTranslucentFirstVertexColor = [](Mesh & mesh){
-                // mesh.color_buf.bind();
-                // if (mesh.color_buf.size() < 4) {
-                //     throw std::runtime_error("non tree color mesh has no colors");
-                // }
-                // std::uint8_t buffer;
-                // mesh.color_buf.read(3, &buffer, sizeof (buffer));
-                // mesh.color_buf.release();
-                // return buffer < 255;
-                return false;
+                if (mesh.useTreeColor) {
+                    return false;
+                }
+                std::uint8_t buffer;
+                Mesh::unibuf.read(*mesh.color_buf+3, &buffer, sizeof (buffer));
+                return buffer < 255;
             };
-            if (state->viewerState->meshAlphaFactor3d != 1.0 || (tree.mesh->useTreeColor && tree.color.alphaF() < 1.0) || (!tree.mesh->useTreeColor && hasTranslucentFirstVertexColor(*(tree.mesh)))) {
+            if (state->viewerState->meshAlphaFactor3d != 1.0 || (tree.mesh->useTreeColor && tree.color.alphaF() < 1.0) || hasTranslucentFirstVertexColor(*(tree.mesh))) {
                 translucentMeshes.emplace_back(*(tree.mesh));
             } else if (tree.mesh->useTreeColor) {
                 uniColorMeshes.emplace_back(*(tree.mesh));
@@ -1319,6 +1319,7 @@ void ViewportBase::renderMesh() {
             }
         }
     }
+    Mesh::unibuf.release();
     renderMeshBuffers(uniColorMeshes, meshTreeColorShader);
     renderMeshBuffers(multiColorMeshes, meshShader);
     glEnable(GL_CULL_FACE);
@@ -1369,9 +1370,9 @@ boost::optional<BufferSelection> ViewportBase::pickMesh(const QPoint pos) {
         const auto index = triangleID - treeIt->mesh->pickingIdOffset;
 
         std::array<GLfloat, 3> vertex_components;
-        // treeIt->mesh->position_buf.bind();
-        // treeIt->mesh->position_buf.read(index * sizeof(vertex_components), vertex_components.data(), vertex_components.size() * sizeof(vertex_components[0]));
-        // treeIt->mesh->position_buf.release();
+        Mesh::unibuf.bind();
+        Mesh::unibuf.read(*treeIt->mesh->position_buf + index * sizeof(vertex_components), vertex_components.data(), vertex_components.size() * sizeof(vertex_components[0]));
+        Mesh::unibuf.release();
 
         coord = floatCoordinate{vertex_components[0], vertex_components[1], vertex_components[2]};
         coord  /= Dataset::current().scales[0];
@@ -1394,30 +1395,14 @@ void ViewportBase::pickMeshIdAtPosition() {
     glEnable(GL_DEPTH_TEST);
 
     // create id map
-    std::uint32_t id_counter = 1;
     for (auto & tree : state->skeletonState->trees) {
         if (!tree.mesh || tree.mesh->render_mode != GL_TRIANGLES) {// can’t pick GL_POINTS
             continue;
         }
-        // tree.mesh->picking_color_buf.bind();
-        // const auto pickingBufferFilled = tree.mesh->picking_color_buf.size() == static_cast<int>(tree.mesh->vertex_count * 4 * sizeof(GLubyte)); // > 0 not sufficient, e.g. after a merge we have fewer colors than vertices
-        // const auto pickingMeshValid = id_counter == tree.mesh->pickingIdOffset && pickingBufferFilled;
-        // if (pickingMeshValid) {// increment
-        //     id_counter += tree.mesh->vertex_count;
-        // } else {// create picking color buf and increment
-        //     tree.mesh->pickingIdOffset = id_counter;
-
-        //     std::vector<std::array<GLubyte, 4>> picking_colors;
-        //     for (std::size_t i{0}; i < tree.mesh->vertex_count; ++i) {// for each vertex
-        //         picking_colors.emplace_back(meshIdToColor(id_counter++));
-        //     }
-        //     tree.mesh->picking_color_buf.allocate(picking_colors.data(), picking_colors.size() * sizeof(picking_colors[0]));
-        // }
-        // tree.mesh->picking_color_buf.release();
-        // if (shouldRenderMesh(tree, viewportType)) {
-        //     const bool isMeshSlicing = viewportType != VIEWPORT_SKELETON;
-        //     renderMeshBuffer(*tree.mesh, isMeshSlicing ? meshSlicingIdShader : meshIdShader);
-        // }
+        if (shouldRenderMesh(tree, viewportType)) {
+            const bool isMeshSlicing = viewportType != VIEWPORT_SKELETON;
+            renderMeshBuffer(*tree.mesh, isMeshSlicing ? meshSlicingIdShader : meshIdShader);
+        }
     }
     if (blendState) {
         glEnable(GL_BLEND);

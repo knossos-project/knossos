@@ -2041,15 +2041,11 @@ std::tuple<QVector<GLfloat>, QVector<std::uint8_t>, QVector<GLuint>> Skeletonize
     QVector<GLfloat> vertex_components(tree.mesh->vertex_count * 3);
     QVector<std::uint8_t> colors(tree.mesh->vertex_count * 4);
     QVector<GLuint> indices(tree.mesh->index_count);
-    // tree.mesh->position_buf.bind();
-    // tree.mesh->position_buf.read(0, vertex_components.data(), vertex_components.size() * sizeof(vertex_components[0]));
-    // tree.mesh->position_buf.release();
-    // tree.mesh->color_buf.bind();
-    // tree.mesh->color_buf.read(0, colors.data(), colors.size() * sizeof(colors[0]));
-    // tree.mesh->color_buf.release();
-    // tree.mesh->index_buf.bind();
-    // tree.mesh->index_buf.read(0, indices.data(), indices.size() * sizeof(indices[0]));
-    // tree.mesh->index_buf.release();
+    Mesh::unibuf.bind();
+    Mesh::unibuf.read(*tree.mesh->position_buf, vertex_components.data(), vertex_components.size() * sizeof(vertex_components[0]));
+    Mesh::unibuf.read(*tree.mesh->color_buf, colors.data(), colors.size() * sizeof(colors[0]));
+    Mesh::unibuf.read(*tree.mesh->index_buf, indices.data(), indices.size() * sizeof(indices[0]));
+    Mesh::unibuf.release();
     return std::make_tuple(std::move(vertex_components), std::move(colors), std::move(indices));
 }
 
@@ -2131,6 +2127,14 @@ void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeI
     mesh->normals = normals;
     mesh->colors = colors;
     mesh->indices = indices;
+
+    mesh->pickingIdOffset = Mesh::pickingIdCount;
+    Mesh::pickingIdCount += mesh->vertex_count;
+    auto id_counter = mesh->pickingIdOffset;
+    std::array<unsigned char, 4> meshIdToColor(uint32_t id);
+    for (std::size_t i{0}; i < mesh->vertex_count; ++i) {// for each vertex
+        mesh->picking_colors.emplace_back(meshIdToColor(id_counter++));
+    }
 
     std::swap(tree->mesh, mesh);
 

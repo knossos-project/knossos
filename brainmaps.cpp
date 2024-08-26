@@ -1200,24 +1200,24 @@ void splitMe() {
         Coordinate min;
         treeListElement * minTree{nullptr};
         for (auto & tree : state->skeletonState->trees) {
-            // if (!tree.mesh || !tree.mesh->vertex_count || !tree.mesh->position_buf.bind()) {
-            //     qDebug() << "tree unsuitable for splitting" << tree.treeID << tree.mesh->vertex_count;
-            //     continue;
-            // }
-            // QVector<floatCoordinate> vertices(tree.mesh->vertex_count);
-            // if (tree.mesh->position_buf.read(0, vertices.data(), vertices.size() * sizeof (vertices[0]))) {
-            //     qDebug() << "read" << tree.treeID << tree.mesh->vertex_count << tree.mesh->position_buf.size();
-            //     for (auto & pos : vertices) {
-            //         pos /= dataset.scales[0];
-            //         if ((ref - pos).length() < (ref - min).length()) {
-            //             min = pos;
-            //             minTree = &tree;
-            //         }
-            //     }
-            // } else {
-            //     qDebug() << "no read" << tree.treeID << tree.mesh->vertex_count << tree.mesh->position_buf.size();
-            // }
-            // tree.mesh->position_buf.release();
+            if (!tree.mesh || !tree.mesh->vertex_count || !Mesh::unibuf.bind()) {
+                qDebug() << "tree unsuitable for splitting" << tree.treeID << tree.mesh->vertex_count;
+                continue;
+            }
+            QVector<floatCoordinate> vertices(tree.mesh->vertex_count);
+            if (Mesh::unibuf.read(*tree.mesh->position_buf, vertices.data(), vertices.size() * sizeof (vertices[0]))) {
+                qDebug() << "read" << tree.treeID << tree.mesh->vertex_count;
+                for (auto & pos : vertices) {
+                    pos /= dataset.scales[0];
+                    if ((ref - pos).length() < (ref - min).length()) {
+                        min = pos;
+                        minTree = &tree;
+                    }
+                }
+            } else {
+                qDebug() << "no read" << tree.treeID << tree.mesh->vertex_count;
+            }
+            Mesh::unibuf.release();
         }
         if (!minTree) {
             throw std::runtime_error{"no min tree for splitting"};
