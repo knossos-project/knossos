@@ -1133,7 +1133,8 @@ auto retrieveGraph(std::uint64_t soid) {
     }
     const auto json{QJsonDocument::fromJson({pair.second})};
     const auto group{json["groups"][0]["groupMembers"]};
-    qDebug() << group.toArray().size() << group;
+    qDebug() << url << payload;
+    qDebug() << soid << group.toArray().size()/* << group << pair.second*/;
     QJsonObject o;
     o["segmentId"] = group;
     {
@@ -1143,7 +1144,8 @@ auto retrieveGraph(std::uint64_t soid) {
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     const auto pair = dataset.useAlternativebrainmapsChangeServer ? blockDownloadExtractData(*Network::singleton().manager.post(request, payload)) : googleRequestBlocking(dataset.token, url, payload);
     if (!pair.first) {
-        throw std::runtime_error("list fail");
+        qDebug() << pair.second;
+        throw std::runtime_error(std::string("list fail: ") + pair.second.toStdString());
     }
     auto life = std::make_unique<Skeletonizer>();
     auto & graph = *life;
@@ -1206,7 +1208,7 @@ void splitMe() {
             }
             QVector<floatCoordinate> vertices(tree.mesh->vertex_count);
             if (Mesh::unibuf.read(*tree.mesh->position_buf, vertices.data(), vertices.size() * sizeof (vertices[0]))) {
-                qDebug() << "read" << tree.treeID << tree.mesh->vertex_count;
+                // qDebug() << "read" << tree.treeID << tree.mesh->vertex_count;
                 for (auto & pos : vertices) {
                     pos /= dataset.scales[0];
                     if ((ref - pos).length() < (ref - min).length()) {
