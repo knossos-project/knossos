@@ -1294,10 +1294,6 @@ static bool shouldRenderMesh(const treeListElement & tree, const ViewportType vi
 }
 
 void ViewportBase::renderMesh() {
-    static QElapsedTimer t;
-    qDebug() << t.nsecsElapsed()/1e6 << "mspf";
-    t.restart();
-
     std::vector<std::reference_wrapper<Mesh>> uniColorMeshes, multiColorMeshes, translucentMeshes;
     Mesh::unibuf.bind();
     for (const auto & tree : state->skeletonState->trees) {
