@@ -68,6 +68,7 @@ for:
     - time brew remove qt6 || true
     - time brew install boost ninja python qt5 snappy python-requests
     - time brew install --overwrite cmake # for building from source, brew needs its own cmake, which conflicts with the preinstalled one
+    - time brew tap --force homebrew/core
     - sed -e 's/"qt"/"qt@5"/' -i bak $(brew edit --print-path quazip)
     # Warning: `brew install` ignores locally edited casks and formulae if HOMEBREW_NO_INSTALL_FROM_API is not set.
     - time env HOMEBREW_NO_INSTALL_FROM_API=1 brew install -s quazip # build from source (with patched qt5 dependency)
