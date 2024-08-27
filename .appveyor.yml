@@ -4,10 +4,10 @@ image:
   - Visual Studio 2022 # Windows Server 2019
   - Visual Studio 2017 # Windows Server 2016
   - Visual Studio 2015 # Windows Server 2012 R2
-  - macOS-monterey # 12.6.1
+  - macOS-monterey # 12.7.3
+  - macOS-sonoma   # 14.2.1
+  - macOS-ventura  # 13.6.4
   - macOS-bigsur   # 11.7.1
-  - macOS-catalina # 10.15.7
-  - macOS-mojave   # 10.14
   - Ubuntu2204
   - Ubuntu2004
   - Ubuntu1804
@@ -60,7 +60,7 @@ for:
     only:
       - image: macOS-monterey
   environment:
-    MACOSX_DEPLOYMENT_TARGET: 10.14 # mojave
+    MACOSX_DEPLOYMENT_TARGET: 11.0 # bigsur
   install:
     - brew pin appveyor-build-agent # https://github.com/appveyor/ci/issues/3763#issuecomment-1003168277
     - time brew update
@@ -82,9 +82,9 @@ for:
 -
   matrix:
     only:
+      - image: macOS-sonoma
+      - image: macOS-ventura
       - image: macOS-bigsur
-      - image: macOS-catalina
-      - image: macOS-mojave
   before_test:
     - curl --fail -JLO https://github.com/knossos-project/knossos/releases/download/nightly-dev/macos.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.app.zip
     - unzip -q macos.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.app.zip
