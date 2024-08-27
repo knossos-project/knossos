@@ -11,7 +11,7 @@ chmod +x linuxdeploy linuxdeploy-plugin-qt-x86_64.AppImage linuxdeploy-plugin-ch
 cd ..
 
 rm -vf depl/usr/bin/knossos
-time deploy-tools/linuxdeploy --appdir depl -e knossos -d ../knossos/installer/knossos.desktop -i ../knossos/resources/icons/knossos.png --plugin qt --plugin checkrt
+time env NO_STRIP=true deploy-tools/linuxdeploy --appdir depl -e knossos -d ../knossos/installer/knossos.desktop -i ../knossos/resources/icons/knossos.png --plugin qt --plugin checkrt
 
 #time deploy-tools/linuxdeploy --appdir depl --output appimage
 
