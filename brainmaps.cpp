@@ -1133,7 +1133,7 @@ auto retrieveGraph(std::uint64_t soid) {
     }
     const auto json{QJsonDocument::fromJson({pair.second})};
     const auto group{json["groups"][0]["groupMembers"]};
-    qDebug() << group.toArray().size()/* << group*/;
+    qDebug() << group.toArray().size() << group;
     QJsonObject o;
     o["segmentId"] = group;
     {
@@ -1148,27 +1148,27 @@ auto retrieveGraph(std::uint64_t soid) {
     auto life = std::make_unique<Skeletonizer>();
     auto & graph = *life;
     for (auto edge : QJsonDocument::fromJson({pair.second})["edge"].toArray()) {
-        // const auto n0id = edge.toObject()["first"].toString().toULongLong();
-        // const auto n1id = edge.toObject()["second"].toString().toULongLong();
-        // auto x = [&dataset, &graph](auto nid){
-        //     auto * n = graph.findNodeByNodeID(nid);
-        //     if (!n) {
-        //         auto * tree = Skeletonizer::singleton().findTreeByTreeID(nid);
-        //         auto pos = floatCoordinate{};
-        //         tree->mesh->position_buf.bind();
-        //         tree->mesh->position_buf.read(0, &pos, 3 * sizeof(float));
-        //         tree->mesh->position_buf.release();
-        //         pos /= dataset.scales[0];
+        const auto n0id = edge.toObject()["first"].toString().toULongLong();
+        const auto n1id = edge.toObject()["second"].toString().toULongLong();
+        auto x = [&dataset, &graph](auto nid){
+            auto * n = graph.findNodeByNodeID(nid);
+            if (!n) {
+                auto * tree = Skeletonizer::singleton().findTreeByTreeID(nid);
+                auto pos = floatCoordinate{};
+                Mesh::unibuf.bind();
+                Mesh::unibuf.read(*tree->mesh->position_buf, &pos, 3 * sizeof(float));
+                Mesh::unibuf.release();
+                pos /= dataset.scales[0];
 
-        //         tree = graph.findTreeByTreeID(nid);
-        //         if (!tree) {
-        //             tree = &graph.addTree(nid);
-        //         }
-        //         return &graph.addNode(nid, pos, *tree).get();
-        //     }
-        //     return n;
-        // };
-        // graph.addSegment(*x(n0id), *x(n1id));
+                tree = graph.findTreeByTreeID(nid);
+                if (!tree) {
+                    tree = &graph.addTree(nid);
+                }
+                return &graph.addNode(nid, pos, *tree).get();
+            }
+            return n;
+        };
+        graph.addSegment(*x(n0id), *x(n1id));
     }
     return life;
     }
