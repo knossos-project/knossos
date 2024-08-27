@@ -68,7 +68,7 @@ for:
     - time brew update
     - time brew upgrade || true # skipped upgrades for pinned packages don’t return cleanly
     - time brew remove qt6 || true
-    - time brew install boost ninja python qt5 snappy python-requests
+    - time brew install boost ninja python qt5 snappy
     - time brew install --overwrite cmake # for building from source, brew needs its own cmake, which conflicts with the preinstalled one
     - time brew tap --force homebrew/core
     - sed -e 's/"qt"/"qt@5"/' -i bak $(brew edit --print-path quazip)
