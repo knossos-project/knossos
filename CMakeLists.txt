@@ -87,7 +87,7 @@ endif()
 
 find_package(Python COMPONENTS Development.Embed)
 set(pythonqt Qt5Python3${Python_VERSION_MINOR} CACHE STRING "PythonQt flavour to search for")
-find_package(Boost 1.50 REQUIRED) # 1.50 added hash_value of std::tuple for Coordinate hash specialization
+find_package(Boost 1.50 REQUIRED CONFIG) # 1.50 added hash_value of std::tuple for Coordinate hash specialization
 find_package(OpenGL REQUIRED COMPONENTS OpenGL) # GLU
 find_package(${pythonqt} REQUIRED CONFIG)
 find_package(Snappy REQUIRED MODULE)
@@ -95,10 +95,7 @@ find_package(QuaZip 0.6.2 REQUIRED MODULE)
 
 include(FetchContent)
 FetchContent_Declare(toml11 GIT_REPOSITORY https://github.com/ToruNiina/toml11.git)
-FetchContent_Populate(toml11)
-
-add_library(toml11::toml11 INTERFACE IMPORTED)
-target_include_directories(toml11::toml11 INTERFACE "${toml11_SOURCE_DIR}")
+FetchContent_MakeAvailable(toml11)
 
 #platform dependent resources
 if(WIN32)
