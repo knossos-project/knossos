@@ -25,6 +25,6 @@ time cmake -G Ninja -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=RELEASE "${DEBUG_
 time ninja
 
 # Deploy
-cp -v knossos.exe $PROJECTPATH/win.${APPVEYOR_REPO_BRANCH}-KNOSSOS.nightly.exe
+cp -v knossos.exe $PROJECTPATH/win.${APPVEYOR_REPO_BRANCH2}-KNOSSOS.nightly.exe
 strip -v knossos.exe
 mv -v knossos.exe $PROJECTPATH/win.KNOSSOS.nightly.exe

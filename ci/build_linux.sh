@@ -18,4 +18,4 @@ time ../knossos/installer/create_appimage.sh
 
 # Deploy
 cp -v *.AppImage ../knossos/linux.KNOSSOS.nightly.AppImage
-cp -v *.AppImage ../knossos/linux.${APPVEYOR_REPO_BRANCH}-KNOSSOS.nightly.AppImage
+cp -v *.AppImage ../knossos/linux.${APPVEYOR_REPO_BRANCH2}-KNOSSOS.nightly.AppImage
