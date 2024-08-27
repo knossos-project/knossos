@@ -80,9 +80,9 @@ for:
   build_script:
     - sh ci/build_macos.sh
   test_script:
-    - ../knossos-build/KNOSSOS.app/Contents/MacOS/knossos exit | true
+    - ../knossos-build/KNOSSOS.app/Contents/MacOS/knossos exit || true
     - ls -l $HOME/Library/Logs/DiagnosticReports
-    - cat $HOME/Library/Logs/DiagnosticReports/*
+    - cat $HOME/Library/Logs/DiagnosticReports/* || true
   artifacts:
     - path: '*nightly.*'
 -
