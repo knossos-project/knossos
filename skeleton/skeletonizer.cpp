@@ -1269,6 +1269,14 @@ void Skeletonizer::toggleLink(nodeListElement & lhs, nodeListElement & rhs) {
 
 void Skeletonizer::clearSkeleton() {
     skeletonState = SkeletonState{};
+
+    state->mainWindow->viewport3D->makeCurrent();
+    Mesh::unibuf.destroy();
+    Mesh::uniindexbuf.destroy();
+    Mesh::unibufoffset = Mesh::unibufindexoffset = 0;
+    Mesh::pickingIdCount = 1;
+    state->mainWindow->viewport3D->doneCurrent();
+
     numberProperties = textProperties = {};
     emit resetData();
 }
