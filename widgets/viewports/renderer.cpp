@@ -1294,7 +1294,7 @@ static bool shouldRenderMesh(const treeListElement & tree, const ViewportType vi
 }
 
 void ViewportBase::renderMesh() {
-    std::vector<std::reference_wrapper<Mesh>> uniColorMeshes, multiColorMeshes, translucentMeshes;
+    std::vector<std::reference_wrapper<Mesh>> uniColorMeshes, multiColorMeshes, translucentUniMeshes, translucentMultiMeshes;
     Mesh::unibuf.bind();
     for (const auto & tree : state->skeletonState->trees) {
         if (shouldRenderMesh(tree, viewportType)) {
@@ -1307,11 +1307,9 @@ void ViewportBase::renderMesh() {
                 return buffer < 255;
             };
             if (state->viewerState->meshAlphaFactor3d != 1.0 || (tree.mesh->useTreeColor && tree.color.alphaF() < 1.0) || hasTranslucentFirstVertexColor(*(tree.mesh))) {
-                translucentMeshes.emplace_back(*(tree.mesh));
-            } else if (tree.mesh->useTreeColor) {
-                uniColorMeshes.emplace_back(*(tree.mesh));
+                (tree.mesh->useTreeColor ? translucentUniMeshes : translucentMultiMeshes).emplace_back(*(tree.mesh));
             } else {
-                multiColorMeshes.emplace_back(*(tree.mesh));
+                (tree.mesh->useTreeColor ? uniColorMeshes : multiColorMeshes).emplace_back(*(tree.mesh));
             }
         }
     }
@@ -1319,8 +1317,9 @@ void ViewportBase::renderMesh() {
     renderMeshBuffers(uniColorMeshes, meshTreeColorShader);
     renderMeshBuffers(multiColorMeshes, meshShader);
     glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    renderMeshBuffers(translucentMeshes, meshShader);// render translucent after opaque meshes
+    glCullFace(GL_BACK);// render translucent after opaque meshes
+    renderMeshBuffers(translucentUniMeshes, meshTreeColorShader);
+    renderMeshBuffers(translucentMultiMeshes, meshShader);
     glDisable(GL_CULL_FACE);
 }
 
