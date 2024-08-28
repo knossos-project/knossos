@@ -63,7 +63,7 @@ double SkeletonState::volBoundary() const {
     return 2 * std::max({scale.x * boundary.x, scale.y * boundary.y, scale.z * boundary.z});
 }
 
-QSet<nodeListElement *> shortestPath(nodeListElement & lhs, const nodeListElement & rhs) { // using uniform cost search
+std::vector<nodeListElement *> shortestPathV(nodeListElement & lhs, const nodeListElement & rhs) { // using uniform cost search
     auto cmp = [](const auto & lhs, const auto & rhs) { return lhs.second > rhs.second; };
     std::unordered_set<const nodeListElement *> explored;
     std::priority_queue<std::pair<nodeListElement *, int>, std::vector<std::pair<nodeListElement *, int>>, decltype(cmp)> frontier(cmp);
@@ -80,10 +80,11 @@ QSet<nodeListElement *> shortestPath(nodeListElement & lhs, const nodeListElemen
         }
         explored.insert(node);
         if (node == &rhs) {
-            QSet<nodeListElement *> path{node};
+            std::vector<nodeListElement *> path;
+            path.emplace_back(node);
             auto * parent = parentMap[node];
             while (parent != nullptr) {
-                path.insert(parent);
+                path.emplace_back(parent);
                 parent = parentMap[parent];
             }
             return path;
@@ -96,6 +97,11 @@ QSet<nodeListElement *> shortestPath(nodeListElement & lhs, const nodeListElemen
             }
         }
     }
+}
+
+QSet<nodeListElement *> shortestPath(nodeListElement & lhs, const nodeListElement & rhs) {
+    auto path = shortestPathV(lhs, rhs);
+    return {std::begin(path), std::end(path)};
 }
 
 auto connectedComponent(nodeListElement & node) {
@@ -124,7 +130,7 @@ Skeletonizer::Skeletonizer(bool global) {
     if (global) {
         state->skeletonState = &skeletonState;
 
-        QObject::connect(this, &Skeletonizer::resetData, this, &Skeletonizer::guiModeLoaded);
+//        QObject::connect(this, &Skeletonizer::resetData, this, &Skeletonizer::guiModeLoaded);
         QObject::connect(this, &Skeletonizer::resetData, this, &Skeletonizer::lockingChanged);
     }
 }
@@ -146,7 +152,7 @@ QList<treeListElement *> Skeletonizer::findTreesContainingComment(const QString 
 
 boost::optional<nodeListElement &> Skeletonizer::UI_addSkeletonNode(const Coordinate & clickedCoordinate, ViewportType VPtype) {
     if(!skeletonState.activeTree) {
-        addTree();
+        addTreeAndActivate();
     }
 
     auto addedNode = addNode(
@@ -867,8 +873,8 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
             state->viewer->setPosition(loadedPosition.get());
         }
     }
-    if (skeletonState.activeNode == nullptr && !skeletonState.trees.empty() && !skeletonState.trees.front().nodes.empty()) {
-        setActiveNode(&skeletonState.trees.front().nodes.front());
+    if (skeletonState.activeNode == nullptr && !skeletonState.nodesByNodeID.empty()) {
+        setActiveNode(skeletonState.nodesByNodeID.begin()->second);
     }
 
     QMessageBox msgBox{QApplication::activeWindow()};
@@ -1132,7 +1138,11 @@ bool Skeletonizer::setActiveNode(nodeListElement *node) {
         if (skeletonState.lockPositions && node->getComment().contains(skeletonState.lockingComment, Qt::CaseInsensitive)) {
             lockPosition(node->position);
         }
-        setActiveTreeByID(node->correspondingTree->treeID);
+        if (Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps)) {// avoid changing tree selection
+            state->skeletonState->activeTree = node->correspondingTree;
+        } else {
+            setActiveTreeByID(node->correspondingTree->treeID);
+        }
     }
 
     skeletonState.jumpToSkeletonNext = true;
@@ -1412,6 +1422,12 @@ QList<nodeListElement*> Skeletonizer::findNodesInTree(treeListElement & tree, co
     return hits;
 }
 
+treeListElement & Skeletonizer::addTreeAndActivate(boost::optional<decltype(treeListElement::treeID)> treeID, boost::optional<decltype(treeListElement::color)> color, const decltype(treeListElement::properties) & properties) {
+    auto & newTree = addTree(treeID, color, properties);
+    setActiveTreeByID(newTree.treeID);
+    return newTree;
+}
+
 treeListElement & Skeletonizer::addTree(boost::optional<decltype(treeListElement::treeID)> treeID, boost::optional<decltype(treeListElement::color)> color, const decltype(treeListElement::properties) & properties) {
     if (!treeID) {
         treeID = skeletonState.nextAvailableTreeID;
@@ -1440,8 +1456,6 @@ treeListElement & Skeletonizer::addTree(boost::optional<decltype(treeListElement
     }
 
     emit treeAddedSignal(newTree);
-
-    setActiveTreeByID(newTree.treeID);
 
     return newTree;
 }
@@ -1618,7 +1632,7 @@ void Skeletonizer::continueSynapse() {
     if(skeletonState.synapseState == Synapse::State::PreSynapse) { //set active Node as presynapse
         if (skeletonState.activeNode != nullptr) {
             skeletonState.temporarySynapse.setPreSynapse(*skeletonState.activeNode);
-            auto & synapticCleft = addTree();
+            auto & synapticCleft = addTreeAndActivate();
             skeletonState.temporarySynapse.setCleft(synapticCleft);
             skeletonState.synapseState = Synapse::State::Cleft;
         }
@@ -1653,7 +1667,7 @@ void Skeletonizer::addSynapseFromNodes(std::vector<nodeListElement *> & nodes) {
         return;
     }
     //Add a synaptic cleft tree with one node between the two selected nodes
-    addFinishedSynapse(addTree(), *nodes[0], *nodes[1]);
+    addFinishedSynapse(addTreeAndActivate(), *nodes[0], *nodes[1]);
 
     const auto minx = std::min(nodes[0]->position.x, nodes[1]->position.x);
     const auto miny = std::min(nodes[0]->position.y, nodes[1]->position.y);
@@ -2004,8 +2018,8 @@ void Skeletonizer::loadMesh(QIODevice & file, boost::optional<decltype(treeListE
             QElapsedTimer t;
             t.start();
             ply.read(file);
-            qDebug() << tr("Parsing .ply file took %1 ms. #vertices: %2, normals %3, #colors: %4, #triangles: %5.")
-                        .arg(t.elapsed()).arg(vertexCount).arg(normalCount).arg(colorCount).arg(faceCount);
+//            qDebug() << tr("Parsing .ply file took %1 ms. #vertices: %2, normals %3, #colors: %4, #triangles: %5.")
+//                        .arg(t.elapsed()).arg(vertexCount).arg(normalCount).arg(colorCount).arg(faceCount);
             if (!treeID) {
                 treeID = addTree(boost::none, boost::none, {{"comment",QFileInfo{filename}.fileName()}}).treeID;
             }
@@ -2104,6 +2118,7 @@ void Skeletonizer::addMeshToTree(boost::optional<decltype(treeListElement::treeI
 
     auto * tree = treeID ? findTreeByTreeID(treeID.get()) : nullptr;
     if (tree == nullptr) {
+        qWarning() << treeID.get();
         tree = &addTree(treeID);
     }
     state->viewer->mainWindow.viewport3D->makeCurrent();

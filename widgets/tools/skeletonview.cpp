@@ -24,6 +24,7 @@
 
 #include "annotation/annotation.h"
 #include "action_helper.h"
+#include "brainmaps.h"
 #include "gui_wrapper.h"
 #include "model_helper.h"
 #include "skeleton/node.h"
@@ -616,10 +617,25 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
         const auto & selectedTrees = state->skeletonState->selectedTrees;
         const auto nodeEditing = Annotation::singleton().annotationMode.testFlag(AnnotationMode::NodeEditing);
         const auto tracingAdvanced = Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_TracingAdvanced);
-        mergeAction->setVisible(tracingAdvanced);
+        const auto bmAnchors = selectedTrees.size() > 0
+                               && Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps)
+                               && selectedTrees.front()->properties.contains("anchor");
+        const auto meshExport = Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps);
+        mergeAction->setVisible(tracingAdvanced || meshExport);
         moveNodesAction->setVisible(tracingAdvanced);
 
         treeContextMenu.actions().at(i++)->setEnabled(selectedTrees.size() == 1);//show
+        treeContextMenu.actions().at(i++)->setVisible(bmAnchors); // separator
+        treeContextMenu.actions().at(i++)->setVisible(bmAnchors); // copy anchor ID
+        treeContextMenu.actions().at(i++)->setVisible(bmAnchors && selectedTrees.front()->properties.contains("nuc")); // copy nucleus ID
+        treeContextMenu.actions().at(i++)->setVisible(bmAnchors); // select anchor
+        treeContextMenu.actions().at(i++)->setVisible(bmAnchors); // set anchor note
+        treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() == 1
+                                                      && Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_Brainmaps)
+                                                      && !selectedTrees.front()->properties.contains("anchor")); // add anchor
+        treeContextMenu.actions().at(i++)->setVisible(bmAnchors
+                                                      && !selectedTrees.front()->properties.contains("nuc")); // remove anchor
+        treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() > 0); // explosion
         treeContextMenu.actions().at(i++)->setVisible(selectedTrees.size() == 1 && selectedTrees.front()->isSynapticCleft);//seperator
         treeContextMenu.actions().at(i++)->setVisible(tracingAdvanced
                                                       && selectedTrees.size() == 1
@@ -697,6 +713,53 @@ SkeletonView::SkeletonView(QWidget * const parent) : QWidget{parent}
             Skeletonizer::singleton().jumpToNode(tree->nodes.front());
         }
     });
+    addDisabledSeparator(treeContextMenu);
+    QObject::connect(treeContextMenu.addAction("Copy Anchor ID"), &QAction::triggered, [](){
+        const auto anchorId = state->skeletonState->selectedTrees.front()->properties.value("anchor");
+        QApplication::clipboard()->setText(anchorId.toString());
+    });
+    QObject::connect(treeContextMenu.addAction("Copy Nucleus ID"), &QAction::triggered, [](){
+        const auto nucleusId = state->skeletonState->selectedTrees.front()->properties.value("nuc");
+        QApplication::clipboard()->setText(nucleusId.toString());
+    });
+    QObject::connect(treeContextMenu.addAction("Select Anchor object(s)"), &QAction::triggered, &selectAnchorObjects);
+    QObject::connect(treeContextMenu.addAction("Set Anchor note"), &QAction::triggered, [this](){
+        bool ok;
+        auto & currentNote = state->skeletonState->selectedTrees.front()->properties.value("note", "");
+        auto text = QInputDialog::getText(this, tr("Add an Anchor note"), tr("Note:"), QLineEdit::Normal, currentNote.toString(), &ok);
+        if (ok) {
+            const auto anchorId = state->skeletonState->selectedTrees.front()->properties.value("anchor").toULongLong();
+            anchorSetNoteRequest(anchorId, text);
+        }
+    });
+    QObject::connect(treeContextMenu.addAction("Add Anchor"), &QAction::triggered, [](){
+        const auto soid = state->skeletonState->selectedTrees.front()->treeID;
+        anchorRequest(soid, true);
+    });
+    QObject::connect(treeContextMenu.addAction("Remove Anchor"), &QAction::triggered, [](){
+        const auto anchorId = state->skeletonState->selectedTrees.front()->properties.value("anchor").toULongLong();
+        QMessageBox question{QApplication::activeWindow()};
+        question.setIcon(QMessageBox::Question);
+        question.setText(tr("Remove Anchor property from supervoxel %1?").arg(anchorId));
+        const auto * const removeButton = question.addButton(tr("Remove Anchor"), QMessageBox::RejectRole);
+        question.addButton(QMessageBox::Cancel);
+        question.exec();
+        if (question.clickedButton() == removeButton) {
+            anchorRequest(anchorId, false);
+        }
+    });
+    QObject::connect(treeContextMenu.addAction("Explode object"), &QAction::triggered, []() {
+        QMessageBox msgBox{QApplication::activeWindow()};
+        msgBox.setIcon(QMessageBox::Question);
+        msgBox.setText(tr("Do you really want to remove all edges from this object?"));
+        msgBox.addButton(QMessageBox::Ok);
+        msgBox.addButton(QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::Cancel);
+        if (static_cast<QMessageBox::StandardButton>(msgBox.exec()) == QMessageBox::Ok) {
+            explodeRequest(state->skeletonState->selectedTrees.front()->treeID);
+        }
+    });
+
     addDisabledSeparator(treeContextMenu);
     QObject::connect(treeContextMenu.addAction("Jump to preSynapse"), &QAction::triggered, [](){
         const auto * tree = state->skeletonState->selectedTrees.front();

@@ -34,6 +34,7 @@
 #include <QLabel>
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QSignalBlocker>
 #include <QSplitter>
 
 AnnotationWidget::AnnotationWidget(QWidget *parent) : DialogVisibilityNotify(ANNOTATION_WIDGET, parent) {
@@ -63,6 +64,8 @@ void AnnotationWidget::loadSettings() {
 
     skeletonTab.treeCommentFilter.setText(settings.value(SEARCH_FOR_TREE, "").toString());
     skeletonTab.nodeCommentFilter.setText(settings.value(SEARCH_FOR_NODE, "").toString());
+
+    { QSignalBlocker b{segmentationTab.lodSpin}; segmentationTab.lodSpin.setValue(settings.value(MESH_LOD, 2).toInt()); }
     settings.endGroup();
 
     commentsTab.loadSettings();
@@ -75,6 +78,8 @@ void AnnotationWidget::saveSettings() {
 
     settings.setValue(SEARCH_FOR_TREE, skeletonTab.treeCommentFilter.text());
     settings.setValue(SEARCH_FOR_NODE, skeletonTab.nodeCommentFilter.text());
+
+    settings.setValue(MESH_LOD, segmentationTab.lodSpin.value());
     settings.endGroup();
 
     commentsTab.saveSettings();

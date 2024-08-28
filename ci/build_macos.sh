@@ -6,7 +6,7 @@ QUAZIP_VERSION=$(brew list --versions quazip | tr ' ' '\n' | tail -1)
 cd ${APPVEYOR_BUILD_FOLDER} && cd ..
 # Build KNOSSOS
 mkdir knossos-build && cd knossos-build
-time cmake -G Ninja ../knossos -DCMAKE_PREFIX_PATH=/usr/local/opt/qt@5/ -DCMAKE_CXX_FLAGS=-Wno-deprecated-declarations
+time cmake -G Ninja ../knossos -DCMAKE_PREFIX_PATH=/usr/local/opt/qt@5/ -DCMAKE_CXX_FLAGS=-Wno-deprecated-declarations -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl
 time ninja
 
 # OS X housekeeping

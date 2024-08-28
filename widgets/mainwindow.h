@@ -105,6 +105,11 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
     friend class TaskManagementWidget;
     friend class SkeletonProxy;
+    friend void fetchAgglo(const Dataset & dataset, const std::uint64_t soid, QElapsedTimer & timer, const bool dc);
+    template<bool>
+    friend void fetchFragmentsSwitch(const Dataset &, const std::uint64_t, QElapsedTimer &, const int);
+    friend void retrieveMeshes();
+    friend class QColor brainmapsMeshColor(const decltype(treeListElement::treeID) treeID);
 
     QToolBar basicToolbar{"Basic Functionality"};
     QToolBar defaultToolbar{"Tools"};
@@ -117,6 +122,7 @@ class MainWindow : public QMainWindow {
                                                  {AnnotationMode::Mode_OverPaint, tr("Segmentation Overpaint")},
                                                  {AnnotationMode::Mode_CellSegmentation, tr("Segmentation Cell Painting")},
                                                  {AnnotationMode::Mode_Selection, tr("Review")},
+                                                 {AnnotationMode::Mode_Brainmaps, tr("Agglomeration")},
                                                };
     WorkModeModel workModeModel;
     QComboBox modeCombo;
@@ -140,6 +146,7 @@ class MainWindow : public QMainWindow {
     QAction *increaseOpacityAction;
     QAction *enlargeBrushAction;
     QAction *shrinkBrushAction;
+    QAction *bmUndoAction;
     // convenience mode switch actions for proof reading mode
     QAction *modeSwitchSeparator{nullptr};
     QAction *setMergeModeAction{nullptr};
@@ -166,11 +173,14 @@ class MainWindow : public QMainWindow {
     std::vector<QAction*> commentActions;
     std::vector<QAction*> categoryActions;
 
+    std::size_t networkRequestCounter{0};
     QProgressBar networkProgressBar;
+    QProgressBar meshDownloadProgressBar;
+    QProgressBar meshAddProgressBar;
     QPushButton networkProgressAbortButton{"Abort"};
 
     int loaderLastProgress;
-    QLabel *loaderProgress;
+    QLabel loaderProgress;
 
     // segmentation job mode
     QToolBar segJobModeToolbar{"Job Navigation"};
@@ -255,7 +265,7 @@ public slots:
     void refreshScriptingMenu();
     void setProofReadingUI(const bool on);
     void setJobModeUI(bool enabled);
-    void updateLoaderProgress(int refCount);
+    void updateLoaderProgress(int refCount, int failed);
     void updateCursorLabel(const Coordinate & position, const ViewportType vpType);
     // for the recent file menu
     bool openFileDispatch(QStringList fileNames, const bool mergeAll = false, const bool silent = false);

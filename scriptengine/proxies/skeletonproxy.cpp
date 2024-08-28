@@ -294,10 +294,10 @@ QList<treeListElement*> SkeletonProxy::trees() {
 }
 
 treeListElement * SkeletonProxy::add_tree(const QVariantHash & properties) {
-    return &Skeletonizer::singleton().addTree(boost::none, boost::none, properties);
+    return &Skeletonizer::singleton().addTreeAndActivate(boost::none, boost::none, properties);
 }
 treeListElement * SkeletonProxy::add_tree(quint64 tree_id, const QVariantHash &properties) {
-    return &Skeletonizer::singleton().addTree(tree_id, boost::none, properties);
+    return &Skeletonizer::singleton().addTreeAndActivate(tree_id, boost::none, properties);
 }
 
 void SkeletonProxy::set_tree_comment(quint64 tree_id, const QString & comment) {

@@ -15,19 +15,11 @@ td {
 }
 
 tr:first-of-type {
-	border-top: 2px solid #ccc;
+	border-top: 5px solid #ccc;
 }
 
 tr:nth-of-type(2n) {
 	background-color: #ccc;
-}
-
-thead th {
-	font-weight: bold;
-}
-
-table {
-	border-collapse: collapse;
 }
 
 html {

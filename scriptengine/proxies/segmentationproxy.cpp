@@ -38,8 +38,7 @@ void SegmentationProxy::mergelist_clear() {
 }
 
 void SegmentationProxy::mergelist_load(QString & mergelist) {
-    QTextStream stream(&mergelist);
-    Segmentation::singleton().mergelistLoad(stream);
+    Segmentation::singleton().mergelistLoad(QTextStream{&mergelist});
 }
 
 QString SegmentationProxy::mergelist_save() {

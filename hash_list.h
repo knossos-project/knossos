@@ -49,6 +49,16 @@ class hash_list {
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
 public:
+    hash_list() = default;
+    hash_list(const hash_list & rhs) {
+        operator=(rhs);
+    }
+    hash_list & operator=(const hash_list & rhs) {
+        for (auto & elem : rhs.data) {
+            emplace_back(elem);
+        }
+        return *this;
+    }
     const T & back() const {
         return data.back();
     }

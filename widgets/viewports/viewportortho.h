@@ -32,6 +32,9 @@
 
 class ViewportOrtho : public ViewportBase {
     Q_OBJECT
+    Coordinate srcPos;
+    boost::optional<Coordinate> dstPos;
+
     QAction zoomResetAction{tr("Reset zoom"), &menuButton};
 
     floatCoordinate handleMovement(const QPoint & pos);

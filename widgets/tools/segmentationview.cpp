@@ -26,6 +26,7 @@
 #include "dataset.h"
 #include "mesh/mesh_generation.h"
 #include "model_helper.h"
+#include "qglobal.h"
 #include "segmentation/cubeloader.h"
 #include "stateInfo.h"
 #include "viewer.h"
@@ -241,6 +242,9 @@ public:
     }
 };
 
+#include "brainmaps.h"
+#include "skeleton/skeletonizer.h"
+
 SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), categoryDelegate(categoryModel) {
     modeGroup.addButton(&twodBtn, 0);
     modeGroup.addButton(&threedBtn, 1);
@@ -256,14 +260,20 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     brushRadiusEdit.setValue(Segmentation::singleton().brush.getRadius());
     twodBtn.setChecked(true);
 
+    lodSpin.setToolTip("Specify maximum mesh level of detail");
+    lodSpin.setRange(0, 3);
+
     toolsLayout.addWidget(&showOnlySelectedChck, 0, 0, Qt::AlignLeft);
-    toolsLayout.addWidget(&lockNewObjectsCheckbox, 1, 0, Qt::AlignLeft);
     mergeCategoryLayout.addWidget(&defaultMergeCategoryLabel);
     mergeCategoryLayout.addWidget(&defaultMergeCategoryEdit);
     toolsLayout.addLayout(&mergeCategoryLayout, 2, 0, Qt::AlignLeft);
     toolsLayout.addWidget(&brushRadiusLabel, 0, 1, Qt::AlignRight);
     toolsLayout.addWidget(&brushRadiusEdit, 0, 2);
     toolsLayout.addWidget(&twodBtn, 0, 3);
+
+    toolsLayout.addWidget(&lockNewObjectsCheckbox, 1, 0, Qt::AlignLeft);
+    toolsLayout.addWidget(&lodLabel, 1, 1, Qt::AlignRight);
+    toolsLayout.addWidget(&lodSpin, 1, 2);
     toolsLayout.addWidget(&threedBtn, 1, 3);
     layout.addLayout(&toolsLayout);
 
@@ -318,6 +328,15 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
 
     QObject::connect(&brushRadiusEdit, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [](auto value){
         Segmentation::singleton().brush.setRadius(value);
+    });
+    QObject::connect(&lodSpin, qOverload<int>(&QSpinBox::valueChanged), this, [](auto){
+        for (auto & tree : Skeletonizer::singleton().skeletonState.trees) {
+            tree.mesh.reset();
+        }
+        emit Skeletonizer::singleton().resetData();
+        if (Segmentation::singleton().selectedObjectsCount() > 0) {
+            retrieveMeshes(Segmentation::singleton().subobjectIdOfFirstSelectedObject({}));
+        }
     });
     QObject::connect(&modeGroup, &QButtonGroup::idClicked, [](int id){
         Segmentation::singleton().brush.setMode(static_cast<brush_t::mode_t>(id));
@@ -381,6 +400,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
     });
     QObject::connect(&Segmentation::singleton(), &Segmentation::changedRowSelection, [this](int index){
         if (scope s{objectSelectionProtection}) {
+            QSignalBlocker blocker{objectsTable.selectionModel()};
             const auto & proxyIndex = objectProxyModelComment.mapFromSource(objectProxyModelCategory.mapFromSource(objectModel.index(index, 0)));
             //selection lookup is way cheaper than reselection (sadly)
             const bool alreadySelected = objectsTable.selectionModel()->isSelected(proxyIndex);

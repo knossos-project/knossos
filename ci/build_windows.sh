@@ -19,7 +19,7 @@ PROJECTPATH=$(cygpath ${APPVEYOR_BUILD_FOLDER})
 mkdir knossos-build
 cd knossos-build
 DEBUG_FLAGS=-DCMAKE_CXX_FLAGS="-g -fno-omit-frame-pointer"
-time cmake -G Ninja -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=RELEASE "${DEBUG_FLAGS}" ${PROJECTPATH}
+time cmake -G Ninja -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=RELEASE "${DEBUG_FLAGS}" -DOPENSSL_ROOT_DIR=/mingw64 ${PROJECTPATH}
 
 # Build
 time ninja

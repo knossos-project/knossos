@@ -1,0 +1,52 @@
+<html>
+<head>
+	<meta content="text/html; charset=utf-8"/>
+	<link rel="stylesheet" href=":/resources/cheatsheet/cheatsheet.css" type="text/css" />
+</head>
+
+<body>
+	<h1>Agglomeration</h1>
+
+	<p><a href=#annotation_seg>Segmentation table view</a> | <a href=#pref_seg>Visibility preferences</a></p>
+	<p><a href=#navi>Navigation preferences</a></p>
+
+	<p>
+	Segmentation mode for proofreading of agglomeration. KNOSSOS streams segmentation and 3D models from a server and automatically uploads work.
+	</p>
+
+	<p>
+	<table>
+		<thead>
+			<tr><th align="left"><h3>Shortcut</h3></th><th align="left"><h3>Action</h3></th></tr>
+			<tr><th colspan="2" align="left">Navigation</th></tr>
+		</thead>
+		<tr><td><span class="sh"><img src=":/resources/cheatsheet/leftclick.png" alt="Left click"/></span></td><td>Select object</td></tr>
+		<tr><td><span class="sh">S</span></td><td>Jump to clicked location in work object or reselect it</td></tr>
+		<tr><td><span class="sh">B</span></td><td>Place branchpoint at hovered position</td></tr>
+		<tr><td><span class="sh">J</span></td><td>Jump to last branchpoint</td></tr>
+		<thead>
+			<tr><th colspan="2" align="left"><hr>Merging & Splitting in 2D</th></tr>
+		</thead>
+		<tr><td><span class="sh"><img src=":/resources/cheatsheet/rightclick.png" alt="Right click"/> drag</span></td><td>Merge objects</td></tr>
+		<tr><td><span class="sh">Shift + <img src=":/resources/cheatsheet/rightclick.png" alt="Right click"/> drag</span></td><td>Quick split objects</td></tr>
+		<thead>
+			<tr><th colspan="2" align="left"><hr>Split Mode</th></tr>
+		</thead>
+		<tr><td colspan="2">Unlike quick split, split mode works in all viewports.</td>
+
+		<tr><td><span class="sh">Shift + <img src=":/resources/cheatsheet/rightclick.png" alt="Right click"/> on target</span></td><td>Enter split mode for target object</td></tr>
+		<tr><td><span class="sh"><img src=":/resources/cheatsheet/rightclick.png" alt="Right click"/> on other</span></td><td>Split off from target</td></tr>
+		<tr><th colspan="2"><hr></th></tr>
+		<tr><td><span class="sh">Ctrl + Z</span></td><td>Undo merge or split</td></tr>
+		<thead>
+			<tr><th colspan="2" align="left"><hr>Visibility</th></tr>
+		</thead>
+		<tr><td><span class="sh">Ctrl + <img src=":/resources/cheatsheet/middleclick.png" alt="Wheel"/> scroll</span></td><td>Zoom</td></tr>
+		<tr><td><span class="sh">Ctrl + 0</span></td><td>Zoom reset</td></tr>
+		<tr><td><span class="sh">+</span></td><td>Increase segmentation opacity</td></tr>
+		<tr><td><span class="sh">-</span></td><td>Decrease segmentation opacity</td></tr>
+		<tr><td><span class="sh">Hold space</span></td><td>Hide segmentation overlay temporarily</td></tr>
+	</table>
+	</p>
+</body>
+</html>

@@ -135,6 +135,7 @@ Coordinate getCoordinateFromOrthogonalClick(const QPointF pos, ViewportOrtho & v
 class ViewportBase : public QOpenGLWidget, protected QOpenGLFunctions_1_4 { // glBlendFuncSeparate requires 1.4
     Q_OBJECT
 protected:
+    friend class MainWindow;// brainmaps branchpoints
     std::weak_ptr<QOpenGLFramebufferObject> snapshotFbo;
     QVBoxLayout vpLayout;
     QHBoxLayout vpHeadLayout;

@@ -118,6 +118,7 @@ Q_OBJECT
     QHBoxLayout mergeCategoryLayout;
     QLabel defaultMergeCategoryLabel{"Default merge class"};
     QLineEdit defaultMergeCategoryEdit{};
+    QLabel lodLabel{"Mesh LoD"};
     QHBoxLayout filterLayout;
     CategoryModel categoryModel;
     QComboBox categoryFilter;
@@ -151,6 +152,7 @@ Q_OBJECT
     bool objectSelectionProtection = false;
     bool touchedObjectSelectionProtection = false;
 public:
+    QSpinBox lodSpin;
     explicit SegmentationView(QWidget * const parent = nullptr);
     void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void touchedObjSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);

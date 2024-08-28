@@ -22,6 +22,7 @@
 
 #include "dataset.h"
 
+#include "brainmaps.h"
 #include "network.h"
 #include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
@@ -61,6 +62,7 @@ QString Dataset::compressionString() const {
     case Dataset::CubeType::RAW_PNG: return "png";
     case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_16: return "16 bit id";
     case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64: return "64 bit id";
+    case Dataset::CubeType::SEGMENTATION_SZ: return "seg.sz";
     case Dataset::CubeType::SEGMENTATION_SZ_ZIP: return "seg.sz.zip";
     case Dataset::CubeType::SNAPPY: return "snappy";
     }
@@ -111,8 +113,6 @@ Dataset::list_t Dataset::parse(const QUrl & url, const QString & data, bool add_
     Dataset::list_t infos;
     if (Dataset::isWebKnossos(url)) {
         infos = Dataset::parseWebKnossosJson(url, data);
-    } else if (Dataset::isGoogleBrainmaps(url)) {
-        infos = Dataset::parseGoogleJson(url, data);
     } else if (Dataset::isNeuroDataStore(url)) {
         infos = Dataset::parseNeuroDataStoreJson(url, data);
     } else if (Dataset::isPyKnossos(url)) {
@@ -143,35 +143,6 @@ Dataset::list_t Dataset::parse(const QUrl & url, const QString & data, bool add_
         }
     }
     return infos;
-}
-
-Dataset::list_t Dataset::parseGoogleJson(const QUrl & infoUrl, const QString & json_raw) {
-    Dataset info;
-    info.api = API::GoogleBrainmaps;
-    info.experimentname = QFileInfo{infoUrl.path()}.fileName().section(':', 2);
-    const auto jmap = QJsonDocument::fromJson(json_raw.toUtf8()).object();
-
-    const auto boundary_json = jmap["geometry"][0]["volumeSize"];
-    info.boundary = {
-        boundary_json["x"].toString().toInt(),
-        boundary_json["y"].toString().toInt(),
-        boundary_json["z"].toString().toInt(),
-    };
-
-    for (auto scaleRef : jmap["geometry"].toArray()) {
-        const auto & scale_json = scaleRef.toObject()["pixelSize"].toObject();
-        info.scales.emplace_back(scale_json["x"].toDouble(1), scale_json["y"].toDouble(1), scale_json["z"].toDouble(1));
-    }
-    info.scale = info.scales.front();
-
-    info.magIndex = 0;
-    info.lowestAvailableMagIndex = 0;
-    info.highestAvailableMagIndex = jmap["geometry"].toArray().size() - 1; //highest google mag
-    info.type = CubeType::RAW_JPG;
-
-    info.url = infoUrl;
-
-    return {info};
 }
 
 Dataset::list_t Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QString & json_raw) {
@@ -208,7 +179,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
     QTextStream stream(&config);
     QString line;
     while (!(line = stream.readLine()).isNull()) {
-        const auto & tokenList = line.split(QRegularExpression(" = "));
+        const auto & tokenList = line.remove("\"").split(QRegularExpression(" = "));
         const auto & token = tokenList.front();
         if (token.startsWith("[Dataset")) {
             infos.emplace_back();
@@ -235,7 +206,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         } else if (token == "_Password") {
             info.url.setPassword(value);
         } else if (token == "_ServerFormat") {
-            info.api = value == "knossos" ? API::Heidelbrain : value == "1" ? API::OpenConnectome : API::PyKnossos;
+            info.api = value == "knossos" ? API::Heidelbrain : value == "1" ? API::OpenConnectome : value == "brainmaps" ? API::GoogleBrainmaps : API::PyKnossos;
         } else if (token == "_BaseExt") {
             info.fileextension = value;
             info.type = typeMap.left.at(info.fileextension);
@@ -269,14 +240,55 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
             infos.back().allocationEnabled = infos.back().loadingEnabled = info.renderSettings.visible = QVariant{value}.toBool();
         } else if (token == "_Description") {
             info.description = value;
+        } else if (token == "_BrainmapsChangeServer") {
+            info.useAlternativebrainmapsChangeServer = true;
+            info.brainmapsChangeServer = value;
+        } else if (token == "_AgglomerationServer") {
+            info.aggloServer = value;
+        } else if (token == "_MeshServer") {
+            info.meshServer = value;
+        } else if (token == "_BrainmapsChangeStack") {
+            info.brainmapsChangeStack = value;
+        } else if (token == "_BrainmapsMesh") {
+            info.brainmapsMeshKey = value;
+        } else if (token == "_ServiceAccountURL") {
+            auto saccUrl = QUrl(value);
+            if (saccUrl.isRelative()) {
+                if (QFileInfo{value}.isRelative()) {
+                    saccUrl.setUrl(QString("file://%1/%2").arg(QFileInfo{configUrl.path()}.dir().path()).arg(value));
+                } else {
+                    saccUrl.setUrl("file://" + value);
+                }
+            }
+            const auto download = Network::singleton().refresh(saccUrl);
+            if (download.first) {
+                info.brainmapsSacc = QJsonDocument::fromJson(download.second.toUtf8());
+            } else {
+                throw std::runtime_error(("Could not load Service Account from " + value).toStdString());
+            }
         } else if (!token.isEmpty() && token != "_NumberofCubes" && token != "_Origin") {
             qDebug() << "Skipping unknown parameter" << token;
         }
     }
 
+    QString token;// reuse token for all layers
     for (auto && info : infos) {
+        if (info.brainmapsChangeServer.isEmpty()) {
+            info.brainmapsChangeServer = info.url;
+        }
+        if (info.api == API::GoogleBrainmaps) {
+            if (token.isEmpty()) {
+                if (info.brainmapsSacc.isNull()) {
+                    throw std::runtime_error("Missing _ServiceAccountURL entry in dataset config.");
+                }
+                updateToken(info);
+                token = info.token;
+            }
+            info.token = token;
+            parseGoogleJson(info);
+        }
         if (info.scales.empty()) {
-            return {};
+            throw std::runtime_error("Missing _Scale entry in dataset config.");
         }
         if (info.url.isEmpty()) {
             info.url = QUrl::fromLocalFile(QFileInfo(configUrl.toLocalFile()).absoluteDir().absolutePath());
@@ -314,6 +326,9 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         const auto & extent = toml::find(vit, "Extent_px").as_array();
         info.boundary = Coordinate(extent.at(0).as_integer(), extent.at(1).as_integer(), extent.at(2).as_integer());
         const auto & cube_shape = toml::find(vit, "CubeShape_px").as_array();
+        if (cube_shape.at(2).as_integer() == 1) {
+            throw std::runtime_error("2D support is not yet integrated here");
+        }
         info.cubeEdgeLength = cube_shape.at(0).as_integer();
         const auto & scales = toml::find(vit, "VoxelSize_nm").as_array();
         for (const auto & scaleit : scales) {
@@ -331,6 +346,11 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         info.allocationEnabled = info.loadingEnabled = info.renderSettings.visible = toml::find_or(vit, "Visible", true);
         info.renderSettings.color = QColor{QString::fromStdString(toml::find_or(vit, "Color", "white"))};
 
+        info.aggloServer = QString::fromStdString(toml::find_or(vit, "AgglomerationServer", std::string{}));
+        info.meshServer  = QString::fromStdString(toml::find_or(vit, "MeshServer", std::string{}));
+        info.brainmapsChangeServer = QString::fromStdString(toml::find_or(vit, "BrainmapsChangeServer", std::string{}));
+        info.brainmapsChangeStack = QString::fromStdString(toml::find_or(vit, "BrainmapsChangeStack", std::string{}));
+        info.useAlternativebrainmapsChangeServer = !info.aggloServer.isEmpty();
         for (const auto & ext : toml::find(vit, "FileExtension").as_array()) {
             info.fileextension = QString::fromStdString(ext.as_string());
             info.type = typeMap.left.at(info.fileextension);
@@ -370,7 +390,7 @@ Dataset::list_t Dataset::parseWebKnossosJson(const QUrl &, const QString & json_
         if (category == "color") {
             info.type = CubeType::RAW_UNCOMPRESSED;
         } else {// "segmentation"
-            info.type = CubeType::SEGMENTATION_UNCOMPRESSED_16;
+            info.type = CubeType::SEGMENTATION_SZ;
         }
         const auto boundary_json = layer["boundingBox"];
         info.boundary = {
@@ -570,6 +590,7 @@ QNetworkRequest Dataset::apiSwitch(const CoordOfCube cubeCoord) const {
 bool Dataset::isOverlay() const {
     return type == CubeType::SEGMENTATION_UNCOMPRESSED_16
             || type == CubeType::SEGMENTATION_UNCOMPRESSED_64
+            || type == CubeType::SEGMENTATION_SZ
             || type == CubeType::SEGMENTATION_SZ_ZIP
             || type == CubeType::SNAPPY;
 }
