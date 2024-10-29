@@ -147,7 +147,11 @@ ButtonListView::ButtonListView(DatasetModel & datasetModel, SortFilterProxy & pr
         const auto selectedFile = ::state->viewer->suspend([this, &indexToEdit] {
             auto currentUrl = QUrl(indexToEdit.data().toString());
             auto workingDir = currentUrl.isEmpty() || !currentUrl.isLocalFile() ? QDir::homePath() : QString("file://") + currentUrl.toLocalFile();
-            return QFileDialog::getOpenFileUrl(this, "Select a KNOSSOS dataset", workingDir, "*.conf").toString();
+            return QFileDialog::getOpenFileUrl(this, "Select a KNOSSOS dataset", workingDir, "Dataset descriptor (*.conf *"
+#ifndef Q_OS_MAC
+                                                                                                ".k"
+#endif
+                                                                                                ".toml)").toString();
         });
         if (!selectedFile.isEmpty()) {
             model()->setData(indexToEdit, selectedFile);
