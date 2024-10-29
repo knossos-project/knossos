@@ -54,16 +54,17 @@ void subobjectBucketFill(const Coordinate & seed, const uint64_t fillsoid, const
         const auto pos = work.back();
         work.pop_back();
 
-        const auto walk = [&work, &cubeCoords, clickedsoid, fillsoid](const Coordinate coord){
-            if (readVoxel(coord) == clickedsoid) {
+        const auto posDec = (pos - voxelSpacing).capped(areaMin, areaMax);
+        const auto posInc = (pos + voxelSpacing).capped(areaMin, areaMax);
+
+        const auto walk = [&work, &cubeCoords, clickedsoid, fillsoid, &brush](const Coordinate coord){
+            const auto adjacent = brush.mode == brush_t::mode_t::adjacent && (readVoxel(coord + brush.n) == fillsoid || readVoxel(coord - brush.n) == fillsoid) && readVoxel(coord) != fillsoid;
+            if (adjacent || brush.mode != brush_t::mode_t::adjacent && readVoxel(coord) == clickedsoid) {
                 writeVoxel(coord, fillsoid, false);
                 work.emplace_back(coord);
                 cubeCoords.insert(Dataset::datasets[Segmentation::singleton().layerId].global2cube(coord));
             }
         };
-
-        const auto posDec = (pos - voxelSpacing).capped(areaMin, areaMax);
-        const auto posInc = (pos + voxelSpacing).capped(areaMin, areaMax);
 
         if (brush.view != brush_t::view_t::xy || brush.mode == brush_t::mode_t::three_dim) {
             walk({pos.x, pos.y, posInc.z});

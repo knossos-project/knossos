@@ -31,7 +31,7 @@
 class brush_t {
 public:
     enum class mode_t {
-        two_dim, three_dim
+        two_dim, three_dim, adjacent
     };
     enum class view_t {
         xy, xz, zy, arb

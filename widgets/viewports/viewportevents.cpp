@@ -446,6 +446,13 @@ void ViewportOrtho::handleMouseReleaseMiddle(const QMouseEvent *event) {
             areaMin = areaMin.capped(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax);
             areaMax = areaMax.capped(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax) + 1;
 
+            if (!brush_copy.inverse && brush_copy.mode == brush_t::mode_t::two_dim && readVoxel(clickedCoordinate) != seg.getBackgroundId()) {
+                auto brush_copy2 = brush_copy;
+                brush_copy2.inverse = true;
+                subobjectBucketFill(clickedCoordinate, seg.getBackgroundId(), brush_copy2, areaMin, areaMax);
+
+                brush_copy.mode = brush_t::mode_t::adjacent;
+            }
             subobjectBucketFill(clickedCoordinate, soid, brush_copy, areaMin, areaMax);
         }
     }
