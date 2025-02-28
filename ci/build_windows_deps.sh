@@ -18,7 +18,7 @@ PROJECTPATH=$(cygpath ${APPVEYOR_BUILD_FOLDER})
 cd $PROJECTPATH/ci/deps
 for dep in $(ls); do
 	cd $PROJECTPATH/ci/deps/$dep
-	makepkg-mingw -s --noconfirm --nocheck
+	makepkg-mingw -s --noconfirm
 	# Deploy
 	mv -v *.pkg.tar.zst $PROJECTPATH/mingw-w64-${MSYSTEM}-${dep}.pkg.tar.zst
 done

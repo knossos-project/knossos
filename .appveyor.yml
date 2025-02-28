@@ -5,19 +5,23 @@ image: [Visual Studio 2022] # Windows Server 2019
 configuration: [CLANG64,UCRT64,MINGW64]
 
 environment:
+  MESA_DIST_WIN_VER: 25.0.0
   MSYSTEM: "%CONFIGURATION%"
 
 init:
   - appveyor version
   - cmd: ver
   - cmd: systeminfo | findstr /B /C:"OS Name" /C:"OS Version"
-  - sh: type system_profiler && system_profiler SPSoftwareDataType SPHardwareDataType || true
-  - sh: type lsb_release && lsb_release -a || true
-  - sh: type uname && uname -a || true
+
+install:
+  - cmd: C:\msys64\usr\bin\bash -lc 'pacman -Syuu --noconfirm'
+  - cmd: C:\msys64\usr\bin\bash -lc 'ls -hal /c/Python$(pacman -Q python | grep -Eo \'[0-9]+\.[0-9]+\')-x64'
+  - cmd: curl --fail -JLO https://github.com/pal1000/mesa-dist-win/releases/download/%MESA_DIST_WIN_VER%/mesa3d-%MESA_DIST_WIN_VER%-release-msvc.7z
+  - cmd: 7z e "-i!x64/*.dll" "-i!x64/*.json" "mesa3d-*-release-msvc.7z"
 
 build_script:
-  - cmd: C:\msys64\usr\bin\bash -lc 'pacman -Syuu --noconfirm'
   - cmd: C:\msys64\usr\bin\bash -lc '$(cygpath ${APPVEYOR_BUILD_FOLDER})/ci/build_windows_deps.sh'
+
 artifacts: {path: '*.pkg.tar.zst'}
 
 deploy:

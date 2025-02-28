@@ -43,6 +43,7 @@ build() {
 }
 
 check() {
+  cp -v /c/Python$_pyver-x64/python$_pyver.dll "$srcdir/build-$MINGW_CHOST-$_realname"
   cmake --build "$srcdir/build-$MINGW_CHOST-$_realname" --target tests
 }
 
