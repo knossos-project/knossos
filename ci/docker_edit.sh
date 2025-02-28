@@ -1,0 +1,1 @@
+docker run -it --privileged --cap-add=ALL -v .:/outside -v /lib/modules:/lib/modules -v /dev:/dev ghcr.io/knossos-project/arch:multi /usr/bin/fish
