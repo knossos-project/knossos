@@ -14,7 +14,8 @@ image:
   - Ubuntu1604
 
 environment:
-  MESA_DIST_WIN_VER: 23.0.1
+  MESA_DIST_WIN_VER: 25.0.0
+  QT_OPENGL_DLL: opengl32 # https://github.com/qt/qtbase/commit/6c85067ba51fae169b99538b2ba3a5dd30348227#diff-30d85ae3c18697e52d180edc79bb5eefcb74f970957dc73b3a766541088a5237
 
 init:
   - appveyor version
