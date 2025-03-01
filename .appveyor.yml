@@ -15,7 +15,7 @@ init:
 
 install:
   - cmd: C:\msys64\usr\bin\bash -lc 'pacman -Syuu --noconfirm'
-  - cmd: C:\msys64\usr\bin\bash -lc 'ls -hal /c/Python$(pacman -Q python | grep -Eo \'[0-9]+\.[0-9]+\')-x64'
+  - cmd: C:\msys64\usr\bin\bash -lc 'ls -hal /c/Python312-x64'
   - cmd: curl --fail -JLO https://github.com/pal1000/mesa-dist-win/releases/download/%MESA_DIST_WIN_VER%/mesa3d-%MESA_DIST_WIN_VER%-release-msvc.7z
   - cmd: 7z e "-i!x64/*.dll" "-i!x64/*.json" "mesa3d-*-release-msvc.7z"
 
