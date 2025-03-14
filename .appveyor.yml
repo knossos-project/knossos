@@ -4,10 +4,8 @@ image:
   - Visual Studio 2022 # Windows Server 2019
   - Visual Studio 2017 # Windows Server 2016
   - Visual Studio 2015 # Windows Server 2012 R2
-  - macOS-monterey # 12.7.3
-  - macOS-sonoma   # 14.2.1
   - macOS-ventura  # 13.6.4
-  - macOS-bigsur   # 11.7.1
+  - macOS-sonoma   # 14.2.1
   - Ubuntu2204
   - Ubuntu2004
   - Ubuntu1804
@@ -24,11 +22,6 @@ init:
   - sh: type system_profiler && system_profiler SPSoftwareDataType SPHardwareDataType || true
   - sh: type lsb_release && lsb_release -a || true
   - sh: type uname && uname -a || true
-
-matrix:
-  allow_failures:
-    - image: macOS-catalina
-    - image: macOS-mojave
 
 for:
 -
@@ -59,15 +52,14 @@ for:
 -
   matrix:
     only:
-      - image: macOS-monterey
-  environment:
-    MACOSX_DEPLOYMENT_TARGET: 11.0 # bigsur
+      - image: macOS-ventura
   install:
     - brew pin appveyor-build-agent # https://github.com/appveyor/ci/issues/3763#issuecomment-1003168277
     - time brew update
     - time brew upgrade || true # skipped upgrades for pinned packages don’t return cleanly
     - time brew remove qt6 || true
-    - time brew install boost ninja python qt5 snappy python-requests
+    - time brew install boost ninja python qt5 snappy
+    - time python3 -m pip install requests --break-system-packages
     - time brew install --overwrite cmake # for building from source, brew needs its own cmake, which conflicts with the preinstalled one
     - time brew tap --force homebrew/core
     - sed -e 's/"qt"/"qt@5"/' -i bak $(brew edit --print-path quazip)
@@ -84,8 +76,6 @@ for:
   matrix:
     only:
       - image: macOS-sonoma
-      - image: macOS-ventura
-      - image: macOS-bigsur
   before_test:
     - curl --fail -JLO https://github.com/knossos-project/knossos/releases/download/nightly-dev/macos.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.app.zip
     - unzip -q macos.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.app.zip
