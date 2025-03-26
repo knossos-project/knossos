@@ -94,8 +94,16 @@ find_package(Snappy REQUIRED MODULE)
 find_package(QuaZip 0.6.2 REQUIRED MODULE)
 
 include(FetchContent)
-FetchContent_Declare(toml11 GIT_REPOSITORY https://github.com/ToruNiina/toml11.git)
+FetchContent_Declare(toml11
+    GIT_REPOSITORY https://github.com/ToruNiina/toml11.git
+    GIT_TAG main
+    GIT_SHALLOW TRUE
+    FIND_PACKAGE_ARGS # try to find installed versions, first
+)
 FetchContent_MakeAvailable(toml11)
+if(toml11_INSTALL)
+    message(FATAL_ERROR "you will need to clean your /usr/local containing old toml11 and unset toml11_INSTALL")
+endif()
 
 #platform dependent resources
 if(WIN32)
