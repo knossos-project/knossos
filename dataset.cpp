@@ -305,22 +305,13 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
     return infos;
 }
 
-#include <iostream>
-
-#include <QTemporaryFile>
-
 #include <toml.hpp>
 
-extern toml::value toml_parse(const std::string & filename);
+extern toml::value toml_parse(const std::vector<unsigned char> & blob, const std::string & filename);
 
 Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
     const auto data = configData.toStdString();
-    QTemporaryFile file;
-    file.open();
-    file.write(configData.toUtf8());
-    file.close();
-//    auto config = toml::parse(file.fileName().toStdString());
-    auto config = toml_parse(file.fileName().toStdString());
+    auto config = toml_parse({std::cbegin(data), std::cend(data)}, configUrl.toString().toStdString());
     Dataset::list_t infos;
     for (const auto & vit : toml::find(config, "Layer").as_array()) {
         Dataset info;
