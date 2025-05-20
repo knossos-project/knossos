@@ -22,6 +22,8 @@
 
 #include "commentsetting.h"
 
+decltype(CommentSetting::comments) CommentSetting::comments = {};// clang complains if it’s static inline
+
 QColor CommentSetting::getColor(const QString & comment) {
     for(const auto & item : comments) {
         if(!item.text.isEmpty() && comment.contains(item.text, Qt::CaseInsensitive)) {
