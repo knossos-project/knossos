@@ -228,7 +228,7 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow{parent}, evilHack{[this](
         for (int z = cpos.z; z < cpos.z + state->M; ++z)
         for (int y = cpos.y; y < cpos.y + state->M; ++y)
         for (int x = cpos.x; x < cpos.x + state->M; ++x) {
-            Loader::Controller::singleton().markCubeAsModified(Segmentation::singleton().layerId, {x, y, z}, Dataset::current().magnification);
+            Loader::Controller::singleton().markCubeAsModified(Segmentation::singleton().layerId, {x, y, z}, Dataset::current().magIndex);
         }
     });
 
@@ -269,20 +269,7 @@ void MainWindow::updateCursorLabel(const Coordinate & position, const ViewportTy
     const auto inc{state->skeletonState->displayMatlabCoordinates};
     cursorPositionLabel.setText(QString("%1 %2 %3").arg(position.x + inc).arg(position.y + inc).arg(position.z + inc));
     auto cubePos = Dataset::current().global2cube(position);
-    cubePositionLabel.setText(QString("cube %4 %5 %6 (mag%7)").arg(cubePos.x).arg(cubePos.y).arg(cubePos.z).arg(Dataset::current().magnification));
-}
-
-void MainWindow::resetTextureProperties() {
-    //reset viewerState texture properties
-    forEachOrthoVPDo([](ViewportOrtho & orthoVP) {
-        orthoVP.texture.size = state->viewerState->texEdgeLength;
-        orthoVP.texture.texUnitsPerDataPx = (1.0 / orthoVP.texture.size) / Dataset::current().magnification;
-        orthoVP.texture.FOV = 1;
-        orthoVP.texture.usedSizeInCubePixels = (state->M - 1) * Dataset::current().cubeShape.componentMul(orthoVP.v1).length();
-        if (orthoVP.viewportType == VIEWPORT_ARBITRARY) {
-            orthoVP.texture.usedSizeInCubePixels /= std::sqrt(2);
-        }
-    });
+    cubePositionLabel.setText(QString("cube %4 %5 %6 (mag%7)").arg(cubePos.x).arg(cubePos.y).arg(cubePos.z).arg(Dataset::current().toMag(Dataset::current().magIndex)));
 }
 
 void MainWindow::createViewports() {
@@ -301,7 +288,6 @@ void MainWindow::createViewports() {
     state->viewer->viewportXZ = viewportXZ.get();
     state->viewer->viewportZY = viewportZY.get();
     state->viewer->viewportArb = viewportArb.get();
-    resetTextureProperties();
     forEachVPDo([this](ViewportBase & vp) {
         QObject::connect(&vp, &ViewportBase::cursorPositionChanged, this, &MainWindow::updateCursorLabel);
         QObject::connect(&vp, &ViewportBase::cursorPositionChanged, this, [this](const Coordinate & coord, const ViewportType vpType){
@@ -634,7 +620,6 @@ void MainWindow::createMenus() {
             std::swap(Dataset::datasets[0].renderSettings.visible, Dataset::datasets[1].renderSettings.visible);
             std::swap(Dataset::datasets[0].allocationEnabled, Dataset::datasets[1].allocationEnabled);
             std::swap(Dataset::datasets[0].loadingEnabled, Dataset::datasets[1].loadingEnabled);
-            state->viewer->layerRenderSettingsChanged();
             emit widgetContainer.datasetLoadWidget.datasetChanged();
             state->viewer->updateDatasetMag();
             updateCompressionRatioDisplay();
