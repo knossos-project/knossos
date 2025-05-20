@@ -164,9 +164,9 @@ Dataset::list_t Dataset::parseGoogleJson(const QUrl & infoUrl, const QString & j
     }
     info.scale = info.scales.front();
 
-    info.lowestAvailableMag = 1;
-    info.magnification = info.lowestAvailableMag;
-    info.highestAvailableMag = std::pow(2,(jmap["geometry"].toArray().size()-1)); //highest google mag
+    info.magIndex = 0;
+    info.lowestAvailableMagIndex = 0;
+    info.highestAvailableMagIndex = jmap["geometry"].toArray().size() - 1; //highest google mag
     info.type = CubeType::RAW_JPG;
 
     info.url = infoUrl;
@@ -195,9 +195,9 @@ Dataset::list_t Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QSt
     info.scale = !info.scales.empty() ? info.scales.front() : decltype(info.scale){1, 1, 1};
     const auto mags = dataset["resolutions"];
 
-    info.lowestAvailableMag = std::pow(2, mags[0].toInt(1));
-    info.magnification = info.lowestAvailableMag;
-    info.highestAvailableMag = std::pow(2, mags[mags.toArray().size()-1].toInt(1));
+    info.magIndex = mags[0].toInt(0);
+    info.lowestAvailableMagIndex = info.magIndex;
+    info.highestAvailableMagIndex = mags[mags.toArray().size()-1].toInt(0);
     info.type = CubeType::RAW_JPG;
 
     return {info};
@@ -245,8 +245,9 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
                 info.scales.emplace_back(tokenList.at(i-2).toFloat(), tokenList.at(i-1).toFloat(), tokenList.at(i).toFloat());
             }
             info.scale = info.scales.front();
-            info.magnification = info.lowestAvailableMag = 1;
-            info.highestAvailableMag = std::pow(2, tokenList.size() / 3 - 1);
+            info.magIndex = 0;
+            info.lowestAvailableMagIndex = 0;
+            info.highestAvailableMagIndex = tokenList.size() / 3 - 1;
         } else if (token == "_FileType") {
             const auto type = value.toInt();
             if (type == 1) {
@@ -316,8 +317,8 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
             info.scales.emplace_back(x, y, z);
         }
         info.scale = info.scales.front();
-        info.magnification = info.lowestAvailableMag = 1;
-        info.highestAvailableMag = std::pow(2, scales.size() - 1);
+        info.magIndex = info.lowestAvailableMagIndex = 0;
+        info.highestAvailableMagIndex = scales.size() - 1;
         info.description = QString::fromStdString(toml::find(vit, "Description").as_string());
         info.renderSettings.visibleSetExplicitly = vit.contains("Visible");
         info.allocationEnabled = info.loadingEnabled = info.renderSettings.visible = toml::find_or(vit, "Visible", true);
@@ -404,9 +405,9 @@ Dataset::list_t Dataset::parseWebKnossosJson(const QUrl &, const QString & json_
             }));
         }
 
-        info.lowestAvailableMag = 1;
-        info.magnification = info.lowestAvailableMag;
-        info.highestAvailableMag = static_cast<int>(std::pow(2, info.scales.size() - 1));
+        info.magIndex = 0;
+        info.lowestAvailableMagIndex = 0;
+        info.highestAvailableMagIndex = static_cast<int>(info.scales.size() - 1);
 
         layers.push_back(info);
         layers.back().url.setPath(info.url.path() + "/layers/" + layerString + "/data");
@@ -423,6 +424,7 @@ Dataset::list_t Dataset::fromLegacyConf(const QUrl & configUrl, QString config) 
 
     QTextStream stream(&config);
     QString line;
+    boost::optional<std::size_t> magnification;
     while (!(line = stream.readLine()).isNull()) {
         const QStringList tokenList = line.split(QRegularExpression("[ ;]"));
         QString token = tokenList.front();
@@ -448,7 +450,7 @@ Dataset::list_t Dataset::fromLegacyConf(const QUrl & configUrl, QString config) 
                 info.boundary.z = tokenList.at(2).toFloat();
             }
         } else if (token == "magnification") {
-            info.magnification = tokenList.at(1).toInt();
+            magnification = tokenList.at(1).toULongLong();
         } else if (token == "cube_edge_length") {
             info.cubeShape = {tokenList.at(1).toInt(), tokenList.at(1).toInt(), tokenList.at(1).toInt()};
             info.gpuCubeShape = info.cubeShape;// possibly ÷2
@@ -491,10 +493,12 @@ Dataset::list_t Dataset::fromLegacyConf(const QUrl & configUrl, QString config) 
         info.url = QUrl::fromLocalFile(configDir.absolutePath());
     }
 
-    //transform boundary and scale of higher mag only datasets
-    info.boundary = info.boundary * info.magnification;
-    info.scale = info.scale / static_cast<float>(info.magnification);
-    info.lowestAvailableMag = info.highestAvailableMag = info.magnification;
+    if (magnification) {
+        //transform boundary and scale of higher mag only datasets
+        info.boundary = info.boundary * magnification.get();
+        info.scale = info.scale / static_cast<float>(magnification.get());
+        info.lowestAvailableMagIndex = info.highestAvailableMagIndex = magnification.get();
+    }
 
     if (info.type != Dataset::CubeType::RAW_UNCOMPRESSED) {
         auto info2 = info;
@@ -509,9 +513,9 @@ Dataset::list_t Dataset::fromLegacyConf(const QUrl & configUrl, QString config) 
 
 void Dataset::checkMagnifications() {
     //iterate over all possible mags and test their availability
-    std::tie(lowestAvailableMag, highestAvailableMag) = Network::singleton().checkOnlineMags(url);
-    magnification = std::min(std::max(magnification, lowestAvailableMag), highestAvailableMag);
-    qDebug() << QObject::tr("Lowest Mag: %1, Highest Mag: %2").arg(lowestAvailableMag).arg(highestAvailableMag).toUtf8().constData();
+    std::tie(lowestAvailableMagIndex, highestAvailableMagIndex) = Network::singleton().checkOnlineMags(url);
+//    magnification = std::min(std::max(magnification, lowestAvailableMag), highestAvailableMag);
+    qDebug() << QObject::tr("Lowest Mag: %1, Highest Mag: %2").arg(lowestAvailableMagIndex).arg(highestAvailableMagIndex).toUtf8().constData();
 }
 
 Dataset Dataset::createCorrespondingOverlayLayer() {
@@ -521,7 +525,7 @@ Dataset Dataset::createCorrespondingOverlayLayer() {
 }
 
 QUrl Dataset::knossosCubeUrl(const CoordOfCube cubeCoord) const {
-    const auto mag = api == API::PyKnossos ? std::log2(magnification) + 1 : magnification;
+    const auto mag = api == API::PyKnossos ? magIndex + 1 : std::pow(2, magIndex);
     auto pos = QString("/mag%1/x%2/y%3/z%4/")
             .arg(mag)
             .arg(cubeCoord.x, 4, 10, QChar('0'))
@@ -547,7 +551,7 @@ QUrl Dataset::knossosCubeUrl(const CoordOfCube cubeCoord) const {
 QUrl Dataset::openConnectomeCubeUrl(CoordOfCube coord) const {
     auto path = url.path();
 
-    path += (!path.endsWith('/') ? "/" : "") + QString::number(static_cast<std::size_t>(std::log2(magnification)));// >= 0
+    path += (!path.endsWith('/') ? "/" : "") + QString::number(magIndex);// >= 0
     coord.x *= cubeShape.x;
     coord.y *= cubeShape.y;
     coord.z += 1;//offset
@@ -586,4 +590,12 @@ bool Dataset::isOverlay() const {
             || type == CubeType::SEGMENTATION_UNCOMPRESSED_64
             || type == CubeType::SEGMENTATION_SZ_ZIP
             || type == CubeType::SNAPPY;
+}
+
+std::size_t Dataset::toMagIndex(const int mag) const {
+    return api == API::Heidelbrain ? std::log2(mag) : mag - 1;
+}
+
+int Dataset::toMag(const std::size_t magIndex) const {
+    return api == API::Heidelbrain ? std::pow(2, magIndex) : magIndex + 1;
 }

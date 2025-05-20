@@ -181,8 +181,7 @@ void annotationFileLoad(const QString & filename, bool mergeSkeleton, const QStr
                 QuaZipFile file(&archive);
                 file.open(QIODevice::ReadOnly);
                 const auto cubeCoord = CoordOfCube(match.captured("x").toInt(), match.captured("y").toInt(), match.captured("z").toInt());
-                const auto anisoMags = Dataset::current().api == Dataset::API::PyKnossos;
-                const auto cubeMagnification = anisoMags ? match.captured("mag").toInt() - 1 : static_cast<int>(std::log2(match.captured("mag").toInt()));
+                const auto cubeMagnification = Dataset::datasets[Segmentation::singleton().layerId].toMagIndex(match.captured("mag").toInt());
                 Loader::Controller::singleton().snappyCacheSupplySnappy(Segmentation::singleton().layerId, cubeCoord, cubeMagnification, file.readAll().toStdString());
             }
         }
@@ -351,8 +350,8 @@ void annotationFileSave(const QString & filename, const bool onlySelectedTrees, 
             const auto guard = Loader::Controller::singleton().getAllModifiedCubes(Segmentation::singleton().layerId);
             const auto & cubes = guard.cubes;
             for (std::size_t i = 0; i < cubes.size(); ++i) {
-                const auto mag = Dataset::current().api == Dataset::API::PyKnossos ? i + 1 : std::pow(2, i);
-                const auto nameTemplate = QString("%1_mag%2x%3y%4z%5.seg.sz").arg(Dataset::current().experimentname).arg(QString::number(mag));
+                const auto & segLayer = Dataset::datasets[Segmentation::singleton().layerId];
+                const auto nameTemplate = QString("%1_mag%2x%3y%4z%5.seg.sz").arg(segLayer.experimentname).arg(QString::number(segLayer.toMag(i)));
                 for (const auto & pair : cubes[i]) {
                     QuaZipFile file_write(&archive_write);
                     const auto cubeCoord = pair.first;

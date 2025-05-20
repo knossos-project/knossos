@@ -62,11 +62,11 @@ struct GLTexture2D : public QOpenGLTexture {
 
 struct viewportTexture {
     //Handles for OpenGl
-    std::vector<GLTexture2D> texHandle;
-    std::vector<std::vector<std::uint8_t>> texData;
+    GLTexture2D texHandle;
+    std::vector<std::uint8_t> texData;
     //The absPx coordinate of the upper left corner of the texture actually stored in *texture
     floatCoordinate leftUpperPxInAbsPx;
-    GLsizei size;
+    GLsizei size{512};
 
     //These variables specifiy the lengths inside the texture that are currently displayed.
     //Their values depend on the zoom level and the data voxel dimensions (because of aspect
@@ -74,11 +74,11 @@ struct viewportTexture {
     float texUsedX;
     float texUsedY;
 
-    float texUnitsPerDataPx;
+    floatCoordinate texUnitsPerCoord;
     //Texture coordinates
     float texLUx, texLUy, texLLx, texLLy, texRUx, texRUy, texRLx, texRLy;
     // Current zoom level. 1: no zoom; near 0: maximum zoom.
-    float FOV;
+    float FOV{1};
     float usedSizeInCubePixels;
 };
 

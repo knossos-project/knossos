@@ -518,7 +518,7 @@ SegmentationView::SegmentationView(QWidget * const parent) : QWidget(parent), ca
         contextMenu.actions().at(i++)->setEnabled(true);// collect ids
         ++i;// separator
         contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 1);// mergeAction
-        contextMenu.actions().at(i)->setText(tr("Generate mesh (%2, mag%1)").arg(Dataset::current().magnification)
+        contextMenu.actions().at(i)->setText(tr("Generate mesh (%2, mag%1)").arg(Dataset::datasets[Segmentation::singleton().layerId].toMag(Dataset::datasets[Segmentation::singleton().layerId].magIndex))
                                              .arg(Segmentation::singleton().selectedObjectsCount() > 0 ? "selected objects" : "all subobjects"));
         contextMenu.actions().at(i++)->setEnabled(true);// generate meshes
         contextMenu.actions().at(i++)->setEnabled(Segmentation::singleton().selectedObjectsCount() > 0);// assign new id

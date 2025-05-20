@@ -234,7 +234,6 @@ public:
             func(*vp);
         }
     }
-    void resetTextureProperties();
     ViewportBase *viewport(const ViewportType vpType);
     ViewportOrtho *viewportOrtho(const ViewportType vpType);
     virtual void closeEvent(QCloseEvent *event) override;

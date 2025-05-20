@@ -27,10 +27,24 @@ Network::Network(const QObject*) {
         QNetworkRequest::NoLessSafeRedirectPolicy); // default is manual redirect
 }
 
-std::pair<int, int> Network::checkOnlineMags(const QUrl& url) {
-    int lowestAvailableMag = NUM_MAG_DATASETS;
-    int highestAvailableMag = 0;
-    const auto maxMagCount = static_cast<std::size_t>(std::log2(NUM_MAG_DATASETS)) + 1;
+QVariantList Network::getCookiesForHost(const QUrl & host) {
+    QVariantList cookies;
+    for (const auto & cookie : cookieJar.cookiesForUrl(host)) {
+        cookies.append(cookie.toRawForm());
+    }
+    return cookies;
+}
+
+void Network::setCookies(const QVariantList & setting) {
+    for (const auto & cookie : setting) {
+        cookieJar.insertCookie(QNetworkCookie::parseCookies(cookie.toByteArray()).front());
+    }
+}
+
+std::pair<int, int> Network::checkOnlineMags(const QUrl & url) {
+    std::size_t lowestAvailableMagIndex = NUM_MAG_DATASETS;
+    std::size_t highestAvailableMagIndex = 0;
+    const auto maxMagCount = static_cast<std::size_t>(NUM_MAG_DATASETS) + 1;
 
     std::vector<qint64> bytesReceivedAll(maxMagCount);
     std::vector<qint64> bytesTotalAll(maxMagCount);
@@ -38,35 +52,28 @@ std::pair<int, int> Network::checkOnlineMags(const QUrl& url) {
 
     QEventLoop pause;
     int downloadCounter{0};
-    for (int currMag = 1; currMag <= NUM_MAG_DATASETS; currMag *= 2) {
+    for (std::size_t currMagIndex = 0; currMagIndex <= NUM_MAG_DATASETS; currMagIndex += 1) {
         QUrl magUrl = url;
-        magUrl.setPath(QString("%1/mag%2/knossos.conf").arg(url.path()).arg(currMag));
-        auto* replyPtr = manager.get(QNetworkRequest{magUrl});
-        replies[static_cast<std::size_t>(std::log2(currMag))] =
-            decltype(replies)::value_type{replyPtr};
+        magUrl.setPath(QString("%1/mag%2/knossos.conf").arg(url.path()).arg(std::pow(2, currMagIndex)));
+        auto * replyPtr = manager.get(QNetworkRequest{magUrl});
+        replies[currMagIndex] = decltype(replies)::value_type{replyPtr};
         ++downloadCounter;
-        QObject::connect(replyPtr, &QNetworkReply::finished,
-                         [magUrl, &pause, &downloadCounter, currMag, replyPtr, &lowestAvailableMag,
-                          &highestAvailableMag]() {
-                             auto& reply = *replyPtr;
-                             if (reply.error() == QNetworkReply::NoError) {
-                                 lowestAvailableMag = std::min(lowestAvailableMag, currMag);
-                                 highestAvailableMag = std::max(highestAvailableMag, currMag);
-                             }
-                             if (--downloadCounter ==
-                                 0) { // exit event loop after last download finished
-                                 qDebug() << reply.errorString() << reply.readAll();
-                                 pause.exit();
-                             }
-                         });
-        auto processProgress = [this, currMag, &bytesReceivedAll,
-                                &bytesTotalAll](qint64 bytesReceived, qint64 bytesTotal) {
-            bytesReceivedAll[static_cast<std::size_t>(std::log2(currMag))] = bytesReceived;
-            bytesTotalAll[static_cast<std::size_t>(std::log2(currMag))] = bytesTotal;
-            const auto received = std::accumulate(std::begin(bytesReceivedAll),
-                                                  std::end(bytesReceivedAll), qint64{0});
-            const auto total =
-                std::accumulate(std::begin(bytesTotalAll), std::end(bytesTotalAll), qint64{0});
+        QObject::connect(replyPtr, &QNetworkReply::finished, [magUrl, &pause, &downloadCounter, currMagIndex, replyPtr, &lowestAvailableMagIndex, &highestAvailableMagIndex]() {
+            auto & reply = *replyPtr;
+            if (reply.error() == QNetworkReply::NoError) {
+                lowestAvailableMagIndex = std::min(lowestAvailableMagIndex, currMagIndex);
+                highestAvailableMagIndex = std::max(highestAvailableMagIndex, currMagIndex);
+            }
+            if (--downloadCounter == 0) {// exit event loop after last download finished
+                qDebug() << reply.errorString() << reply.readAll();
+                pause.exit();
+            }
+        });
+        auto processProgress = [this, currMagIndex, &bytesReceivedAll, &bytesTotalAll](qint64 bytesReceived, qint64 bytesTotal){
+            bytesReceivedAll[static_cast<std::size_t>(currMagIndex)] = bytesReceived;
+            bytesTotalAll[static_cast<std::size_t>(currMagIndex)] = bytesTotal;
+            const auto received = std::accumulate(std::begin(bytesReceivedAll), std::end(bytesReceivedAll), qint64{0});
+            const auto total = std::accumulate(std::begin(bytesTotalAll), std::end(bytesTotalAll), qint64{0});
             emit Network::progressChanged(received, total);
         };
         emit Network::singleton().startedNetworkRequest(*replyPtr); // register abort
@@ -77,11 +84,11 @@ std::pair<int, int> Network::checkOnlineMags(const QUrl& url) {
     state->viewer->suspend([&pause]() { return pause.exec(); });
     emit Network::singleton().finishedNetworkRequest();
 
-    if (lowestAvailableMag > highestAvailableMag) {
+    if (lowestAvailableMagIndex > highestAvailableMagIndex) {
         throw std::runtime_error{"no mags detected"};
     }
 
-    return {lowestAvailableMag, highestAvailableMag};
+    return {lowestAvailableMagIndex, highestAvailableMagIndex};
 }
 
 QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply& reply,
