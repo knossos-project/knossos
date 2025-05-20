@@ -23,9 +23,6 @@
 #include "dataset.h"
 
 #include "network.h"
-#include "segmentation/segmentation.h"
-#include "skeleton/skeletonizer.h"
-#include "stateInfo.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -39,6 +36,8 @@
 
 #include <boost/assign.hpp>
 #include <boost/bimap.hpp>
+#include <boost/optional.hpp>
+#include <cstddef>
 
 
 Dataset::list_t Dataset::datasets;
@@ -75,6 +74,10 @@ QString Dataset::apiString() const {
         return "Heidelbrain";
     case Dataset::API::OpenConnectome:
         return "OpenConnectome";
+    case Dataset::API::Precomputed:
+        return "precomputed/unsharded";
+    case Dataset::API::Sharded:
+        return "precomputed/sharded";
     case Dataset::API::PyKnossos:
         return "PyKnossos";
     case Dataset::API::WebKnossos:
@@ -287,6 +290,8 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
     return infos;
 }
 
+#include <QTemporaryFile>
+
 #include <toml.hpp>
 
 extern toml::value toml_parse(const std::vector<unsigned char> & blob, const std::string & filename);
@@ -299,25 +304,71 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         Dataset info;
         const auto & value = toml::find_or(vit, "ServerFormat", "");
         info.api = value == "knossos" ? API::Heidelbrain : value == "1" ? API::OpenConnectome : API::PyKnossos;
-        info.url = QString::fromStdString(toml::find_or(vit, "URL", std::string{}));
+        auto url = QString::fromStdString(toml::find_or(vit, "URL", std::string{}));
+        info.url = url;
+        if (url.endsWith("info")) {
+            info.api = API::Precomputed;
+            const auto download = Network::singleton().refresh(url);
+            if (download.first) {
+                info.boundary = info.cubeShape = {};
+                const auto jmap = QJsonDocument::fromJson(download.second.toUtf8()).object();
+                info.gpuCubeShape = {};
+                for (auto && scaleRef : jmap["scales"].toArray()) {
+                    const auto scaleRef2 = scaleRef.toObject();
+                    const auto scale = scaleRef2["resolution"].toArray();
+                    info.scales.emplace_back(scale[0].toDouble(1), scale[1].toDouble(1), scale[2].toDouble(1));
+                    const auto boundary = scaleRef2["size"].toArray();
+                    if (boundary[0].toInt(1) > info.boundary.x) {
+                        info.boundary = {boundary[0].toInt(1), boundary[1].toInt(1), boundary[2].toInt(1)};
+                    }
+                    const auto chunk_size = scaleRef2["chunk_sizes"].toArray()[0].toArray();
+                    if (chunk_size[0].toInt(1) > info.cubeShape.x) {
+                        info.cubeShape = {chunk_size[0].toInt(1), chunk_size[1].toInt(1), chunk_size[2].toInt(1)};
+                    }
+                    info.scaleKeys.emplace_back(scaleRef2["key"].toString());
+                    if (info.scaleKeys.size() == 1) {
+                        if (auto it = scaleRef2.find("compressed_segmentation_block_size"); it != std::end(scaleRef2)) {
+                            const auto a = it->toArray();
+                            if (a[0].toInt(1) > info.gpuCubeShape.x) {
+                                info.gpuCubeShape = {a[0].toInt(1), a[1].toInt(1), a[2].toInt(1)};
+                            }
+                        } else {
+                            info.gpuCubeShape = info.cubeShape;// possibly ÷2
+                            info.gpuCubeShape.z = std::max(1, info.gpuCubeShape.z);// 1/2=0 → 1
+                        }
+                    }
+                    if (auto it = scaleRef2.find("sharding"); it != std::end(scaleRef2)) {
+                        const auto a = it->toObject();
+                        info.api = API::Sharded;
+                        info.bits.emplace_back(a["preshift_bits"].toInt(0), a["minishard_bits"].toInt(0), a["shard_bits"].toInt(0));
+                    }
+                }
+            }
+        }
         info.experimentname = QString::fromStdString(toml::find(vit, "Name").as_string());
-        const auto & extent = toml::find(vit, "Extent_px").as_array();
-        info.boundary = Coordinate(extent.at(0).as_integer(), extent.at(1).as_integer(), extent.at(2).as_integer());
-        const auto & cube_shape = toml::find(vit, "CubeShape_px").as_array();
-        info.cubeShape = Coordinate(cube_shape.at(0).as_integer(), cube_shape.at(1).as_integer(), cube_shape.at(2).as_integer());
-        info.gpuCubeShape = info.cubeShape;// possibly ÷2
-        info.gpuCubeShape.z = std::max(1, info.gpuCubeShape.z);// 1/2=0 → 1
-        const auto & scales = toml::find(vit, "VoxelSize_nm").as_array();
-        for (const auto & scaleit : scales) {
-            const auto scale = scaleit.as_array();
-            const auto x = (scale.at(0).is_floating()) ? scale.at(0).as_floating() : scale.at(0).as_integer();
-            const auto y = (scale.at(1).is_floating()) ? scale.at(1).as_floating() : scale.at(1).as_integer();
-            const auto z = (scale.at(2).is_floating()) ? scale.at(2).as_floating() : scale.at(2).as_integer();
-            info.scales.emplace_back(x, y, z);
+        if (vit.contains("Extent_px")) {
+            const auto extent = toml::find(vit, "Extent_px").as_array();
+            info.boundary = Coordinate(extent.at(0).as_integer(), extent.at(1).as_integer(), extent.at(2).as_integer());
+        }
+        if (vit.contains("CubeShape_px")) {
+            const auto cube_shape = toml::find(vit, "CubeShape_px").as_array();
+            info.cubeShape = Coordinate(cube_shape.at(0).as_integer(), cube_shape.at(1).as_integer(), cube_shape.at(2).as_integer());
+            info.gpuCubeShape = info.cubeShape;// possibly ÷2
+            info.gpuCubeShape.z = std::max(1, info.gpuCubeShape.z);// 1/2=0 → 1
+        }
+        if (vit.contains("VoxelSize_nm")) {
+            const auto scales = toml::find(vit, "VoxelSize_nm").as_array();
+            for (const auto & scaleit : scales) {
+                const auto scale = scaleit.as_array();
+                const auto x = (scale.at(0).is_floating()) ? scale.at(0).as_floating() : scale.at(0).as_integer();
+                const auto y = (scale.at(1).is_floating()) ? scale.at(1).as_floating() : scale.at(1).as_integer();
+                const auto z = (scale.at(2).is_floating()) ? scale.at(2).as_floating() : scale.at(2).as_integer();
+                info.scales.emplace_back(x, y, z);
+            }
         }
         info.scale = info.scales.front();
         info.magIndex = info.lowestAvailableMagIndex = 0;
-        info.highestAvailableMagIndex = scales.size() - 1;
+        info.highestAvailableMagIndex = info.scales.size() - 1;
         info.description = QString::fromStdString(toml::find(vit, "Description").as_string());
         info.renderSettings.visibleSetExplicitly = vit.contains("Visible");
         info.allocationEnabled = info.loadingEnabled = info.renderSettings.visible = toml::find_or(vit, "Visible", true);
@@ -524,6 +575,58 @@ QUrl Dataset::knossosCubeUrl(const CoordOfCube cubeCoord) const {
     return base;
 }
 
+std::uint64_t Dataset::chunkid(const CoordOfCube cubeCoord) const {
+    auto max_bits = std::array{std::ceil(std::log2(std::ceil(1. * boundary.x / scaleFactor.x / cubeShape.x))), std::ceil(std::log2(std::ceil(1. * boundary.y / scaleFactor.y / cubeShape.y))), std::ceil(std::log2(std::ceil(1. * boundary.z / scaleFactor.z / cubeShape.z)))};
+    std::uint64_t chunk_id = 0;
+    std::array<std::uint32_t,3> c{static_cast<unsigned int>(cubeCoord.x), static_cast<unsigned int>(cubeCoord.y), static_cast<unsigned int>(cubeCoord.z)};
+    for (std::size_t si{0}, ti{0}; si < 32; ++si) {
+        for (std::size_t di{0}; di < 3; ++di) {
+            if (si < max_bits[di]) {
+                // qDebug() << ti << si << di << (ti-si) << (1 & (c[di] >> si));
+                chunk_id = chunk_id | ((1 << ti) & (c[di] << (ti-si)));
+                ++ti;
+            }
+        }
+    }
+    // qDebug() << cubeCoord << max_bits[0] << max_bits[1] << max_bits[2] << chunk_id << (chunk_id & 0b11111111) << ((chunk_id >> 8) >> 0) << scaleFactor << boundary;
+    // auto print_bits = [](auto n){
+    //     for (int i{sizeof (n)*8 - 1}; i >= 0; --i) {
+    //         std::cout << ((n >> i) & 1);
+    //         if (i % 4 == 0) {
+    //             std::cout << ' ';
+    //         }
+    //     }
+    //     std::cout << std::endl;
+    // };
+    // print_bits(cubeCoord.x);
+    // print_bits(cubeCoord.y);
+    // print_bits(cubeCoord.z);
+    // print_bits(chunk_id);
+    return chunk_id;
+}
+
+std::uint64_t Dataset::minishard(const CoordOfCube cubeCoord) const {
+    return (chunkid(cubeCoord) >> bits[magIndex].preshift_bits) & ((1u << bits[magIndex].minishard_bits) - 1);
+}
+
+QUrl Dataset::precomputedCubeUrl(const CoordOfCube cubeCoord, bool sharded) const {
+    const auto coord = (cube2global(cubeCoord) / scaleFactor).capped({}, boundary / scaleFactor+1);
+    const auto coord2 = (cube2global(cubeCoord+1) / scaleFactor).capped({}, boundary / scaleFactor+1);
+    auto base = url;
+    base.setPath(base.path().chopped(5) + QString("/%1").arg(scaleKeys[magIndex]));
+    if (!sharded) {
+        base.setPath(base.path() + QString("/%4-%5_%6-%7_%8-%9")
+                                  // .arg(scale.x).arg(scale.y).arg(scale.z)
+                                  .arg(coord.x).arg(coord2.x)
+                                  .arg(coord.y).arg(coord2.y)
+                                  .arg(coord.z).arg(coord2.z));
+    } else {
+        auto chunk_id = chunkid(cubeCoord);
+        base.setPath(base.path() + QString("/%1.shard").arg((chunk_id >> bits[magIndex].preshift_bits) >> bits[magIndex].minishard_bits, std::ceil(bits[magIndex].shard_bits/4.), 16, QChar{'0'}));
+    }
+    return base;
+}
+
 QUrl Dataset::openConnectomeCubeUrl(CoordOfCube coord) const {
     auto path = url.path();
 
@@ -550,13 +653,15 @@ QNetworkRequest Dataset::apiSwitch(const CoordOfCube cubeCoord) const {
         return request;
     }
     case API::Heidelbrain:
-    case API::PyKnossos: {
+    case API::PyKnossos:
         return QNetworkRequest{knossosCubeUrl(cubeCoord)};
-    }
     case API::OpenConnectome:
         return QNetworkRequest{openConnectomeCubeUrl(cubeCoord)};
     case API::WebKnossos:
         return QNetworkRequest{url};
+    case API::Precomputed:
+    case API::Sharded:
+        return QNetworkRequest{precomputedCubeUrl(cubeCoord, api == API::Sharded)};
     }
     throw std::runtime_error("unknown value for Dataset::API");
 }

@@ -23,14 +23,28 @@
 #include "loader.h"
 
 #include "brainmaps.h"
+#include "coordinate.h"
+#include "dataset.h"
 #include "functions.h"
 #include "network.h"
+#include "scriptengine/scripting.h"
 #include "segmentation/segmentation.h"
 #include "skeleton/skeletonizer.h"
 #include "stateInfo.h"
 #include "viewer.h"
 #include "widgets/mainwindow.h"
 
+#include <boost/multi_array/storage_order.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <numeric>
+#include <qdebug.h>
+#include <qelapsedtimer.h>
+#include <qfileinfo.h>
+#include <qglobal.h>
+#include <qhashfunctions.h>
+#include <qnamespace.h>
+#include <qnetworkrequest.h>
 #include <quazip.h>
 #include <quazipfile.h>
 
@@ -51,6 +65,9 @@
 #include <fstream>
 #include <stdexcept>
 #include <type_traits>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 //generalizing this needs polymorphic lambdas or return type deduction
 auto currentlyVisibleWrap = [](const Coordinate & center, const Dataset & dataset){
@@ -423,6 +440,110 @@ void Loader::Worker::abortDownloadsFinishDecompression(std::size_t layerId, Func
     }
 }
 
+#include <boost/endian/conversion.hpp>
+#include <boost/endian/buffers.hpp>
+
+template<std::uint8_t bits>
+struct arb {
+    struct it {
+        unsigned char const * bytebase;
+        std::size_t bitoffset;
+        bool operator!=(const it & other) {
+            return bitoffset != other.bitoffset;
+        }
+        std::uint32_t operator*() const {
+            return (boost::endian::load_little_u32(bytebase + bitoffset / 8) >> (bitoffset % 8)) & ((1uL << bits) - 1);
+        }
+        auto & operator++() {
+            bitoffset += bits;
+            return *this;
+        }
+        auto & operator--() {
+            bitoffset -= bits;
+            return *this;
+        }
+    } sentinel;
+    arb(unsigned char const * ptr, std::size_t size) : sentinel{ptr, size*bits} {}
+    auto begin() {
+        return it{sentinel.bytebase, 0};
+    }
+    auto end() {
+        return sentinel;
+    }
+};
+
+auto minishards_from_shard(unsigned char const * data, const std::size_t num_minishards) {
+    std::vector<std::array<std::uint64_t,2>> minishards(num_minishards);
+    for (std::size_t mi{0}; mi < num_minishards; ++mi) {
+        minishards[mi] = {boost::endian::load_little_u64(data+mi*16), boost::endian::load_little_u64(data+mi*16+8)};
+    }
+    return minishards;
+}
+
+auto chunks_from_minishards(unsigned char const * data, const std::size_t & size, const std::size_t shard_data_offset) {
+    std::unordered_map<std::uint64_t, std::array<std::uint64_t,2>>  chunks;
+    auto num_chunks = size/8/3;
+    std::size_t id_delta{}, offset_delta{};
+    for (std::size_t ci{0}; ci < num_chunks; ++ci) {
+        auto * p = data + ci*8;
+        const auto chunk_id = boost::endian::load_little_u64(p);
+        const auto offset = boost::endian::load_little_u64(p + num_chunks*8);
+        const auto size = boost::endian::load_little_u64(p + 2*num_chunks*8);
+        // std::cout << chunk_id+id_delta << ' ';
+        chunks[chunk_id+id_delta] = {shard_data_offset+offset+offset_delta, size};
+        // qDebug() << (chunk_id+id_delta) << (shard_data_offset+offset+offset_delta) << size;
+        id_delta += chunk_id;
+        offset_delta += offset+size;
+    }
+    return chunks;
+}
+
+#include <iostream>
+
+void degzip(QByteArray & data) {
+    auto * ref = reinterpret_cast<unsigned char const *>(data.data());
+    if (data.size() < 2 || ref[0] != 0x1F || ref[1] != 0x8B) {
+        return;
+    }
+    std::vector<unsigned char> decompressed;
+    z_stream strm;
+    std::memset(&strm, 0, sizeof(strm));
+    strm.next_in = const_cast<Bytef*>(ref);
+    strm.avail_in = data.size();
+    if (inflateInit2(&strm, MAX_WBITS + 16) != Z_OK) {// Use windowBits = MAX_WBITS + 16 to enable gzip decoding
+        std::cerr << "inflateInit2 failed!" << std::endl;
+        return;
+    }
+    const size_t chunkSize = 262144; // 256KB chunks
+    std::vector<unsigned char> buffer(chunkSize);
+
+    int ret;
+    do {
+        strm.next_out = buffer.data();
+        strm.avail_out = buffer.size();
+
+        ret = inflate(&strm, Z_NO_FLUSH);
+        if (ret != Z_OK && ret != Z_STREAM_END) {
+            std::cerr << "inflate failed with error: " << ret << std::endl;
+            inflateEnd(&strm);
+            return;
+        }
+
+        // Calculate number of bytes decompressed in this iteration
+        size_t bytesDecompressed = buffer.size() - strm.avail_out;
+        decompressed.insert(decompressed.end(), buffer.begin(), buffer.begin() + bytesDecompressed);
+    } while (ret != Z_STREAM_END);
+
+    if (ret != Z_STREAM_END) {
+        std::cerr << "inflate failed with error 2: " << ret << std::endl;
+        inflateEnd(&strm);
+        return;
+    }
+    inflateEnd(&strm);
+    // auto data2 = qUncompress(data);
+    data = QByteArray(reinterpret_cast<char *>(decompressed.data()), decompressed.size());
+}
+
 Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply, const std::size_t layerId, const Dataset dataset, decltype(state->cube2Pointer)::value_type::value_type & cubeHash, const CoordOfCube cubeCoord) {
     if (!reply.isOpen()) {// sanity check, finished replies with no error should be ready for reading (https://bugreports.qt.io/browse/QTBUG-45944)
         qCritical() << layerId << cubeCoord << static_cast<int>(dataset.type) << "decompression failed → no fill";
@@ -433,8 +554,84 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
 
     auto data = reply.read(reply.bytesAvailable());//readAll can be very slow – https://bugreports.qt.io/browse/QTBUG-45926
     const auto cubeVxCount = dataset.cubeShape.prod();
+    const auto partialCubeShape = (dataset.cube2global(cubeCoord + 1) / dataset.scaleFactor).capped({}, dataset.boundary / dataset.scaleFactor + 1) - dataset.cube2global(cubeCoord) / dataset.scaleFactor;
+    const auto partialCubeVxCount = partialCubeShape.prod();
     const std::size_t availableSize = data.size();
-    if (dataset.type == Dataset::CubeType::RAW_UNCOMPRESSED) {
+    if (dataset.isOverlay() && (dataset.api == Dataset::API::Precomputed || dataset.api == Dataset::API::Sharded)) {
+        const std::size_t expectedSize = cubeVxCount * OBJID_BYTES;
+        if (availableSize <= expectedSize) {
+            degzip(data);
+            // std::copy(std::begin(data), std::end(data), reinterpret_cast<std::uint8_t *>(currentSlot));
+            // std::fill(reinterpret_cast<std::uint64_t *>(currentSlot) + availableSize/OBJID_BYTES, reinterpret_cast<std::uint64_t *>(currentSlot) + cubeVxCount, 1);
+
+            boost::multi_array_ref<std::uint64_t, 3> slotRef(reinterpret_cast<std::uint64_t *>(currentSlot), boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x]);
+
+            const auto num_channels = boost::endian::load_little_u32(reinterpret_cast<unsigned char const *>(data.data()));
+
+            auto cpd = floatCoordinate{partialCubeShape} / dataset.gpuCubeShape;
+            auto cpd2 = Coordinate(std::ceil(cpd.x), std::ceil(cpd.y), std::ceil(cpd.z));
+
+            QElapsedTimer t;
+            QFutureSynchronizer<void> sync;
+            t.start();
+            // qDebug() << "foo" << num_channels << cubeCoord << availableSize << data.size() << expectedSize << dataset.gpuCubeShape << cpd << cpd2;
+            for (int y = 0; y < cpd2.y; ++y)
+            sync.addFuture(QtConcurrent::run(&Loader::Controller::singleton().worker->decompressionPool, [&,y](){
+                    std::vector<std::uint64_t> output(dataset.gpuCubeShape.prod());
+                    for (int z = 0; z < cpd2.z; ++z)
+                    for (int x = 0; x < cpd2.x; ++x) {
+                            auto headerByteOffset = 8 * (x + cpd2.x * (y + cpd2.y * z));
+
+                            const auto * data2 = reinterpret_cast<unsigned char const *>(data.data()+4*num_channels);
+
+                            const auto lookupTableByteOffset = 4*boost::endian::load_little_u24(data2 + headerByteOffset);
+                            const std::uint8_t encodedBits = data2[headerByteOffset + 3];
+                            const auto encodedValuesByteOffset = 4*boost::endian::load_little_u32(data2 + headerByteOffset + 4);
+
+                            if (encodedBits > 0) {
+                                std::uint64_t const * const lut = reinterpret_cast<const std::uint64_t *>(data2 + lookupTableByteOffset);// or 32 bit
+                                // bits.insert(lut.size());
+
+                                auto resolve = [&]<std::size_t c>(){
+                                    arb<c> keys(data2 + encodedValuesByteOffset, dataset.gpuCubeShape.prod());
+                                    std::transform(std::begin(keys), std::end(keys), std::begin(output), [&lut](auto key){ return lut[key]; });
+                                };
+                                switch (encodedBits) {
+                                case 1: resolve.template operator()<1>(); break;
+                                case 2: resolve.template operator()<2>(); break;
+                                case 4: resolve.template operator()<4>(); break;
+                                case 8: resolve.template operator()<8>(); break;
+                                case 16: resolve.template operator()<16>(); break;
+                                case 32: resolve.template operator()<32>(); break;
+                                };
+                            } else {
+                                // output = decltype(output)(output.size(), boost::endian::load_little_u32(data2 + lookupTableByteOffset));
+                                std::fill(std::begin(output), std::end(output), boost::endian::load_little_u32(data2 + lookupTableByteOffset));
+                            }
+                            if (dataset.global2cube(Coordinate{12891, 13090, 0}) == cubeCoord && (Coordinate{12891, 13090, 0} - dataset.cube2global(cubeCoord)) / dataset.gpuCubeShape == Coordinate{x,y,z}) {
+                            }
+
+                            boost::const_multi_array_ref<std::uint64_t, 3> dataCube(output.data(), boost::extents[dataset.gpuCubeShape.z][dataset.gpuCubeShape.y][dataset.gpuCubeShape.x]);
+                            const auto & s = dataset.gpuCubeShape;
+                            using range = boost::multi_array_types::index_range;
+                            auto e = (Coordinate{x,y,z}).componentMul(s);
+                            auto slice  = boost::indices[range(z*s.z, std::min((z+1)*s.z, dataset.cubeShape.z))][range(y*s.y, std::min((y+1)*s.y, dataset.cubeShape.y))][range(x*s.x, std::min((x+1)*s.x, dataset.cubeShape.x))];
+                            auto slice2 = boost::indices[range(0, slotRef[slice].shape()[0])][range(0, slotRef[slice].shape()[1])][range(0, slotRef[slice].shape()[2])];
+                            slotRef[slice] = dataCube[slice2];
+                            //     qDebug() << "foo" << cubeCoord << availableSize << expectedSize << dataset.gpuCubeShape << cpd << cpd2 << x << y << z << headerByteOffset << lookupTableByteOffset << encodedBits << encodedValuesByteOffset;
+                            if (encodedBits > 0 || lookupTableByteOffset == encodedValuesByteOffset) {
+                            } else {
+                                // qDebug() << encodedBits << lookupTableByteOffset << encodedValuesByteOffset << boost::endian::load_little_u32(data2 + lookupTableByteOffset) << boost::endian::load_little_u32(data2 + encodedValuesByteOffset);
+                                // qDebug() << x << y << z << cubeCoord << (z*s.z, std::min((z+1)*s.z, dataset.cubeShape.z)) << (y*s.y, std::min((y+1)*s.y, dataset.cubeShape.y)) << (x*s.x, std::min((x+1)*s.x, dataset.cubeShape.x));
+                            }
+                    }
+                }));
+
+            sync.waitForFinished();
+            // qDebug() << t.nsecsElapsed()/1e6;
+            success = true;
+        }
+    } else if (dataset.type == Dataset::CubeType::RAW_UNCOMPRESSED) {
         const std::size_t expectedSize = cubeVxCount;
         if (availableSize == expectedSize) {
             std::copy(std::begin(data), std::end(data), reinterpret_cast<std::uint8_t *>(currentSlot));
@@ -442,17 +639,46 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
         }
     } else if (dataset.type == Dataset::CubeType::RAW_JPG || dataset.type == Dataset::CubeType::RAW_J2K || dataset.type == Dataset::CubeType::RAW_JP2_6 || dataset.type == Dataset::CubeType::RAW_PNG) {
         const auto image = QImage::fromData(data).convertToFormat(QImage::Format_Grayscale8);
+        // qDebug() << cubeCoord << availableSize << image.size() << image.sizeInBytes() << image.bytesPerLine() << partialCubeVxCount << partialCubeShape << (dataset.cube2global(cubeCoord + 1) / dataset.scaleFactor).capped({}, dataset.boundary / dataset.scaleFactor + 1) << dataset.cube2global(cubeCoord) / dataset.scaleFactor;
         const qint64 expectedSize = cubeVxCount;
         if (image.sizeInBytes() == expectedSize) {
             std::copy(image.bits(), image.bits() + image.sizeInBytes(), reinterpret_cast<std::uint8_t *>(currentSlot));
+            success = true;
+        } else if (image.sizeInBytes() >= partialCubeVxCount) {
+            bool needsAttention = (partialCubeShape.x > 1 && (partialCubeShape.x % 2 != 0 || partialCubeShape.y % 2 != 0)) || (image.height() != image.width() && partialCubeShape.x == image.height() && partialCubeShape.y == image.width());
+            using range = boost::multi_array_types::index_range;
+            auto extents = partialCubeShape.z == 1 || needsAttention ? boost::extents[1][image.height()][image.bytesPerLine()] : boost::extents[partialCubeShape.z][partialCubeShape.y][partialCubeShape.x];
+            boost::const_multi_array_ref<uint8_t, 3> dataRef(image.bits(), extents);
+            boost::multi_array_ref<uint8_t, 3> slotRef(reinterpret_cast<uint8_t *>(currentSlot), boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x]);
+            std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeVxCount, 0);
+            auto v = slotRef[boost::indices[range(0, partialCubeShape.z)][range(0, partialCubeShape.y)][range(0, partialCubeShape.x)]];
+            if (needsAttention) {
+                boost::multi_array<uint8_t, 3> b = dataRef[boost::indices[range(0, 1)][range(0, image.height())][range(0, image.width())]];
+                b.reshape(boost::array<decltype(b)::index, 3>{partialCubeShape.z, partialCubeShape.y, partialCubeShape.x});
+                v = b;
+            } else {
+                v = dataRef[boost::indices[range(0, partialCubeShape.z)][range(0, partialCubeShape.y)][range(0, partialCubeShape.x)]];
+            }
+
+            // for (std::size_t y = 0; y < partialCubeShape.y; ++y) {
+            //     // std::copy(image.scanLine(y), image.scanLine(y) + partialCubeShape.x, reinterpret_cast<std::uint8_t *>(currentSlot)+y*dataset.cubeShape.x);
+            //     std::copy(image.constBits() + y *  - partialCubeShape.x, image.constBits() + y * image.bytesPerLine() + , reinterpret_cast<std::uint8_t *>(currentSlot) + y * dataset.cubeShape.x);
+            // }
+
+            // auto right_view  = slotRef[boost::indices[range::all().start(partialCubeShape.z)][range()][range()]];
+            // auto bottom_view = slotRef[boost::indices[range()][range::all().start(partialCubeShape.y)][range()]];
+            // auto behind_view = slotRef[boost::indices[range()][range()][range::all().start(partialCubeShape.x)]];
+            // for (auto & view : {right_view, bottom_view, behind_view}) {
+            //     std::fill(view.begin(), view.end(), 0);
+            // }
             success = true;
         }
     } else if (dataset.type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_16) {
         const std::size_t expectedSize = cubeVxCount * OBJID_BYTES / 4;
         if (availableSize == expectedSize) {
-            boost::multi_array_ref<uint16_t, 1> dataRef(reinterpret_cast<uint16_t *>(data.data()), boost::extents[cubeVxCount]);
+            boost::const_multi_array_ref<uint16_t, 1> dataRef(reinterpret_cast<const uint16_t *>(data.data()), boost::extents[cubeVxCount]);
             boost::multi_array_ref<uint64_t, 1> slotRef(reinterpret_cast<uint64_t *>(currentSlot), boost::extents[cubeVxCount]);
-            std::copy(std::begin(dataRef), std::end(dataRef), std::begin(slotRef));
+            slotRef = dataRef;
             success = true;
         }
     } else if (dataset.type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64) {
@@ -599,6 +825,26 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         }
         qDebug() << "in" << qSetRealNumberPrecision(2) << time.nsecsElapsed()/1e9 << "s";
     }
+    static std::vector<std::unordered_map<std::uint64_t, std::array<std::uint64_t,2>>> chunkid2chunk(datasets.size());
+    static std::vector<std::unordered_map<CoordOfCube, std::array<std::uint64_t,2>>> cube2chunk(datasets.size());
+    static std::vector<QSet<QUrl>> fourohfour(datasets.size());
+
+    if (changedDatasets.size() != datasets.size()) {
+        chunkid2chunk.clear();
+        chunkid2chunk.resize(changedDatasets.size());
+        cube2chunk.clear();
+        cube2chunk.resize(changedDatasets.size());
+        fourohfour.clear();
+        fourohfour.resize(changedDatasets.size());
+    }
+    for (std::size_t layerId{0}; layerId < std::min(datasets.size(), changedDatasets.size()); ++layerId) {
+        if (datasets[layerId].url != changedDatasets[layerId].url || datasets[layerId].magIndex != changedDatasets[layerId].magIndex) {
+            chunkid2chunk[layerId].clear();
+            cube2chunk[layerId].clear();
+            fourohfour[layerId].clear();
+        }
+    }
+
     datasets = changedDatasets;
     loaderCacheSize = cacheSize;
 
@@ -617,7 +863,124 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         }
     }
 
-    auto startDownload = [this, center, loadingNr](const std::size_t layerId, const Dataset dataset, const CoordOfCube cubeCoord, decltype(slotDownload)::value_type & downloads
+    QSet<QPair<quint64,QUrl>> shards;
+    QMap<QPair<quint64,QUrl>,QSet<quint64>> shard2minishards;
+    for (std::size_t i{0}; i < allCubes.size(); ++i) {
+        const auto layerId = allCubes[i].first;
+        const auto & dataset = datasets[layerId];
+        const auto cubeCoord = allCubes[i].second;
+        if (dataset.api == Dataset::API::Sharded) {
+            if (auto it = chunkid2chunk[layerId].find(dataset.chunkid(cubeCoord)); it != std::end(chunkid2chunk[layerId])) {
+                cube2chunk[layerId].emplace(cubeCoord, it->second);
+            } else if(auto shard = dataset.precomputedCubeUrl(cubeCoord, true); !fourohfour[layerId].contains(shard)) {
+                // allCubes.erase(std::next(std::begin(allCubes), i));
+                shards.insert({layerId,shard});
+                shard2minishards[{layerId,shard}].insert((dataset.minishard(cubeCoord)));
+            }
+        }
+    }
+
+    for (const auto & [layerId,shard] : shards) {
+        qDebug() << "l" << shard;
+
+        auto num_minishards = (1u << datasets[layerId].bits[datasets[layerId].magIndex].minishard_bits);
+        auto shard_data_offset = num_minishards * 16;
+
+        if (shard.scheme() == "file") {
+            QFile f(shard.toLocalFile());
+            f.open(QIODevice::ReadOnly);
+            auto data = f.read(shard_data_offset);
+            if (data.size() > 0) {
+                qDebug() << "foo" << data.size();
+                const auto minishards = minishards_from_shard(reinterpret_cast<unsigned char const *>(data.data()), num_minishards);
+                // for (std::size_t mi{0}; mi < minishards.size(); ++mi) {
+                for (const auto mi : qAsConst(shard2minishards[{layerId,shard}])) {
+                    if (minishards[mi][0] < minishards[mi][1]) {
+                        QFile f(shard.toLocalFile());
+                        f.open(QIODevice::ReadOnly);
+                        /*qDebug() << */f.seek(shard_data_offset+minishards[mi][0]);
+                        data = f.read(minishards[mi][1]-minishards[mi][0]);
+                        degzip(data);
+                        if (data.size() > 0) {
+                            // qDebug() << "bar" << data.size();
+                            for (auto chunkid : chunks_from_minishards((reinterpret_cast<unsigned char const *>(data.data())), data.size(), shard_data_offset)) {
+                                chunkid2chunk[layerId][chunkid.first] = chunkid.second;
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            QNetworkRequest request(shard);
+            request.setRawHeader("Range", QString("bytes=%1-%2").arg(0).arg(shard_data_offset - 1).toUtf8());
+            auto * reply = qnam.get(request);
+            QObject::connect(reply, &QNetworkReply::finished, [this, reply, num_minishards, shard, shard_data_offset, layerId, shard2minishards](){
+                if (reply->error() != QNetworkReply::NoError) {
+                    qDebug() << "shard" << reply->request().url() << reply->errorString();
+                    if (reply->error() == QNetworkReply::ContentNotFoundError) {
+                        fourohfour[layerId].insert(shard);
+                    }
+                    return;
+                }
+                auto data = reply->readAll();
+                qDebug() << "foo" << data.size() << reply->rawHeaderPairs();
+                const auto minishards = minishards_from_shard(reinterpret_cast<unsigned char const *>(data.data()), num_minishards);
+                // for (std::size_t mi{0}; mi < minishards.size(); ++mi) {
+                for (auto mi : shard2minishards[{layerId,shard}]) {
+                    if (minishards[mi][0] < minishards[mi][1]) {
+                        QNetworkRequest request(shard);
+                        request.setRawHeader("Range", QString("bytes=%1-%2").arg(shard_data_offset + minishards[mi][0]).arg(shard_data_offset + minishards[mi][1] - 1).toUtf8());
+                        auto * reply = qnam.get(request);
+                        QObject::connect(reply, &QNetworkReply::finished, [reply, minishards, layerId, shard_data_offset](){
+                            if (reply->error() != QNetworkReply::NoError) {
+                                qDebug() << "minishard" << reply->request().url() << reply->errorString();
+                                return;
+                            }
+                            auto data = reply->readAll();
+                            degzip(data);
+                            // qDebug() << "bar" << data.size() << reply->rawHeaderPairs();
+                            for (auto chunkid : chunks_from_minishards((reinterpret_cast<unsigned char const *>(data.data())), data.size(), shard_data_offset)) {
+                                chunkid2chunk[layerId][chunkid.first] = chunkid.second;
+                            }
+                            // state->viewer->loader_notify();
+                            reply->deleteLater();
+                        });
+                    }
+                }
+                reply->deleteLater();
+            });
+        }
+    }
+
+    qDebug() << "foobar" << std::accumulate(std::begin(chunkid2chunk), std::end(chunkid2chunk), 0, [](std::size_t sum, const auto & m){ return sum + m.size(); })
+             << std::accumulate(std::begin(shard2minishards), std::end(shard2minishards), 0, [](std::size_t sum, const auto & m){ return sum + m.size(); }) << shards.size();
+
+    // for (std::size_t i{0}; i < allCubes.size(); ++i) {
+    //     const auto layerId = allCubes[i].first;
+    //     const auto & dataset = datasets[layerId];
+    //     const auto cubeCoord = allCubes[i].second;
+    //     if (dataset.api == Dataset::API::Sharded) {
+    //         if (auto it = chunkid2chunk[layerId].find(dataset.chunkid(cubeCoord)); it == std::end(chunkid2chunk[layerId])) {
+    //             allCubes.erase(std::next(std::begin(allCubes), i));
+    //         }
+    //     }
+    // }
+
+    for (std::size_t i{0}; i < allCubes.size(); ++i) {
+        const auto layerId = allCubes[i].first;
+        const auto & dataset = datasets[layerId];
+        const auto cubeCoord = allCubes[i].second;
+        if (dataset.api == Dataset::API::Sharded) {
+            if (auto it = chunkid2chunk[layerId].find(dataset.chunkid(cubeCoord)); it != std::end(chunkid2chunk[layerId])) {
+                cube2chunk[layerId].emplace(cubeCoord, it->second);
+            } else {
+                allCubes.erase(std::next(std::begin(allCubes), i));
+                shards.insert({layerId,dataset.precomputedCubeUrl(cubeCoord, true)});
+            }
+        }
+    }
+
+    auto startDownload = [this, center, loadingNr](const std::size_t layerId, Dataset dataset, const CoordOfCube cubeCoord, decltype(slotDownload)::value_type & downloads
             , decltype(slotDecompression)::value_type & decompressions, decltype(freeSlots)::value_type & freeSlots, decltype(state->cube2Pointer)::value_type::value_type & cubeHash){
         auto & opens = slotOpen[layerId];
         const auto c = dataset.cube2global(cubeCoord);
@@ -688,6 +1051,12 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             }
 
             auto request = dataset.apiSwitch(cubeCoord);
+            if (dataset.api == Dataset::API::Sharded) {
+                if (!cube2chunk[layerId].contains(cubeCoord)) {
+                    return;
+                }
+                request.setRawHeader("Range", QString("bytes=%1-%2").arg(cube2chunk[layerId][cubeCoord][0]).arg(cube2chunk[layerId][cubeCoord][0]+cube2chunk[layerId][cubeCoord][1] - 1).toUtf8());
+            }
 //            request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
 //            request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
 //            request.setAttribute(QNetworkRequest::BackgroundRequestAttribute, true);
@@ -792,21 +1161,25 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     broadcastProgress();
                 });
                 localPool.setMaxThreadCount(1024);
-                watcher.setFuture(QtConcurrent::run(&localPool, [loadingNr, &io, path]() -> boost::optional<bool> {
+                watcher.setFuture(QtConcurrent::run(&localPool, [loadingNr, &io, path, dataset, layerId, cubeCoord]() -> boost::optional<bool> {
                     // immediately exit unstarted thread from the previous loadSignal
-                    if (loadingNr != Loader::Controller::singleton().loadingNr) {
+                    if (loadingNr != Loader::Controller::singleton().loadingNr || !QFile{path}.exists()) {
                         return boost::none;
                     }
                     QFile file(path);
                     file.open(QIODevice::ReadOnly | QIODevice::Unbuffered);
                     io.open(QIODevice::WriteOnly | QIODevice::Unbuffered);
-                    const int size = file.size();
-                    auto * fmap = file.map(0, size);
-                    if (fmap == nullptr && QFile{path}.exists()) {
-                        qWarning() << "mmap not used, but file exists, for" << path << size;
+                    std::size_t offset2 = dataset.api == Dataset::API::Sharded ? cube2chunk[layerId][cubeCoord][0] : 0;
+                    const std::size_t size = dataset.api == Dataset::API::Sharded ? cube2chunk[layerId][cubeCoord][1] : file.size();
+                    auto * fmap = file.map(offset2, size);
+                    if (fmap == nullptr) {
+                        if (QFile{path}.exists()) {
+                            qWarning() << "mmap not used, but file exists, for" << path << offset2 << size << QFile{path}.size();
+                        }
+                        file.seek(offset2);
                     }
-                    const int chunksize = 32*1024;
-                    for (int offset{}; offset < size; offset += chunksize) {
+                    const std::size_t chunksize = 32*1024;
+                    for (std::size_t offset{}; offset < size; offset += chunksize) {
                         if (loadingNr != Loader::Controller::singleton().loadingNr) {
                             return boost::none;
                         }
