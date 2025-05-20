@@ -292,7 +292,7 @@ void ViewportOrtho::renderSegPlaneIntersection(const segmentListElement & segmen
                     {0.,1.,0.},
                     {0.,0.,1.}};
 
-    const auto distToCurrPos = 0.5 * (state->M / 2) * Dataset::current().cubeShape.x * Dataset::current().magnification * Dataset::current().scales[0].x;
+    const auto distToCurrPos = 0.5 * (state->M / 2) * Dataset::current().cubeShape.x * Dataset::current().scale.x;
 
     //Check if there is an intersection between the given segment and one
     //of the slice planes.
@@ -579,8 +579,8 @@ void ViewportOrtho::renderViewportFast(const Dataset & dset, TextureLayer & laye
 
     //z component of vp vectors specifies portion of scale to apply
     const auto zScaleIncrement = !arb ? scale - 1 : 0;
-    const float hfov = texture.FOV * fov.componentMul(v1).length() / (1 + zScaleIncrement * std::abs(v1.z));
-    const float vfov = texture.FOV * fov.componentMul(v2).length() / (1 + zScaleIncrement * std::abs(v2.z));
+    const float hfov = textures[0].FOV * fov.componentMul(v1).length() / (1 + zScaleIncrement * std::abs(v1.z));
+    const float vfov = textures[0].FOV * fov.componentMul(v2).length() / (1 + zScaleIncrement * std::abs(v2.z));
     viewMatrix.scale(width() / hfov, height() / vfov);
     const auto cameraPos = floatCoordinate{cpos} + n;
     viewMatrix.lookAt(cameraPos, cpos, v2);
@@ -1736,19 +1736,20 @@ void ViewportOrtho::renderArbitrarySlicePane(const RenderOptions & options, floa
                 isoCurPos + dataPxX * v1 + dataPxY * v2,
                 isoCurPos - dataPxX * v1 + dataPxY * v2
             };
+            auto & texture = textures[layerId];
             std::vector<float> texCoordComponents{texture.texLUx, texture.texLUy, texture.texRUx, texture.texRUy, texture.texRLx, texture.texRLy, texture.texLLx, texture.texLLy};
 
             glEnable(GL_TEXTURE_2D);
             glEnableClientState(GL_VERTEX_ARRAY);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-            texture.texHandle[layerId].bind();
+            texture.texHandle.bind();
             glVertexPointer(3, GL_FLOAT, 0, vertices.data());
             glTexCoordPointer(2, GL_FLOAT, 0, texCoordComponents.data());
 
             glDrawArrays(GL_QUADS, 0, 4);
 
-            texture.texHandle[layerId].release();
+            texture.texHandle.release();
 
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
             glDisableClientState(GL_VERTEX_ARRAY);

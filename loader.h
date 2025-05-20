@@ -119,7 +119,7 @@ public://matsch
 
     void unloadCurrentMagnification(const std::size_t);
     void unloadCurrentMagnification();
-    void markCubeAsModified(const std::size_t layerId, const CoordOfCube &cubeCoord, const int magnification);
+    void markCubeAsModified(const std::size_t layerId, const CoordOfCube &cubeCoord, const std::size_t magIndex);
     void snappyCacheSupplySnappy(const std::size_t layerId, const CoordOfCube, const quint64 cubeMagnification, const std::string cube);
     void flushIntoSnappyCache();
     void broadcastProgress(bool startup = false);
@@ -146,14 +146,13 @@ public:
     void suspendLoader();
     Controller();
     virtual ~Controller() override;
-    void unloadCurrentMagnification();
 
     void startLoading(const Coordinate & center, const UserMoveType userMoveType, const floatCoordinate &direction);
     template<typename... Args>
     void snappyCacheSupplySnappy(Args&&... args) {
         emit snappyCacheSupplySnappySignal(std::forward<Args>(args)...);
     }
-    void markCubeAsModified(const std::size_t layerId, const CoordOfCube &cubeCoord, const int magnification);
+    void markCubeAsModified(const std::size_t layerId, const CoordOfCube &cubeCoord, const std::size_t magIndex);
 
     struct LockedSnappy {
         std::unique_lock<QMutex> locker;
@@ -173,9 +172,8 @@ public slots:
 signals:
     void progress(int count);
     void refCountChange(bool isIncrement, int refCount);
-    void unloadCurrentMagnificationSignal();
     void loadSignal(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset::list_t & changedDatasets, const quint64 cacheSize);
-    void markCubeAsModifiedSignal(const std::size_t layerId, const CoordOfCube &cubeCoord, const int magnification);
+    void markCubeAsModifiedSignal(const std::size_t layerId, const CoordOfCube &cubeCoord, const std::size_t magIndex);
     void snappyCacheSupplySnappySignal(const std::size_t layerId, const CoordOfCube, const quint64 cubeMagnification, const std::string cube);
 };
 }//namespace Loader
