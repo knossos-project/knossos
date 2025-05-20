@@ -35,7 +35,7 @@
 class stateInfo;
 inline stateInfo * state{nullptr};
 
-#define NUM_MAG_DATASETS 65536
+#define NUM_MAG_DATASETS 16
 
 using coord2bytep_map_t = std::vector<std::vector<std::unordered_map<CoordOfCube, void *>>>;
 
