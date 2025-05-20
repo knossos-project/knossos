@@ -55,15 +55,11 @@ set(SRC_LIST ${sources} ${sources2} ${headers} ${headers2} ${uis})
 set(cheatsheet_dir ${CMAKE_CURRENT_BINARY_DIR}/cheatsheet)
 list(APPEND SRC_LIST ${cheatsheet_dir}/cheatsheet.qrc)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_COLOR_DIAGNOSTICS ON)
-
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)#resource files
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
+# set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(QT_CREATOR_SKIP_MAINTENANCE_TOOL_PROVIDER CACHE BOOL ON)
 
@@ -81,10 +77,12 @@ if(BUILD_SHARED_LIBS AND ${QtCoreLibraryType} MATCHES STATIC_LIBRARY)
     message(STATUS "static Qt found, disabling BUILD_SHARED_LIBS")
     set(BUILD_SHARED_LIBS OFF) # changing this later wont affect already cached libraries
 endif()
-# only introduce option (with default value) after testing if it was set initially
-option(BUILD_SHARED_LIBS "disable to find static versions of all libraries" ON)
-if(NOT BUILD_SHARED_LIBS AND NOT ${QtCoreLibraryType} MATCHES STATIC_LIBRARY)
-    message(FATAL_ERROR "BUILD_SHARED_LIBS has been set to FALSE, but the Qt version found is not static")
+if(WIN32)
+    # only introduce option (with default value) after testing if it was set initially
+    option(BUILD_SHARED_LIBS "disable to find static versions of all libraries" ON)
+    if(NOT BUILD_SHARED_LIBS AND NOT ${QtCoreLibraryType} MATCHES STATIC_LIBRARY)
+        message(FATAL_ERROR "BUILD_SHARED_LIBS has been set to FALSE, but the Qt version found is not static")
+    endif()
 endif()
 
 find_package(Python COMPONENTS Development.Embed)
@@ -100,9 +98,12 @@ FetchContent_Declare(toml11
     GIT_REPOSITORY https://github.com/ToruNiina/toml11.git
     GIT_TAG main
     GIT_SHALLOW TRUE
-    FIND_PACKAGE_ARGS # try to find installed versions, first
+    FIND_PACKAGE_ARGS
 )
 FetchContent_MakeAvailable(toml11)
+if(toml11_INSTALL)
+    message(FATAL_ERROR "you will need to clean your /usr/local")
+endif()
 
 #platform dependent resources
 if(WIN32)
@@ -156,22 +157,28 @@ add_custom_command(OUTPUT ${cheatsheet_dir}/cheatsheet.qrc
 )
 
 if(NOT MINGW) # msys2-lld __delayLoadHelper2 broken
-find_program(MOLD mold)
-find_program(LLD lld)
-if(MOLD)
-    message(STATUS "using MOLD linker")
-    add_link_options(-fuse-ld=mold)
-elseif(LLD)
-    message(STATUS "using LLVM linker")
-    # CMAKE_COLOR_DIAGNOSTICS doesn’t apply coloring to the compiler driver during linking
-    add_link_options(-fuse-ld=lld LINKER:--color-diagnostics -fdiagnostics-color=always)
-else()
-    message(STATUS "using gold linker")
-    add_link_options($<$<PLATFORM_ID:Linux>:-fuse-ld=gold>) # only ELF
-endif()
+    find_program(MOLD mold)
+    find_program(LLD lld)
+    if(MOLD)
+        message(STATUS "using MOLD linker")
+        add_link_options(-fuse-ld=mold -Wl,--color-diagnostics=always)
+    elseif(LLD)
+        message(STATUS "using LLVM linker")
+        # CMAKE_COLOR_DIAGNOSTICS doesn’t apply coloring to the compiler driver during linking
+        add_link_options(-fuse-ld=lld LINKER:--color-diagnostics -fdiagnostics-color=always)
+    else()
+        message(STATUS "using gold linker")
+        add_link_options($<$<PLATFORM_ID:Linux>:-fuse-ld=gold>) # only ELF
+    endif()
 endif()
 
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)#resource files
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
 add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE ${SRC_LIST} buildinfo.cpp)
+# add_dependencies(${PROJECT_NAME} ts_project)
 set_source_files_properties(${cheatsheet_dir}/cheatsheet.qrc PROPERTIES
     AUTORCC_OPTIONS "--root;/cheatsheet"
 )
@@ -185,12 +192,12 @@ option(PythonQt_QtAll "Include the PythonQt QtAll extension which wraps all Qt l
 if(PythonQt_QtAll)
     find_package(${pythonqt}_QtAll REQUIRED CONFIG)
     target_compile_definitions(${PROJECT_NAME} PRIVATE "QtAll")
-    target_link_libraries(${PROJECT_NAME} ${pythonqt}_QtAll)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${pythonqt}_QtAll)
     # remove the DSServicePlugin as it will depend on multimedia libraries (i.e. evc.dll) only available in non-N editions of Windows
     set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY QT_NO_PLUGINS Qt::DSServicePlugin)
 endif()
 
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME} PRIVATE
     Boost::headers
     OpenGL::GLU
     Qt::Concurrent
@@ -226,17 +233,17 @@ endif(APPLE)
 set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 
 #target_compile_options(${PROJECT_NAME} PRIVATE "-ftime-report")
-target_compile_options(${PROJECT_NAME} PRIVATE "-pedantic-errors")
+# target_compile_options(${PROJECT_NAME} PRIVATE "-pedantic-errors")
 target_compile_options(${PROJECT_NAME} PRIVATE "-Wall" "-Wextra")
 target_compile_options(${PROJECT_NAME} PRIVATE "-fdiagnostics-show-template-tree")
 
 #list(APPEND CMAKE_CXX_FLAGS "-fsanitize=address")
 
-string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UPPER_CASE)
-if(CMAKE_BUILD_TYPE_UPPER_CASE MATCHES "DEBUG")
-    target_compile_definitions(${PROJECT_NAME} PRIVATE "_GLIBCXX_DEBUG")
-    target_compile_definitions(${PROJECT_NAME} PRIVATE "_GLIBCXX_DEBUG_PEDANTIC")
-endif()
+# string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UPPER_CASE)
+# if(CMAKE_BUILD_TYPE_UPPER_CASE MATCHES "DEBUG")
+#     target_compile_definitions(${PROJECT_NAME} PRIVATE "_GLIBCXX_DEBUG")
+#     target_compile_definitions(${PROJECT_NAME} PRIVATE "_GLIBCXX_DEBUG_PEDANTIC")
+# endif()
 
 include(cotire OPTIONAL)#https://github.com/sakra/cotire/releases/latest
 if(COMMAND cotire)

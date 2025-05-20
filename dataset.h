@@ -36,7 +36,7 @@
 struct Dataset {
     using list_t = boost::container::small_vector<Dataset, 2>;
     enum class API {
-        Heidelbrain, WebKnossos, GoogleBrainmaps, PyKnossos, OpenConnectome
+        Heidelbrain, WebKnossos, GoogleBrainmaps, Precomputed, Sharded, PyKnossos, OpenConnectome
     };
     enum class CubeType {
         RAW_UNCOMPRESSED, RAW_JPG, RAW_J2K, RAW_JP2_6, RAW_PNG, SEGMENTATION_UNCOMPRESSED_16, SEGMENTATION_UNCOMPRESSED_64, SEGMENTATION_SZ_ZIP, SNAPPY
@@ -63,7 +63,11 @@ struct Dataset {
 
     QNetworkRequest apiSwitch(const CoordOfCube cubeCoord) const;
     QUrl knossosCubeUrl(const CoordOfCube cubeCoord) const;
+    QUrl precomputedCubeUrl(const CoordOfCube cubeCoord, bool sharded) const;
     QUrl openConnectomeCubeUrl(CoordOfCube coord) const;
+
+    std::uint64_t chunkid(const CoordOfCube cubeCoord) const;
+    std::uint64_t minishard(const CoordOfCube cubeCoord) const;
 
     bool isOverlay() const;
 
@@ -76,6 +80,11 @@ struct Dataset {
     Coordinate cube2global(const CoordOfCube & cubeCoord) const {
         return cubeCoord.cube2Global(cubeShape, scaleFactor);
     }
+    Coordinate cubeIsPartial(const CoordOfCube & cubeCoord) const {
+        auto coord = cube2global(cubeCoord+1) / scaleFactor;
+        auto magBoundary = boundary / scaleFactor;
+        return {std::min(coord.x, magBoundary.x), std::min(coord.y, magBoundary.y), std::min(coord.z, magBoundary.z)};
+    }
 
     API api{API::Heidelbrain};
     CubeType type{CubeType::RAW_UNCOMPRESSED};
@@ -84,6 +93,17 @@ struct Dataset {
     // pixel-to-nanometer scale
     floatCoordinate scale{1.f, 1.f, 1.f};
     boost::container::small_vector<floatCoordinate, 4> scales;
+    boost::container::small_vector<QString, 4> scaleKeys;
+    struct bits {
+        int preshift_bits, minishard_bits, shard_bits;
+    };
+    boost::container::small_vector<bits, 4> bits;
+    // stores the currently active magnification;
+    // it is set by magnification = 2^MAGx
+    // Dataset::current().magnification should only be used by the viewer,
+    // but its value is copied over to loaderMagnification.
+    // This is locked for thread safety.
+    // do not change to uint, it causes bugs in the display of higher mag datasets
     std::size_t magIndex{0};
     std::size_t lowestAvailableMagIndex{0};
     std::size_t highestAvailableMagIndex{0};

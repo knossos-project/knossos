@@ -61,7 +61,7 @@ QVariant LayerItemModel::data(const QModelIndex &index, int role) const {
                 data.description,
                 data.experimentname,
                 QString("mag%1").arg(data.toMag(data.magIndex)),
-                data.cubeShape.x,
+                QString("%1 %2 %3").arg(data.cubeShape.x).arg(data.cubeShape.y).arg(data.cubeShape.z),
                 data.compressionString(),
                 data.apiString(),
             }[index.column()];

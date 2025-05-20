@@ -72,8 +72,9 @@ class Worker : public QObject {
     friend class Loader::Controller;
     friend boost::multi_array_ref<uint64_t, 3> getCube(const Coordinate & pos);
     friend void Segmentation::clear();
-private:
+public:
     QThreadPool decompressionPool;//let pool be alive just after ~Worker
+private:
     QFutureSynchronizer<void> sync;
     QThreadPool localPool;
     QNetworkAccessManager qnam;
