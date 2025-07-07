@@ -321,6 +321,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         info.renderSettings.visibleSetExplicitly = vit.contains("Visible");
         info.allocationEnabled = info.loadingEnabled = info.renderSettings.visible = toml::find_or(vit, "Visible", true);
         info.renderSettings.color = QColor{QString::fromStdString(toml::find_or(vit, "Color", "white"))};
+        info.token = QString::fromStdString(toml::find_or(vit, "AdditionalQuery", std::string{}));
 
         for (const auto & ext : toml::find(vit, "FileExtension").as_array()) {
             info.fileextension = QString::fromStdString(ext.as_string());
@@ -517,6 +518,7 @@ QUrl Dataset::knossosCubeUrl(const CoordOfCube cubeCoord) const {
             .arg(typeMap.right.at(type));
     auto base = url;
     base.setPath(url.path() + pos + filename);
+    base.setQuery(token);
     return base;
 }
 
