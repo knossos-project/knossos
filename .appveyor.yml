@@ -5,7 +5,7 @@ image: [Visual Studio 2022] # Windows Server 2019
 configuration: [CLANG64,UCRT64,MINGW64]
 
 environment:
-  MESA_DIST_WIN_VER: 25.0.0
+  MESA_DIST_WIN_VER: 25.1.5
   MSYSTEM: "%CONFIGURATION%"
 
 init:
