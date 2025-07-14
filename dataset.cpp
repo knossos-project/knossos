@@ -341,7 +341,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                     if (auto it = scaleRef2.find("sharding"); it != std::end(scaleRef2)) {
                         const auto a = it->toObject();
                         info.api = API::Sharded;
-                        info.bits.emplace_back(a["preshift_bits"].toInt(0), a["minishard_bits"].toInt(0), a["shard_bits"].toInt(0));
+                        info.bits.emplace_back((class Dataset::bits){a["preshift_bits"].toInt(0), a["minishard_bits"].toInt(0), a["shard_bits"].toInt(0)});
                     }
                 }
             }
