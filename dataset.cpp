@@ -323,6 +323,21 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         info.renderSettings.color = QColor{QString::fromStdString(toml::find_or(vit, "Color", "white"))};
         info.token = QString::fromStdString(toml::find_or(vit, "AdditionalQuery", std::string{}));
 
+        if (info.url.scheme() == "https") {
+            QUrl authurl;
+            authurl.setScheme(info.url.scheme());
+            authurl.setHost(info.url.host());
+            authurl.setPath("/auth");
+            authurl.setQuery(QString{"path=%1"}.arg(QUrl{info.url}.path()));
+            authurl.setUserInfo(info.url.userInfo());
+            qDebug() << "cdn auth" << authurl << authurl.isValid();
+            const auto download = Network::singleton().refresh(authurl);
+            if (download.first) {
+                info.url.setQuery(QJsonDocument::fromJson(download.second.toUtf8())["token_string"].toString());
+            }
+            qDebug() << download.first << download.second;
+        }
+
         for (const auto & ext : toml::find(vit, "FileExtension").as_array()) {
             info.fileextension = QString::fromStdString(ext.as_string());
             info.type = typeMap.left.at(info.fileextension);
