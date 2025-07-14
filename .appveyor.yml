@@ -4,8 +4,8 @@ image:
   - Visual Studio 2022 # Windows Server 2019
   - Visual Studio 2017 # Windows Server 2016
   - Visual Studio 2015 # Windows Server 2012 R2
-  - macOS-ventura  # 13.6.4
   - macOS-sonoma   # 14.2.1
+  - macOS-ventura  # 13.6.4
   - Ubuntu2204
   - Ubuntu2004
   - Ubuntu1804
@@ -52,7 +52,7 @@ for:
 -
   matrix:
     only:
-      - image: macOS-ventura
+      - image: macOS-sonoma
   install:
     - brew pin appveyor-build-agent # https://github.com/appveyor/ci/issues/3763#issuecomment-1003168277
     - time brew update
@@ -75,7 +75,7 @@ for:
 -
   matrix:
     only:
-      - image: macOS-sonoma
+      - image: macOS-ventura
   before_test:
     - curl --fail -JLO https://github.com/knossos-project/knossos/releases/download/nightly-dev/macos.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.app.zip
     - unzip -q macos.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.app.zip
