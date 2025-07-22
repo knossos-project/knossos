@@ -294,6 +294,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
     const auto data = configData.toStdString();
     auto config = toml_parse({std::cbegin(data), std::cend(data)}, configUrl.toString().toStdString());
     Dataset::list_t infos;
+    bool failfast{false};
     for (const auto & vit : toml::find(config, "Layer").as_array()) {
         Dataset info;
         const auto & value = toml::find_or(vit, "ServerFormat", "");
@@ -323,7 +324,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         info.renderSettings.color = QColor{QString::fromStdString(toml::find_or(vit, "Color", "white"))};
         info.token = QString::fromStdString(toml::find_or(vit, "AdditionalQuery", std::string{}));
 
-        if (info.url.scheme() == "https") {
+        if (info.url.scheme() == "https" && !failfast) {
             QUrl authurl;
             authurl.setScheme(info.url.scheme());
             authurl.setHost(info.url.host());
@@ -334,6 +335,8 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
             const auto download = Network::singleton().refresh(authurl);
             if (download.first) {
                 info.url.setQuery(QJsonDocument::fromJson(download.second.toUtf8())["token_string"].toString());
+            } else {
+                failfast = true;
             }
             qDebug() << download.first << download.second;
         }
