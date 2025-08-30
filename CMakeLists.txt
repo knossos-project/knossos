@@ -87,18 +87,18 @@ endif()
 
 find_package(Python COMPONENTS Development.Embed)
 set(pythonqt Qt5Python3${Python_VERSION_MINOR} CACHE STRING "PythonQt flavour to search for")
-find_package(Boost 1.50 REQUIRED) # 1.50 added hash_value of std::tuple for Coordinate hash specialization
+find_package(Boost 1.50 REQUIRED CONFIG) # 1.50 added hash_value of std::tuple for Coordinate hash specialization
 find_package(OpenGL REQUIRED COMPONENTS OpenGL) # GLU
 find_package(${pythonqt} REQUIRED CONFIG)
 find_package(Snappy REQUIRED MODULE)
 find_package(QuaZip 0.6.2 REQUIRED MODULE)
 
 include(FetchContent)
-FetchContent_Declare(toml11 GIT_REPOSITORY https://github.com/ToruNiina/toml11.git)
-FetchContent_Populate(toml11)
+FetchContent_Declare(toml11 GIT_REPOSITORY https://github.com/ToruNiina/toml11.git FIND_PACKAGE_ARGS)
+FetchContent_MakeAvailable(toml11)
 
-add_library(toml11::toml11 INTERFACE IMPORTED)
-target_include_directories(toml11::toml11 INTERFACE "${toml11_SOURCE_DIR}")
+# add_library(toml11::toml11 INTERFACE IMPORTED)
+# target_include_directories(toml11::toml11 INTERFACE "${toml11_SOURCE_DIR}")
 
 #platform dependent resources
 if(WIN32)
@@ -178,16 +178,21 @@ set_target_properties(${PROJECT_NAME}
 add_dependencies(${PROJECT_NAME} buildinfo)#main target needs buildinfo
 
 include(FetchContent)
-FetchContent_Declare(jwt-cpp GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git)
-FetchContent_Populate(jwt-cpp)
+option(JWT_BUILD_EXAMPLES FALSE)
+option(JWT_BUILD_TESTS FALSE)
+FetchContent_Declare(jwt-cpp
+    GIT_REPOSITORY  https://github.com/Thalhammer/jwt-cpp.git
+    FIND_PACKAGE_ARGS
+)
+FetchContent_MakeAvailable(jwt-cpp)
 
 if(NOT BUILD_SHARED_LIBS)
     set(OPENSSL_USE_STATIC_LIBS TRUE) # we do this suffix stuff here already, but just show that we tried
 endif()
 find_package(OpenSSL REQUIRED COMPONENTS Crypto)
-add_library(jwt-cpp::jwt-cpp INTERFACE IMPORTED)
-target_include_directories(jwt-cpp::jwt-cpp INTERFACE "${jwt-cpp_SOURCE_DIR}/include")
-target_link_libraries(jwt-cpp::jwt-cpp INTERFACE OpenSSL::Crypto $<$<PLATFORM_ID:Windows>:-lcrypto -lws2_32 -lcrypt32>)
+add_library(jwt-cpp::_ssl INTERFACE IMPORTED)
+# target_include_directories(jwt-cpp::jwt-cpp INTERFACE "${jwt-cpp_SOURCE_DIR}/include")
+target_link_libraries(jwt-cpp::_ssl INTERFACE jwt-cpp::jwt-cpp OpenSSL::Crypto $<$<PLATFORM_ID:Windows>:-lcrypto -lws2_32 -lcrypt32>)
 
 option(PythonQt_QtAll "Include the PythonQt QtAll extension which wraps all Qt libraries" ON)
 if(PythonQt_QtAll)
@@ -209,7 +214,7 @@ target_link_libraries(${PROJECT_NAME}
     QuaZip::QuaZip
     Snappy::Snappy
     toml11::toml11
-    jwt-cpp::jwt-cpp
+    jwt-cpp::_ssl
     $<$<AND:$<PLATFORM_ID:Windows>,$<NOT:$<CONFIG:Debug>>>:-Wl,--dynamicbase># use ASLR, required by the »Windows security features test« for »Windows Desktop App Certification«
     $<$<AND:$<PLATFORM_ID:Windows>,$<CXX_COMPILER_ID:Clang>,$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>>:-Wl,--allow-multiple-definition>
 )
