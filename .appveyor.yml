@@ -88,7 +88,7 @@ for:
     only:
       - image: Visual Studio 2022
   environment:
-    MSYSTEM: MINGW64
+    MSYSTEM: UCRT64
   build_script:
     - cmd: C:\msys64\usr\bin\bash -lc "pacman -Syuu --noconfirm"
     - cmd: C:\msys64\usr\bin\bash -lc "$(cygpath ${APPVEYOR_BUILD_FOLDER})/ci/build_windows.sh"
