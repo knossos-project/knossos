@@ -4,12 +4,6 @@ image:
   - Visual Studio 2022 # Windows Server 2019
   - Visual Studio 2017 # Windows Server 2016
   - Visual Studio 2015 # Windows Server 2012 R2
-  - macOS-sonoma   # 14.2.1
-  - macOS-ventura  # 13.6.4
-  - Ubuntu2204
-  - Ubuntu2004
-  - Ubuntu1804
-  - Ubuntu1604
 
 environment:
   MESA_DIST_WIN_VER: 25.1.5
@@ -24,65 +18,6 @@ init:
   - sh: type uname && uname -a || true
 
 for:
--
-  matrix:
-    only:
-      - image: Ubuntu2204
-  environment:
-    APPIMAGE_EXTRACT_AND_RUN: 1 # 2204 doesn’t have libfuse2
-  services:
-    - docker
-  install:
-    - time docker pull ghcr.io/knossos-project/arch
-  build_script:
-    - time docker run --privileged --cap-add=ALL -v /lib/modules:/lib/modules -v /dev:/dev -v ${APPVEYOR_BUILD_FOLDER}:/root/knossos -e APPVEYOR_REPO_BRANCH ghcr.io/knossos-project/arch bash -c '/root/knossos/ci/build_linux.sh'
-  artifacts:
-    - path: '*nightly.*'
--
-  matrix:
-    only:
-      - image: Ubuntu2004
-      - image: Ubuntu1804
-      - image: Ubuntu1604
-  build: off
-  before_test:
-    - curl --fail -JLO https://github.com/knossos-project/knossos/releases/download/nightly-dev/linux.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.AppImage
-    - chmod +x linux.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.AppImage
-  deploy: off
--
-  matrix:
-    only:
-      - image: macOS-sonoma
-  install:
-    - brew pin appveyor-build-agent # https://github.com/appveyor/ci/issues/3763#issuecomment-1003168277
-    #- time brew update
-    - time brew upgrade || true # skipped upgrades for pinned packages don’t return cleanly
-    - time brew remove qt6 || true
-    - time brew install boost ninja python qt5 snappy
-    - time python3 -m pip install requests --break-system-packages
-    - time brew install --overwrite cmake # for building from source, brew needs its own cmake, which conflicts with the preinstalled one
-    - time brew tap --force homebrew/core
-    - sed -e 's/"qt"/"qt@5"/' -i bak $(brew edit --print-path quazip)
-    # Warning: `brew install` ignores locally edited casks and formulae if HOMEBREW_NO_INSTALL_FROM_API is not set.
-    - time env HOMEBREW_NO_INSTALL_FROM_API=1 brew install -s quazip # build from source (with patched qt5 dependency)
-    - sh ci/build_macos_PythonQt.sh
-  build_script:
-    - sh ci/build_macos.sh
-  test_script:
-    - ../knossos-build/KNOSSOS.app/Contents/MacOS/knossos exit
-  artifacts:
-    - path: '*nightly.*'
--
-  matrix:
-    only:
-      - image: macOS-ventura
-  before_test:
-    - curl --fail -JLO https://github.com/knossos-project/knossos/releases/download/nightly-dev/macos.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.app.zip
-    - unzip -q macos.$APPVEYOR_REPO_BRANCH-KNOSSOS.nightly.app.zip
-  build: off
-  test_script:
-    - KNOSSOS.app/Contents/MacOS/knossos exit
-  deploy: off
 -
   matrix:
     only:
