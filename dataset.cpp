@@ -536,7 +536,11 @@ QUrl Dataset::knossosCubeUrl(const CoordOfCube cubeCoord) const {
             .arg(typeMap.right.at(type));
     auto base = url;
     base.setPath(url.path() + pos + filename);
-    base.setQuery(token);
+    if (!token.isEmpty()) {
+        auto query = base.query();
+        query += "&" + token;
+        base.setQuery(query);
+    }
     return base;
 }
 
