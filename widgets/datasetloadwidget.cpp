@@ -426,18 +426,35 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     } else if (path.isEmpty()) {//if empty reload previous
         path = datasetUrl;
     }
-    const auto download = Network::singleton().refresh(path);
-    if (!Dataset::isGoogleBrainmaps(path) && !download.first) {
-        if (!silent) {
-            QMessageBox warning{QApplication::activeWindow()};
-            warning.setIcon(QMessageBox::Warning);
-            warning.setText(tr("Unable to load Dataset."));
-            warning.setInformativeText(tr("Failed to read config file from %1").arg(path.toString()));
-            warning.exec();
-            open();
-        }
+    auto resp = Network::singleton().refresh(path);
+    if (!Dataset::isGoogleBrainmaps(path) && !resp.first) {
         qDebug() << "no config at" << path;
-        return false;
+        if (path.isLocalFile()) {
+            // we retry with a dataset knossos has already opened
+            auto targetPath = path.path();
+            auto targetConfig = targetPath.mid(1 + targetPath.lastIndexOf('/'));
+            for (auto path : datasetModel.datasets) {
+                if (path.mid(1 + path.lastIndexOf('/')) == targetConfig){
+                    qDebug() << "trying a recently opened dataset that matches: " << path;
+                    resp = Network::singleton().refresh(path);
+                    if (resp.first) {
+                        break;
+                    }
+                }
+            }
+
+        }
+        if (!resp.first) {
+            if (!silent) {
+                QMessageBox warning{QApplication::activeWindow()};
+                warning.setIcon(QMessageBox::Warning);
+                warning.setText(tr("Unable to load Dataset."));
+                warning.setInformativeText(tr("Failed to read config file from %1").arg(path.toString()));
+                warning.exec();
+                open();
+            }
+            return false;
+        }
     }
 
     const auto iter = std::find(std::begin(datasetModel.datasets), std::end(datasetModel.datasets), path.url());
@@ -448,7 +465,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
     }
     tableWidget.selectionModel()->select(datasetModel.index(row, 0), QItemSelectionModel::ClearAndSelect);
     tableWidget.scrollTo(sortAndFilterProxy.mapFromSource(tableWidget.selectionModel()->selectedIndexes()[0]));
-    return loadDataset(download.second, loadOverlay, path, silent);
+    return loadDataset(resp.second, loadOverlay, path, silent);
 }
 
 bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> loadOverlay, QUrl path, const bool silent) {

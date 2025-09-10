@@ -59,22 +59,6 @@ enum AnnotationMode {
     Mode_CellSegmentation = (1 << 15) | Mode_Paint
 };
 
-struct AAMTask {
-    QString project;
-    QString category;
-    QString name;
-
-    bool isEmpty() const {
-        return project.isEmpty() && category.isEmpty() && name.isEmpty();
-    }
-    bool operator==(const AAMTask & other) const {
-        return project == other.project && category == other.category && name == other.name;
-    }
-    bool operator!=(const AAMTask & other) const {
-        return !(*this == other);
-    }
-};
-
 class Annotation : public QObject {
     Q_OBJECT
     class ActivityEventFilter;
@@ -94,8 +78,6 @@ public:
     bool savePlyAsBinary{true};
     bool unsavedChanges = false;
 
-    AAMTask activeTask;
-    AAMTask fileTask;
     QFlags<AnnotationMode> annotationMode;
     GUIMode guiMode{GUIMode::None};
     std::optional<QString> embeddedDataset;

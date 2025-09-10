@@ -274,14 +274,6 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     }
     xml.writeAttribute("overlay", QString::number(static_cast<int>(Segmentation::singleton().enabled)));
     xml.writeEndElement();
-    const auto & task = Annotation::singleton().fileTask;
-    if (!task.project.isEmpty() || !task.category.isEmpty() || !task.name.isEmpty()) {
-        xml.writeStartElement("task");
-        xml.writeAttribute("project", task.project);
-        xml.writeAttribute("category", task.category);
-        xml.writeAttribute("name", task.name);
-        xml.writeEndElement();
-    }
 
     xml.writeStartElement("MovementArea");
     xml.writeAttribute("min.x", QString::number(Annotation::singleton().movementAreaMin.x));
@@ -464,7 +456,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     Annotation::singleton().guiMode = GUIMode::None;
 
     bool matlabCoordinates{true};
-    QString experimentName, loadedProject, loadedCategory, loadedTaskName;
+    QString experimentName;
     std::uint64_t activeNodeID = 0;
     auto nmlScale = boost::make_optional(false, floatCoordinate{});
     auto loadedPosition = boost::make_optional(false, floatCoordinate{});// make_optional gets around GCCs false positive maybe-uninitialized
@@ -612,17 +604,6 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                 } else if(xml.name() == "scale") {
                     const auto & attributes = xml.attributes();
                     nmlScale = floatCoordinate(attributes.value("x").toDouble(), attributes.value("y").toDouble(), attributes.value("z").toDouble());
-                } else if(xml.name() == "task") {
-                    for (auto && attribute : attributes) {
-                        auto key = attribute.name();
-                        if (key == "project") {
-                            loadedProject = attribute.value().toString();
-                        } else if (key == "category") {
-                            loadedCategory = attribute.value().toString();
-                        } else if (key == "name") {
-                            loadedTaskName = attribute.value().toString();
-                        }
-                    }
                 } else if (knownElements.find(xml.name().toString()) == std::end(knownElements)) {// known but unused legacy elements are not reported
                     skippedElements.insert(xml.name().toString());
                 }
@@ -881,17 +862,8 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     }
     const auto mismatchedDataset = !experimentName.isEmpty() && experimentName != Dataset::current().experimentname;
     if (mismatchedDataset) {
-        msg += tr("• The annotation (created in dataset “%1”) does not belong to the currently loaded dataset (“%2”).\n\n").arg(experimentName).arg(Dataset::current().experimentname);
+        msg += tr("• The annotation (created in dataset “%1”) does not belong to the currently loaded dataset (“%2”).").arg(experimentName).arg(Dataset::current().experimentname);
     }
-    const auto task = Annotation::singleton().activeTask;
-    Annotation::singleton().fileTask = {loadedProject, loadedCategory, loadedTaskName};
-    const auto mismatchedTask = !task.isEmpty() && task != Annotation::singleton().fileTask;
-    if (mismatchedTask) {
-        state->viewer->mainWindow.widgetContainer.taskManagementWidget.logout();
-        msg += tr("• The loaded file’s task “%1” (%2, %3) does not belong to your current task “%4” (%5, %6), so you have been logged out from AAM.\n")
-               .arg(loadedTaskName, loadedProject, loadedCategory, task.name, task.project, task.category);
-    }
-    msg.chop(2);// remove the 2 newlines at the end
     if (!msg.isEmpty()) {
         msgBox.setIcon(QMessageBox::Warning);
         msgBox.setText(tr("Incompatible Annotation File<br>Although the file was loaded successfully, <strong>working with it is not recommended.</strong>"));

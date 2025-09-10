@@ -334,7 +334,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
             qDebug() << "cdn auth" << authurl << authurl.isValid();
             const auto download = Network::singleton().refresh(authurl);
             if (download.first) {
-                info.url.setQuery(QJsonDocument::fromJson(download.second.toUtf8())["token_string"].toString());
+                info.url.setQuery(QJsonDocument::fromJson(download.second)["token_string"].toString());
             } else {
                 failfast = true;
             }
@@ -375,7 +375,7 @@ Dataset::list_t Dataset::parseWebKnossosJson(const QUrl &, const QString & json_
         const auto category = layer["category"].toString();
         const auto download = Network::singleton().refresh(QString("https://demo.webknossos.org/api/userToken/generate"));
         if (download.first) {
-            info.token = QJsonDocument::fromJson(download.second.toUtf8())["token"].toString();
+            info.token = QJsonDocument::fromJson(download.second)["token"].toString();
         }
         if (category == "color") {
             info.type = CubeType::RAW_UNCOMPRESSED;
