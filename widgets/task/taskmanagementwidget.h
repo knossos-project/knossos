@@ -1,92 +1,53 @@
-/*
- *  This file is a part of KNOSSOS.
- *
- *  (C) Copyright 2007-2018
- *  Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.
- *
- *  KNOSSOS is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 of
- *  the License as published by the Free Software Foundation.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- *
- *  For further information, visit https://knossos.app
- *  or contact knossosteam@gmail.com
- */
-
 #pragma once
 
-#include "taskloginwidget.h"
 #include "widgets/DialogVisibilityNotify.h"
+#include "widgets/task/taskloginwidget.h"
+#include "widgets/task/taskselectiontab.h"
+#include "widgets/task/taskupdatetab.h"
 
-#include <QFormLayout>
+#include <QBoxLayout>
+#include <QByteArray>
 #include <QGridLayout>
-#include <QGroupBox>
-#include <QHBoxLayout>
 #include <QLabel>
-#include <QLineEdit>
+#include <QObject>
 #include <QPushButton>
+#include <QString>
+#include <QTabWidget>
 #include <QVBoxLayout>
+
+class QUrl;
+class QWidget;
 
 class TaskManagementWidget : public DialogVisibilityNotify {
     Q_OBJECT
-    friend class TaskLoginWidget;
-    const QString api{"/api/2"};
-    QString baseUrl;
-    void saveAndLoadFile(const QString & filename, const QByteArray & content);
-public:
-    explicit TaskManagementWidget(QWidget *parent = nullptr);
 
+    bool updated{false}; // discrimate between first refresh for user and the following ones
     TaskLoginWidget taskLoginWidget;
 
-protected:
-    QLabel statusLabel;
-
     QVBoxLayout mainLayout;
-    QHBoxLayout hLayout;
-    QGroupBox taskInfoGroupBox{"Task Info"};
-    QFormLayout formLayout;
-    QVBoxLayout vLayout;
-    QGroupBox taskManagementGroupBox{"Task Management"};
-    QGridLayout gridLayout;
 
-    QLabel taskLabel;
-    QLabel categoryDescriptionLabel;
-    QLabel taskCommentLabel;
-
-    QPushButton startNewTaskButton{"Start new Task"};
-    QPushButton loadLastSubmitButton{"Load last Submit"};
-    QLineEdit submitCommentEdit;
-    QPushButton submitButton{"Submit"};
-    QPushButton submitFinalButton{"Final Submit"};
-    QFrame separator;
-    QPushButton submitInvalidButton{"Flag invalid"};
-    QPushButton rejectTaskButton{"Reject"};
-
+    QGridLayout headerLayout;
+    QLabel statusLabel;
+    QLabel fullName;
     QPushButton logoutButton{"Logout"};
 
-    bool submit(const bool final = false, const bool valid = true);
-public slots:
-    virtual void setVisible(bool enable) override;// showOrLoginOrHide
+    QTabWidget tabWidget;
+    TaskSelectionTab taskSelectionTab;
+    TaskUpdateTab taskUpdateTab;
 
-    void updateAndRefreshWidget();
+    bool removeApiKey();
+    bool storeApiKey(QByteArray jsonRaw);
 
-    void rejectTask();
-    void submitFinal();
-    void submitInvalid();
+  public:
+    QString baseUrl;
+    explicit TaskManagementWidget(QWidget* parent = nullptr);
+    bool updateStatus(bool ok, const QString& message);
+    QString loadApiKey();
+    void saveSettings() override;
 
-    void startNewTaskButtonClicked();
-    void loadLastSubmitButtonClicked();
-    void loginButtonClicked(QUrl host, const QString & username, const QString & password);
-    void logout();
+  public slots:
+    void loginButtonClicked(QUrl host, const QString& username, const QString& password);
     void logoutButtonClicked();
-
-private:
-    bool handleError(const QPair<bool, QString> & res, const QString & successText = "");
+    void setVisible(bool visible) override;
+    bool updateAndRefreshWidget();
 };

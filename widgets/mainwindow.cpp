@@ -534,7 +534,6 @@ void MainWindow::updateTodosLeft() {
             auto jobFilename = "final_" + QFileInfo(Annotation::singleton().annotationFilename).fileName();
             auto finishedJobPath = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/segmentationJobs/" + jobFilename;
             annotationFileSave(finishedJobPath);
-            Network::singleton().submitSegmentationJob(finishedJobPath);
         }
     }
 }
@@ -791,7 +790,7 @@ void MainWindow::createMenus() {
 
     auto windowMenu = menuBar()->addMenu("&Windows");
     windowMenu->addAction(QIcon{}, tr("Dataset Browser"), &widgetContainer.datasetBrowser, &DatasetBrowser::show);
-    windowMenu->addAction(QIcon(":/resources/icons/menubar/tasks-management.png"), tr("Task Management"), &widgetContainer.taskManagementWidget, &TaskManagementWidget::updateAndRefreshWidget);
+    windowMenu->addAction(QIcon(":/resources/icons/menubar/tasks-management.png"), tr("Task Management"), &widgetContainer.taskManagementWidget, &TaskManagementWidget::show);
     windowMenu->addAction(QIcon(":/resources/icons/layers.png"), tr("Layers"), &widgetContainer.layerDialogWidget, &LayerDialogWidget::show);
     windowMenu->addAction(QIcon(":/resources/icons/menubar/annotation.png"), tr("Annotation"), &widgetContainer.annotationWidget, &AnnotationWidget::show);
     windowMenu->addAction(QIcon(":/resources/icons/menubar/zoom.png"), tr("Zoom"), &widgetContainer.zoomWidget, &ZoomWidget::show);
@@ -1337,7 +1336,7 @@ void MainWindow::saveSettings() {
     widgetContainer.pythonInterpreterWidget.saveSettings();
     widgetContainer.pythonPropertyWidget.saveSettings();
     widgetContainer.snapshotWidget.saveSettings();
-    widgetContainer.taskManagementWidget.taskLoginWidget.saveSettings();
+    widgetContainer.taskManagementWidget.saveSettings();
     widgetContainer.zoomWidget.saveSettings();
 }
 

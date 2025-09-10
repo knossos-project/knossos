@@ -1,0 +1,23 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 100
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+PackConstructorInitializers: Never
+BreakConstructorInitializers: AfterColon
+BreakBeforeBraces: Attach
+SpacesInParentheses: false
+SpaceBeforeParens: ControlStatements
+PointerAlignment: Left
+ReflowComments: true
+SortIncludes: true
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^".*"$'
+    Priority: 1
+  - Regex: '^<(Qt/.*|Q[A-Z].*)>$'
+    Priority: 2
+  - Regex: '^<[^/]+>$'
+    Priority: 3

@@ -30,11 +30,11 @@ const QString ANNOTATION_WIDGET = "tools_widget";
 const QString COMMENTS_TAB = "comments_tab";
 const QString DATASET_BROWSER = "dataset_browser";
 const QString DATASET_WIDGET = "dataset_widget";
-const QString HEIDELBRAIN_INTEGRATION = "heidelbrain_integration";
 const QString LAYER_DIALOG_WIDGET = "layer_dialog_widget";
 const QString MAIN_WINDOW = "main_window";
 const QString PREFERENCES_WIDGET = "preferences_widget";
 const QString PYTHON_PROPERTY_WIDGET = "pythonpropertywidget";
+const QString REDMINE_INTEGRATION = "redmine_integration";
 const QString SNAPSHOT_WIDGET = "snapshot_widget";
 const QString VIEWER = "viewer";
 const QString ZOOM_WIDGET = "zoom_and_multires_widget";
@@ -175,9 +175,9 @@ const QString PYTHON_PLUGIN_FOLDER = "python_plugin_folder";
 const QString PYTHON_REGISTERED_PLUGINS = "python_registered_plugins";
 const QString PYTHON_WORKING_DIRECTORY = "python_working_directory";
 
-// Heidelbrain Integration
-const QString HEIDELBRAIN_COOKIES = "heidelbrain_cookies";
-const QString HEIDELBRAIN_HOST = "heidelbrain_host_v2";
+// Redmine Integration
+const QString REDMINE_HOST = "redmine_host";
+const QString REDMINE_USERNAME = "redmine_username";
 
 // Snapshot settings
 const QString SAVE_DIR = "save_dir";

@@ -1,64 +1,36 @@
-/*
- *  This file is a part of KNOSSOS.
- *
- *  (C) Copyright 2007-2018
- *  Max-Planck-Gesellschaft zur Foerderung der Wissenschaften e.V.
- *
- *  KNOSSOS is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License version 2 of
- *  the License as published by the Free Software Foundation.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- *
- *  For further information, visit https://knossos.app
- *  or contact knossosteam@gmail.com
- */
-
 #include "taskloginwidget.h"
 
-#include "annotation/annotation.h"
-#include "network.h"
 #include "widgets/GuiConstants.h"
 
-#include <QApplication>
-#include <QDir>
 #include <QIcon>
-#include <QPushButton>
 #include <QSettings>
-#include <QStandardPaths>
-#include <QStyle>
+#include <QVariant>
+#include <Qt>
 
-TaskLoginWidget::TaskLoginWidget(QWidget * parent) : QDialog(parent) {
+class QWidget;
+
+TaskLoginWidget::TaskLoginWidget(QWidget* parent) :
+    QDialog(parent) {
     setWindowFlag(Qt::WindowContextHelpButtonHint, false);
     setWindowIcon(QIcon(":/resources/icons/tasks-management.png"));
     setWindowTitle("Task Login");
     setModal(true);
 
-    QDir taskDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/tasks");
-    taskDir.mkpath(".");
-
-    //load settings
+    // load settings
     QSettings settings;
-    settings.beginGroup(HEIDELBRAIN_INTEGRATION);
-    host = settings.value(HEIDELBRAIN_HOST, "https://heidelbrain.org").toString();
-    Network::singleton().setCookies(settings.value(HEIDELBRAIN_COOKIES).toList());
+    settings.beginGroup(REDMINE_INTEGRATION);
+    urlField.setText(
+        settings.value(REDMINE_HOST, "https://dashboard.ariadne.ai/intern").toString());
+    usernameField.setText(settings.value(REDMINE_USERNAME).toString());
     settings.endGroup();
-    response.setOpenExternalLinks(true);
-    response.setTextInteractionFlags(Qt::TextBrowserInteraction);
 
-    urlField.setText(host.toString());
+    response.setTextInteractionFlags(Qt::TextBrowserInteraction);
     passwordField.setEchoMode(QLineEdit::Password);
 
     line.setFrameShape(QFrame::HLine);
     line.setFrameShadow(QFrame::Sunken);
 
-    box.addButton("Login", QDialogButtonBox::AcceptRole)->setAutoDefault(true);//default only did not work
+    box.addButton("Login", QDialogButtonBox::AcceptRole);
     box.addButton("Cancel", QDialogButtonBox::RejectRole);
 
     QObject::connect(&box, &QDialogButtonBox::accepted, this, &QDialog::accept);
@@ -73,20 +45,17 @@ TaskLoginWidget::TaskLoginWidget(QWidget * parent) : QDialog(parent) {
 
     setLayout(&formLayout);
 
-    urlField.setMinimumWidth(160);
-    usernameField.setFocus();
+    urlField.setMinimumWidth(250);
+    if (usernameField.text().isEmpty())
+        usernameField.setFocus();
+    else
+        passwordField.setFocus();
 }
 
 void TaskLoginWidget::saveSettings() {
     QSettings settings;
-    settings.beginGroup(HEIDELBRAIN_INTEGRATION);
-    settings.setValue(HEIDELBRAIN_HOST, host.toString());
-    settings.setValue(HEIDELBRAIN_COOKIES, Network::singleton().getCookiesForHost(host));
+    settings.beginGroup(REDMINE_INTEGRATION);
+    settings.setValue(REDMINE_HOST, urlField.text());
+    settings.setValue(REDMINE_USERNAME, usernameField.text());
     settings.endGroup();
-}
-
-void TaskLoginWidget::setResponse(const QString &message) {
-    Annotation::singleton().activeTask = {};
-    response.setText(message);
-    show();
 }

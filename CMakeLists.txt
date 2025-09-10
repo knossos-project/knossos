@@ -93,6 +93,7 @@ find_package(Boost 1.50 REQUIRED CONFIG) # 1.50 added hash_value of std::tuple f
 find_package(OpenGL REQUIRED COMPONENTS OpenGL) # GLU
 find_package(${pythonqt} REQUIRED CONFIG)
 find_package(Snappy REQUIRED MODULE)
+find_package(Qt5Keychain REQUIRED)
 find_package(QuaZip 0.6.2 REQUIRED MODULE)
 
 include(FetchContent)
@@ -199,6 +200,7 @@ target_link_libraries(${PROJECT_NAME}
     Qt::Network
     Qt::Widgets
     ${pythonqt}
+    qt5keychain
     QuaZip::QuaZip
     Snappy::Snappy
     toml11::toml11
