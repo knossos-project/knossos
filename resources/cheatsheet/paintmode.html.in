@@ -22,6 +22,7 @@
 			</tr>
 		</thead>
 		<tr><td><span class="sh"><img src=":/resources/cheatsheet/middleclick.png" alt="Middle click"/> click</span></td><td>Bucket fill</td></tr>
+		<tr><td><span class="sh"><img src=":/resources/cheatsheet/middleclick.png" alt="Middle click on selection"/> on selection</span></td><td>bounded by adjacent frame fills</td></tr>
 		<tr><td><span class="sh">Shift +  <img src=":/resources/cheatsheet/middleclick.png" alt="Middle click"/> scroll</span></td><td>Change brush size</td></tr>
 		<tr><td><span class="sh"><img src=":/resources/cheatsheet/rightclick.png" alt="Right click"/></span></td><td>Draw</td></tr>
 		<tr><td><span class="sh">Shift + <img src=":/resources/cheatsheet/rightclick.png" alt="Right click"/></span></td><td>Erase</td></tr>
