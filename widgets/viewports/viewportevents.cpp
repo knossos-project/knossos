@@ -446,8 +446,11 @@ void ViewportOrtho::handleMouseReleaseMiddle(const QMouseEvent *event) {
             areaMin = areaMin.capped(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax);
             areaMax = areaMax.capped(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax) + 1;
 
-            if (!Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_OverPaint)) {
-                if (!brush_copy.inverse && brush_copy.mode == brush_t::mode_t::two_dim && seg.isSelected(seg.subobjectFromId(readVoxel(clickedCoordinate), clickedCoordinate))) {
+            if (!Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_OverPaint) && Dataset::datasets[Segmentation::singleton().layerId].boundary.z > 1) {
+                const bool isAdjacent = (seg.isSelected(seg.subobjectFromId(readVoxel(clickedCoordinate), clickedCoordinate))
+                                        + seg.isSelected(seg.subobjectFromId(readVoxel(clickedCoordinate + n), clickedCoordinate + n))
+                                        + seg.isSelected(seg.subobjectFromId(readVoxel(clickedCoordinate - n), clickedCoordinate - n))) > 1;
+                if (!brush_copy.inverse && brush_copy.mode == brush_t::mode_t::two_dim && isAdjacent) {
                     auto brush_copy2 = brush_copy;
                     brush_copy2.inverse = true;
                     subobjectBucketFill(clickedCoordinate, seg.getBackgroundId(), brush_copy2, areaMin, areaMax);
