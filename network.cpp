@@ -32,6 +32,7 @@
 #include <QDir>
 #include <QEventLoop>
 #include <QHttpMultiPart>
+#include <QJsonDocument>
 #include <QMessageBox>
 #include <QNetworkCookie>
 #include <QNetworkCookieJar>
@@ -115,8 +116,37 @@ std::pair<int, int> Network::checkOnlineMags(const QUrl & url) {
     return {lowestAvailableMag, highestAvailableMag};
 }
 
-QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply) {
+QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply, QNetworkAccessManager * manager) {
     QEventLoop pause;
+    auto replyRef = std::ref(reply);
+    if (manager != nullptr && !reply.request().url().path().endsWith("/auth")) {
+        QObject::connect(&reply, &QNetworkReply::finished, &pause, [&replyRef, &reply, &pause, manager](){
+            if (reply.error() == QNetworkReply::ContentAccessDenied || reply.error() == QNetworkReply::AuthenticationRequiredError) {
+                auto authrequest = reply.request();
+                QUrl authurl = authrequest.url();
+                authurl.setQuery(QString{"path=%1"}.arg(authurl.path()));
+                authurl.setPath("/auth");
+                authrequest.setUrl(authurl);
+                qDebug() << "cdn auth" << authurl << "isValid" << authurl.isValid();
+                auto & tokenReply = *manager->get(authrequest);
+
+                QObject::disconnect(&reply , &QNetworkReply::finished, &pause, &QEventLoop::quit);
+                QObject::connect(&tokenReply, &QNetworkReply::finished, &pause, [&replyRef, &tokenReply, &pause, request=reply.request(), manager]()mutable{
+                    qDebug() << tokenReply.errorString();
+                    if (tokenReply.error() == QNetworkReply::NoError) {
+                        QUrl url = request.url();
+                        url.setQuery(QJsonDocument::fromJson(tokenReply.readAll())["token_string"].toString());
+                        request.setUrl(url);
+                        auto & retryReply = *manager->get(request);
+                        QObject::   connect(&retryReply, &QNetworkReply::finished, &pause, &QEventLoop::quit);
+                        replyRef = retryReply;
+                    } else {
+                        pause.quit();
+                    }
+                });
+            }
+        });
+    }
     QObject::connect(&reply, &QNetworkReply::finished, &pause, &QEventLoop::quit);
     emit Network::singleton().startedNetworkRequest(reply);
     QObject::connect(&reply, &QNetworkReply::downloadProgress, &Network::singleton(), &Network::progressChanged);
@@ -127,13 +157,16 @@ QPair<bool, QByteArray> blockDownloadExtractData(QNetworkReply & reply) {
             return pause.exec();
         });
     }
+    {
+        auto & reply = replyRef.get();
 
-    if (reply.error() != QNetworkReply::NoError) {
-        qDebug() << reply.attribute(QNetworkRequest::HttpStatusCodeAttribute) << reply.error() << reply.errorString();
+        if (reply.error() != QNetworkReply::NoError) {
+            qDebug() << reply.attribute(QNetworkRequest::HttpStatusCodeAttribute) << reply.error() << reply.errorString();
+        }
+        emit Network::singleton().finishedNetworkRequest();
+        reply.deleteLater();
+        return {reply.error() == QNetworkReply::NoError, reply.readAll()};
     }
-    emit Network::singleton().finishedNetworkRequest();
-    reply.deleteLater();
-    return {reply.error() == QNetworkReply::NoError, reply.readAll()};
 }
 
 // for retrieving information from response headers. Useful for responses with file content
@@ -155,7 +188,7 @@ QPair<bool, QString> Network::refresh(const QUrl & url) {
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::UserAgentHeader, QApplication::applicationName() + "/" + KREVISION);
     auto & reply = *manager.get(request);
-    return blockDownloadExtractData(reply);
+    return blockDownloadExtractData(reply, &manager);
 }
 
 QPair<bool, QString> Network::login(const QUrl & url, const QString & username, const QString & password) {
