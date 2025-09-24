@@ -37,10 +37,14 @@ struct WidgetDisabler {
     bool wasEnabled;
     explicit WidgetDisabler(T & w) : w{w}, wasEnabled{w.isEnabled()} {
         focusWidget = QApplication::focusWidget();
-        w.setEnabled(false);
+        if (wasEnabled) { // don't explicitely disable a disabled widget
+            w.setEnabled(false);
+        }
     }
     ~WidgetDisabler() {
-        w.setEnabled(wasEnabled);
+        if (wasEnabled) { // don't explicitely disable a disabled widget
+            w.setEnabled(true);
+        }
         if (focusWidget != nullptr) {
             focusWidget->setFocus();
         }
