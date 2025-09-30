@@ -8,11 +8,11 @@ sed -i "s?#IgnorePkg   =?IgnorePkg   = $(pacman -Slq msys mingw32 | xargs pacman
 
 # don’t verify twice, only during install
 sed -i 's/Required/Never/' /etc/pacman.conf
-time pacman --noconfirm --needed -Syuuw ${MINGW_PACKAGE_PREFIX}-{boost,cmake,jasper,ninja,python,qt5-static,snappy,toml11,toolchain}
+time pacman --noconfirm --needed -Syuuw ${MINGW_PACKAGE_PREFIX}-{boost,cmake,jasper,ninja,python,qt5-static,qtkeychain-qt5,snappy,toml11,toolchain}
 # Download and install static PythonQt and QuaZIP, also only directly works like this with disabled signature checking
 time pacman --noconfirm -U https://github.com/knossos-project/knossos/releases/download/nightly-dev/mingw-w64-${MSYSTEM}-{pythonqt,quazip}-static.pkg.tar.zst
 sed -i 's/Never/Required/' /etc/pacman.conf
-time pacman --noconfirm --needed -Syuu ${MINGW_PACKAGE_PREFIX}-{boost,cmake,jasper,ninja,python,qt5-static,snappy,toolchain}
+time pacman --noconfirm --needed -Syuu ${MINGW_PACKAGE_PREFIX}-{boost,cmake,jasper,ninja,python,qt5-static,qtkeychain-qt5,snappy,toml11,toolchain}
 
 PROJECTPATH=$(cygpath ${APPVEYOR_BUILD_FOLDER})
 
