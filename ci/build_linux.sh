@@ -3,6 +3,7 @@ set -euxo pipefail
 
 time pacman -Sy archlinux-keyring --noconfirm
 time pacman -Syu --noconfirm
+time pacman -S --noconfirm qtkeychain-qt5 # TODO: move it to the Docker image
 
 cd ~
 git config --global --add safe.directory /root/knossos
