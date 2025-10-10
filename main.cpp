@@ -206,7 +206,7 @@ int main(int argc, char * argv[]) { boost::leaf::try_handle_all([argc, &argv]() 
         QTimer::singleShot(5000, &app, [](){
             if (::state->scripting) {
                 qDebug() << QDir::currentPath();
-                for (const auto script : {"import ssl", "from PythonQt import QtGui", "from PythonQt.QtGui import QPushButton"}) {
+                for (const auto script : {"import ssl", "from PythonQt import QtGui", "from PythonQt.QtGui import QPushButton", "import site,sys", "sys.path += site.getsitepackages()", "print(sys.path)", "import requests", "import numpy"}) {
                     qDebug() << "testing" << script;
                     ::state->scripting->evalScript(script, 257);
                 }
