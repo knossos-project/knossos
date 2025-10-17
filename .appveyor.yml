@@ -29,6 +29,7 @@ for:
     - time brew install boost ninja python qt5 snappy
     - time python3 -m pip install requests --break-system-packages
     - time python3 -m pip install numpy --break-system-packages
+    - time python3 -c 'import numpy,requests; print(requests.__path__, numpy.__path__)'                                                                                                                                          
     - time brew install --overwrite cmake # for building from source, brew needs its own cmake, which conflicts with the preinstalled one
     - time brew tap --force homebrew/core
     - sed -e 's/"qtbase"/"qt@5"/' -i bak $(brew edit --print-path quazip)
