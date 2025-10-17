@@ -18,6 +18,7 @@ install_name_tool KNOSSOS.app/Contents/Frameworks/libquazip*.dylib -change /usr/
 PYTHON_VERSION=$(cd /usr/local/Frameworks/Python.framework/Versions/ && echo * | tr ' ' '\n' | grep -v Current | sort -V | tail -1)
 mkdir -p KNOSSOS.app/Contents/Frameworks/Python.framework/Versions
 cp -r /usr/local/Frameworks/Python.framework/Versions/${PYTHON_VERSION} KNOSSOS.app/Contents/Frameworks/Python.framework/Versions
+cp -rf /usr/local/lib/python${PYTHON_VERSION}/site-packages/* KNOSSOS.app/Contents/Frameworks/Python.framework/Versions/${PYTHON_VERSION}/lib/python${PYTHON_VERSION}/site-packages
 install_name_tool KNOSSOS.app/Contents/MacOS/knossos -change /usr/local/opt/python@${PYTHON_VERSION}/Frameworks/Python.framework/Versions/${PYTHON_VERSION}/Python @executable_path/../Frameworks/Python.framework/Versions/${PYTHON_VERSION}/Python
 
 cp -v /usr/local/opt/openssl/lib/lib{ssl,crypto}*.dylib KNOSSOS.app/Contents/Frameworks/
