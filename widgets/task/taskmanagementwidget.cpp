@@ -155,6 +155,7 @@ void TaskManagementWidget::logoutButtonClicked() {
     setVisible(false);
     tabWidget.setTabEnabled(1, false);
     statusLabel.clear();
+    taskUpdateTab.attachAnnotationCheckBox.setChecked(true);
     taskUpdateTab.commentsEdit.clear();
     taskLoginWidget.response.setText("<font color='green'>Successfully logged out.</font>");
     taskLoginWidget.show();

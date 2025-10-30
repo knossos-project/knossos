@@ -74,7 +74,7 @@ class TaskSelectionTab : public QWidget {
 
     QVBoxLayout leftPartSearchLayout;
     QLineEdit projectSearchBar;
-    QStandardItemModel projectItemModel;
+    ReadOnlyStandardItemModel projectItemModel;
     TreeFilterProxyModel projectProxyModel;
     QTreeView projectTreeView;
 

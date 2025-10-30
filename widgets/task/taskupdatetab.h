@@ -48,13 +48,13 @@ class TaskUpdateTab : public QWidget {
     QLabel statusLabel;
     QComboBox newStatusCombo;
     QLabel attachAnnotationLabel{"Save and attach annotation"};
-    QCheckBox attachAnnotationCheckBox;
     QLabel commentsLabel{"Comments"};
     QPushButton submitButton{"Update task"};
 
     bool attachmentMismatch();
 
   public:
+    QCheckBox attachAnnotationCheckBox;
     QPlainTextEdit commentsEdit;
 
     explicit TaskUpdateTab(TaskManagementWidget& taskManagementWidget, QWidget* parent = nullptr);
