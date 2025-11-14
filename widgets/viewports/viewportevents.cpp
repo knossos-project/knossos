@@ -446,6 +446,7 @@ void ViewportOrtho::handleMouseReleaseMiddle(const QMouseEvent *event) {
             areaMin = areaMin.capped(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax);
             areaMax = areaMax.capped(Annotation::singleton().movementAreaMin, Annotation::singleton().movementAreaMax) + 1;
 
+            if (false) {
             if (!Annotation::singleton().annotationMode.testFlag(AnnotationMode::Mode_OverPaint) && Dataset::datasets[Segmentation::singleton().layerId].boundary.z > 1) {
                 const bool isAdjacent = (seg.isSelected(seg.subobjectFromId(readVoxel(clickedCoordinate), clickedCoordinate))
                                         + seg.isSelected(seg.subobjectFromId(readVoxel(clickedCoordinate + n), clickedCoordinate + n))
@@ -457,7 +458,7 @@ void ViewportOrtho::handleMouseReleaseMiddle(const QMouseEvent *event) {
 
                     brush_copy.mode = brush_t::mode_t::adjacent;
                 }
-            }
+            }}
             subobjectBucketFill(clickedCoordinate, soid, brush_copy, areaMin, areaMax);
         }
     }
