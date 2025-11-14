@@ -59,7 +59,7 @@ void subobjectBucketFill(const Coordinate & seed, const uint64_t fillsoid, const
 
         const auto walk = [&work, &cubeCoords, clickedsoid, fillsoid, &brush](const Coordinate coord){
             const auto adjacent = brush.mode == brush_t::mode_t::adjacent && (readVoxel(coord + brush.n) == fillsoid || readVoxel(coord - brush.n) == fillsoid) && readVoxel(coord) != fillsoid;
-            const bool activateAdjacent = False;
+            const bool activateAdjacent = false;
             if ((adjacent && activateAdjacent) || (brush.mode != brush_t::mode_t::adjacent || !activateAdjacent) && readVoxel(coord) == clickedsoid) {
                 writeVoxel(coord, fillsoid, false);
                 work.emplace_back(coord);
