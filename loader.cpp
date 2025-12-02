@@ -39,6 +39,7 @@
 #include <QBuffer>
 #include <QFile>
 #include <QFuture>
+#include <QHostInfo>
 #include <QImage>
 #include <QMutexLocker>
 #include <QNetworkAccessManager>
@@ -755,6 +756,12 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     } else {
                         if(maybeReply != nullptr && maybeReply->error() != QNetworkReply::OperationCanceledError) {
                             qCritical() << layerId << cubeCoord << static_cast<int>(dataset.type) << maybeReply->request().url() << maybeReply->errorString() << maybeReply->readAll();
+                            if (maybeReply->error() == QNetworkReply::HostNotFoundError) {
+                                for (const auto & url : {maybeReply->request().url().host(), QString{"google.com"}}) {
+                                    const auto & info = QHostInfo::fromName(url);
+                                    qDebug() << info.hostName() << info.addresses() << (info.error() != QHostInfo::HostInfoError::NoError ? info.errorString() : "");
+                                }
+                            }
                             if (dataset.api == Dataset::API::GoogleBrainmaps) {
                                 qDebug() << "GoogleBrainmaps error" << maybeReply->error();
                                 if (maybeReply->error() == QNetworkReply::ContentAccessDenied || maybeReply->error() == QNetworkReply::AuthenticationRequiredError) {
