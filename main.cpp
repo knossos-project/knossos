@@ -248,7 +248,7 @@ int main(int argc, char * argv[]) { boost::leaf::try_handle_all([argc, &argv]() 
     std::unique_ptr<Network> network_deleter{&Network::singleton()};
     return app.exec();
 },
-    [argc, &argv](const boost::leaf::verbose_diagnostic_info & info) -> int {
+    [argc, &argv](const boost::leaf::diagnostic_details & info) -> int {
         const auto text = QObject::tr("KNOSSOS will terminate due to a problem.    ");// a little padding to increase the mbox width
         const auto details = (std::ostringstream{} << boost::stacktrace::stacktrace{}).str();
         MessageHermit{text, QString::fromStdString((std::ostringstream{} << info).str()), QString::fromStdString(details)}
