@@ -304,12 +304,29 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
     for (const auto & vit : toml::find(config, "Layer").as_array()) {
         Dataset info;
         const auto & value = toml::find_or(vit, "ServerFormat", "");
-        info.api = value == "knossos" ? API::Heidelbrain : value == "1" ? API::OpenConnectome : API::PyKnossos;
+        info.api = value == "knossos" ? API::Heidelbrain : value == "1" ? API::OpenConnectome : value == "precomputed" ? API::Precomputed : API::PyKnossos;
         auto url = QString::fromStdString(toml::find_or(vit, "URL", std::string{}));
         info.url = url;
-        if (url.endsWith("info")) {
+        if (info.url.scheme() == "https" && !failfast) {
+            QUrl authurl;
+            authurl.setScheme(info.url.scheme());
+            authurl.setHost(info.url.host());
+            authurl.setPath("/auth");
+            authurl.setQuery(QString{"path=%1"}.arg(QUrl{info.url}.path()));
+            authurl.setUserInfo(info.url.userInfo());
+            qDebug() << "cdn auth" << authurl << authurl.isValid();
+            const auto download = Network::singleton().refresh(authurl);
+            if (download.first) {
+                info.url.setQuery(QJsonDocument::fromJson(download.second)["token_string"].toString());
+            } else {
+                failfast = true;
+            }
+            qDebug() << download.first << download.second;
+        }
+
+        if (url.endsWith("info") or info.api == API::Precomputed) {
             info.api = API::Precomputed;
-            const auto download = Network::singleton().refresh(url);
+            const auto download = Network::singleton().refresh(url.setQuery(info.url.query()));
             if (download.first) {
                 info.boundary = info.cubeShape = {};
                 const auto jmap = QJsonDocument::fromJson(download.second.toUtf8()).object();
@@ -375,23 +392,6 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         info.allocationEnabled = info.loadingEnabled = info.renderSettings.visible = toml::find_or(vit, "Visible", true);
         info.renderSettings.color = QColor{QString::fromStdString(toml::find_or(vit, "Color", "white"))};
         info.token = QString::fromStdString(toml::find_or(vit, "AdditionalQuery", std::string{}));
-
-        if (info.url.scheme() == "https" && !failfast) {
-            QUrl authurl;
-            authurl.setScheme(info.url.scheme());
-            authurl.setHost(info.url.host());
-            authurl.setPath("/auth");
-            authurl.setQuery(QString{"path=%1"}.arg(QUrl{info.url}.path()));
-            authurl.setUserInfo(info.url.userInfo());
-            qDebug() << "cdn auth" << authurl << authurl.isValid();
-            const auto download = Network::singleton().refresh(authurl);
-            if (download.first) {
-                info.url.setQuery(QJsonDocument::fromJson(download.second)["token_string"].toString());
-            } else {
-                failfast = true;
-            }
-            qDebug() << download.first << download.second;
-        }
 
         for (const auto & ext : toml::find(vit, "FileExtension").as_array()) {
             info.fileextension = QString::fromStdString(ext.as_string());
