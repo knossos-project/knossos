@@ -25,7 +25,7 @@ PROJECTPATH=$(cygpath ${APPVEYOR_BUILD_FOLDER})
 mkdir knossos-build
 cd knossos-build
 DEBUG_FLAGS=-DCMAKE_CXX_FLAGS="-g -fno-omit-frame-pointer"
-time cmake -G Ninja -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=RELEASE "${DEBUG_FLAGS}" ${PROJECTPATH}
+time cmake -G Ninja -DPython_ROOT_DIR="C:/Python312-x64" -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=RELEASE "${DEBUG_FLAGS}" ${PROJECTPATH}
 
 # Build
 time ninja
