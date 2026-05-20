@@ -1,11 +1,11 @@
 version: '{build} {branch}'
 
 image:
-  - Visual Studio 2022 # Windows Server 2019
-  - Visual Studio 2017 # Windows Server 2016
-  - Visual Studio 2015 # Windows Server 2012 R2
-  - macOS-sonoma   # 14.2.1
-  - macOS-ventura  # 13.6.4
+  # - Visual Studio 2022 # Windows Server 2019
+  # - Visual Studio 2017 # Windows Server 2016
+  # - Visual Studio 2015 # Windows Server 2012 R2
+  # - macOS-sonoma   # 14.2.1
+  # - macOS-ventura  # 13.6.4
   - Ubuntu2404
   - Ubuntu2204
   - Ubuntu2004
