@@ -16,7 +16,7 @@ time pacman --noconfirm --needed -Syuu ${MINGW_PACKAGE_PREFIX}-{boost,cmake,jasp
 
 # the mingw package doesn't contain the static lib so we build it from source
 time git clone "https://github.com/frankosterfeld/qtkeychain" && cd qtkeychain && mkdir build && cd build
-time cmake -G Ninja -DCMAKE_PREFIX_PATH=/mingw64/qt5-static -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/mingw64/qt5-static ..
+time cmake -G Ninja -DCMAKE_PREFIX_PATH=/mingw64/qt5-static -DBUILD_WITH_QT5=ON -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/mingw64/qt5-static ..
 time ninja
 time ninja install
 
