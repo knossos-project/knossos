@@ -326,7 +326,11 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
 
         if (url.endsWith("info") or info.api == API::Precomputed) {
             info.api = API::Precomputed;
-            const auto download = Network::singleton().refresh(url.setQuery(info.url.query()));
+            if (!url.endsWith("info") && !url.isEmpty())
+                info.url.setPath(info.url.path() + "/info");
+            else if (url.isEmpty())
+                info.url = "./info";
+            const auto download = Network::singleton().refresh(info.url);
             if (download.first) {
                 info.boundary = info.cubeShape = {};
                 const auto jmap = QJsonDocument::fromJson(download.second.toUtf8()).object();
