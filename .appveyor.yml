@@ -6,6 +6,7 @@ image:
   - Visual Studio 2015 # Windows Server 2012 R2
   - macOS-sonoma   # 14.2.1
   - macOS-ventura  # 13.6.4
+  - Ubuntu2404
   - Ubuntu2204
   - Ubuntu2004
   - Ubuntu1804
@@ -29,9 +30,7 @@ for:
 -
   matrix:
     only:
-      - image: Ubuntu2204
-  environment:
-    APPIMAGE_EXTRACT_AND_RUN: 1 # 2204 doesn’t have libfuse2
+      - image: Ubuntu2404
   services:
     - docker
   install:
@@ -43,6 +42,7 @@ for:
 -
   matrix:
     only:
+      - image: Ubuntu2204
       - image: Ubuntu2004
       - image: Ubuntu1804
       - image: Ubuntu1604
