@@ -3,7 +3,8 @@ set -euxo pipefail
 
 time pacman -Sy archlinux-keyring --noconfirm
 time pacman -Syu --noconfirm
-time pacman -S --noconfirm qtkeychain-qt5 # TODO: move it to the Docker image
+sed -i 's/Required/Never/' /etc/pacman.conf
+time pacman --noconfirm -U https://github.com/knossos-project/knossos/releases/download/nightly-dev/{pythonqt-knossos-git,qtkeychain-qt5,quazip-qt5}--x86_64.pkg.tar.zst
 
 cd ~
 git config --global --add safe.directory /root/knossos
