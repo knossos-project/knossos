@@ -332,8 +332,11 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
             info.api = API::Precomputed;
             if (!url.endsWith("info") && !url.isEmpty())
                 info.url.setPath(info.url.path() + "/info");
-            else if (url.isEmpty())
-                info.url = "./info";
+            else if (url.isEmpty()) {
+                QString current_path = configUrl.path();
+                current_path.chop(configUrl.fileName().length());
+                info.url = "file://" + current_path + "/info";
+            }
             const auto download = Network::singleton().refresh(info.url);
             if (download.first) {
                 info.boundary = info.cubeShape = {};
@@ -372,11 +375,11 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
             }
         }
         info.experimentname = QString::fromStdString(toml::find(vit, "Name").as_string());
-        if (vit.contains("Extent_px")) {
+        if (vit.contains("Extent_px") && !(info.api == API::Precomputed || info.api == API::Sharded)) {
             const auto extent = toml::find(vit, "Extent_px").as_array();
             info.boundary = Coordinate(extent.at(0).as_integer(), extent.at(1).as_integer(), extent.at(2).as_integer());
         }
-        if (vit.contains("CubeShape_px")) {
+        if (vit.contains("CubeShape_px") && !(info.api == API::Precomputed || info.api == API::Sharded)) {
             const auto cube_shape = toml::find(vit, "CubeShape_px").as_array();
             info.cubeShape = Coordinate(cube_shape.at(0).as_integer(), cube_shape.at(1).as_integer(), cube_shape.at(2).as_integer());
             info.gpuCubeShape = info.cubeShape;// possibly ÷2
