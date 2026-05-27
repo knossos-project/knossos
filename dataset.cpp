@@ -308,11 +308,15 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         auto url = QString::fromStdString(toml::find_or(vit, "URL", std::string{}));
         info.url = url;
         if (info.url.scheme() == "https" && !failfast) {
+            QString requested_path = QUrl{info.url}.path();
+            if (requested_path.endsWith("/info")) {
+                requested_path.chop(5);
+            }
             QUrl authurl;
             authurl.setScheme(info.url.scheme());
             authurl.setHost(info.url.host());
             authurl.setPath("/auth");
-            authurl.setQuery(QString{"path=%1"}.arg(QUrl{info.url}.path()));
+            authurl.setQuery(QString{"path=%1"}.arg(requested_path));
             authurl.setUserInfo(info.url.userInfo());
             qDebug() << "cdn auth" << authurl << authurl.isValid();
             const auto download = Network::singleton().refresh(authurl);
@@ -333,7 +337,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
             const auto download = Network::singleton().refresh(info.url);
             if (download.first) {
                 info.boundary = info.cubeShape = {};
-                const auto jmap = QJsonDocument::fromJson(download.second.toUtf8()).object();
+                const auto jmap = QJsonDocument::fromJson(download.second.data()).object();
                 info.gpuCubeShape = {};
                 for (auto && scaleRef : jmap["scales"].toArray()) {
                     const auto scaleRef2 = scaleRef.toObject();

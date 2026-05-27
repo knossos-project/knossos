@@ -27,20 +27,6 @@ Network::Network(const QObject*) {
         QNetworkRequest::NoLessSafeRedirectPolicy); // default is manual redirect
 }
 
-QVariantList Network::getCookiesForHost(const QUrl & host) {
-    QVariantList cookies;
-    for (const auto & cookie : cookieJar.cookiesForUrl(host)) {
-        cookies.append(cookie.toRawForm());
-    }
-    return cookies;
-}
-
-void Network::setCookies(const QVariantList & setting) {
-    for (const auto & cookie : setting) {
-        cookieJar.insertCookie(QNetworkCookie::parseCookies(cookie.toByteArray()).front());
-    }
-}
-
 std::pair<int, int> Network::checkOnlineMags(const QUrl & url) {
     std::size_t lowestAvailableMagIndex = NUM_MAG_DATASETS;
     std::size_t highestAvailableMagIndex = 0;
