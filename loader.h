@@ -44,7 +44,9 @@
 #include <boost/multi_array.hpp>
 #include <boost/optional/optional.hpp>
 
+#include <array>
 #include <atomic>
+#include <cstdint>
 #include <list>
 #include <memory>
 #include <mutex>
@@ -83,10 +85,15 @@ private:
     using ptr = std::unique_ptr<T>;
     using DecompressionOperationPtr = ptr<QFutureWatcher<DecompressionResult>>;
     using OpenWatcher = QFutureWatcher<boost::optional<bool>>;
+    using DownloadMap = std::unordered_map<CoordOfCube, QNetworkReply*>;
+    using DecompressionMap = std::unordered_map<CoordOfCube, DecompressionOperationPtr>;
+    using FreeSlotList = std::list<void *>;
+    using CubePointerMap = std::unordered_map<CoordOfCube, void *>;
+    using ShardedChunk = std::array<std::uint64_t, 2>;
     std::vector<std::unordered_map<CoordOfCube, ptr<OpenWatcher>>> slotOpen;
     std::vector<ptr<OpenWatcher>> solitaryConfinement;// disconnected worker threads that wait for IO
-    std::vector<std::unordered_map<CoordOfCube, QNetworkReply*>> slotDownload;
-    std::vector<std::unordered_map<CoordOfCube, DecompressionOperationPtr>> slotDecompression;
+    std::vector<DownloadMap> slotDownload;
+    std::vector<DecompressionMap> slotDecompression;
     std::vector<std::list<std::vector<std::uint8_t>>> slotChunk;// slot ownership
     std::vector<std::list<void *>> freeSlots;
     int currentMaxMetric;
@@ -102,6 +109,7 @@ private:
     void snappyCacheClear();
 
     decltype(slotDecompression)::value_type::iterator finalizeDecompression(QFutureWatcher<DecompressionResult> & watcher, decltype(freeSlots)::value_type & freeSlots, decltype(slotDecompression)::value_type & decompressions, const CoordOfCube & cubeCoord);
+    void startDownload(const unsigned int loadingNr, const Coordinate &center, const std::size_t layerId, Dataset dataset, const CoordOfCube cubeCoord, DownloadMap &downloads, DecompressionMap &decompressions, FreeSlotList &freeSlots, CubePointerMap &cubeHash, const boost::optional<ShardedChunk> &shardedChunk);
     void abortDownloadsFinishDecompression();
     template<typename Func>
     void abortDownloadsFinishDecompression(std::size_t, Func);

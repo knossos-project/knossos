@@ -63,7 +63,6 @@
 #include <boost/range/combine.hpp>
 
 #include <cmath>
-#include <functional>
 #include <fstream>
 #include <stdexcept>
 #include <type_traits>
@@ -594,6 +593,7 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
 
             QElapsedTimer t;
             QFutureSynchronizer<void> sync;
+            std::atomic_bool decodeFailed{false};
             t.start();
             // qDebug() << "foo" << channelHeaderBytes << cubeCoord << availableSize << data.size() << expectedSize << dataset.gpuCubeShape << cpd << cpd2;
             for (int y = 0; y < cpd2.y; ++y)
@@ -617,16 +617,19 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
                                 encodedBits != 8 &&
                                 encodedBits != 16 &&
                                 encodedBits != 32) {
+                                decodeFailed = true;
                                 return;
                             }
 
                             if (lookupTableByteOffset + 4 > data2Size) {
+                                decodeFailed = true;
                                 return;
                             }
 
                             if (encodedBits > 0) {
                                 const auto encodedBytes = (static_cast<std::size_t>(dataset.gpuCubeShape.prod()) * encodedBits + 7) / 8;
                                 if (encodedValuesByteOffset + encodedBytes > data2Size) {
+                                    decodeFailed = true;
                                     return;
                                 }
                             }
@@ -637,7 +640,16 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
 
                                 auto resolve = [&]<std::size_t c>(){
                                     arb<c> keys(data2 + encodedValuesByteOffset, dataset.gpuCubeShape.prod());
-                                    std::transform(std::begin(keys), std::end(keys), std::begin(output), [&lut](auto key){ return lut[key]; });
+                                    const auto lutEnd = encodedValuesByteOffset > lookupTableByteOffset ? encodedValuesByteOffset : data2Size;
+                                    const auto lutEntries = (lutEnd - lookupTableByteOffset) / sizeof(std::uint64_t);
+                                    auto outIt = std::begin(output);
+                                    for (const auto key : keys) {
+                                        if (static_cast<std::size_t>(key) >= lutEntries) {
+                                            decodeFailed = true;
+                                            return;
+                                        }
+                                        *outIt++ = lut[key];
+                                    }
                                 };
                                 switch (encodedBits) {
                                 case 1: resolve.template operator()<1>(); break;
@@ -647,6 +659,9 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
                                 case 16: resolve.template operator()<16>(); break;
                                 case 32: resolve.template operator()<32>(); break;
                                 };
+                                if (decodeFailed.load()) {
+                                    return;
+                                }
                             } else {
                                 // output = decltype(output)(output.size(), boost::endian::load_little_u32(data2 + lookupTableByteOffset));
                                 std::fill(std::begin(output), std::end(output), boost::endian::load_little_u32(data2 + lookupTableByteOffset));
@@ -672,7 +687,7 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
 
             sync.waitForFinished();
             // qDebug() << t.nsecsElapsed()/1e6;
-            success = true;
+            success = !decodeFailed.load();
         }
     } else if (dataset.type == Dataset::CubeType::RAW_UNCOMPRESSED) {
         const std::size_t expectedSize = cubeVxCount;
@@ -800,6 +815,233 @@ void Loader::Worker::broadcastProgress(bool startup) {
     emit progress(startup, count);
 }
 
+void Loader::Worker::startDownload(const unsigned int loadingNr, const Coordinate &center, const std::size_t layerId, Dataset dataset, const CoordOfCube cubeCoord, DownloadMap &downloads, DecompressionMap &decompressions, FreeSlotList &freeSlots, CubePointerMap &cubeHash, const boost::optional<ShardedChunk> &shardedChunk) {
+    auto & opens = slotOpen[layerId];
+    const auto c = dataset.cube2global(cubeCoord);
+    const auto b = floatCoordinate(dataset.boundary) * dataset.scales[0].x / datasets[0].scales[0].x;
+    if (c.x < 0 || c.y < 0 || c.z < 0 || c.x >= b.x || c.y >= b.y || c.z >= b.z) {
+        return;
+    }
+    if (dataset.isOverlay()) {
+        QMutexLocker lock{&snappyCacheMutex};
+        auto snappyIt = snappyCache[layerId][dataset.magIndex].find(cubeCoord);
+        if (snappyIt != std::end(snappyCache[layerId][dataset.magIndex])) {
+            if (!freeSlots.empty()) {
+                auto downloadIt = downloads.find(cubeCoord);
+                if (downloadIt != std::end(downloads)) {
+                    downloadIt->second->abort();
+                }
+                auto decompressionIt = decompressions.find(cubeCoord);
+                if (decompressionIt != std::end(decompressions)) {
+                    decompressionIt->second->waitForFinished();
+                }
+                state->protectCube2Pointer.lock();
+                const auto currentSlotIt = cubeHash.find(cubeCoord);
+                auto * currentSlot = currentSlotIt != std::end(cubeHash) ? currentSlotIt->second : freeSlots.front();
+                cubeHash.erase(cubeCoord);
+                state->protectCube2Pointer.unlock();
+                if (currentSlot == freeSlots.front()) {
+                    freeSlots.pop_front();
+                }
+                //directly uncompress snappy cube into the OC slot
+                const auto success = snappy::RawUncompress(snappyIt->second.c_str(), snappyIt->second.size(), reinterpret_cast<char*>(currentSlot));
+                if (success) {
+                    state->protectCube2Pointer.lock();
+                    cubeHash[cubeCoord] = currentSlot;
+                    state->protectCube2Pointer.unlock();
+
+                    state->viewer->reslice_notify_all(layerId, cubeCoord);
+                } else {
+                    freeSlots.emplace_back(currentSlot);
+                    qCritical() << layerId << cubeCoord << "snappy extract failed" << snappyIt->second.size();
+                }
+            } else {
+                qCritical() << layerId << cubeCoord << "no slots for snappy extract" << cubeHash.size() << freeSlots.size();
+            }
+            return;
+        }
+    }
+    state->protectCube2Pointer.lock();
+    const bool cubeNotAlreadyLoaded = cubeHash.count(cubeCoord) == 0;
+    state->protectCube2Pointer.unlock();
+    const bool cubeNotDownloading = downloads.count(cubeCoord) == 0 && opens.count(cubeCoord) == 0;
+    const bool cubeNotDecompressing = decompressions.count(cubeCoord) == 0;
+
+    if (cubeNotAlreadyLoaded && cubeNotDownloading && cubeNotDecompressing) {
+        if (dataset.type == Dataset::CubeType::SNAPPY) {
+            if (!freeSlots.empty()) {
+                auto * currentSlot = freeSlots.front();
+                freeSlots.pop_front();
+                const std::size_t cubeBytes = dataset.cubeShape.prod() * (dataset.isOverlay() ? OBJID_BYTES : 1);
+                std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeBytes, 0);
+                state->protectCube2Pointer.lock();
+                cubeHash[cubeCoord] = currentSlot;
+                state->protectCube2Pointer.unlock();
+                state->viewer->reslice_notify_all(layerId, cubeCoord);
+            } else {
+                qCritical() << layerId << cubeCoord << "no slots for snappy extract" << cubeHash.size() << freeSlots.size();
+            }
+            return;
+        }
+
+        auto request = dataset.apiSwitch(cubeCoord);
+        if (dataset.api == Dataset::API::Sharded) {
+            if (!shardedChunk) {
+                return;
+            }
+            const auto chunk = *shardedChunk;
+            request.setRawHeader("Range", QString("bytes=%1-%2").arg(chunk[0]).arg(chunk[0]+chunk[1] - 1).toUtf8());
+        }
+//            request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
+//            request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
+//            request.setAttribute(QNetworkRequest::BackgroundRequestAttribute, true);
+
+        QByteArray payload;
+        if (cubeCoord == dataset.global2cube(center)) {
+            //the first download usually finishes last (which is a bug) so we put it alone in the high priority bucket
+            request.setPriority(QNetworkRequest::HighPriority);
+        }
+        auto & io = [&]() -> QIODevice & {
+            if (dataset.api == Dataset::API::GoogleBrainmaps) {
+                const auto inmagCoord = cubeCoord.componentMul(dataset.cubeShape);
+                request.setRawHeader("Content-Type", "application/octet-stream");
+                const QString json(R"json({"geometry":{"corner":"%1,%2,%3", "size":"%4,%5,%6", "scale":%7}, "subvolume_format":"SINGLE_IMAGE", "image_format_options":{"image_format":"JPEG", "jpeg_quality":70}})json");
+                payload = json.arg(inmagCoord.x).arg(inmagCoord.y).arg(inmagCoord.z).arg(dataset.cubeShape.x).arg(dataset.cubeShape.y).arg(dataset.cubeShape.z).arg(dataset.magIndex).toUtf8();
+            } else if (dataset.api == Dataset::API::WebKnossos) {
+                const auto globalCoord = dataset.cube2global(cubeCoord);
+                request.setRawHeader("Content-Type", "application/json");
+                payload = QString{R"json([{"position":[%1,%2,%3],"zoomStep":%4,"cubeSize":%5,"fourBit":false}])json"}.arg(globalCoord.x).arg(globalCoord.y).arg(globalCoord.z).arg(dataset.magIndex).arg(dataset.cubeShape.x).toUtf8();
+            }
+            if (dataset.url.scheme() == "file") {
+                return *new QBuffer{};
+            }
+            if (dataset.api == Dataset::API::WebKnossos || dataset.api == Dataset::API::GoogleBrainmaps) {
+                return *qnam.post(request, payload);
+            } else {
+                return *qnam.get(request);
+            }
+        }();
+        auto processDownload = [this, layerId, dataset, &io, cubeCoord, &downloads, &decompressions, &freeSlots, &cubeHash](bool exists = false){
+            if (freeSlots.empty()) {
+                qCritical() << layerId << cubeCoord << static_cast<int>(dataset.type) << "no slots for decompression" << cubeHash.size() << freeSlots.size();
+                io.deleteLater();
+                downloads.erase(cubeCoord);
+                broadcastProgress();
+                return;
+            }
+            auto * maybeReply = dynamic_cast<QNetworkReply*>(&io);
+            if ((maybeReply != nullptr && maybeReply->error() == QNetworkReply::NoError) || (maybeReply == nullptr && exists)) {
+                auto * currentSlot = freeSlots.front();
+                freeSlots.pop_front();
+                auto * watcher = new QFutureWatcher<DecompressionResult>;
+                QObject::connect(watcher, &QFutureWatcher<DecompressionResult>::finished, this, [this, watcher, &freeSlots, &decompressions, cubeCoord](){
+                    finalizeDecompression(*watcher, freeSlots, decompressions, cubeCoord);
+                });
+                io.setParent(nullptr);// reparent, so it doesn’t get destroyed with qnam
+                decompressions[cubeCoord].reset(watcher);
+                downloads.erase(cubeCoord);
+                watcher->setFuture(QtConcurrent::run(&decompressionPool, std::bind(&decompressCube, currentSlot, std::ref(io), layerId, dataset, std::ref(cubeHash), cubeCoord)));
+            } else {
+                if ((maybeReply != nullptr && maybeReply->error() == QNetworkReply::ContentNotFoundError) || (maybeReply == nullptr && !exists)) {//404 → fill
+                    auto * currentSlot = freeSlots.front();
+                    freeSlots.pop_front();
+                    const std::size_t cubeBytes = dataset.cubeShape.prod() * (dataset.isOverlay() ? OBJID_BYTES : 1);
+                    std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeBytes, 0);
+                    state->protectCube2Pointer.lock();
+                    cubeHash[cubeCoord] = currentSlot;
+                    state->protectCube2Pointer.unlock();
+                    state->viewer->reslice_notify_all(layerId, cubeCoord);
+                } else {
+                    if(maybeReply != nullptr && maybeReply->error() != QNetworkReply::OperationCanceledError) {
+                        qCritical() << layerId << cubeCoord << static_cast<int>(dataset.type) << maybeReply->request().url() << maybeReply->errorString() << maybeReply->readAll();
+                        if (maybeReply->error() == QNetworkReply::HostNotFoundError) {
+                            for (const auto & url : {maybeReply->request().url().host(), QString{"google.com"}}) {
+                                const auto & info = QHostInfo::fromName(url);
+                                qDebug() << info.hostName() << info.addresses() << (info.error() != QHostInfo::HostInfoError::NoError ? info.errorString() : "");
+                            }
+                        }
+                        if (dataset.api == Dataset::API::GoogleBrainmaps) {
+                            qDebug() << "GoogleBrainmaps error" << maybeReply->error();
+                            if (maybeReply->error() == QNetworkReply::ContentAccessDenied || maybeReply->error() == QNetworkReply::AuthenticationRequiredError) {
+                                auto pair = getBrainmapsToken();
+                                if (pair.first) {
+                                    Dataset::datasets[layerId].token = datasets[layerId].token = pair.second;
+                                }
+                            }
+                        }
+                    }
+                }
+                io.deleteLater();
+                downloads.erase(cubeCoord);
+                broadcastProgress();
+            }
+        };
+        if (dataset.url.scheme() != "file") {
+            downloads[cubeCoord] = &dynamic_cast<QNetworkReply &>(io);
+            QObject::connect(downloads[cubeCoord], &QNetworkReply::finished, this, processDownload);
+        } else if (Annotation::singleton().embeddedDataset) {
+            const auto path = QFileInfo{*Annotation::singleton().embeddedDataset}.dir().path() + request.url().toLocalFile();
+            const bool exists = Annotation::singleton().extraFiles.contains(path);
+            if (exists) {
+                dynamic_cast<QBuffer &>(io).setBuffer(&Annotation::singleton().extraFiles[path]);
+                io.open(QIODevice::ReadOnly | QIODevice::Unbuffered);
+            }
+            processDownload(exists);
+        } else {
+            opens[cubeCoord] = std::make_unique<OpenWatcher>();
+            auto & watcher = *opens[cubeCoord];
+            io.setParent(&watcher);// reparent, so it gets destroyed upon cleanup
+            const auto path = request.url().toLocalFile();
+            QObject::connect(&watcher, &std::remove_reference_t<decltype(watcher)>::finished, this, [this, &watcher, processDownload, &opens, cubeCoord, path](){
+                if (!watcher.isCanceled()) {
+                    if (auto res = watcher.result()) {// skip loadingNr-aborted open
+                        processDownload(res.get() || QFile{path}.exists());
+                    }
+                }
+                opens.erase(cubeCoord);
+                broadcastProgress();
+            });
+            localPool.setMaxThreadCount(1024);
+            watcher.setFuture(QtConcurrent::run(&localPool, [loadingNr, &io, path, dataset, layerId, cubeCoord, shardedChunk]() -> boost::optional<bool> {
+                // immediately exit unstarted thread from the previous loadSignal
+                if (loadingNr != Loader::Controller::singleton().loadingNr || !QFile{path}.exists()) {
+                    return boost::none;
+                }
+                QFile file(path);
+                file.open(QIODevice::ReadOnly | QIODevice::Unbuffered);
+                io.open(QIODevice::WriteOnly | QIODevice::Unbuffered);
+                std::size_t offset2 = shardedChunk ? (*shardedChunk)[0] : 0;
+                const std::size_t size = shardedChunk ? (*shardedChunk)[1] : file.size();
+                auto * fmap = file.map(offset2, size);
+                if (fmap == nullptr) {
+                    if (QFile{path}.exists()) {
+                        qWarning() << "mmap not used, but file exists, for" << path << offset2 << size << QFile{path}.size();
+                    }
+                    file.seek(offset2);
+                }
+                const std::size_t chunksize = 32*1024;
+                for (std::size_t offset{}; offset < size; offset += chunksize) {
+                    if (loadingNr != Loader::Controller::singleton().loadingNr) {
+                        return boost::none;
+                    }
+                    if (fmap != nullptr) {
+                        io.write(reinterpret_cast<const char *>(fmap) + offset, std::min(chunksize, size - offset));
+                    } else {
+                        io.write(file.read(chunksize));
+                    }
+                    if (loadingNr != Loader::Controller::singleton().loadingNr) {
+                        return boost::none;
+                    }
+                }
+                io.close();
+                io.open(QIODevice::ReadOnly | QIODevice::Unbuffered);
+                return size != 0;
+            }));
+        }
+        broadcastProgress(true);
+    }
+}
+
 void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Coordinate center, const UserMoveType userMoveType, const floatCoordinate & direction, Dataset::list_t changedDatasets, const size_t cacheSize) {
     cleanup(center);
     // freeSlots[] are lists of pointers to locations that
@@ -873,12 +1115,6 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     static std::vector<QSet<QUrl>> fourohfour(datasets.size());
     using PendingShardedKey = QPair<QPair<quint64, QUrl>, quint64>;
     static QMap<PendingShardedKey, std::vector<CoordOfCube>> pendingShardedCubes;
-
-    using Downloads = decltype(slotDownload)::value_type;
-    using Decompressions = decltype(slotDecompression)::value_type;
-    using FreeSlotList = decltype(freeSlots)::value_type;
-    using CubeHash = decltype(state->cube2Pointer)::value_type::value_type;
-    auto startDownload = std::make_shared<std::function<void(std::size_t, Dataset, CoordOfCube, Downloads &, Decompressions &, FreeSlotList &, CubeHash &)>>();
 
     if (changedDatasets.size() != datasets.size()) {
         chunkid2chunk.clear();
@@ -979,7 +1215,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             const auto requestUrl = datasets[layerId].url;
             const auto requestScaleKey = datasets[layerId].scaleKeys[datasets[layerId].magIndex];
             auto * reply = qnam.get(request);
-            QObject::connect(reply, &QNetworkReply::finished, [this, reply, num_minishards, shard, shard_data_offset, layerId, shard2minishards, startDownload,
+            QObject::connect(reply, &QNetworkReply::finished, [this, reply, num_minishards, shard, shard_data_offset, layerId, shard2minishards, center,
                              requestLoadingNr, requestMagIndex, requestUrl, requestScaleKey](){
                 const bool staleDataset = layerId >= datasets.size()
                                        || datasets[layerId].url != requestUrl
@@ -1007,7 +1243,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                         QNetworkRequest request(shard);
                         request.setRawHeader("Range", QString("bytes=%1-%2").arg(shard_data_offset + minishards[mi][0]).arg(shard_data_offset + minishards[mi][1] - 1).toUtf8());
                         auto * reply = qnam.get(request);
-                        QObject::connect(reply, &QNetworkReply::finished, [this, reply, minishards, layerId, shard_data_offset, shard, mi, startDownload,
+                        QObject::connect(reply, &QNetworkReply::finished, [this, reply, minishards, layerId, shard_data_offset, shard, mi, center,
                                          requestLoadingNr, requestMagIndex, requestUrl, requestScaleKey](){
                             const bool staleLoadingNr = requestLoadingNr != Loader::Controller::singleton().loadingNr;
                             const bool staleDataset = layerId >= datasets.size()
@@ -1035,7 +1271,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                             if (wroteChunkMapping && !staleLoadingNr) {
                                 const auto pendingKey = qMakePair(qMakePair(static_cast<quint64>(layerId), shard), mi);
                                 auto pendingIt = pendingShardedCubes.find(pendingKey);
-                                if (pendingIt != pendingShardedCubes.end() && *startDownload) {
+                                if (pendingIt != pendingShardedCubes.end()) {
                                     auto pendingCubes = std::move(pendingIt.value());
                                     pendingShardedCubes.erase(pendingIt);
                                     for (const auto & cubeCoord : pendingCubes) {
@@ -1048,7 +1284,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                                             continue;
                                         }
                                         try {
-                                            (*startDownload)(layerId, datasets[layerId], cubeCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer.at(layerId).at(datasets[layerId].magIndex));
+                                            startDownload(requestLoadingNr, center, layerId, datasets[layerId], cubeCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer.at(layerId).at(datasets[layerId].magIndex), boost::optional<ShardedChunk>{chunkIt->second});
                                         } catch (const std::out_of_range &) {}
                                     }
                                 }
@@ -1090,239 +1326,19 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         }
     }
 
-    *startDownload = [this, center, loadingNr](const std::size_t layerId, Dataset dataset, const CoordOfCube cubeCoord, Downloads & downloads
-            , Decompressions & decompressions, FreeSlotList & freeSlots, CubeHash & cubeHash){
-        auto & opens = slotOpen[layerId];
-        const auto c = dataset.cube2global(cubeCoord);
-        const auto b = floatCoordinate(dataset.boundary) * dataset.scales[0].x / datasets[0].scales[0].x;
-        if (c.x < 0 || c.y < 0 || c.z < 0 || c.x >= b.x || c.y >= b.y || c.z >= b.z) {
-            return;
-        }
-        if (dataset.isOverlay()) {
-            QMutexLocker lock{&snappyCacheMutex};
-            auto snappyIt = snappyCache[layerId][dataset.magIndex].find(cubeCoord);
-            if (snappyIt != std::end(snappyCache[layerId][dataset.magIndex])) {
-                if (!freeSlots.empty()) {
-                    auto downloadIt = downloads.find(cubeCoord);
-                    if (downloadIt != std::end(downloads)) {
-                        downloadIt->second->abort();
-                    }
-                    auto decompressionIt = decompressions.find(cubeCoord);
-                    if (decompressionIt != std::end(decompressions)) {
-                        decompressionIt->second->waitForFinished();
-                    }
-                    state->protectCube2Pointer.lock();
-                    const auto currentSlotIt = cubeHash.find(cubeCoord);
-                    auto * currentSlot = currentSlotIt != std::end(cubeHash) ? currentSlotIt->second : freeSlots.front();
-                    cubeHash.erase(cubeCoord);
-                    state->protectCube2Pointer.unlock();
-                    if (currentSlot == freeSlots.front()) {
-                        freeSlots.pop_front();
-                    }
-                    //directly uncompress snappy cube into the OC slot
-                    const auto success = snappy::RawUncompress(snappyIt->second.c_str(), snappyIt->second.size(), reinterpret_cast<char*>(currentSlot));
-                    if (success) {
-                        state->protectCube2Pointer.lock();
-                        cubeHash[cubeCoord] = currentSlot;
-                        state->protectCube2Pointer.unlock();
-
-                        state->viewer->reslice_notify_all(layerId, cubeCoord);
-                    } else {
-                        freeSlots.emplace_back(currentSlot);
-                        qCritical() << layerId << cubeCoord << "snappy extract failed" << snappyIt->second.size();
-                    }
-                } else {
-                    qCritical() << layerId << cubeCoord << "no slots for snappy extract" << cubeHash.size() << freeSlots.size();
-                }
-                return;
-            }
-        }
-        state->protectCube2Pointer.lock();
-        const bool cubeNotAlreadyLoaded = cubeHash.count(cubeCoord) == 0;
-        state->protectCube2Pointer.unlock();
-        const bool cubeNotDownloading = downloads.count(cubeCoord) == 0 && opens.count(cubeCoord) == 0;
-        const bool cubeNotDecompressing = decompressions.count(cubeCoord) == 0;
-
-        if (cubeNotAlreadyLoaded && cubeNotDownloading && cubeNotDecompressing) {
-            if (dataset.type == Dataset::CubeType::SNAPPY) {
-                if (!freeSlots.empty()) {
-                    auto * currentSlot = freeSlots.front();
-                    freeSlots.pop_front();
-                    const std::size_t cubeBytes = dataset.cubeShape.prod() * (dataset.isOverlay() ? OBJID_BYTES : 1);
-                    std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeBytes, 0);
-                    state->protectCube2Pointer.lock();
-                    cubeHash[cubeCoord] = currentSlot;
-                    state->protectCube2Pointer.unlock();
-                    state->viewer->reslice_notify_all(layerId, cubeCoord);
-                } else {
-                    qCritical() << layerId << cubeCoord << "no slots for snappy extract" << cubeHash.size() << freeSlots.size();
-                }
-                return;
-            }
-
-            auto request = dataset.apiSwitch(cubeCoord);
-            if (dataset.api == Dataset::API::Sharded) {
-                if (!cube2chunk[layerId].contains(cubeCoord)) {
-                    return;
-                }
-                const auto chunk = cube2chunk[layerId][cubeCoord];
-                request.setRawHeader("Range", QString("bytes=%1-%2").arg(chunk[0]).arg(chunk[0]+chunk[1] - 1).toUtf8());
-            }
-//            request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
-//            request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
-//            request.setAttribute(QNetworkRequest::BackgroundRequestAttribute, true);
-
-            QByteArray payload;
-            if (cubeCoord == dataset.global2cube(center)) {
-                //the first download usually finishes last (which is a bug) so we put it alone in the high priority bucket
-                request.setPriority(QNetworkRequest::HighPriority);
-            }
-            auto & io = [&]() -> QIODevice & {
-                if (dataset.api == Dataset::API::GoogleBrainmaps) {
-                    const auto inmagCoord = cubeCoord.componentMul(dataset.cubeShape);
-                    request.setRawHeader("Content-Type", "application/octet-stream");
-                    const QString json(R"json({"geometry":{"corner":"%1,%2,%3", "size":"%4,%5,%6", "scale":%7}, "subvolume_format":"SINGLE_IMAGE", "image_format_options":{"image_format":"JPEG", "jpeg_quality":70}})json");
-                    payload = json.arg(inmagCoord.x).arg(inmagCoord.y).arg(inmagCoord.z).arg(dataset.cubeShape.x).arg(dataset.cubeShape.y).arg(dataset.cubeShape.z).arg(dataset.magIndex).toUtf8();
-                } else if (dataset.api == Dataset::API::WebKnossos) {
-                    const auto globalCoord = dataset.cube2global(cubeCoord);
-                    request.setRawHeader("Content-Type", "application/json");
-                    payload = QString{R"json([{"position":[%1,%2,%3],"zoomStep":%4,"cubeSize":%5,"fourBit":false}])json"}.arg(globalCoord.x).arg(globalCoord.y).arg(globalCoord.z).arg(dataset.magIndex).arg(dataset.cubeShape.x).toUtf8();
-                }
-                if (dataset.url.scheme() == "file") {
-                    return *new QBuffer{};
-                }
-                if (dataset.api == Dataset::API::WebKnossos || dataset.api == Dataset::API::GoogleBrainmaps) {
-                    return *qnam.post(request, payload);
-                } else {
-                    return *qnam.get(request);
-                }
-            }();
-            auto processDownload = [this, layerId, dataset, &io, cubeCoord, &downloads, &decompressions, &freeSlots, &cubeHash](bool exists = false){
-                if (freeSlots.empty()) {
-                    qCritical() << layerId << cubeCoord << static_cast<int>(dataset.type) << "no slots for decompression" << cubeHash.size() << freeSlots.size();
-                    io.deleteLater();
-                    downloads.erase(cubeCoord);
-                    broadcastProgress();
-                    return;
-                }
-                auto * maybeReply = dynamic_cast<QNetworkReply*>(&io);
-                if ((maybeReply != nullptr && maybeReply->error() == QNetworkReply::NoError) || (maybeReply == nullptr && exists)) {
-                    auto * currentSlot = freeSlots.front();
-                    freeSlots.pop_front();
-                    auto * watcher = new QFutureWatcher<DecompressionResult>;
-                    QObject::connect(watcher, &QFutureWatcher<DecompressionResult>::finished, this, [this, watcher, &freeSlots, &decompressions, cubeCoord](){
-                        finalizeDecompression(*watcher, freeSlots, decompressions, cubeCoord);
-                    });
-                    io.setParent(nullptr);// reparent, so it doesn’t get destroyed with qnam
-                    decompressions[cubeCoord].reset(watcher);
-                    downloads.erase(cubeCoord);
-                    watcher->setFuture(QtConcurrent::run(&decompressionPool, std::bind(&decompressCube, currentSlot, std::ref(io), layerId, dataset, std::ref(cubeHash), cubeCoord)));
-                } else {
-                    if ((maybeReply != nullptr && maybeReply->error() == QNetworkReply::ContentNotFoundError) || (maybeReply == nullptr && !exists)) {//404 → fill
-                        auto * currentSlot = freeSlots.front();
-                        freeSlots.pop_front();
-                        const std::size_t cubeBytes = dataset.cubeShape.prod() * (dataset.isOverlay() ? OBJID_BYTES : 1);
-                        std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeBytes, 0);
-                        state->protectCube2Pointer.lock();
-                        cubeHash[cubeCoord] = currentSlot;
-                        state->protectCube2Pointer.unlock();
-                        state->viewer->reslice_notify_all(layerId, cubeCoord);
-                    } else {
-                        if(maybeReply != nullptr && maybeReply->error() != QNetworkReply::OperationCanceledError) {
-                            qCritical() << layerId << cubeCoord << static_cast<int>(dataset.type) << maybeReply->request().url() << maybeReply->errorString() << maybeReply->readAll();
-                            if (maybeReply->error() == QNetworkReply::HostNotFoundError) {
-                                for (const auto & url : {maybeReply->request().url().host(), QString{"google.com"}}) {
-                                    const auto & info = QHostInfo::fromName(url);
-                                    qDebug() << info.hostName() << info.addresses() << (info.error() != QHostInfo::HostInfoError::NoError ? info.errorString() : "");
-                                }
-                            }
-                            if (dataset.api == Dataset::API::GoogleBrainmaps) {
-                                qDebug() << "GoogleBrainmaps error" << maybeReply->error();
-                                if (maybeReply->error() == QNetworkReply::ContentAccessDenied || maybeReply->error() == QNetworkReply::AuthenticationRequiredError) {
-                                    auto pair = getBrainmapsToken();
-                                    if (pair.first) {
-                                        Dataset::datasets[layerId].token = datasets[layerId].token = pair.second;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    io.deleteLater();
-                    downloads.erase(cubeCoord);
-                    broadcastProgress();
-                }
-            };
-            if (dataset.url.scheme() != "file") {
-                downloads[cubeCoord] = &dynamic_cast<QNetworkReply &>(io);
-                QObject::connect(downloads[cubeCoord], &QNetworkReply::finished, this, processDownload);
-            } else if (Annotation::singleton().embeddedDataset) {
-                const auto path = QFileInfo{*Annotation::singleton().embeddedDataset}.dir().path() + request.url().toLocalFile();
-                const bool exists = Annotation::singleton().extraFiles.contains(path);
-                if (exists) {
-                    dynamic_cast<QBuffer &>(io).setBuffer(&Annotation::singleton().extraFiles[path]);
-                    io.open(QIODevice::ReadOnly | QIODevice::Unbuffered);
-                }
-                processDownload(exists);
-            } else {
-                opens[cubeCoord] = std::make_unique<OpenWatcher>();
-                auto & watcher = *opens[cubeCoord];
-                io.setParent(&watcher);// reparent, so it gets destroyed upon cleanup
-                const auto path = request.url().toLocalFile();
-                QObject::connect(&watcher, &std::remove_reference_t<decltype(watcher)>::finished, this, [this, &watcher, processDownload, &opens, cubeCoord, path](){
-                    if (!watcher.isCanceled()) {
-                        if (auto res = watcher.result()) {// skip loadingNr-aborted open
-                            processDownload(res.get() || QFile{path}.exists());
-                        }
-                    }
-                    opens.erase(cubeCoord);
-                    broadcastProgress();
-                });
-                localPool.setMaxThreadCount(1024);
-                watcher.setFuture(QtConcurrent::run(&localPool, [loadingNr, &io, path, dataset, layerId, cubeCoord]() -> boost::optional<bool> {
-                    // immediately exit unstarted thread from the previous loadSignal
-                    if (loadingNr != Loader::Controller::singleton().loadingNr || !QFile{path}.exists()) {
-                        return boost::none;
-                    }
-                    QFile file(path);
-                    file.open(QIODevice::ReadOnly | QIODevice::Unbuffered);
-                    io.open(QIODevice::WriteOnly | QIODevice::Unbuffered);
-                    std::size_t offset2 = dataset.api == Dataset::API::Sharded ? cube2chunk[layerId][cubeCoord][0] : 0;
-                    const std::size_t size = dataset.api == Dataset::API::Sharded ? cube2chunk[layerId][cubeCoord][1] : file.size();
-                    auto * fmap = file.map(offset2, size);
-                    if (fmap == nullptr) {
-                        if (QFile{path}.exists()) {
-                            qWarning() << "mmap not used, but file exists, for" << path << offset2 << size << QFile{path}.size();
-                        }
-                        file.seek(offset2);
-                    }
-                    const std::size_t chunksize = 32*1024;
-                    for (std::size_t offset{}; offset < size; offset += chunksize) {
-                        if (loadingNr != Loader::Controller::singleton().loadingNr) {
-                            return boost::none;
-                        }
-                        if (fmap != nullptr) {
-                            io.write(reinterpret_cast<const char *>(fmap) + offset, std::min(chunksize, size - offset));
-                        } else {
-                            io.write(file.read(chunksize));
-                        }
-                        if (loadingNr != Loader::Controller::singleton().loadingNr) {
-                            return boost::none;
-                        }
-                    }
-                    io.close();
-                    io.open(QIODevice::ReadOnly | QIODevice::Unbuffered);
-                    return size != 0;
-                }));
-            }
-            broadcastProgress(true);
-        }
-    };
-
     for (auto [layerId, cubeCoord] : allCubes) {
         if (loadingNr == Loader::Controller::singleton().loadingNr) {
             if (datasets[layerId].loadingEnabled) {
                 try {
-                    (*startDownload)(layerId, datasets[layerId], cubeCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer.at(layerId).at(datasets[layerId].magIndex));
+                    boost::optional<ShardedChunk> shardedChunk;
+                    if (datasets[layerId].api == Dataset::API::Sharded) {
+                        auto chunkIt = cube2chunk[layerId].find(cubeCoord);
+                        if (chunkIt == std::end(cube2chunk[layerId])) {
+                            continue;
+                        }
+                        shardedChunk = chunkIt->second;
+                    }
+                    startDownload(loadingNr, center, layerId, datasets[layerId], cubeCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer.at(layerId).at(datasets[layerId].magIndex), shardedChunk);
                 } catch (const std::out_of_range &) {}
             }
         }
