@@ -372,6 +372,16 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                         info.bits.emplace_back((class Dataset::bits){a["preshift_bits"].toInt(0), a["minishard_bits"].toInt(0), a["shard_bits"].toInt(0)});
                     }
                 }
+            } else if (infos.size() > 0){
+                // info file not found; assume same layer parameter then first layer
+                qDebug() << "copying information from first layer";
+                info.boundary = infos[0].boundary;
+                info.cubeShape = infos[0].cubeShape;
+                info.gpuCubeShape = infos[0].gpuCubeShape;
+                info.scales = infos[0].scales;
+                info.scaleKeys = infos[0].scaleKeys;
+                info.api = infos[0].api;
+                info.bits = infos[0].bits;
             }
         }
         info.experimentname = QString::fromStdString(toml::find(vit, "Name").as_string());
