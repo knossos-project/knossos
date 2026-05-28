@@ -436,6 +436,9 @@ void LayerDialogWidget::updateLayerProperties() {
     optionsSpoiler.setEnabled(currentIndex.isValid());
     if (currentIndex.isValid()) {
         const auto ordered_index = itemModel.ordered_i(currentIndex.row());
+        if (ordered_index >= Dataset::datasets.size()) {
+            return;
+        }
         auto & layerSettings = Dataset::datasets[ordered_index].renderSettings;
         opacitySlider.setValue(static_cast<int>(layerSettings.opacity * opacitySlider.maximum()));
         biasSlider.setValue(static_cast<int>(layerSettings.bias * biasSlider.maximum()));
