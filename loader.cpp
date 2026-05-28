@@ -63,6 +63,7 @@
 #include <boost/range/combine.hpp>
 
 #include <cmath>
+#include <functional>
 #include <fstream>
 #include <stdexcept>
 #include <type_traits>
@@ -565,17 +566,36 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
             // std::copy(std::begin(data), std::end(data), reinterpret_cast<std::uint8_t *>(currentSlot));
             // std::fill(reinterpret_cast<std::uint64_t *>(currentSlot) + availableSize/OBJID_BYTES, reinterpret_cast<std::uint64_t *>(currentSlot) + cubeVxCount, 1);
 
-            boost::multi_array_ref<std::uint64_t, 3> slotRef(reinterpret_cast<std::uint64_t *>(currentSlot), boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x]);
-
-            const auto num_channels = boost::endian::load_little_u32(reinterpret_cast<unsigned char const *>(data.data()));
-
             auto cpd = floatCoordinate{partialCubeShape} / dataset.gpuCubeShape;
             auto cpd2 = Coordinate(std::ceil(cpd.x), std::ceil(cpd.y), std::ceil(cpd.z));
+
+            boost::multi_array_ref<std::uint64_t, 3> slotRef(reinterpret_cast<std::uint64_t *>(currentSlot), boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x]);
+
+            const auto dataSize = static_cast<std::size_t>(data.size());
+            if (dataSize < 4) {
+                return {false, currentSlot, &reply};
+            }
+
+            const auto expectedBlockHeaderBytes = 8ull * static_cast<std::size_t>(cpd2.x)
+                                                      * static_cast<std::size_t>(cpd2.y)
+                                                      * static_cast<std::size_t>(cpd2.z);
+            const auto expectedBlockHeaderWords = expectedBlockHeaderBytes / 4;
+            const auto firstWord = boost::endian::load_little_u32(reinterpret_cast<unsigned char const *>(data.constData()));
+            const auto candidateChannelHeaderBytes = 4ull * firstWord;
+            const auto hasChannelHeader = firstWord > 0
+                                       && firstWord < expectedBlockHeaderWords
+                                       && candidateChannelHeaderBytes <= dataSize
+                                       && candidateChannelHeaderBytes + expectedBlockHeaderBytes <= dataSize;
+            const auto channelHeaderBytes = hasChannelHeader ? candidateChannelHeaderBytes : 0ull;
+
+            if (channelHeaderBytes + expectedBlockHeaderBytes > dataSize) {
+                return {false, currentSlot, &reply};
+            }
 
             QElapsedTimer t;
             QFutureSynchronizer<void> sync;
             t.start();
-            // qDebug() << "foo" << num_channels << cubeCoord << availableSize << data.size() << expectedSize << dataset.gpuCubeShape << cpd << cpd2;
+            // qDebug() << "foo" << channelHeaderBytes << cubeCoord << availableSize << data.size() << expectedSize << dataset.gpuCubeShape << cpd << cpd2;
             for (int y = 0; y < cpd2.y; ++y)
             sync.addFuture(QtConcurrent::run(&Loader::Controller::singleton().worker->decompressionPool, [&,y](){
                     std::vector<std::uint64_t> output(dataset.gpuCubeShape.prod());
@@ -583,11 +603,33 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
                     for (int x = 0; x < cpd2.x; ++x) {
                             auto headerByteOffset = 8 * (x + cpd2.x * (y + cpd2.y * z));
 
-                            const auto * data2 = reinterpret_cast<unsigned char const *>(data.data()+4*num_channels);
+                            const auto * data2 = reinterpret_cast<unsigned char const *>(data.constData() + channelHeaderBytes);
 
                             const auto lookupTableByteOffset = 4*boost::endian::load_little_u24(data2 + headerByteOffset);
                             const std::uint8_t encodedBits = data2[headerByteOffset + 3];
                             const auto encodedValuesByteOffset = 4*boost::endian::load_little_u32(data2 + headerByteOffset + 4);
+                            const auto data2Size = dataSize - channelHeaderBytes;
+
+                            if (encodedBits != 0 &&
+                                encodedBits != 1 &&
+                                encodedBits != 2 &&
+                                encodedBits != 4 &&
+                                encodedBits != 8 &&
+                                encodedBits != 16 &&
+                                encodedBits != 32) {
+                                return;
+                            }
+
+                            if (lookupTableByteOffset + 4 > data2Size) {
+                                return;
+                            }
+
+                            if (encodedBits > 0) {
+                                const auto encodedBytes = (static_cast<std::size_t>(dataset.gpuCubeShape.prod()) * encodedBits + 7) / 8;
+                                if (encodedValuesByteOffset + encodedBytes > data2Size) {
+                                    return;
+                                }
+                            }
 
                             if (encodedBits > 0) {
                                 std::uint64_t const * const lut = reinterpret_cast<const std::uint64_t *>(data2 + lookupTableByteOffset);// or 32 bit
@@ -829,6 +871,14 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     static std::vector<std::unordered_map<std::uint64_t, std::array<std::uint64_t,2>>> chunkid2chunk(datasets.size());
     static std::vector<std::unordered_map<CoordOfCube, std::array<std::uint64_t,2>>> cube2chunk(datasets.size());
     static std::vector<QSet<QUrl>> fourohfour(datasets.size());
+    using PendingShardedKey = QPair<QPair<quint64, QUrl>, quint64>;
+    static QMap<PendingShardedKey, std::vector<CoordOfCube>> pendingShardedCubes;
+
+    using Downloads = decltype(slotDownload)::value_type;
+    using Decompressions = decltype(slotDecompression)::value_type;
+    using FreeSlotList = decltype(freeSlots)::value_type;
+    using CubeHash = decltype(state->cube2Pointer)::value_type::value_type;
+    auto startDownload = std::make_shared<std::function<void(std::size_t, Dataset, CoordOfCube, Downloads &, Decompressions &, FreeSlotList &, CubeHash &)>>();
 
     if (changedDatasets.size() != datasets.size()) {
         chunkid2chunk.clear();
@@ -837,17 +887,20 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         cube2chunk.resize(changedDatasets.size());
         fourohfour.clear();
         fourohfour.resize(changedDatasets.size());
+        pendingShardedCubes.clear();
     }
     for (std::size_t layerId{0}; layerId < std::min(datasets.size(), changedDatasets.size()); ++layerId) {
         if (datasets[layerId].url != changedDatasets[layerId].url || datasets[layerId].magIndex != changedDatasets[layerId].magIndex) {
             chunkid2chunk[layerId].clear();
             cube2chunk[layerId].clear();
             fourohfour[layerId].clear();
+            pendingShardedCubes.clear();
         }
     }
 
     datasets = changedDatasets;
     loaderCacheSize = cacheSize;
+    pendingShardedCubes.clear();
 
     //split dcoi into slice planes and rest
     std::vector<std::pair<std::size_t, CoordOfCube>> allCubes;
@@ -875,6 +928,10 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 cube2chunk[layerId].emplace(cubeCoord, it->second);
             } else if(auto shard = dataset.precomputedCubeUrl(cubeCoord, true); !fourohfour[layerId].contains(shard)) {
                 // allCubes.erase(std::next(std::begin(allCubes), i));
+                auto & pendingCubes = pendingShardedCubes[qMakePair(qMakePair(static_cast<quint64>(layerId), shard), dataset.minishard(cubeCoord))];
+                if (std::find(std::begin(pendingCubes), std::end(pendingCubes), cubeCoord) == std::end(pendingCubes)) {
+                    pendingCubes.push_back(cubeCoord);
+                }
                 shards.insert({layerId,shard});
                 shard2minishards[{layerId,shard}].insert((dataset.minishard(cubeCoord)));
             }
@@ -912,15 +969,33 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 }
             }
         } else {
+            if (loadingNr != Loader::Controller::singleton().loadingNr) {
+                continue;
+            }
             QNetworkRequest request(shard);
             request.setRawHeader("Range", QString("bytes=%1-%2").arg(0).arg(shard_data_offset - 1).toUtf8());
+            const auto requestLoadingNr = loadingNr;
+            const auto requestMagIndex = datasets[layerId].magIndex;
+            const auto requestUrl = datasets[layerId].url;
+            const auto requestScaleKey = datasets[layerId].scaleKeys[datasets[layerId].magIndex];
             auto * reply = qnam.get(request);
-            QObject::connect(reply, &QNetworkReply::finished, [this, reply, num_minishards, shard, shard_data_offset, layerId, shard2minishards](){
+            QObject::connect(reply, &QNetworkReply::finished, [this, reply, num_minishards, shard, shard_data_offset, layerId, shard2minishards, startDownload,
+                             requestLoadingNr, requestMagIndex, requestUrl, requestScaleKey](){
+                const bool staleDataset = layerId >= datasets.size()
+                                       || datasets[layerId].url != requestUrl
+                                       || datasets[layerId].magIndex != requestMagIndex
+                                       || requestMagIndex >= datasets[layerId].scaleKeys.size()
+                                       || datasets[layerId].scaleKeys[requestMagIndex] != requestScaleKey;
+                if (staleDataset) {
+                    reply->deleteLater();
+                    return;
+                }
                 if (reply->error() != QNetworkReply::NoError) {
                     qDebug() << "shard" << reply->request().url() << reply->errorString();
                     if (reply->error() == QNetworkReply::ContentNotFoundError) {
                         fourohfour[layerId].insert(shard);
                     }
+                    reply->deleteLater();
                     return;
                 }
                 auto data = reply->readAll();
@@ -932,18 +1007,52 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                         QNetworkRequest request(shard);
                         request.setRawHeader("Range", QString("bytes=%1-%2").arg(shard_data_offset + minishards[mi][0]).arg(shard_data_offset + minishards[mi][1] - 1).toUtf8());
                         auto * reply = qnam.get(request);
-                        QObject::connect(reply, &QNetworkReply::finished, [reply, minishards, layerId, shard_data_offset](){
+                        QObject::connect(reply, &QNetworkReply::finished, [this, reply, minishards, layerId, shard_data_offset, shard, mi, startDownload,
+                                         requestLoadingNr, requestMagIndex, requestUrl, requestScaleKey](){
+                            const bool staleLoadingNr = requestLoadingNr != Loader::Controller::singleton().loadingNr;
+                            const bool staleDataset = layerId >= datasets.size()
+                                                   || datasets[layerId].url != requestUrl
+                                                   || datasets[layerId].magIndex != requestMagIndex
+                                                   || requestMagIndex >= datasets[layerId].scaleKeys.size()
+                                                   || datasets[layerId].scaleKeys[requestMagIndex] != requestScaleKey;
+                            if (staleDataset) {
+                                reply->deleteLater();
+                                return;
+                            }
                             if (reply->error() != QNetworkReply::NoError) {
                                 qDebug() << "minishard" << reply->request().url() << reply->errorString();
+                                reply->deleteLater();
                                 return;
                             }
                             auto data = reply->readAll();
                             degzip(data);
                             // qDebug() << "bar" << data.size() << reply->rawHeaderPairs();
+                            bool wroteChunkMapping = false;
                             for (auto chunkid : chunks_from_minishards((reinterpret_cast<unsigned char const *>(data.data())), data.size(), shard_data_offset)) {
                                 chunkid2chunk[layerId][chunkid.first] = chunkid.second;
+                                wroteChunkMapping = true;
                             }
-                            // state->viewer->loader_notify();
+                            if (wroteChunkMapping && !staleLoadingNr) {
+                                const auto pendingKey = qMakePair(qMakePair(static_cast<quint64>(layerId), shard), mi);
+                                auto pendingIt = pendingShardedCubes.find(pendingKey);
+                                if (pendingIt != pendingShardedCubes.end() && *startDownload) {
+                                    auto pendingCubes = std::move(pendingIt.value());
+                                    pendingShardedCubes.erase(pendingIt);
+                                    for (const auto & cubeCoord : pendingCubes) {
+                                        auto chunkIt = chunkid2chunk[layerId].find(datasets[layerId].chunkid(cubeCoord));
+                                        if (chunkIt == std::end(chunkid2chunk[layerId])) {
+                                            continue;
+                                        }
+                                        cube2chunk[layerId][cubeCoord] = chunkIt->second;
+                                        if (!datasets[layerId].loadingEnabled) {
+                                            continue;
+                                        }
+                                        try {
+                                            (*startDownload)(layerId, datasets[layerId], cubeCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer.at(layerId).at(datasets[layerId].magIndex));
+                                        } catch (const std::out_of_range &) {}
+                                    }
+                                }
+                            }
                             reply->deleteLater();
                         });
                     }
@@ -981,8 +1090,8 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         }
     }
 
-    auto startDownload = [this, center, loadingNr](const std::size_t layerId, Dataset dataset, const CoordOfCube cubeCoord, decltype(slotDownload)::value_type & downloads
-            , decltype(slotDecompression)::value_type & decompressions, decltype(freeSlots)::value_type & freeSlots, decltype(state->cube2Pointer)::value_type::value_type & cubeHash){
+    *startDownload = [this, center, loadingNr](const std::size_t layerId, Dataset dataset, const CoordOfCube cubeCoord, Downloads & downloads
+            , Decompressions & decompressions, FreeSlotList & freeSlots, CubeHash & cubeHash){
         auto & opens = slotOpen[layerId];
         const auto c = dataset.cube2global(cubeCoord);
         const auto b = floatCoordinate(dataset.boundary) * dataset.scales[0].x / datasets[0].scales[0].x;
@@ -1056,7 +1165,8 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 if (!cube2chunk[layerId].contains(cubeCoord)) {
                     return;
                 }
-                request.setRawHeader("Range", QString("bytes=%1-%2").arg(cube2chunk[layerId][cubeCoord][0]).arg(cube2chunk[layerId][cubeCoord][0]+cube2chunk[layerId][cubeCoord][1] - 1).toUtf8());
+                const auto chunk = cube2chunk[layerId][cubeCoord];
+                request.setRawHeader("Range", QString("bytes=%1-%2").arg(chunk[0]).arg(chunk[0]+chunk[1] - 1).toUtf8());
             }
 //            request.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
 //            request.setAttribute(QNetworkRequest::SpdyAllowedAttribute, true);
@@ -1212,7 +1322,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         if (loadingNr == Loader::Controller::singleton().loadingNr) {
             if (datasets[layerId].loadingEnabled) {
                 try {
-                    startDownload(layerId, datasets[layerId], cubeCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer.at(layerId).at(datasets[layerId].magIndex));
+                    (*startDownload)(layerId, datasets[layerId], cubeCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer.at(layerId).at(datasets[layerId].magIndex));
                 } catch (const std::out_of_range &) {}
             }
         }
