@@ -655,8 +655,7 @@ std::uint64_t Dataset::minishard(const CoordOfCube cubeCoord) const {
 }
 
 QUrl Dataset::precomputedCubeUrl(const CoordOfCube cubeCoord, bool sharded) const {
-    const auto coord = (cube2global(cubeCoord) / scaleFactor).capped({}, boundary / scaleFactor+1);
-    const auto coord2 = (cube2global(cubeCoord+1) / scaleFactor).capped({}, boundary / scaleFactor+1);
+    const auto [coord, coord2] = chunkMagCoordRange(cubeCoord);
     auto base = url;
     base.setPath(base.path().chopped(5) + QString("/%1").arg(scaleKeys[magIndex]));
     if (!sharded) {

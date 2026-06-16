@@ -555,7 +555,8 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
 
     auto data = reply.read(reply.bytesAvailable());//readAll can be very slow – https://bugreports.qt.io/browse/QTBUG-45926
     const auto cubeVxCount = dataset.cubeShape.prod();
-    const auto partialCubeShape = (dataset.cube2global(cubeCoord + 1) / dataset.scaleFactor).capped({}, dataset.boundary / dataset.scaleFactor + 1) - dataset.cube2global(cubeCoord) / dataset.scaleFactor;
+    const auto [magStart, magEnd] = dataset.chunkMagCoordRange(cubeCoord);
+    const auto partialCubeShape = magEnd - magStart;
     const auto partialCubeVxCount = partialCubeShape.prod();
     const std::size_t availableSize = data.size();
     if (dataset.isOverlay() && (dataset.api == Dataset::API::Precomputed || dataset.api == Dataset::API::Sharded)) {
@@ -567,7 +568,12 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
 
             auto cpd = floatCoordinate{partialCubeShape} / dataset.gpuCubeShape;
             auto cpd2 = Coordinate(std::ceil(cpd.x), std::ceil(cpd.y), std::ceil(cpd.z));
+            // if (partialCubeShape != dataset.cubeShape) {
+            //     qDebug() << "partial overlay chunk" << cubeCoord << "magRange" << magStart << magEnd
+            //              << "extent" << partialCubeShape << "blocks" << cpd2;
+            // }
 
+            // std::fill(reinterpret_cast<std::uint64_t *>(currentSlot), reinterpret_cast<std::uint64_t *>(currentSlot) + cubeVxCount, 0);
             boost::multi_array_ref<std::uint64_t, 3> slotRef(reinterpret_cast<std::uint64_t *>(currentSlot), boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x]);
 
             const auto dataSize = static_cast<std::size_t>(data.size());
@@ -666,22 +672,18 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
                                 // output = decltype(output)(output.size(), boost::endian::load_little_u32(data2 + lookupTableByteOffset));
                                 std::fill(std::begin(output), std::end(output), boost::endian::load_little_u32(data2 + lookupTableByteOffset));
                             }
-                            if (dataset.global2cube(Coordinate{12891, 13090, 0}) == cubeCoord && (Coordinate{12891, 13090, 0} - dataset.cube2global(cubeCoord)) / dataset.gpuCubeShape == Coordinate{x,y,z}) {
-                            }
-
                             boost::const_multi_array_ref<std::uint64_t, 3> dataCube(output.data(), boost::extents[dataset.gpuCubeShape.z][dataset.gpuCubeShape.y][dataset.gpuCubeShape.x]);
                             const auto & s = dataset.gpuCubeShape;
                             using range = boost::multi_array_types::index_range;
-                            auto e = (Coordinate{x,y,z}).componentMul(s);
-                            auto slice  = boost::indices[range(z*s.z, std::min((z+1)*s.z, dataset.cubeShape.z))][range(y*s.y, std::min((y+1)*s.y, dataset.cubeShape.y))][range(x*s.x, std::min((x+1)*s.x, dataset.cubeShape.x))];
+                            auto slice  = boost::indices[range(z*s.z, std::min((z+1)*s.z, partialCubeShape.z))][range(y*s.y, std::min((y+1)*s.y, partialCubeShape.y))][range(x*s.x, std::min((x+1)*s.x, partialCubeShape.x))];
                             auto slice2 = boost::indices[range(0, slotRef[slice].shape()[0])][range(0, slotRef[slice].shape()[1])][range(0, slotRef[slice].shape()[2])];
                             slotRef[slice] = dataCube[slice2];
-                            //     qDebug() << "foo" << cubeCoord << availableSize << expectedSize << dataset.gpuCubeShape << cpd << cpd2 << x << y << z << headerByteOffset << lookupTableByteOffset << encodedBits << encodedValuesByteOffset;
-                            if (encodedBits > 0 || lookupTableByteOffset == encodedValuesByteOffset) {
-                            } else {
+                                // qDebug() << "foo" << cubeCoord << availableSize << expectedSize << dataset.gpuCubeShape << cpd << cpd2 << x << y << z << headerByteOffset << lookupTableByteOffset << encodedBits << encodedValuesByteOffset << slotRef[slice].shape()[1] << slotRef[slice].shape()[2];
+                            // if (encodedBits > 0 || lookupTableByteOffset == encodedValuesByteOffset) {
+                            // } else {
                                 // qDebug() << encodedBits << lookupTableByteOffset << encodedValuesByteOffset << boost::endian::load_little_u32(data2 + lookupTableByteOffset) << boost::endian::load_little_u32(data2 + encodedValuesByteOffset);
                                 // qDebug() << x << y << z << cubeCoord << (z*s.z, std::min((z+1)*s.z, dataset.cubeShape.z)) << (y*s.y, std::min((y+1)*s.y, dataset.cubeShape.y)) << (x*s.x, std::min((x+1)*s.x, dataset.cubeShape.x));
-                            }
+                            // }
                     }
                 }));
 

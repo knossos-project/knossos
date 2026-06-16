@@ -33,6 +33,8 @@
 
 #include <boost/container/small_vector.hpp>
 
+#include <utility>
+
 struct Dataset {
     using list_t = boost::container::small_vector<Dataset, 2>;
     enum class API {
@@ -80,10 +82,22 @@ struct Dataset {
     Coordinate cube2global(const CoordOfCube & cubeCoord) const {
         return cubeCoord.cube2Global(cubeShape, scaleFactor);
     }
-    Coordinate cubeIsPartial(const CoordOfCube & cubeCoord) const {
-        auto coord = cube2global(cubeCoord+1) / scaleFactor;
-        auto magBoundary = boundary / scaleFactor;
-        return {std::min(coord.x, magBoundary.x), std::min(coord.y, magBoundary.y), std::min(coord.z, magBoundary.z)};
+    std::pair<Coordinate, Coordinate> chunkMagCoordRange(const CoordOfCube & cubeCoord) const {
+        const auto magEnd = Coordinate{
+            static_cast<int>(std::ceil(static_cast<double>(boundary.x) / scaleFactor.x)),
+            static_cast<int>(std::ceil(static_cast<double>(boundary.y) / scaleFactor.y)),
+            static_cast<int>(std::ceil(static_cast<double>(boundary.z) / scaleFactor.z))
+        };
+        const auto start = cube2global(cubeCoord) / scaleFactor;
+        const auto uncappedEnd = cube2global(cubeCoord + 1) / scaleFactor;
+        return {
+            start,
+            Coordinate{
+                std::min(uncappedEnd.x, magEnd.x),
+                std::min(uncappedEnd.y, magEnd.y),
+                std::min(uncappedEnd.z, magEnd.z)
+            }
+        };
     }
 
     API api{API::Heidelbrain};
