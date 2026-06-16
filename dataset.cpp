@@ -371,6 +371,16 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                         info.api = API::Sharded;
                         info.bits.emplace_back((class Dataset::bits){a["preshift_bits"].toInt(0), a["minishard_bits"].toInt(0), a["shard_bits"].toInt(0)});
                     }
+                    if (info.fileextension.isEmpty()) {
+                        const auto encoding = scaleRef2["encoding"].toString();
+                        if (encoding == "jpeg")
+                            info.fileextension = ".jpg";
+                        else if (encoding == "compressed_segmentation")
+                            info.fileextension = ".seg.sz.zip";
+                        else
+                            info.fileextension = "." + encoding;
+                    }
+                    qDebug() << info.fileextension;
                 }
             } else if (infos.size() > 0){
                 // info file not found; assume same layer parameter then first layer
@@ -414,8 +424,13 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         info.renderSettings.color = QColor{QString::fromStdString(toml::find_or(vit, "Color", "white"))};
         info.token = QString::fromStdString(toml::find_or(vit, "AdditionalQuery", std::string{}));
 
-        for (const auto & ext : toml::find(vit, "FileExtension").as_array()) {
-            info.fileextension = QString::fromStdString(ext.as_string());
+        if (!(info.api == API::Precomputed || info.api == API::Sharded)) {
+            for (const auto & ext : toml::find(vit, "FileExtension").as_array()) {
+                info.fileextension = QString::fromStdString(ext.as_string());
+                info.type = typeMap.left.at(info.fileextension);
+                infos.emplace_back(info);
+            }
+        } else {
             info.type = typeMap.left.at(info.fileextension);
             infos.emplace_back(info);
         }
