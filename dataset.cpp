@@ -447,7 +447,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
             info.gpuCubeShape = info.cubeShape;// possibly ÷2
             info.gpuCubeShape.z = std::max(1, info.gpuCubeShape.z);// 1/2=0 → 1
         }
-        if (vit.contains("VoxelSize_nm")) {
+        if (vit.contains("VoxelSize_nm") && info.scales.empty()) {
             const auto scales = toml::find(vit, "VoxelSize_nm").as_array();
             for (const auto & scaleit : scales) {
                 const auto scale = scaleit.as_array();
@@ -715,6 +715,10 @@ std::uint64_t Dataset::minishard(const CoordOfCube cubeCoord) const {
 QUrl Dataset::precomputedCubeUrl(const CoordOfCube cubeCoord, bool sharded) const {
     const auto [coord, coord2] = chunkMagCoordRange(cubeCoord);
     auto base = url;
+    if (magIndex >= scaleKeys.size()) {
+        qDebug() << "exceeded available mags" << scaleKeys.size() << magIndex ;
+        return QUrl();
+    }
     base.setPath(base.path().chopped(5) + QString("/%1").arg(scaleKeys[magIndex]));
     if (!sharded) {
         base.setPath(base.path() + QString("/%4-%5_%6-%7_%8-%9")
