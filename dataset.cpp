@@ -42,6 +42,38 @@
 
 Dataset::list_t Dataset::datasets;
 
+Coordinate Dataset::magVoxelExtent() const {
+    if (!magSizes.empty() && magIndex < magSizes.size()) {
+        return magSizes[magIndex];
+    }
+    return boundary / scaleFactor;
+}
+
+void Dataset::fillMagSizesFromBoundary() {
+    if (scales.empty()) {
+        return;
+    }
+    magSizes.clear();
+    for (const auto & scale : scales) {
+        const auto magScaleFactor = scale / scales.front();
+        magSizes.emplace_back(boundary / magScaleFactor);
+    }
+}
+
+std::pair<Coordinate, Coordinate> Dataset::chunkMagCoordRange(const CoordOfCube & cubeCoord) const {
+    const auto magEnd = magVoxelExtent();
+    const auto start = cube2global(cubeCoord) / scaleFactor;
+    const auto uncappedEnd = cube2global(cubeCoord + 1) / scaleFactor;
+    return {
+        start,
+        Coordinate{
+            std::min(uncappedEnd.x, magEnd.x),
+            std::min(uncappedEnd.y, magEnd.y),
+            std::min(uncappedEnd.z, magEnd.z)
+        }
+    };
+}
+
 static boost::bimap<QString, Dataset::CubeType> typeMap = boost::assign::list_of<decltype(typeMap)::relation>
         (".raw", Dataset::CubeType::RAW_UNCOMPRESSED)
         (".png", Dataset::CubeType::RAW_PNG)
@@ -143,6 +175,14 @@ Dataset::list_t Dataset::parse(const QUrl & url, const QString & data, bool add_
             infos[i].renderSettings = {};
             infos[i].allocationEnabled = infos[i].loadingEnabled = infos[i].renderSettings.visible = true;
             infos.back().type = Dataset::CubeType::SNAPPY;
+        }
+    }
+    for (auto && info : infos) {
+        if (info.magSizes.empty() && info.api != API::Precomputed && info.api != API::Sharded) {
+            if (info.scales.empty()) {
+                info.scales = {info.scale};
+            }
+            info.fillMagSizesFromBoundary();
         }
     }
     return infos;
@@ -347,6 +387,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                     const auto scale = scaleRef2["resolution"].toArray();
                     info.scales.emplace_back(scale[0].toDouble(1), scale[1].toDouble(1), scale[2].toDouble(1));
                     const auto boundary = scaleRef2["size"].toArray();
+                    info.magSizes.emplace_back(boundary[0].toInt(1), boundary[1].toInt(1), boundary[2].toInt(1));
                     if (boundary[0].toInt(1) > info.boundary.x) {
                         info.boundary = {boundary[0].toInt(1), boundary[1].toInt(1), boundary[2].toInt(1)};
                     }
@@ -390,6 +431,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                 info.gpuCubeShape = infos[0].gpuCubeShape;
                 info.scales = infos[0].scales;
                 info.scaleKeys = infos[0].scaleKeys;
+                info.magSizes = infos[0].magSizes;
                 info.api = infos[0].api;
                 info.bits = infos[0].bits;
             }
@@ -636,7 +678,8 @@ QUrl Dataset::knossosCubeUrl(const CoordOfCube cubeCoord) const {
 }
 
 std::uint64_t Dataset::chunkid(const CoordOfCube cubeCoord) const {
-    auto max_bits = std::array{std::ceil(std::log2(std::ceil(1. * boundary.x / scaleFactor.x / cubeShape.x))), std::ceil(std::log2(std::ceil(1. * boundary.y / scaleFactor.y / cubeShape.y))), std::ceil(std::log2(std::ceil(1. * boundary.z / scaleFactor.z / cubeShape.z)))};
+    const auto extent = magVoxelExtent();
+    auto max_bits = std::array{std::ceil(std::log2(std::ceil(1. * extent.x / cubeShape.x))), std::ceil(std::log2(std::ceil(1. * extent.y / cubeShape.y))), std::ceil(std::log2(std::ceil(1. * extent.z / cubeShape.z)))};
     std::uint64_t chunk_id = 0;
     std::array<std::uint32_t,3> c{static_cast<unsigned int>(cubeCoord.x), static_cast<unsigned int>(cubeCoord.y), static_cast<unsigned int>(cubeCoord.z)};
     for (std::size_t si{0}, ti{0}; si < 32; ++si) {

@@ -820,8 +820,11 @@ void Loader::Worker::broadcastProgress(bool startup) {
 void Loader::Worker::startDownload(const unsigned int loadingNr, const Coordinate &center, const std::size_t layerId, Dataset dataset, const CoordOfCube cubeCoord, DownloadMap &downloads, DecompressionMap &decompressions, FreeSlotList &freeSlots, CubePointerMap &cubeHash, const boost::optional<ShardedChunk> &shardedChunk) {
     auto & opens = slotOpen[layerId];
     const auto c = dataset.cube2global(cubeCoord);
-    const auto b = floatCoordinate(dataset.boundary) * dataset.scales[0].x / datasets[0].scales[0].x;
-    if (c.x < 0 || c.y < 0 || c.z < 0 || c.x >= b.x || c.y >= b.y || c.z >= b.z) {
+    if (c.x < 0 || c.y < 0 || c.z < 0) {
+        return;
+    }
+    const auto [magStart, magEnd] = dataset.chunkMagCoordRange(cubeCoord);
+    if (magStart.x >= magEnd.x || magStart.y >= magEnd.y || magStart.z >= magEnd.z) {
         return;
     }
     if (dataset.isOverlay()) {

@@ -82,23 +82,11 @@ struct Dataset {
     Coordinate cube2global(const CoordOfCube & cubeCoord) const {
         return cubeCoord.cube2Global(cubeShape, scaleFactor);
     }
-    std::pair<Coordinate, Coordinate> chunkMagCoordRange(const CoordOfCube & cubeCoord) const {
-        const auto magEnd = Coordinate{
-            static_cast<int>(std::ceil(static_cast<double>(boundary.x) / scaleFactor.x)),
-            static_cast<int>(std::ceil(static_cast<double>(boundary.y) / scaleFactor.y)),
-            static_cast<int>(std::ceil(static_cast<double>(boundary.z) / scaleFactor.z))
-        };
-        const auto start = cube2global(cubeCoord) / scaleFactor;
-        const auto uncappedEnd = cube2global(cubeCoord + 1) / scaleFactor;
-        return {
-            start,
-            Coordinate{
-                std::min(uncappedEnd.x, magEnd.x),
-                std::min(uncappedEnd.y, magEnd.y),
-                std::min(uncappedEnd.z, magEnd.z)
-            }
-        };
-    }
+    Coordinate magVoxelExtent() const;
+    void fillMagSizesFromBoundary();
+    std::pair<Coordinate, Coordinate> chunkMagCoordRange(const CoordOfCube & cubeCoord) const;
+
+    boost::container::small_vector<Coordinate, 4> magSizes;
 
     API api{API::Heidelbrain};
     CubeType type{CubeType::RAW_UNCOMPRESSED};
