@@ -545,6 +545,16 @@ void degzip(QByteArray & data) {
     data = QByteArray(reinterpret_cast<char *>(decompressed.data()), decompressed.size());
 }
 
+template<typename SrcT, typename DstT = SrcT>
+void copyPartialCube(const SrcT * src, void * slot, const Coordinate & partialCubeShape, const Coordinate & cubeShape, const std::size_t cubeVxCount) {
+    using range = boost::multi_array_types::index_range;
+    boost::const_multi_array_ref<SrcT, 3> dataRef(src, boost::extents[partialCubeShape.z][partialCubeShape.y][partialCubeShape.x]);
+    boost::multi_array_ref<DstT, 3> slotRef(reinterpret_cast<DstT *>(slot), boost::extents[cubeShape.z][cubeShape.y][cubeShape.x]);
+    std::fill(reinterpret_cast<DstT *>(slot), reinterpret_cast<DstT *>(slot) + cubeVxCount, 0);
+    slotRef[boost::indices[range(0, partialCubeShape.z)][range(0, partialCubeShape.y)][range(0, partialCubeShape.x)]] =
+        dataRef[boost::indices[range(0, partialCubeShape.z)][range(0, partialCubeShape.y)][range(0, partialCubeShape.x)]];
+}
+
 Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply, const std::size_t layerId, const Dataset dataset, decltype(state->cube2Pointer)::value_type::value_type & cubeHash, const CoordOfCube cubeCoord) {
     if (!reply.isOpen()) {// sanity check, finished replies with no error should be ready for reading (https://bugreports.qt.io/browse/QTBUG-45944)
         qCritical() << layerId << cubeCoord << static_cast<int>(dataset.type) << "decompression failed → no fill";
@@ -696,6 +706,9 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
         if (availableSize == expectedSize) {
             std::copy(std::begin(data), std::end(data), reinterpret_cast<std::uint8_t *>(currentSlot));
             success = true;
+        } else if (availableSize >= partialCubeVxCount) {
+            copyPartialCube(reinterpret_cast<const uint8_t *>(data.constData()), currentSlot, partialCubeShape, dataset.cubeShape, cubeVxCount);
+            success = true;
         }
     } else if (dataset.type == Dataset::CubeType::RAW_JPG || dataset.type == Dataset::CubeType::RAW_J2K || dataset.type == Dataset::CubeType::RAW_JP2_6 || dataset.type == Dataset::CubeType::RAW_PNG) {
         const auto image = QImage::fromData(data).convertToFormat(QImage::Format_Grayscale8);
@@ -735,16 +748,24 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
         }
     } else if (dataset.type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_16) {
         const std::size_t expectedSize = cubeVxCount * OBJID_BYTES / 4;
+        const std::size_t partialExpectedSize = partialCubeVxCount * OBJID_BYTES / 4;
         if (availableSize == expectedSize) {
             boost::const_multi_array_ref<uint16_t, 1> dataRef(reinterpret_cast<const uint16_t *>(data.data()), boost::extents[cubeVxCount]);
             boost::multi_array_ref<uint64_t, 1> slotRef(reinterpret_cast<uint64_t *>(currentSlot), boost::extents[cubeVxCount]);
             slotRef = dataRef;
             success = true;
+        } else if (availableSize >= partialExpectedSize) {
+            copyPartialCube<uint16_t, uint64_t>(reinterpret_cast<const uint16_t *>(data.constData()), currentSlot, partialCubeShape, dataset.cubeShape, cubeVxCount);
+            success = true;
         }
     } else if (dataset.type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64) {
         const std::size_t expectedSize = cubeVxCount * OBJID_BYTES;
+        const std::size_t partialExpectedSize = partialCubeVxCount * OBJID_BYTES;
         if (availableSize == expectedSize) {
             std::copy(std::begin(data), std::end(data), reinterpret_cast<std::uint64_t *>(currentSlot));
+            success = true;
+        } else if (availableSize >= partialExpectedSize) {
+            copyPartialCube(reinterpret_cast<const uint64_t *>(data.constData()), currentSlot, partialCubeShape, dataset.cubeShape, cubeVxCount);
             success = true;
         }
     } else if (dataset.type == Dataset::CubeType::SEGMENTATION_SZ_ZIP) {
@@ -754,12 +775,19 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
             archive.goToFirstFile();
             QuaZipFile file(&archive);
             if (file.open(QIODevice::ReadOnly)) {
-                auto data = file.readAll();
+                auto zipData = file.readAll();
                 std::size_t uncompressedSize;
-                snappy::GetUncompressedLength(data.data(), data.size(), &uncompressedSize);
+                snappy::GetUncompressedLength(zipData.data(), zipData.size(), &uncompressedSize);
                 const std::size_t expectedSize = cubeVxCount * OBJID_BYTES;
+                const std::size_t partialExpectedSize = partialCubeVxCount * OBJID_BYTES;
                 if (uncompressedSize == expectedSize) {
-                    success = snappy::RawUncompress(data.data(), data.size(), reinterpret_cast<char*>(currentSlot));
+                    success = snappy::RawUncompress(zipData.data(), zipData.size(), reinterpret_cast<char*>(currentSlot));
+                } else if (uncompressedSize >= partialExpectedSize) {
+                    QByteArray uncompressed(static_cast<int>(uncompressedSize), Qt::Uninitialized);
+                    if (snappy::RawUncompress(zipData.data(), zipData.size(), uncompressed.data())) {
+                        copyPartialCube(reinterpret_cast<const uint64_t *>(uncompressed.constData()), currentSlot, partialCubeShape, dataset.cubeShape, cubeVxCount);
+                        success = true;
+                    }
                 }
             }
             archive.close();
