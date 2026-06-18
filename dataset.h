@@ -124,6 +124,8 @@ struct Dataset {
     QString token;
     bool allocationEnabled{true};
     bool loadingEnabled{true};
+    int channelIndex{0};
+    int numChannels{1};
 
     struct LayerRenderSettings {
         bool visibleSetExplicitly{false};

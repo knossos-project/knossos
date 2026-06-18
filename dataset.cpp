@@ -380,8 +380,9 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
             const auto download = Network::singleton().refresh(info.url);
             if (download.first) {
                 info.boundary = info.cubeShape = {};
-                const auto jmap = QJsonDocument::fromJson(download.second.data()).object();
                 info.gpuCubeShape = {};
+                const auto jmap = QJsonDocument::fromJson(download.second.data()).object();
+                info.numChannels = jmap["num_channels"].toInt();
                 for (auto && scaleRef : jmap["scales"].toArray()) {
                     const auto scaleRef2 = scaleRef.toObject();
                     const auto scale = scaleRef2["resolution"].toArray();
@@ -474,7 +475,23 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
             }
         } else {
             info.type = typeMap.left.at(info.fileextension);
-            infos.emplace_back(info);
+            if (info.numChannels > 1) {
+                for (int i = 0; i < info.numChannels; ++i) {
+                    auto ch = info;
+                    ch.channelIndex = i;
+                    if (i % 3 == 0)
+                        ch.renderSettings.color = QColor{Qt::red};
+                    else if (i % 3 == 1)
+                        ch.renderSettings.color = QColor{Qt::green};
+                    else if (i % 3 == 2)
+                        ch.renderSettings.color = QColor{Qt::blue};
+                    ch.experimentname = QStringLiteral("%1_ch%2").arg(info.experimentname).arg(i);
+                    infos.emplace_back(ch);
+                }
+            } else {
+                info.channelIndex = 0;
+                infos.emplace_back(info);
+            }
         }
     }
     for (auto && info : infos) {
