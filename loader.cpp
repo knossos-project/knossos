@@ -757,16 +757,23 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
                     planeBits = channelPlaneStorage.data();
                 }
 
-                const bool needsAttention = (partialCubeShape.x > 1 && (partialCubeShape.x % 2 != 0 || partialCubeShape.y % 2 != 0)) || (imageHeight != imageWidth && partialCubeShape.x == imageHeight && partialCubeShape.y == imageWidth);
+                const bool needsAttention = (partialCubeShape.x > 1 && (partialCubeShape.x % 2 != 0 || partialCubeShape.y % 2 != 0)) ||
+                                            (partialCubeShape.x > 1 && (partialCubeShape.x != imageWidth || partialCubeShape.x != imageBytesPerLine/numChannels)) ||
+                                            (imageHeight != imageWidth && partialCubeShape.x == imageHeight && partialCubeShape.y == imageWidth);
                 boost::multi_array_ref<uint8_t, 3> slotRef(reinterpret_cast<uint8_t *>(currentSlot), boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x]);
                 std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeVxCount, 0);
                 auto slotSlice = slotRef[boost::indices[range(0, nz)][range(0, ny)][range(0, nx)]];
                 const auto extents = partialCubeShape.z == 1 || needsAttention ? boost::extents[1][imageHeight][imageBytesPerLine/numChannels] : boost::extents[nz][ny][nx];
                 boost::const_multi_array_ref<uint8_t, 3> dataRef(planeBits, extents);
                 if (partialCubeShape.z == 1 || needsAttention) {
-                    boost::multi_array<uint8_t, 3> b = dataRef[boost::indices[range(0, 1)][range(0, imageHeight)][range(0, imageWidth)]];
-                    b.reshape(boost::array<decltype(b)::index, 3>{nz, ny, nx});
-                    slotSlice = b;
+                    boost::multi_array<uint8_t, 3> d = dataRef[boost::indices[range(0, 1)][range(0, imageHeight)][range(0, imageWidth)]];
+                    if (dataset.api == Dataset::API::Precomputed or dataset.api == Dataset::API::Sharded) {
+                        d.reshape(boost::array<decltype(d)::index, 3>{nz, ny, nx});
+                        slotSlice = d;
+                    } else {
+                        d.reshape(boost::array<decltype(d)::index, 3>{dataset.cubeShape.z,dataset.cubeShape.y,dataset.cubeShape.x});
+                        slotSlice = d[boost::indices[range(0, nz)][range(0, ny)][range(0, nx)]];
+                    }
                 } else {
                     slotSlice = dataRef[boost::indices[range(0, nz)][range(0, ny)][range(0, nx)]];
                 }
