@@ -54,11 +54,11 @@ static boost::bimap<QString, Dataset::CubeType> typeMap = boost::assign::list_of
 
 QString Dataset::compressionString() const {
     switch (type) {
-    case Dataset::CubeType::RAW_UNCOMPRESSED: return "8 bit gray";
+    case Dataset::CubeType::RAW_UNCOMPRESSED: return bytesPerVoxel == 2 ? "16 bit gray" : "8 bit gray";
     case Dataset::CubeType::RAW_JPG: return "jpg";
     case Dataset::CubeType::RAW_J2K: return "j2k";
     case Dataset::CubeType::RAW_JP2_6: return "jp2";
-    case Dataset::CubeType::RAW_PNG: return "png";
+    case Dataset::CubeType::RAW_PNG: return bytesPerVoxel == 2 ? "png 16 bit" : "png";
     case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_16: return "16 bit id";
     case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64: return "64 bit id";
     case Dataset::CubeType::SEGMENTATION_SZ_ZIP: return "seg.sz.zip";

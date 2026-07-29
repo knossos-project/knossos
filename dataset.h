@@ -33,6 +33,8 @@
 
 #include <boost/container/small_vector.hpp>
 
+#include <cstdint>
+
 struct Dataset {
     using list_t = boost::container::small_vector<Dataset, 2>;
     enum class API {
@@ -76,6 +78,13 @@ struct Dataset {
 
     API api{API::Heidelbrain};
     CubeType type{CubeType::RAW_UNCOMPRESSED};
+    // raw layers only – overlay layers always store OBJID_BYTES per voxel
+    std::size_t bytesPerVoxel{1};
+    // the only place the cube slot element size may be derived from – loader allocation,
+    // decompression and zero-fill sizes must all agree or slot reuse overruns the heap
+    std::size_t cubeElementBytes() const {
+        return isOverlay() ? sizeof(std::uint64_t) : bytesPerVoxel;
+    }
     // Edge length of the current data set in data pixels.
     Coordinate boundary{1000, 1000, 1000};
     // pixel-to-nanometer scale

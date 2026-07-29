@@ -443,17 +443,36 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
     const auto cubeVxCount = dataset.cubeShape.prod();
     const std::size_t availableSize = data.size();
     if (dataset.type == Dataset::CubeType::RAW_UNCOMPRESSED) {
-        const std::size_t expectedSize = cubeVxCount;
+        const std::size_t expectedSize = cubeVxCount * dataset.bytesPerVoxel;// native little endian voxels
         if (availableSize == expectedSize) {
             std::copy(std::begin(data), std::end(data), reinterpret_cast<std::uint8_t *>(currentSlot));
             success = true;
         }
     } else if (dataset.type == Dataset::CubeType::RAW_JPG || dataset.type == Dataset::CubeType::RAW_J2K || dataset.type == Dataset::CubeType::RAW_JP2_6 || dataset.type == Dataset::CubeType::RAW_PNG) {
-        const auto image = QImage::fromData(data).convertToFormat(QImage::Format_Grayscale8);
-        const qint64 expectedSize = cubeVxCount;
-        if (image.sizeInBytes() == expectedSize) {
-            std::copy(image.bits(), image.bits() + image.sizeInBytes(), reinterpret_cast<std::uint8_t *>(currentSlot));
-            success = true;
+        if (dataset.bytesPerVoxel == 2) {
+            const auto image = QImage::fromData(data);
+            // require an actually 16 bit source – convertToFormat would silently invent
+            // 16 bit data (×257) from a misconfigured 8 bit dataset
+            if (image.format() != QImage::Format_Grayscale16) {
+                qCritical() << layerId << cubeCoord << "16 bit layer, but image decoded to format" << image.format() << "instead of Grayscale16 → no fill";
+            } else if (static_cast<std::size_t>(image.width()) * static_cast<std::size_t>(image.height()) == cubeVxCount) {
+                // scanlines are 4 byte aligned – copy per line instead of assuming contiguity
+                const std::size_t lineBytes = image.width() * static_cast<std::size_t>(2);
+                auto * out = reinterpret_cast<std::uint8_t *>(currentSlot);
+                for (int y = 0; y < image.height(); ++y) {
+                    const auto * line = image.constScanLine(y);
+                    std::copy(line, line + lineBytes, out);
+                    out += lineBytes;
+                }
+                success = true;
+            }
+        } else {
+            const auto image = QImage::fromData(data).convertToFormat(QImage::Format_Grayscale8);
+            const qint64 expectedSize = cubeVxCount;
+            if (image.sizeInBytes() == expectedSize) {
+                std::copy(image.bits(), image.bits() + image.sizeInBytes(), reinterpret_cast<std::uint8_t *>(currentSlot));
+                success = true;
+            }
         }
     } else if (dataset.type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_16) {
         const std::size_t expectedSize = cubeVxCount * OBJID_BYTES / 4;
@@ -579,6 +598,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             if (datasets[layerId].allocationEnabled && changedDatasets[layerId].allocationEnabled
                     && loaderCacheSize == cacheSize
                     && datasets[layerId].type == changedDatasets[layerId].type
+                    && datasets[layerId].bytesPerVoxel == changedDatasets[layerId].bytesPerVoxel
                     && datasets[layerId].cubeShape == changedDatasets[layerId].cubeShape) {
                 continue;// loader-relevant layer properties didn’t change
             }
@@ -589,9 +609,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         if (!changedDatasets[layerId].allocationEnabled) {
             continue;
         }
-        const auto overlayFactor = changedDatasets[layerId].isOverlay() ? OBJID_BYTES : 1;
-
-        const auto cubeBytes = changedDatasets[layerId].cubeShape.prod() * overlayFactor;
+        const auto cubeBytes = changedDatasets[layerId].cubeShape.prod() * changedDatasets[layerId].cubeElementBytes();
         const auto cubeSetElements = std::pow(state->M, 3);
         const auto cubeSetBytes = cubeSetElements * cubeBytes;
         qDebug() << layerId << "Allocating" << cubeSetBytes / 1024. / 1024. << "MiB for cubes.";
@@ -681,7 +699,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 if (!freeSlots.empty()) {
                     auto * currentSlot = freeSlots.front();
                     freeSlots.pop_front();
-                    const std::size_t cubeBytes = dataset.cubeShape.prod() * (dataset.isOverlay() ? OBJID_BYTES : 1);
+                    const std::size_t cubeBytes = dataset.cubeShape.prod() * dataset.cubeElementBytes();
                     std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeBytes, 0);
                     state->protectCube2Pointer.lock();
                     cubeHash[cubeCoord] = currentSlot;
@@ -747,7 +765,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     if ((maybeReply != nullptr && maybeReply->error() == QNetworkReply::ContentNotFoundError) || (maybeReply == nullptr && !exists)) {//404 → fill
                         auto * currentSlot = freeSlots.front();
                         freeSlots.pop_front();
-                        const std::size_t cubeBytes = dataset.cubeShape.prod() * (dataset.isOverlay() ? OBJID_BYTES : 1);
+                        const std::size_t cubeBytes = dataset.cubeShape.prod() * dataset.cubeElementBytes();
                         std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeBytes, 0);
                         state->protectCube2Pointer.lock();
                         cubeHash[cubeCoord] = currentSlot;
