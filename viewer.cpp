@@ -318,7 +318,7 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxI
     const auto cubeShape = Dataset::current().cubeShape;
     if((currentPxInDc.x < 0) || (currentPxInDc.y < 0) || (currentPxInDc.z < 0) ||
        (currentPxInDc.x >= cubeShape.x) || (currentPxInDc.y >= cubeShape.y) || (currentPxInDc.z >= cubeShape.z)) {
-        const int sliceIndex = 3 * ( s + *t * std::ceil(usedSizeInCubePixels));
+        const int sliceIndex = 4 * ( s + *t * std::ceil(usedSizeInCubePixels));
         slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = 0;
         slice[sliceIndex + 3] = 255;
         (*t)++;
