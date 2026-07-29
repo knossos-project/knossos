@@ -588,6 +588,9 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
     });
     vp.texture.texHandle[layerId].release();
     glBindTexture(GL_TEXTURE_2D, 0);
+    if (qEnvironmentVariableIsSet("KNOSSOS_TEXCHECKSUM")) {// regression baseline hook, see 16bit-support-plan.md
+        qDebug() << "texchecksum ortho" << layerId << static_cast<int>(vp.viewportType) << qChecksum(reinterpret_cast<const char *>(vp.texture.texData[layerId].data()), vp.texture.texData[layerId].size());
+    }
     vp.resliceNecessary[layerId] = false;
     vp.resliceNecessaryCubes[layerId].clear();
 }
@@ -766,6 +769,9 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, std::ceil(vp.texture.usedSizeInCubePixels), std::ceil(vp.texture.usedSizeInCubePixels), GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
     vp.texture.texHandle[layerId].release();
     glBindTexture(GL_TEXTURE_2D, 0);
+    if (qEnvironmentVariableIsSet("KNOSSOS_TEXCHECKSUM")) {// regression baseline hook, see 16bit-support-plan.md
+        qDebug() << "texchecksum arb" << layerId << qChecksum(reinterpret_cast<const char *>(texData.data()), texData.size());
+    }
 }
 
 void Viewer::calcLeftUpperTexAbsPx() {
