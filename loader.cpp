@@ -455,7 +455,7 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
             // 16 bit data (×257) from a misconfigured 8 bit dataset
             if (image.format() != QImage::Format_Grayscale16) {
                 qCritical() << layerId << cubeCoord << "16 bit layer, but image decoded to format" << image.format() << "instead of Grayscale16 → no fill";
-            } else if (static_cast<std::size_t>(image.width()) * static_cast<std::size_t>(image.height()) == cubeVxCount) {
+            } else if (static_cast<std::size_t>(image.width()) * static_cast<std::size_t>(image.height()) == static_cast<std::size_t>(cubeVxCount)) {
                 // scanlines are 4 byte aligned – copy per line instead of assuming contiguity
                 const std::size_t lineBytes = image.width() * static_cast<std::size_t>(2);
                 auto * out = reinterpret_cast<std::uint8_t *>(currentSlot);
