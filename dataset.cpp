@@ -168,6 +168,10 @@ Dataset::list_t Dataset::parseGoogleJson(const QUrl & infoUrl, const QString & j
     info.magnification = info.lowestAvailableMag;
     info.highestAvailableMag = std::pow(2,(jmap["geometry"].toArray().size()-1)); //highest google mag
     info.type = CubeType::RAW_JPG;
+    const auto channelType = jmap["geometry"][0]["channelType"].toString();
+    if (!channelType.isEmpty() && channelType.compare("uint8", Qt::CaseInsensitive) != 0) {
+        qWarning() << "Brainmaps channelType" << channelType << "not supported – loading as 8 bit JPEG";
+    }
 
     info.url = infoUrl;
 
@@ -199,6 +203,12 @@ Dataset::list_t Dataset::parseNeuroDataStoreJson(const QUrl & infoUrl, const QSt
     info.magnification = info.lowestAvailableMag;
     info.highestAvailableMag = std::pow(2, mags[mags.toArray().size()-1].toInt(1));
     info.type = CubeType::RAW_JPG;
+    for (const auto & channelRef : jdoc["channels"].toObject()) {
+        const auto datatype = channelRef.toObject()["datatype"].toString();
+        if (!datatype.isEmpty() && datatype != "uint8") {
+            qWarning() << "NeuroDataStore channel datatype" << datatype << "not supported – loading as 8 bit JPEG";
+        }
+    }
 
     return {info};
 }
@@ -265,6 +275,12 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         } else if (token == "_Visible") {
             infos.back().renderSettings.visibleSetExplicitly = true;
             infos.back().allocationEnabled = infos.back().loadingEnabled = info.renderSettings.visible = QVariant{value}.toBool();
+        } else if (token == "_ElementClass") {// KNOSSOS extension, not part of the PyKnossos format
+            if (value == "uint16") {
+                info.bytesPerVoxel = 2;
+            } else if (value != "uint8") {
+                qWarning() << "unsupported _ElementClass" << value << "– assuming uint8";
+            }
         } else if (token == "_Description") {
             info.description = value;
         } else if (!token.isEmpty() && token != "_NumberofCubes" && token != "_Origin") {
@@ -341,6 +357,13 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
             qDebug() << download.first << download.second;
         }
 
+        const auto elementClass = QString::fromStdString(toml::find_or(vit, "ElementClass", std::string{"uint8"}));
+        if (elementClass == "uint16") {
+            info.bytesPerVoxel = 2;
+        } else if (elementClass != "uint8") {
+            qWarning() << "Layer" << info.experimentname << "has unsupported ElementClass" << elementClass << "– assuming uint8";
+        }
+
         for (const auto & ext : toml::find(vit, "FileExtension").as_array()) {
             info.fileextension = QString::fromStdString(ext.as_string());
             info.type = typeMap.left.at(info.fileextension);
@@ -377,8 +400,15 @@ Dataset::list_t Dataset::parseWebKnossosJson(const QUrl &, const QString & json_
         if (download.first) {
             info.token = QJsonDocument::fromJson(download.second)["token"].toString();
         }
+        const auto elementClass = layer["elementClass"].toString("uint8");
         if (category == "color") {
             info.type = CubeType::RAW_UNCOMPRESSED;
+            if (elementClass == "uint16") {
+                info.bytesPerVoxel = 2;
+            } else if (elementClass != "uint8") {
+                qWarning() << "skipping color layer" << layerString << "with unsupported elementClass" << elementClass;
+                continue;
+            }
         } else {// "segmentation"
             info.type = CubeType::SEGMENTATION_UNCOMPRESSED_16;
         }
