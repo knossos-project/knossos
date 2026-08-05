@@ -449,30 +449,24 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
             success = true;
         }
     } else if (dataset.type == Dataset::CubeType::RAW_JPG || dataset.type == Dataset::CubeType::RAW_J2K || dataset.type == Dataset::CubeType::RAW_JP2_6 || dataset.type == Dataset::CubeType::RAW_PNG) {
-        if (dataset.bytesPerVoxel == 2) {
-            const auto image = QImage::fromData(data);
-            // require an actually 16 bit source – convertToFormat would silently invent
-            // 16 bit data (×257) from a misconfigured 8 bit dataset
-            if (image.format() != QImage::Format_Grayscale16) {
-                qCritical() << layerId << cubeCoord << "16 bit layer, but image decoded to format" << image.format() << "instead of Grayscale16 → no fill";
-            } else if (static_cast<std::size_t>(image.width()) * static_cast<std::size_t>(image.height()) == static_cast<std::size_t>(cubeVxCount)) {
-                // scanlines are 4 byte aligned – copy per line instead of assuming contiguity
-                const std::size_t lineBytes = image.width() * static_cast<std::size_t>(2);
-                auto * out = reinterpret_cast<std::uint8_t *>(currentSlot);
-                for (int y = 0; y < image.height(); ++y) {
-                    const auto * line = image.constScanLine(y);
-                    std::copy(line, line + lineBytes, out);
-                    out += lineBytes;
-                }
-                success = true;
-            }
+        // for 16 bit require an actually 16 bit source – convertToFormat would silently invent
+        // 16 bit data (×257) from a misconfigured 8 bit dataset
+        const auto expectedFormat = dataset.bytesPerVoxel == 2 ? QImage::Format_Grayscale16 : QImage::Format_Grayscale8;
+        const auto image = dataset.bytesPerVoxel == 2 ? QImage::fromData(data) : QImage::fromData(data).convertToFormat(QImage::Format_Grayscale8);
+        if (image.format() != expectedFormat) {
+            qCritical() << layerId << cubeCoord << "image decoded to format" << image.format() << "instead of" << expectedFormat << "→ no fill";
+        } else if (static_cast<std::size_t>(image.width()) * static_cast<std::size_t>(image.height()) != static_cast<std::size_t>(cubeVxCount)) {
+            qCritical() << layerId << cubeCoord << "image size" << image.width() << "×" << image.height() << "doesn’t cover the cube’s" << cubeVxCount << "voxels → no fill";
         } else {
-            const auto image = QImage::fromData(data).convertToFormat(QImage::Format_Grayscale8);
-            const qint64 expectedSize = cubeVxCount;
-            if (image.sizeInBytes() == expectedSize) {
-                std::copy(image.bits(), image.bits() + image.sizeInBytes(), reinterpret_cast<std::uint8_t *>(currentSlot));
-                success = true;
+            // scanlines are 4 byte aligned – copy per line instead of assuming contiguity
+            const std::size_t lineBytes = image.width() * static_cast<std::size_t>(dataset.bytesPerVoxel);
+            auto * out = reinterpret_cast<std::uint8_t *>(currentSlot);
+            for (int y = 0; y < image.height(); ++y) {
+                const auto * line = image.constScanLine(y);
+                std::copy(line, line + lineBytes, out);
+                out += lineBytes;
             }
+            success = true;
         }
     } else if (dataset.type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_16) {
         const std::size_t expectedSize = cubeVxCount * OBJID_BYTES / 4;

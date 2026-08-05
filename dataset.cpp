@@ -52,6 +52,13 @@ static boost::bimap<QString, Dataset::CubeType> typeMap = boost::assign::list_of
         (".seg.sz.zip", Dataset::CubeType::SEGMENTATION_SZ_ZIP)
         (".seg", Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64);
 
+static void enforce16BitCubeTypeSupport(Dataset & info) {
+    if (info.bytesPerVoxel == 2 && info.type != Dataset::CubeType::RAW_UNCOMPRESSED && info.type != Dataset::CubeType::RAW_PNG) {
+        qWarning() << "Layer" << info.experimentname << "combines 16 bit voxels with" << typeMap.right.at(info.type) << "cubes which only ever decode to 8 bit – falling back to 8 bit";
+        info.bytesPerVoxel = 1;
+    }
+}
+
 QString Dataset::compressionString() const {
     switch (type) {
     case Dataset::CubeType::RAW_UNCOMPRESSED: return bytesPerVoxel == 2 ? "16 bit gray" : "8 bit gray";
@@ -292,6 +299,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         if (info.scales.empty()) {
             return {};
         }
+        enforce16BitCubeTypeSupport(info);
         if (info.url.isEmpty()) {
             info.url = QUrl::fromLocalFile(QFileInfo(configUrl.toLocalFile()).absoluteDir().absolutePath());
         }
@@ -374,6 +382,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         if (info.scales.empty()) {
             return {};
         }
+        enforce16BitCubeTypeSupport(info);
         if (info.url.isEmpty()) {
             info.url = QUrl::fromLocalFile(QFileInfo(configUrl.toLocalFile()).absoluteDir().absolutePath());
         }
@@ -396,10 +405,6 @@ Dataset::list_t Dataset::parseWebKnossosJson(const QUrl &, const QString & json_
 
         const auto layerString = layer["name"].toString();
         const auto category = layer["category"].toString();
-        const auto download = Network::singleton().refresh(QString("https://demo.webknossos.org/api/userToken/generate"));
-        if (download.first) {
-            info.token = QJsonDocument::fromJson(download.second)["token"].toString();
-        }
         const auto elementClass = layer["elementClass"].toString("uint8");
         if (category == "color") {
             info.type = CubeType::RAW_UNCOMPRESSED;
@@ -411,6 +416,10 @@ Dataset::list_t Dataset::parseWebKnossosJson(const QUrl &, const QString & json_
             }
         } else {// "segmentation"
             info.type = CubeType::SEGMENTATION_UNCOMPRESSED_16;
+        }
+        const auto download = Network::singleton().refresh(QString("https://demo.webknossos.org/api/userToken/generate"));
+        if (download.first) {
+            info.token = QJsonDocument::fromJson(download.second)["token"].toString();
         }
         const auto boundary_json = layer["boundingBox"];
         info.boundary = {

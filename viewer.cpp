@@ -253,10 +253,11 @@ Viewer::AdjustmentTable Viewer::buildAdjustmentTable(const std::size_t layerId) 
     const auto range = renderSettings.rangeDelta;
     const bool invert = range < 0;
     const bool lutOn = state->viewerState->datasetColortableOn;
+    const double rangeAbs = std::max(std::abs(range), 1.0 / maxVal);// range 0 degenerates into a threshold at bias instead of dividing by 0
     AdjustmentTable table(levels);
     for (std::size_t v = 0; v < levels; ++v) {
         // window in the native domain, emit 8 bit
-        int dynIndex = (v - bias * maxVal) / std::abs(range) * scale;
+        int dynIndex = (v - bias * maxVal) / rangeAbs * scale;
         dynIndex = invert ? 255 - dynIndex : dynIndex;
         const std::uint8_t val = std::min(255, std::max(0, dynIndex));
         if (lutOn) {// windowing first keeps 256-entry LUTs useful on 16 bit data
@@ -509,6 +510,9 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
         vpGenerateTexture(static_cast<ViewportArb&>(vp), layerId);
         return;
     }
+    if (!vp.resliceNecessary[layerId] && vp.resliceNecessaryCubes[layerId].empty()) {
+        return;// no adjustment table for nothing – this runs every frame
+    }
     const int multiSliceiMax = Dataset::datasets[layerId].renderSettings.combineSlicesEnabled
             * Dataset::datasets[layerId].renderSettings.combineSlices
             * ((vp.viewportType == VIEWPORT_XY) || !Dataset::datasets[layerId].renderSettings.combineSlicesXyOnly);
@@ -543,9 +547,6 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
 
         // We iterate over the texture with x and y being in a temporary coordinate
         // system local to this texture.
-        if (!vp.resliceNecessary[layerId] && vp.resliceNecessaryCubes[layerId].empty()) {
-            return;
-        }
         const CoordOfCube upperLeftDc = Dataset::datasets[layerId].global2cube(vp.texture.leftUpperPxInAbsPx) + offsetCube;
         QFutureSynchronizer<void> sync;
         for_each_resliced_cube_do(upperLeftDc, [this, cubeShape, layerId, &vp, &sync, &adjustment, currentPosition_inside_dc, first](auto, auto, auto currentDc, auto index){
@@ -955,6 +956,15 @@ void Viewer::run() {
         qDebug() << "loadPendingCubes";
         std::size_t id{};
         for (auto && [dset, textures] : boost::combine(Dataset::datasets, layers)) {
+            if (!dset.isOverlay() && dset.bytesPerVoxel != 1) {// gpu_raw_cube uploads assume 8 bit voxels
+                static bool warned{false};
+                if (!warned) {
+                    qWarning() << "GPU slicing doesn’t support 16 bit layers – layer" << id << "won’t be rendered";
+                    warned = true;
+                }
+                ++id;
+                continue;
+            }
             calculateMissingOrthoGPUCubes(dset, textures);
             qDebug() << textures.pendingOrthoCubes.size() << textures.pendingArbCubes.size() << textures.textures.size();
             loadPendingCubes(dset, textures, id, textures.pendingOrthoCubes, timer);

@@ -521,10 +521,12 @@ bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> lo
             return false;
         }
     }
-    auto layers = [this, &path, &data, &loadOverlay, &silent]() {
+    bool parseErrorReported{false};
+    auto layers = [this, &path, &data, &loadOverlay, &silent, &parseErrorReported]() {
         try {
             return Dataset::parse(path, data, loadOverlay.get_value_or(segmentationOverlayCheckbox.isChecked()));
         } catch(std::exception & e) {
+            parseErrorReported = true;
             if (!silent) {
                 QMessageBox warning{QApplication::activeWindow()};
                 warning.setIcon(QMessageBox::Warning);
@@ -538,6 +540,17 @@ bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> lo
         }
     }();
     if (layers.empty()) {
+        if (!parseErrorReported) {
+            if (!silent) {
+                QMessageBox warning{QApplication::activeWindow()};
+                warning.setIcon(QMessageBox::Warning);
+                warning.setText(tr("Failed to load dataset"));
+                warning.setInformativeText(tr("%1\n\nThe dataset contains no usable layers – see the log for details.").arg(path.toString()));
+                warning.exec();
+                open();
+            }
+            qDebug() << "no usable layers in dataset" << path;
+        }
         return false;
     }
     if (Dataset::isHeidelbrain(path)) {
