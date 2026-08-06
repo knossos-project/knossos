@@ -269,7 +269,7 @@ void MainWindow::updateCursorLabel(const Coordinate & position, const ViewportTy
     const auto inc{state->skeletonState->displayMatlabCoordinates};
     cursorPositionLabel.setText(QString("%1 %2 %3").arg(position.x + inc).arg(position.y + inc).arg(position.z + inc));
     auto cubePos = Dataset::current().global2cube(position);
-    cubePositionLabel.setText(QString("cube %4 %5 %6 (mag%7)").arg(cubePos.x).arg(cubePos.y).arg(cubePos.z).arg(Dataset::current().toMag(Dataset::current().magIndex)));
+    cubePositionLabel.setText(QString("cube %4 %5 %6 (mag%7)").arg(cubePos.x).arg(cubePos.y).arg(cubePos.z).arg(std::pow(2, Dataset::current().magIndex)));
 }
 
 void MainWindow::createViewports() {
