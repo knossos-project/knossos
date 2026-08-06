@@ -450,6 +450,8 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                         const auto a = it->toObject();
                         info.api = API::Sharded;
                         info.bits.emplace_back((class Dataset::bits){a["preshift_bits"].toInt(0), a["minishard_bits"].toInt(0), a["shard_bits"].toInt(0)});
+                    } else {
+                        info.bits.emplace_back((class Dataset::bits){0,0,0});
                     }
 
                     if (info.fileextension.isEmpty()) {
@@ -490,7 +492,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
 
                 // --- SORT scales ---
                 struct CombinedScale {
-                    Coordinate scale;
+                    floatCoordinate scale;
                     Coordinate magSize;
                     QString key;
                     class Dataset::bits bits;
