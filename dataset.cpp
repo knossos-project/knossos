@@ -368,6 +368,38 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
             qDebug() << download.first << download.second;
         }
 
+        boost::container::small_vector<floatCoordinate, 4> tomlScales;
+        if (vit.contains("Extent_px")) {
+            const auto extent = toml::find(vit, "Extent_px").as_array();
+            info.boundary = Coordinate(extent.at(0).as_integer(), extent.at(1).as_integer(), extent.at(2).as_integer());
+        }
+        if (vit.contains("CubeShape_px")) {
+            const auto cube_shape = toml::find(vit, "CubeShape_px").as_array();
+            info.cubeShape = Coordinate(cube_shape.at(0).as_integer(), cube_shape.at(1).as_integer(), cube_shape.at(2).as_integer());
+            info.gpuCubeShape = info.cubeShape;// possibly ÷2
+            info.gpuCubeShape.z = std::max(1, info.gpuCubeShape.z);// 1/2=0 → 1
+        }
+        if (vit.contains("VoxelSize_nm")) {
+            const auto scales = toml::find(vit, "VoxelSize_nm").as_array();
+            for (const auto & scaleit : scales) {
+                const auto scale = scaleit.as_array();
+                const auto x = (scale.at(0).is_floating()) ? scale.at(0).as_floating() : scale.at(0).as_integer();
+                const auto y = (scale.at(1).is_floating()) ? scale.at(1).as_floating() : scale.at(1).as_integer();
+                const auto z = (scale.at(2).is_floating()) ? scale.at(2).as_floating() : scale.at(2).as_integer();
+                tomlScales.emplace_back(x, y, z);
+            }
+        }
+
+        // helper for comparing scales
+        auto scaleExists = [](const boost::container::small_vector<floatCoordinate, 4>& container, double x, double y, double z) {
+            for (const auto& s : container) {
+                if (std::abs(s.x - x) < 1e-3 && std::abs(s.y - y) < 1e-3 && std::abs(s.z - z) < 1e-3) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
         if (url.endsWith("info") or info.api == API::Precomputed) {
             info.api = API::Precomputed;
             if (!url.endsWith("info") && !url.isEmpty())
@@ -379,23 +411,28 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
             }
             const auto download = Network::singleton().refresh(info.url);
             if (download.first) {
-                info.boundary = info.cubeShape = {};
+                info.cubeShape = {};
                 info.gpuCubeShape = {};
+                info.scales.clear();
                 const auto jmap = QJsonDocument::fromJson(download.second.data()).object();
                 info.numChannels = jmap["num_channels"].toInt();
                 for (auto && scaleRef : jmap["scales"].toArray()) {
                     const auto scaleRef2 = scaleRef.toObject();
+
                     const auto scale = scaleRef2["resolution"].toArray();
                     info.scales.emplace_back(scale[0].toDouble(1), scale[1].toDouble(1), scale[2].toDouble(1));
+
                     const auto boundary = scaleRef2["size"].toArray();
                     info.magSizes.emplace_back(boundary[0].toInt(1), boundary[1].toInt(1), boundary[2].toInt(1));
                     if (boundary[0].toInt(1) > info.boundary.x) {
                         info.boundary = {boundary[0].toInt(1), boundary[1].toInt(1), boundary[2].toInt(1)};
                     }
+
                     const auto chunk_size = scaleRef2["chunk_sizes"].toArray()[0].toArray();
                     if (chunk_size[0].toInt(1) > info.cubeShape.x) {
                         info.cubeShape = {chunk_size[0].toInt(1), chunk_size[1].toInt(1), chunk_size[2].toInt(1)};
                     }
+
                     info.scaleKeys.emplace_back(scaleRef2["key"].toString());
                     if (info.scaleKeys.size() == 1) {
                         if (auto it = scaleRef2.find("compressed_segmentation_block_size"); it != std::end(scaleRef2)) {
@@ -408,11 +445,13 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                             info.gpuCubeShape.z = std::max(1, info.gpuCubeShape.z);// 1/2=0 → 1
                         }
                     }
+
                     if (auto it = scaleRef2.find("sharding"); it != std::end(scaleRef2)) {
                         const auto a = it->toObject();
                         info.api = API::Sharded;
                         info.bits.emplace_back((class Dataset::bits){a["preshift_bits"].toInt(0), a["minishard_bits"].toInt(0), a["shard_bits"].toInt(0)});
                     }
+
                     if (info.fileextension.isEmpty()) {
                         const auto encoding = scaleRef2["encoding"].toString();
                         if (encoding == "jpeg")
@@ -423,6 +462,69 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                             info.fileextension = "." + encoding;
                     }
                     qDebug() << info.fileextension;
+                }
+
+                // --- combine values from TOML file and INFO file ---
+                floatCoordinate refScale = tomlScales.empty() ? floatCoordinate{1, 1, 1} : tomlScales[0];
+                Coordinate refSize  = info.boundary; // Extent_px aus TOML
+                if (!info.scales.empty()) { // get scale parameter from info if available
+                    refScale = info.scales[0];
+                    refSize  = info.magSizes[0];
+                }
+
+                // add scales that are in TOML but not in INFO
+                for (const auto& ts : tomlScales) {
+                    if (!scaleExists(info.scales, ts.x, ts.y, ts.z)) {
+                        info.scales.push_back(ts);
+                        info.scaleKeys.push_back(""); // Leerer Key
+                        info.bits.emplace_back((class Dataset::bits){0, 0, 0}); // Default-Bits {0,0,0}
+
+                        // magSize berechnen (base size * (base scale / new scale))
+                        int mx = std::max(1, static_cast<int>(std::round(refSize.x * (refScale.x / ts.x))));
+                        int my = std::max(1, static_cast<int>(std::round(refSize.y * (refScale.y / ts.y))));
+                        int mz = std::max(1, static_cast<int>(std::round(refSize.z * (refScale.z / ts.z))));
+
+                        info.magSizes.emplace_back(mx, my, mz);
+                    }
+                }
+
+                // --- SORT scales ---
+                struct CombinedScale {
+                    Coordinate scale;
+                    Coordinate magSize;
+                    QString key;
+                    class Dataset::bits bits;
+                };
+
+                std::vector<CombinedScale> combined;
+                for (size_t i = 0; i < info.scales.size(); ++i) {
+                    combined.push_back({info.scales[i], info.magSizes[i], info.scaleKeys[i], info.bits[i]});
+                }
+
+                std::sort(combined.begin(), combined.end(), [](const CombinedScale& a, const CombinedScale& b) {
+                    double volA = static_cast<double>(a.magSize.x) * a.magSize.y * a.magSize.z;
+                    double volB = static_cast<double>(b.magSize.x) * b.magSize.y * b.magSize.z;
+
+                    // compare the total pixel volume
+                    if (std::abs(volA - volB) > 1e-3) return volA > volB;
+
+                    // tie-breaker: compare each axis
+                    if (a.magSize.x != b.magSize.x) return a.magSize.x > b.magSize.x;
+                    if (a.magSize.y != b.magSize.y) return a.magSize.y > b.magSize.y;
+                    return a.magSize.z > b.magSize.z;
+                });
+
+                // clear lists and fill them with the correct order
+                info.scales.clear();
+                info.magSizes.clear();
+                info.scaleKeys.clear();
+                info.bits.clear();
+
+                for (const auto& c : combined) {
+                    info.scales.push_back(c.scale);
+                    info.magSizes.push_back(c.magSize);
+                    info.scaleKeys.push_back(c.key);
+                    info.bits.push_back(c.bits);
                 }
             } else if (infos.size() > 0){
                 // info file not found; assume same layer parameter then first layer
@@ -436,28 +538,11 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                 info.api = infos[0].api;
                 info.bits = infos[0].bits;
             }
+        } else {
+            info.scales = tomlScales;
         }
+
         info.experimentname = QString::fromStdString(toml::find(vit, "Name").as_string());
-        if (vit.contains("Extent_px") && !(info.api == API::Precomputed || info.api == API::Sharded)) {
-            const auto extent = toml::find(vit, "Extent_px").as_array();
-            info.boundary = Coordinate(extent.at(0).as_integer(), extent.at(1).as_integer(), extent.at(2).as_integer());
-        }
-        if (vit.contains("CubeShape_px") && !(info.api == API::Precomputed || info.api == API::Sharded)) {
-            const auto cube_shape = toml::find(vit, "CubeShape_px").as_array();
-            info.cubeShape = Coordinate(cube_shape.at(0).as_integer(), cube_shape.at(1).as_integer(), cube_shape.at(2).as_integer());
-            info.gpuCubeShape = info.cubeShape;// possibly ÷2
-            info.gpuCubeShape.z = std::max(1, info.gpuCubeShape.z);// 1/2=0 → 1
-        }
-        if (vit.contains("VoxelSize_nm") && info.scales.empty()) {
-            const auto scales = toml::find(vit, "VoxelSize_nm").as_array();
-            for (const auto & scaleit : scales) {
-                const auto scale = scaleit.as_array();
-                const auto x = (scale.at(0).is_floating()) ? scale.at(0).as_floating() : scale.at(0).as_integer();
-                const auto y = (scale.at(1).is_floating()) ? scale.at(1).as_floating() : scale.at(1).as_integer();
-                const auto z = (scale.at(2).is_floating()) ? scale.at(2).as_floating() : scale.at(2).as_integer();
-                info.scales.emplace_back(x, y, z);
-            }
-        }
         info.scale = info.scales.front();
         info.magIndex = info.lowestAvailableMagIndex = 0;
         info.highestAvailableMagIndex = info.scales.size() - 1;
