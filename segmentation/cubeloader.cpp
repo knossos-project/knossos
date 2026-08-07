@@ -57,7 +57,10 @@ std::optional<std::uint64_t> readLayerVoxel(const Coordinate & pos, const std::s
     const auto access = [&](auto arg){
         return getCubeRef<decltype(arg)>(cubeIt.second, layerIdx)[inCube.z][inCube.y][inCube.x];
     };
-    return Dataset::datasets[layerIdx].isOverlay() ? access(std::uint64_t{}) : access(std::uint8_t{});
+    if (Dataset::datasets[layerIdx].isOverlay()) {
+        return access(std::uint64_t{});
+    }
+    return Dataset::datasets[layerIdx].bytesPerVoxel == 2 ? access(std::uint16_t{}) : access(std::uint8_t{});
 }
 
 std::uint64_t readVoxel(const Coordinate & pos) {

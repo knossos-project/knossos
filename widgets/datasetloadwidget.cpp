@@ -394,7 +394,15 @@ void DatasetLoadWidget::adaptMemoryConsumption(boost::optional<Coordinate> cubeS
     if (lastCubeShape.z != 1) {// assuming this is actually 2D – it doesn’t have to be
         mebibytes *= fov + lastCubeShape.z;
     }
-    mebibytes += segmentationOverlayCheckbox.isChecked() * OBJID_BYTES * mebibytes;
+    std::size_t maxBytesPerVoxel{1};
+    for (const auto & info : infos) {
+        if (!info.isOverlay()) {
+            maxBytesPerVoxel = std::max(maxBytesPerVoxel, info.bytesPerVoxel);
+        }
+    }
+    const auto baseMebibytes = mebibytes;
+    mebibytes *= maxBytesPerVoxel;
+    mebibytes += segmentationOverlayCheckbox.isChecked() * OBJID_BYTES * baseMebibytes;
     mebibytes += infos.size() * std::pow(std::pow(2, std::ceil(std::log2(fov + cubeEdgeSpin.value()))), 2) *4./*RGBA*/*2/*cpu+gpu*/*3/*vps*//(1<<20);
     auto text = QString("FOV per dimension (%1 MiB memory)").arg(mebibytes);
     superCubeSizeLabel.setText(text);
@@ -513,10 +521,12 @@ bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> lo
             return false;
         }
     }
-    auto layers = [this, &path, &data, &loadOverlay, &silent]() {
+    bool parseErrorReported{false};
+    auto layers = [this, &path, &data, &loadOverlay, &silent, &parseErrorReported]() {
         try {
             return Dataset::parse(path, data, loadOverlay.get_value_or(segmentationOverlayCheckbox.isChecked()));
         } catch(std::exception & e) {
+            parseErrorReported = true;
             if (!silent) {
                 QMessageBox warning{QApplication::activeWindow()};
                 warning.setIcon(QMessageBox::Warning);
@@ -530,6 +540,17 @@ bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> lo
         }
     }();
     if (layers.empty()) {
+        if (!parseErrorReported) {
+            if (!silent) {
+                QMessageBox warning{QApplication::activeWindow()};
+                warning.setIcon(QMessageBox::Warning);
+                warning.setText(tr("Failed to load dataset"));
+                warning.setInformativeText(tr("%1\n\nThe dataset contains no usable layers – see the log for details.").arg(path.toString()));
+                warning.exec();
+                open();
+            }
+            qDebug() << "no usable layers in dataset" << path;
+        }
         return false;
     }
     if (Dataset::isHeidelbrain(path)) {

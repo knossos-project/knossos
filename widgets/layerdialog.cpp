@@ -441,8 +441,25 @@ void LayerDialogWidget::updateLayerProperties() {
         }
         auto & layerSettings = Dataset::datasets[ordered_index].renderSettings;
         opacitySlider.setValue(static_cast<int>(layerSettings.opacity * opacitySlider.maximum()));
-        biasSlider.setValue(static_cast<int>(layerSettings.bias * biasSlider.maximum()));
-        rangeDeltaSlider.setValue(static_cast<int>(layerSettings.rangeDelta * rangeDeltaSlider.maximum()));
+        {
+            // bias/range are stored as fractions of the full range – widen the widget range
+            // for 16 bit layers so windowing has native-domain resolution (12-in-16 bit data
+            // would otherwise leave only ~16 usable bias steps).
+            // setMaximum may clamp the previous layer's value and would write the clamped
+            // value into this layer's settings through the change handlers – block signals
+            // and set both widgets of each pair explicitly instead.
+            const QSignalBlocker blockers[]{QSignalBlocker{biasSlider}, QSignalBlocker{biasSpinBox}, QSignalBlocker{rangeDeltaSlider}, QSignalBlocker{rangeDeltaSpinBox}};
+            const int adjustmentUiMax = Dataset::datasets[ordered_index].bytesPerVoxel == 2 ? 65535 : 255;
+            biasSlider.setMaximum(adjustmentUiMax);
+            biasSpinBox.setMaximum(adjustmentUiMax);
+            rangeDeltaSlider.setRange(-adjustmentUiMax, adjustmentUiMax);
+            rangeDeltaSlider.setTickInterval(adjustmentUiMax);
+            rangeDeltaSpinBox.setRange(-adjustmentUiMax, adjustmentUiMax);
+            biasSlider.setValue(static_cast<int>(layerSettings.bias * biasSlider.maximum()));
+            biasSpinBox.setValue(biasSlider.value());
+            rangeDeltaSlider.setValue(static_cast<int>(layerSettings.rangeDelta * rangeDeltaSlider.maximum()));
+            rangeDeltaSpinBox.setValue(rangeDeltaSlider.value());
+        }
         linearFilteringCheckBox.setChecked(layerSettings.textureFilter == QOpenGLTexture::Linear);
 
         combineSlicesCheck.setChecked(layerSettings.combineSlicesEnabled);
