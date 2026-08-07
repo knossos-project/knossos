@@ -699,7 +699,11 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
         // for 16 bit require an actually 16 bit source – convertToFormat would silently invent
         // 16 bit data (×257) from a misconfigured 8 bit dataset
         const auto expectedFormat = dataset.bytesPerVoxel == 2 ? QImage::Format_Grayscale16 : QImage::Format_Grayscale8;
-        const auto image = dataset.bytesPerVoxel == 2 ? QImage::fromData(data) : QImage::fromData(data).convertToFormat(QImage::Format_Grayscale8);
+        auto image = QImage::fromData(data);
+        const bool has16BitChannels = image.format() == QImage::Format_Grayscale16 || image.format() == QImage::Format_RGBX64 || image.format() == QImage::Format_RGBA64 || image.format() == QImage::Format_RGBA64_Premultiplied;
+        if (dataset.bytesPerVoxel != 2 || has16BitChannels) {
+            image = image.convertToFormat(expectedFormat);
+        }
         if (image.format() != expectedFormat) {
             qCritical() << layerId << cubeCoord << "image decoded to format" << image.format() << "instead of" << expectedFormat << "→ no fill";
         } else if (static_cast<std::size_t>(image.width()) * static_cast<std::size_t>(image.height()) == static_cast<std::size_t>(cubeVxCount)) {
@@ -712,20 +716,21 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
                 out += lineBytes;
             }
             success = true;
-        } else if (dataset.bytesPerVoxel == 1 && image.sizeInBytes() >= partialCubeVxCount) {
+        } else if (static_cast<std::size_t>(image.sizeInBytes()) >= partialCubeVxCount * dataset.bytesPerVoxel) {
+            const int bpv = dataset.bytesPerVoxel;// x extents below are in bytes to cover both depths
             bool needsAttention = (partialCubeShape.x > 1 && (partialCubeShape.x % 2 != 0 || partialCubeShape.y % 2 != 0)) || (image.height() != image.width() && partialCubeShape.x == image.height() && partialCubeShape.y == image.width());
             using range = boost::multi_array_types::index_range;
-            auto extents = partialCubeShape.z == 1 || needsAttention ? boost::extents[1][image.height()][image.bytesPerLine()] : boost::extents[partialCubeShape.z][partialCubeShape.y][partialCubeShape.x];
+            auto extents = partialCubeShape.z == 1 || needsAttention ? boost::extents[1][image.height()][image.bytesPerLine()] : boost::extents[partialCubeShape.z][partialCubeShape.y][partialCubeShape.x * bpv];
             boost::const_multi_array_ref<uint8_t, 3> dataRef(image.bits(), extents);
-            boost::multi_array_ref<uint8_t, 3> slotRef(reinterpret_cast<uint8_t *>(currentSlot), boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x]);
-            std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeVxCount, 0);
-            auto v = slotRef[boost::indices[range(0, partialCubeShape.z)][range(0, partialCubeShape.y)][range(0, partialCubeShape.x)]];
+            boost::multi_array_ref<uint8_t, 3> slotRef(reinterpret_cast<uint8_t *>(currentSlot), boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x * bpv]);
+            std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeVxCount * bpv, 0);
+            auto v = slotRef[boost::indices[range(0, partialCubeShape.z)][range(0, partialCubeShape.y)][range(0, partialCubeShape.x * bpv)]];
             if (needsAttention) {
-                boost::multi_array<uint8_t, 3> b = dataRef[boost::indices[range(0, 1)][range(0, image.height())][range(0, image.width())]];
-                b.reshape(boost::array<decltype(b)::index, 3>{partialCubeShape.z, partialCubeShape.y, partialCubeShape.x});
+                boost::multi_array<uint8_t, 3> b = dataRef[boost::indices[range(0, 1)][range(0, image.height())][range(0, image.width() * bpv)]];
+                b.reshape(boost::array<decltype(b)::index, 3>{partialCubeShape.z, partialCubeShape.y, partialCubeShape.x * bpv});
                 v = b;
             } else {
-                v = dataRef[boost::indices[range(0, partialCubeShape.z)][range(0, partialCubeShape.y)][range(0, partialCubeShape.x)]];
+                v = dataRef[boost::indices[range(0, partialCubeShape.z)][range(0, partialCubeShape.y)][range(0, partialCubeShape.x * bpv)]];
             }
 
             // for (std::size_t y = 0; y < partialCubeShape.y; ++y) {
