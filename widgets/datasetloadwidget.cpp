@@ -390,9 +390,9 @@ void DatasetLoadWidget::adaptMemoryConsumption(boost::optional<Coordinate> cubeS
         lastCubeShape = cubeShape.get();
     }
     const auto fov = fovSpin.value();
-    auto mebibytes = (fov + lastCubeShape.x) * (fov + lastCubeShape.y) / std::pow(1024, 2);
+    auto baseMebibytes = (fov + lastCubeShape.x) * (fov + lastCubeShape.y) / std::pow(1024, 2);
     if (lastCubeShape.z != 1) {// assuming this is actually 2D – it doesn’t have to be
-        mebibytes *= fov + lastCubeShape.z;
+        baseMebibytes *= fov + lastCubeShape.z;
     }
     std::size_t maxBytesPerVoxel{1};
     for (const auto & info : infos) {
@@ -400,8 +400,7 @@ void DatasetLoadWidget::adaptMemoryConsumption(boost::optional<Coordinate> cubeS
             maxBytesPerVoxel = std::max(maxBytesPerVoxel, info.bytesPerVoxel);
         }
     }
-    const auto baseMebibytes = mebibytes;
-    mebibytes *= maxBytesPerVoxel;
+    auto mebibytes = baseMebibytes * maxBytesPerVoxel;
     mebibytes += segmentationOverlayCheckbox.isChecked() * OBJID_BYTES * baseMebibytes;
     mebibytes += infos.size() * std::pow(std::pow(2, std::ceil(std::log2(fov + cubeEdgeSpin.value()))), 2) *4./*RGBA*/*2/*cpu+gpu*/*3/*vps*//(1<<20);
     auto text = QString("FOV per dimension (%1 MiB memory)").arg(mebibytes);
