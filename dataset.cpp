@@ -133,7 +133,7 @@ Dataset::list_t Dataset::parse(const QUrl & url, const QString & data, bool add_
         infos = Dataset::fromLegacyConf(url, data);
     }
     if (infos.empty()) {
-        throw std::runtime_error("Missing [Dataset] header in config.");
+        throw std::runtime_error(isHeidelbrain(url) ? "Missing [Dataset] header in config." : "The dataset contains no usable layers – see the log for details.");
     }
     if (add_snappy) {
         bool overlayPresent{false};
@@ -366,9 +366,11 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                 info.boundary = info.cubeShape = {};
                 const auto jmap = QJsonDocument::fromJson(download.second.data()).object();
                 const auto dataType = jmap["data_type"].toString();
-                if (dataType == "uint16") {
+                if (jmap["type"].toString() == "segmentation") {
+                    // segmentation ids of any width are handled by cube type, not bytesPerVoxel
+                } else if (dataType == "uint16") {
                     info.bytesPerVoxel = 2;
-                } else if (!dataType.isEmpty() && dataType != "uint8" && dataType != "uint32" && dataType != "uint64") {// uint32/64 are segmentation ids, handled by cube type
+                } else if (!dataType.isEmpty() && dataType != "uint8") {
                     qWarning() << "unsupported data_type" << dataType << "in" << info.url << "– assuming uint8";
                 }
                 info.gpuCubeShape = {};
@@ -412,7 +414,9 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                 info.scaleKeys = infos[0].scaleKeys;
                 info.api = infos[0].api;
                 info.bits = infos[0].bits;
-                info.bytesPerVoxel = infos[0].bytesPerVoxel;
+                if (infos[0].bytesPerVoxel != 1) {// don’t guess the voxel depth from an unrelated layer
+                    qWarning() << "no info file for layer" << info.url << "– assuming uint8, set ElementClass to override";
+                }
             }
         }
         info.experimentname = QString::fromStdString(toml::find(vit, "Name").as_string());
