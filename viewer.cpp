@@ -275,6 +275,12 @@ Viewer::AdjustmentTable Viewer::buildAdjustmentTable(const std::size_t layerId) 
     return table;
 }
 
+static void texChecksumHook(const QString & tag, const std::vector<std::uint8_t> & texData) {// regression baseline hook
+    if (qEnvironmentVariableIsSet("KNOSSOS_TEXCHECKSUM")) {
+        qDebug().noquote() << "texchecksum" << tag << qChecksum(reinterpret_cast<const char *>(texData.data()), texData.size());
+    }
+}
+
 const Viewer::AdjustmentTable & Viewer::adjustmentTable(const std::size_t layerId) {
     adjustmentTableCaches.resize(Dataset::datasets.size());
     auto & cache = adjustmentTableCaches[layerId];
@@ -608,9 +614,7 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
     });
     vp.textures[layerId].texHandle.release();
     glBindTexture(GL_TEXTURE_2D, 0);
-    if (qEnvironmentVariableIsSet("KNOSSOS_TEXCHECKSUM")) {// regression baseline hook, see 16bit-support-plan.md
-        qDebug() << "texchecksum ortho" << layerId << static_cast<int>(vp.viewportType) << qChecksum(reinterpret_cast<const char *>(vp.textures[layerId].texData.data()), vp.textures[layerId].texData.size());
-    }
+    texChecksumHook(QString{"ortho %1 %2"}.arg(layerId).arg(static_cast<int>(vp.viewportType)), vp.textures[layerId].texData);
     vp.resliceNecessary[layerId] = false;
     vp.resliceNecessaryCubes[layerId].clear();
 }
@@ -792,9 +796,7 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, std::ceil(vp.textures[layerId].usedSizeInCubePixels), std::ceil(vp.textures[layerId].usedSizeInCubePixels), GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
     vp.textures[layerId].texHandle.release();
     glBindTexture(GL_TEXTURE_2D, 0);
-    if (qEnvironmentVariableIsSet("KNOSSOS_TEXCHECKSUM")) {// regression baseline hook, see 16bit-support-plan.md
-        qDebug() << "texchecksum arb" << layerId << qChecksum(reinterpret_cast<const char *>(texData.data()), texData.size());
-    }
+    texChecksumHook(QString{"arb %1"}.arg(layerId), texData);
 }
 
 void Viewer::calcLeftUpperTexAbsPx() {
