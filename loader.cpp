@@ -763,11 +763,12 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
                 boost::multi_array_ref<uint8_t, 3> slotRef(reinterpret_cast<uint8_t *>(currentSlot), boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x]);
                 std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeVxCount, 0);
                 auto slotSlice = slotRef[boost::indices[range(0, nz)][range(0, ny)][range(0, nx)]];
-                const auto extents = partialCubeShape.z == 1 || needsAttention ? boost::extents[1][imageHeight][imageBytesPerLine/numChannels] : boost::extents[nz][ny][nx];
+                const auto extents = partialCubeShape.z == 1 || needsAttention ? boost::extents[1][imageHeight][imageBytesPerLine/numChannels] :
+                                         (cubeVxCount == imageHeight * imageBytesPerLine) ? boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x] : boost::extents[nz][ny][nx];
                 boost::const_multi_array_ref<uint8_t, 3> dataRef(planeBits, extents);
                 if (partialCubeShape.z == 1 || needsAttention) {
                     boost::multi_array<uint8_t, 3> d = dataRef[boost::indices[range(0, 1)][range(0, imageHeight)][range(0, imageWidth)]];
-                    if (dataset.api == Dataset::API::Precomputed or dataset.api == Dataset::API::Sharded) {
+                    if (dataset.api == Dataset::API::Precomputed || dataset.api == Dataset::API::Sharded) {
                         d.reshape(boost::array<decltype(d)::index, 3>{nz, ny, nx});
                         slotSlice = d;
                     } else {
