@@ -33,6 +33,7 @@
 #include <QStringList>
 #include <QTextStream>
 #include <QUrlQuery>
+#include <QMessageBox>
 
 #include <boost/assign.hpp>
 #include <boost/bimap.hpp>
@@ -424,6 +425,10 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                 tomlScales.emplace_back(x, y, z);
             }
         }
+        std::vector<QString> fileExtensions;
+        for (const auto & ext : toml::find(vit, "FileExtension").as_array()) {
+            fileExtensions.emplace_back(QString::fromStdString(ext.as_string()));
+        }
 
         // helper for comparing scales
         auto scaleExists = [](const boost::container::small_vector<floatCoordinate, 4>& container, double x, double y, double z) {
@@ -436,6 +441,10 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         };
 
         if (url.endsWith("info") or info.api == API::Precomputed) {
+            if (fileExtensions.size() > 1) {
+                qWarning() << "Precomputed layers can not have more than 1 file extension!";
+                return infos;
+            }
             info.api = API::Precomputed;
             if (!url.endsWith("info") && !url.isEmpty())
                 info.url.setPath(info.url.path() + "/info");
@@ -455,6 +464,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                     qWarning() << "unsupported data_type" << dataType << "in" << info.url << "– assuming uint8";
                 }
                 info.numChannels = jmap["num_channels"].toInt();
+                bool fileMissMatch = false;
                 for (auto && scaleRef : jmap["scales"].toArray()) {
                     const auto scaleRef2 = scaleRef.toObject();
 
@@ -493,16 +503,27 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                         info.bits.emplace_back((class Dataset::bits){0,0,0});
                     }
 
-                    if (info.fileextension.isEmpty()) {
-                        const auto encoding = scaleRef2["encoding"].toString();
-                        if (encoding == "jpeg")
-                            info.fileextension = ".jpg";
-                        else if (encoding == "compressed_segmentation")
-                            info.fileextension = ".seg.sz.zip";
-                        else
-                            info.fileextension = "." + encoding;
+                    const auto encoding = scaleRef2["encoding"].toString();
+                    if (encoding == "jpeg")
+                        info.fileextension = ".jpg";
+                    else if (encoding == "compressed_segmentation")
+                        info.fileextension = ".seg.sz.zip";
+                    else
+                        info.fileextension = "." + encoding;
+                    if (info.fileextension != fileExtensions[0]) {
+                        if (!fileMissMatch) {
+                            QMessageBox warning{QApplication::activeWindow()};
+                            warning.setIcon(QMessageBox::Warning);
+                            warning.setText("Missmatch in file extensions");
+                            warning.setInformativeText("Expected " + info.fileextension + " from info file. Got " + fileExtensions[0] + " from toml. Continue using format from info file!");
+                            warning.exec();
+                        }
+                        fileMissMatch = true;
+                        if (info.fileextension == ".seg.sz.zip") {
+                            qWarning() << "Can not open precomputed segmentation with raw layer toml config!";
+                            return infos;
+                        }
                     }
-                    qDebug() << info.fileextension;
                 }
 
                 // --- combine values from TOML file and INFO file ---
@@ -600,14 +621,10 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         if (!parseElementClass(elementClass, info)) {
             qWarning() << "Layer" << info.experimentname << "has unsupported ElementClass" << elementClass << "– assuming uint8";
         }
-
-        if (!(info.api == API::Precomputed || info.api == API::Sharded)) {
-            for (const auto & ext : toml::find(vit, "FileExtension").as_array()) {
-                info.fileextension = QString::fromStdString(ext.as_string());
-                info.type = typeMap.left.at(info.fileextension);
-                infos.emplace_back(info);
-            }
-        } else {
+      
+        for (const auto & ext : fileExtensions) {
+            if (info.fileextension.isEmpty())
+                info.fileextension = ext;
             info.type = typeMap.left.at(info.fileextension);
             if (info.numChannels > 1) {
                 for (int i = 0; i < info.numChannels; ++i) {
