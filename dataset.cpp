@@ -365,6 +365,12 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
             if (download.first) {
                 info.boundary = info.cubeShape = {};
                 const auto jmap = QJsonDocument::fromJson(download.second.data()).object();
+                const auto dataType = jmap["data_type"].toString();
+                if (dataType == "uint16") {
+                    info.bytesPerVoxel = 2;
+                } else if (!dataType.isEmpty() && dataType != "uint8" && dataType != "uint32" && dataType != "uint64") {// uint32/64 are segmentation ids, handled by cube type
+                    qWarning() << "unsupported data_type" << dataType << "in" << info.url << "– assuming uint8";
+                }
                 info.gpuCubeShape = {};
                 for (auto && scaleRef : jmap["scales"].toArray()) {
                     const auto scaleRef2 = scaleRef.toObject();
@@ -406,6 +412,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                 info.scaleKeys = infos[0].scaleKeys;
                 info.api = infos[0].api;
                 info.bits = infos[0].bits;
+                info.bytesPerVoxel = infos[0].bytesPerVoxel;
             }
         }
         info.experimentname = QString::fromStdString(toml::find(vit, "Name").as_string());
