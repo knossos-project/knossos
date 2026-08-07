@@ -192,6 +192,15 @@ private:
     // precomputed voxel value → RGB mapping (windowing, then optional LUT), 256 or 65536 entries by layer bit depth
     using AdjustmentTable = std::vector<std::array<std::uint8_t, 3>>;
     AdjustmentTable buildAdjustmentTable(const std::size_t layerId) const;
+    struct AdjustmentTableCache {
+        double bias{}, rangeDelta{};
+        bool lutOn{};
+        std::size_t levels{};
+        decltype(ViewerState::datasetColortable) colortable;
+        AdjustmentTable table;
+    };
+    std::vector<AdjustmentTableCache> adjustmentTableCaches;
+    const AdjustmentTable & adjustmentTable(const std::size_t layerId);
     template<typename T>
     void dcSliceExtract(T * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId, const AdjustmentTable & adjustment, const boost::optional<decltype(Dataset::LayerRenderSettings::combineSlicesType)> combineType);
     template<typename T>

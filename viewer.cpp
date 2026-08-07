@@ -275,11 +275,24 @@ Viewer::AdjustmentTable Viewer::buildAdjustmentTable(const std::size_t layerId) 
     return table;
 }
 
+const Viewer::AdjustmentTable & Viewer::adjustmentTable(const std::size_t layerId) {
+    adjustmentTableCaches.resize(Dataset::datasets.size());
+    auto & cache = adjustmentTableCaches[layerId];
+    const auto & renderSettings = Dataset::datasets[layerId].renderSettings;
+    const std::size_t levels = Dataset::datasets[layerId].bytesPerVoxel == 2 ? 65536 : 256;
+    const bool lutOn = state->viewerState->datasetColortableOn;
+    if (cache.table.empty() || cache.bias != renderSettings.bias || cache.rangeDelta != renderSettings.rangeDelta || cache.lutOn != lutOn || cache.levels != levels
+            || (lutOn && cache.colortable != state->viewerState->datasetColortable)) {
+        cache = {renderSettings.bias, renderSettings.rangeDelta, lutOn, levels, lutOn ? state->viewerState->datasetColortable : decltype(cache.colortable){}, buildAdjustmentTable(layerId)};
+    }
+    return cache.table;
+}
+
 template<typename T>
 void Viewer::dcSliceExtract(T * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId, const AdjustmentTable & adjustment, const boost::optional<decltype(Dataset::LayerRenderSettings::combineSlicesType)> combineType) {
     const auto cubeCoord = Dataset::datasets[layerId].global2cube(cubePosInAbsPx);
     const auto cubeMaxGlobalCoord = Dataset::datasets[layerId].cube2global(cubeCoord + CoordOfCube{1,1,1}) - Coordinate{1,1,1};
-    const auto cubeShape = Dataset::current().cubeShape;
+    const auto cubeShape = Dataset::datasets[layerId].cubeShape;
     const auto partlyOutsideMovementArea = Annotation::singleton().outsideMovementArea(Dataset::datasets[layerId].cube2global(cubeCoord))
             || Annotation::singleton().outsideMovementArea(cubeMaxGlobalCoord);
     // we traverse ZY column first because of better locailty of reference
@@ -326,9 +339,9 @@ void Viewer::dcSliceExtract(T * datacube, Coordinate cubePosInAbsPx, std::uint8_
 }
 
 template<typename T>
-void Viewer::dcSliceExtract(T * datacube, floatCoordinate *currentPxInDc_float, std::uint8_t * slice, int s, int *t, const floatCoordinate & v2, const std::size_t /*layerId*/, const AdjustmentTable & adjustment, float usedSizeInCubePixels) {
+void Viewer::dcSliceExtract(T * datacube, floatCoordinate *currentPxInDc_float, std::uint8_t * slice, int s, int *t, const floatCoordinate & v2, const std::size_t layerId, const AdjustmentTable & adjustment, float usedSizeInCubePixels) {
     Coordinate currentPxInDc = {roundFloat(currentPxInDc_float->x), roundFloat(currentPxInDc_float->y), roundFloat(currentPxInDc_float->z)};
-    const auto cubeShape = Dataset::current().cubeShape;
+    const auto cubeShape = Dataset::datasets[layerId].cubeShape;
     if((currentPxInDc.x < 0) || (currentPxInDc.y < 0) || (currentPxInDc.z < 0) ||
        (currentPxInDc.x >= cubeShape.x) || (currentPxInDc.y >= cubeShape.y) || (currentPxInDc.z >= cubeShape.z)) {
         const int sliceIndex = 4 * ( s + *t * std::ceil(usedSizeInCubePixels));
@@ -521,7 +534,8 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
     const int multiSliceiMax = Dataset::datasets[layerId].renderSettings.combineSlicesEnabled
             * Dataset::datasets[layerId].renderSettings.combineSlices
             * ((vp.viewportType == VIEWPORT_XY) || !Dataset::datasets[layerId].renderSettings.combineSlicesXyOnly);
-    const auto adjustment = Dataset::datasets[layerId].isOverlay() ? AdjustmentTable{} : buildAdjustmentTable(layerId);
+    static const AdjustmentTable noAdjustment;// overlays don’t consult the table
+    const auto & adjustment = Dataset::datasets[layerId].isOverlay() ? noAdjustment : adjustmentTable(layerId);
     bool first{true};
     const auto cubeShape = Dataset::datasets[layerId].cubeShape;
     auto for_each_resliced_cube_do = [this, layerId, cubeShape, &vp](const CoordOfCube upperLeftDc, auto func){
@@ -741,7 +755,7 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
     static std::vector<std::uint8_t> texData;// reallocation for every run would be a waste
     texData.resize(4 * std::pow(std::ceil(vp.textures[layerId].usedSizeInCubePixels), 2), 0);
 
-    const auto adjustment = buildAdjustmentTable(layerId);
+    const auto & adjustment = adjustmentTable(layerId);
 
     int s = 0, t = 0, t_old = 0;
     while(s < vp.textures[layerId].usedSizeInCubePixels) {
@@ -983,12 +997,7 @@ void Viewer::run() {
         qDebug() << "loadPendingCubes";
         std::size_t id{};
         for (auto && [dset, textures] : boost::combine(Dataset::datasets, layers)) {
-            if (!dset.isOverlay() && dset.bytesPerVoxel != 1) {// gpu_raw_cube uploads assume 8 bit voxels
-                static bool warned{false};
-                if (!warned) {
-                    qWarning() << "GPU slicing doesn’t support 16 bit layers – layer" << id << "won’t be rendered";
-                    warned = true;
-                }
+            if (!dset.isOverlay() && dset.bytesPerVoxel != 1) {// gpu_raw_cube uploads assume 8 bit voxels – warned at texture layer creation
                 ++id;
                 continue;
             }
