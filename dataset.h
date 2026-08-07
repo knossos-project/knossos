@@ -34,6 +34,7 @@
 #include <boost/container/small_vector.hpp>
 
 #include <cstdint>
+#include <utility>
 
 struct Dataset {
     using list_t = boost::container::small_vector<Dataset, 2>;
@@ -82,11 +83,11 @@ struct Dataset {
     Coordinate cube2global(const CoordOfCube & cubeCoord) const {
         return cubeCoord.cube2Global(cubeShape, scaleFactor);
     }
-    Coordinate cubeIsPartial(const CoordOfCube & cubeCoord) const {
-        auto coord = cube2global(cubeCoord+1) / scaleFactor;
-        auto magBoundary = boundary / scaleFactor;
-        return {std::min(coord.x, magBoundary.x), std::min(coord.y, magBoundary.y), std::min(coord.z, magBoundary.z)};
-    }
+    Coordinate magVoxelExtent() const;
+    void fillMagSizesFromBoundary();
+    std::pair<Coordinate, Coordinate> chunkMagCoordRange(const CoordOfCube & cubeCoord) const;
+
+    boost::container::small_vector<Coordinate, 4> magSizes;
 
     API api{API::Heidelbrain};
     CubeType type{CubeType::RAW_UNCOMPRESSED};
@@ -131,6 +132,8 @@ struct Dataset {
     QString token;
     bool allocationEnabled{true};
     bool loadingEnabled{true};
+    int channelIndex{0};
+    int numChannels{1};
 
     struct LayerRenderSettings {
         bool visibleSetExplicitly{false};

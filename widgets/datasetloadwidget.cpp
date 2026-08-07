@@ -560,9 +560,11 @@ bool DatasetLoadWidget::loadDataset(QString data, const boost::optional<bool> lo
                 layer.magIndex = layers.front().magIndex;
                 layer.lowestAvailableMagIndex = layers.front().lowestAvailableMagIndex;
                 layer.highestAvailableMagIndex = layers.front().highestAvailableMagIndex;
+                layer.scales.clear();
                 for (std::size_t magIndex = 0; magIndex <= layer.highestAvailableMagIndex; magIndex += 1) {
                     layer.scales.emplace_back(layer.scale * std::pow(2, magIndex));
                 }
+                layer.fillMagSizesFromBoundary();
                 layer.scale = layer.scales[layer.magIndex];
                 layer.scaleFactor = layer.scale / layer.scales[0];
             }

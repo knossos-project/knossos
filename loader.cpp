@@ -545,6 +545,16 @@ void degzip(QByteArray & data) {
     data = QByteArray(reinterpret_cast<char *>(decompressed.data()), decompressed.size());
 }
 
+template<typename SrcT, typename DstT = SrcT>
+void copyPartialCube(const SrcT * src, void * slot, const Coordinate & partialCubeShape, const Coordinate & cubeShape, const std::size_t cubeVxCount) {
+    using range = boost::multi_array_types::index_range;
+    boost::const_multi_array_ref<SrcT, 3> dataRef(src, boost::extents[partialCubeShape.z][partialCubeShape.y][partialCubeShape.x]);
+    boost::multi_array_ref<DstT, 3> slotRef(reinterpret_cast<DstT *>(slot), boost::extents[cubeShape.z][cubeShape.y][cubeShape.x]);
+    std::fill(reinterpret_cast<DstT *>(slot), reinterpret_cast<DstT *>(slot) + cubeVxCount, 0);
+    slotRef[boost::indices[range(0, partialCubeShape.z)][range(0, partialCubeShape.y)][range(0, partialCubeShape.x)]] =
+        dataRef[boost::indices[range(0, partialCubeShape.z)][range(0, partialCubeShape.y)][range(0, partialCubeShape.x)]];
+}
+
 Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply, const std::size_t layerId, const Dataset dataset, decltype(state->cube2Pointer)::value_type::value_type & cubeHash, const CoordOfCube cubeCoord) {
     if (!reply.isOpen()) {// sanity check, finished replies with no error should be ready for reading (https://bugreports.qt.io/browse/QTBUG-45944)
         qCritical() << layerId << cubeCoord << static_cast<int>(dataset.type) << "decompression failed → no fill";
@@ -555,7 +565,8 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
 
     auto data = reply.read(reply.bytesAvailable());//readAll can be very slow – https://bugreports.qt.io/browse/QTBUG-45926
     const auto cubeVxCount = dataset.cubeShape.prod();
-    const auto partialCubeShape = (dataset.cube2global(cubeCoord + 1) / dataset.scaleFactor).capped({}, dataset.boundary / dataset.scaleFactor + 1) - dataset.cube2global(cubeCoord) / dataset.scaleFactor;
+    const auto [magStart, magEnd] = dataset.chunkMagCoordRange(cubeCoord);
+    const auto partialCubeShape = magEnd - magStart;
     const auto partialCubeVxCount = partialCubeShape.prod();
     const std::size_t availableSize = data.size();
     if (dataset.isOverlay() && (dataset.api == Dataset::API::Precomputed || dataset.api == Dataset::API::Sharded)) {
@@ -567,7 +578,12 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
 
             auto cpd = floatCoordinate{partialCubeShape} / dataset.gpuCubeShape;
             auto cpd2 = Coordinate(std::ceil(cpd.x), std::ceil(cpd.y), std::ceil(cpd.z));
+            // if (partialCubeShape != dataset.cubeShape) {
+            //     qDebug() << "partial overlay chunk" << cubeCoord << "magRange" << magStart << magEnd
+            //              << "extent" << partialCubeShape << "blocks" << cpd2;
+            // }
 
+            // std::fill(reinterpret_cast<std::uint64_t *>(currentSlot), reinterpret_cast<std::uint64_t *>(currentSlot) + cubeVxCount, 0);
             boost::multi_array_ref<std::uint64_t, 3> slotRef(reinterpret_cast<std::uint64_t *>(currentSlot), boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x]);
 
             const auto dataSize = static_cast<std::size_t>(data.size());
@@ -666,22 +682,18 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
                                 // output = decltype(output)(output.size(), boost::endian::load_little_u32(data2 + lookupTableByteOffset));
                                 std::fill(std::begin(output), std::end(output), boost::endian::load_little_u32(data2 + lookupTableByteOffset));
                             }
-                            if (dataset.global2cube(Coordinate{12891, 13090, 0}) == cubeCoord && (Coordinate{12891, 13090, 0} - dataset.cube2global(cubeCoord)) / dataset.gpuCubeShape == Coordinate{x,y,z}) {
-                            }
-
                             boost::const_multi_array_ref<std::uint64_t, 3> dataCube(output.data(), boost::extents[dataset.gpuCubeShape.z][dataset.gpuCubeShape.y][dataset.gpuCubeShape.x]);
                             const auto & s = dataset.gpuCubeShape;
                             using range = boost::multi_array_types::index_range;
-                            auto e = (Coordinate{x,y,z}).componentMul(s);
-                            auto slice  = boost::indices[range(z*s.z, std::min((z+1)*s.z, dataset.cubeShape.z))][range(y*s.y, std::min((y+1)*s.y, dataset.cubeShape.y))][range(x*s.x, std::min((x+1)*s.x, dataset.cubeShape.x))];
+                            auto slice  = boost::indices[range(z*s.z, std::min((z+1)*s.z, partialCubeShape.z))][range(y*s.y, std::min((y+1)*s.y, partialCubeShape.y))][range(x*s.x, std::min((x+1)*s.x, partialCubeShape.x))];
                             auto slice2 = boost::indices[range(0, slotRef[slice].shape()[0])][range(0, slotRef[slice].shape()[1])][range(0, slotRef[slice].shape()[2])];
                             slotRef[slice] = dataCube[slice2];
-                            //     qDebug() << "foo" << cubeCoord << availableSize << expectedSize << dataset.gpuCubeShape << cpd << cpd2 << x << y << z << headerByteOffset << lookupTableByteOffset << encodedBits << encodedValuesByteOffset;
-                            if (encodedBits > 0 || lookupTableByteOffset == encodedValuesByteOffset) {
-                            } else {
+                                // qDebug() << "foo" << cubeCoord << availableSize << expectedSize << dataset.gpuCubeShape << cpd << cpd2 << x << y << z << headerByteOffset << lookupTableByteOffset << encodedBits << encodedValuesByteOffset << slotRef[slice].shape()[1] << slotRef[slice].shape()[2];
+                            // if (encodedBits > 0 || lookupTableByteOffset == encodedValuesByteOffset) {
+                            // } else {
                                 // qDebug() << encodedBits << lookupTableByteOffset << encodedValuesByteOffset << boost::endian::load_little_u32(data2 + lookupTableByteOffset) << boost::endian::load_little_u32(data2 + encodedValuesByteOffset);
                                 // qDebug() << x << y << z << cubeCoord << (z*s.z, std::min((z+1)*s.z, dataset.cubeShape.z)) << (y*s.y, std::min((y+1)*s.y, dataset.cubeShape.y)) << (x*s.x, std::min((x+1)*s.x, dataset.cubeShape.x));
-                            }
+                            // }
                     }
                 }));
 
@@ -690,76 +702,135 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
             success = !decodeFailed.load();
         }
     } else if (dataset.type == Dataset::CubeType::RAW_UNCOMPRESSED) {
-        const std::size_t expectedSize = cubeVxCount * dataset.bytesPerVoxel;// native little endian voxels
-        if (availableSize == expectedSize) {
-            std::copy(std::begin(data), std::end(data), reinterpret_cast<std::uint8_t *>(currentSlot));
+        const auto numChannels = std::max(1, dataset.numChannels);
+        const auto channelBytes = partialCubeVxCount * dataset.bytesPerVoxel;
+        const auto partialExpectedSize = channelBytes * static_cast<std::size_t>(numChannels);
+        if (dataset.channelIndex >= 0 && dataset.channelIndex < numChannels && availableSize >= partialExpectedSize) {
+            const auto * src = reinterpret_cast<const uint8_t *>(data.constData()) + static_cast<std::size_t>(dataset.channelIndex) * channelBytes;
+            if (partialCubeShape == dataset.cubeShape && availableSize == partialExpectedSize) {
+                std::copy(src, src + cubeVxCount * dataset.bytesPerVoxel, reinterpret_cast<std::uint8_t *>(currentSlot));
+            } else if (dataset.bytesPerVoxel == 2) {
+                copyPartialCube(reinterpret_cast<const uint16_t *>(src), currentSlot, partialCubeShape, dataset.cubeShape, cubeVxCount);
+            } else {
+                copyPartialCube(src, currentSlot, partialCubeShape, dataset.cubeShape, cubeVxCount);
+            }
             success = true;
         }
     } else if (dataset.type == Dataset::CubeType::RAW_JPG || dataset.type == Dataset::CubeType::RAW_J2K || dataset.type == Dataset::CubeType::RAW_JP2_6 || dataset.type == Dataset::CubeType::RAW_PNG) {
-        // for 16 bit require an actually 16 bit source – convertToFormat would silently invent
-        // 16 bit data (×257) from a misconfigured 8 bit dataset
-        const auto expectedFormat = dataset.bytesPerVoxel == 2 ? QImage::Format_Grayscale16 : QImage::Format_Grayscale8;
-        auto image = QImage::fromData(data);
-        const bool has16BitChannels = image.format() == QImage::Format_Grayscale16 || image.format() == QImage::Format_RGBX64 || image.format() == QImage::Format_RGBA64 || image.format() == QImage::Format_RGBA64_Premultiplied;
-        if (dataset.bytesPerVoxel != 2 || has16BitChannels) {
-            image = image.convertToFormat(expectedFormat);
-        }
-        if (image.format() != expectedFormat) {
-            qCritical() << layerId << cubeCoord << "image decoded to format" << image.format() << "instead of" << expectedFormat << "→ no fill";
-        } else if (static_cast<std::size_t>(image.width()) * static_cast<std::size_t>(image.height()) == static_cast<std::size_t>(cubeVxCount)) {
-            // scanlines are 4 byte aligned – copy per line instead of assuming contiguity
-            const std::size_t lineBytes = image.width() * static_cast<std::size_t>(dataset.bytesPerVoxel);
-            auto * out = reinterpret_cast<std::uint8_t *>(currentSlot);
-            for (int y = 0; y < image.height(); ++y) {
-                const auto * line = image.constScanLine(y);
-                std::copy(line, line + lineBytes, out);
-                out += lineBytes;
+        const auto image = QImage::fromData(data);
+        const auto numChannels = std::max(1, dataset.numChannels);
+        const auto channelIndex = dataset.channelIndex;
+        if (dataset.bytesPerVoxel == 2 && numChannels > 1) {
+            qCritical() << layerId << cubeCoord << "16-bit multichannel images are unsupported → no fill";
+        } else if (dataset.bytesPerVoxel == 2) {
+            const bool has16BitChannels = image.format() == QImage::Format_Grayscale16 || image.format() == QImage::Format_RGBX64 || image.format() == QImage::Format_RGBA64 || image.format() == QImage::Format_RGBA64_Premultiplied;
+            const auto grayscale = has16BitChannels ? image.convertToFormat(QImage::Format_Grayscale16) : image;
+            if (grayscale.format() != QImage::Format_Grayscale16) {
+                qCritical() << layerId << cubeCoord << "image decoded to format" << image.format() << "instead of" << QImage::Format_Grayscale16 << "→ no fill";
+            } else if (static_cast<std::size_t>(grayscale.width()) * static_cast<std::size_t>(grayscale.height()) >= static_cast<std::size_t>(partialCubeVxCount)) {
+                const auto imageVxCount = static_cast<std::size_t>(grayscale.width()) * static_cast<std::size_t>(grayscale.height());
+                std::vector<uint16_t> voxels(imageVxCount);
+                auto * out = reinterpret_cast<uint8_t *>(voxels.data());
+                const auto lineBytes = static_cast<std::size_t>(grayscale.width()) * dataset.bytesPerVoxel;
+                for (int y = 0; y < grayscale.height(); ++y) {
+                    std::copy(grayscale.constScanLine(y), grayscale.constScanLine(y) + lineBytes, out);
+                    out += lineBytes;
+                }
+                if (imageVxCount >= static_cast<std::size_t>(cubeVxCount)) {
+                    using range = boost::multi_array_types::index_range;
+                    boost::const_multi_array_ref<uint16_t, 3> dataRef(voxels.data(), boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x]);
+                    boost::multi_array_ref<uint16_t, 3> slotRef(reinterpret_cast<uint16_t *>(currentSlot), boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x]);
+                    std::fill(reinterpret_cast<uint16_t *>(currentSlot), reinterpret_cast<uint16_t *>(currentSlot) + cubeVxCount, 0);
+                    slotRef[boost::indices[range(0, partialCubeShape.z)][range(0, partialCubeShape.y)][range(0, partialCubeShape.x)]] =
+                        dataRef[boost::indices[range(0, partialCubeShape.z)][range(0, partialCubeShape.y)][range(0, partialCubeShape.x)]];
+                } else {
+                    copyPartialCube(voxels.data(), currentSlot, partialCubeShape, dataset.cubeShape, cubeVxCount);
+                }
+                success = true;
             }
-            success = true;
-        } else if (static_cast<std::size_t>(image.sizeInBytes()) >= partialCubeVxCount * dataset.bytesPerVoxel) {
-            const int bpv = dataset.bytesPerVoxel;// x extents below are in bytes to cover both depths
-            bool needsAttention = (partialCubeShape.x > 1 && (partialCubeShape.x % 2 != 0 || partialCubeShape.y % 2 != 0)) || (image.height() != image.width() && partialCubeShape.x == image.height() && partialCubeShape.y == image.width());
-            using range = boost::multi_array_types::index_range;
-            auto extents = partialCubeShape.z == 1 || needsAttention ? boost::extents[1][image.height()][image.bytesPerLine()] : boost::extents[partialCubeShape.z][partialCubeShape.y][partialCubeShape.x * bpv];
-            boost::const_multi_array_ref<uint8_t, 3> dataRef(image.bits(), extents);
-            boost::multi_array_ref<uint8_t, 3> slotRef(reinterpret_cast<uint8_t *>(currentSlot), boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x * bpv]);
-            std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeVxCount * bpv, 0);
-            auto v = slotRef[boost::indices[range(0, partialCubeShape.z)][range(0, partialCubeShape.y)][range(0, partialCubeShape.x * bpv)]];
-            if (needsAttention) {
-                boost::multi_array<uint8_t, 3> b = dataRef[boost::indices[range(0, 1)][range(0, image.height())][range(0, image.width() * bpv)]];
-                b.reshape(boost::array<decltype(b)::index, 3>{partialCubeShape.z, partialCubeShape.y, partialCubeShape.x * bpv});
-                v = b;
-            } else {
-                v = dataRef[boost::indices[range(0, partialCubeShape.z)][range(0, partialCubeShape.y)][range(0, partialCubeShape.x * bpv)]];
+        } else if (channelIndex >= 0 && channelIndex < numChannels && image.width() * image.height() >= partialCubeVxCount) {
+            if (numChannels == 1 && partialCubeShape == dataset.cubeShape) {
+                const auto grayscale = image.convertToFormat(QImage::Format_Grayscale8);
+                if (grayscale.sizeInBytes() == static_cast<qint64>(cubeVxCount)) {
+                    std::copy(grayscale.constBits(), grayscale.constBits() + cubeVxCount, reinterpret_cast<std::uint8_t *>(currentSlot));
+                    success = true;
+                }
             }
+            if (!success) {
+                using range = boost::multi_array_types::index_range;
+                const QImage work = numChannels == 1 ? image.convertToFormat(QImage::Format_Grayscale8) : image.convertToFormat(QImage::Format_RGB888);
+                const auto nx = partialCubeShape.x;
+                const auto ny = partialCubeShape.y;
+                const auto nz = partialCubeShape.z;
+                const int imageHeight = work.height();
+                const int imageWidth = work.width();
+                const int imageBytesPerLine = work.bytesPerLine();
 
-            // for (std::size_t y = 0; y < partialCubeShape.y; ++y) {
-            //     // std::copy(image.scanLine(y), image.scanLine(y) + partialCubeShape.x, reinterpret_cast<std::uint8_t *>(currentSlot)+y*dataset.cubeShape.x);
-            //     std::copy(image.constBits() + y *  - partialCubeShape.x, image.constBits() + y * image.bytesPerLine() + , reinterpret_cast<std::uint8_t *>(currentSlot) + y * dataset.cubeShape.x);
-            // }
+                boost::multi_array<uint8_t, 2> channelPlaneStorage;
+                const uint8_t * planeBits;
+                if (numChannels == 1) {
+                    planeBits = work.constBits();
+                } else {
+                    const auto fullImageWidth = imageBytesPerLine / numChannels;
+                    channelPlaneStorage.resize(boost::extents[imageHeight][fullImageWidth]);
+                    if (imageBytesPerLine % 3 == 0) {
+                        boost::const_multi_array_ref<uint8_t, 3> rgbRef(work.constBits(), boost::extents[imageHeight][fullImageWidth][3]);
+                        channelPlaneStorage[boost::indices[range(0, imageHeight)][range(0, fullImageWidth)]] =
+                            rgbRef[boost::indices[range(0, imageHeight)][range(0, fullImageWidth)][channelIndex]];
+                    } else {
+                        boost::const_multi_array_ref<uint8_t, 2> byteRef(work.constBits(), boost::extents[imageHeight][imageBytesPerLine]);
+                        for (int h = 0; h < imageHeight; ++h) {
+                            boost::const_multi_array_ref<uint8_t, 2> rgbRow(&byteRef[h][0], boost::extents[fullImageWidth][3]);
+                            channelPlaneStorage[h] = rgbRow[boost::indices[range(0, fullImageWidth)][channelIndex]];
+                        }
+                    }
+                    planeBits = channelPlaneStorage.data();
+                }
 
-            // auto right_view  = slotRef[boost::indices[range::all().start(partialCubeShape.z)][range()][range()]];
-            // auto bottom_view = slotRef[boost::indices[range()][range::all().start(partialCubeShape.y)][range()]];
-            // auto behind_view = slotRef[boost::indices[range()][range()][range::all().start(partialCubeShape.x)]];
-            // for (auto & view : {right_view, bottom_view, behind_view}) {
-            //     std::fill(view.begin(), view.end(), 0);
-            // }
-            success = true;
-        } else {
-            qCritical() << layerId << cubeCoord << "image size" << image.width() << "×" << image.height() << "doesn’t cover the cube’s" << cubeVxCount << "voxels → no fill";
+                const bool needsAttention = (partialCubeShape.x > 1 && (partialCubeShape.x % 2 != 0 || partialCubeShape.y % 2 != 0)) ||
+                                            (partialCubeShape.x > 1 && (partialCubeShape.x != imageWidth || partialCubeShape.x != imageBytesPerLine/numChannels)) ||
+                                            (imageHeight != imageWidth && partialCubeShape.x == imageHeight && partialCubeShape.y == imageWidth);
+                boost::multi_array_ref<uint8_t, 3> slotRef(reinterpret_cast<uint8_t *>(currentSlot), boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x]);
+                std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeVxCount, 0);
+                auto slotSlice = slotRef[boost::indices[range(0, nz)][range(0, ny)][range(0, nx)]];
+                const auto extents = partialCubeShape.z == 1 || needsAttention ? boost::extents[1][imageHeight][imageBytesPerLine/numChannels] :
+                                         (cubeVxCount == imageHeight * imageBytesPerLine) ? boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x] : boost::extents[nz][ny][nx];
+                boost::const_multi_array_ref<uint8_t, 3> dataRef(planeBits, extents);
+                if (partialCubeShape.z == 1 || needsAttention) {
+                    boost::multi_array<uint8_t, 3> d = dataRef[boost::indices[range(0, 1)][range(0, imageHeight)][range(0, imageWidth)]];
+                    if (dataset.api == Dataset::API::Precomputed || dataset.api == Dataset::API::Sharded) {
+                        d.reshape(boost::array<decltype(d)::index, 3>{nz, ny, nx});
+                        slotSlice = d;
+                    } else {
+                        d.reshape(boost::array<decltype(d)::index, 3>{dataset.cubeShape.z,dataset.cubeShape.y,dataset.cubeShape.x});
+                        slotSlice = d[boost::indices[range(0, nz)][range(0, ny)][range(0, nx)]];
+                    }
+                } else {
+                    slotSlice = dataRef[boost::indices[range(0, nz)][range(0, ny)][range(0, nx)]];
+                }
+                success = true;
+            }
         }
     } else if (dataset.type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_16) {
         const std::size_t expectedSize = cubeVxCount * OBJID_BYTES / 4;
+        const std::size_t partialExpectedSize = partialCubeVxCount * OBJID_BYTES / 4;
         if (availableSize == expectedSize) {
             boost::const_multi_array_ref<uint16_t, 1> dataRef(reinterpret_cast<const uint16_t *>(data.data()), boost::extents[cubeVxCount]);
             boost::multi_array_ref<uint64_t, 1> slotRef(reinterpret_cast<uint64_t *>(currentSlot), boost::extents[cubeVxCount]);
             slotRef = dataRef;
             success = true;
+        } else if (availableSize >= partialExpectedSize) {
+            copyPartialCube<uint16_t, uint64_t>(reinterpret_cast<const uint16_t *>(data.constData()), currentSlot, partialCubeShape, dataset.cubeShape, cubeVxCount);
+            success = true;
         }
     } else if (dataset.type == Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64) {
         const std::size_t expectedSize = cubeVxCount * OBJID_BYTES;
+        const std::size_t partialExpectedSize = partialCubeVxCount * OBJID_BYTES;
         if (availableSize == expectedSize) {
             std::copy(std::begin(data), std::end(data), reinterpret_cast<std::uint64_t *>(currentSlot));
+            success = true;
+        } else if (availableSize >= partialExpectedSize) {
+            copyPartialCube(reinterpret_cast<const uint64_t *>(data.constData()), currentSlot, partialCubeShape, dataset.cubeShape, cubeVxCount);
             success = true;
         }
     } else if (dataset.type == Dataset::CubeType::SEGMENTATION_SZ_ZIP) {
@@ -769,12 +840,19 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
             archive.goToFirstFile();
             QuaZipFile file(&archive);
             if (file.open(QIODevice::ReadOnly)) {
-                auto data = file.readAll();
+                auto zipData = file.readAll();
                 std::size_t uncompressedSize;
-                snappy::GetUncompressedLength(data.data(), data.size(), &uncompressedSize);
+                snappy::GetUncompressedLength(zipData.data(), zipData.size(), &uncompressedSize);
                 const std::size_t expectedSize = cubeVxCount * OBJID_BYTES;
+                const std::size_t partialExpectedSize = partialCubeVxCount * OBJID_BYTES;
                 if (uncompressedSize == expectedSize) {
-                    success = snappy::RawUncompress(data.data(), data.size(), reinterpret_cast<char*>(currentSlot));
+                    success = snappy::RawUncompress(zipData.data(), zipData.size(), reinterpret_cast<char*>(currentSlot));
+                } else if (uncompressedSize >= partialExpectedSize) {
+                    QByteArray uncompressed(static_cast<int>(uncompressedSize), Qt::Uninitialized);
+                    if (snappy::RawUncompress(zipData.data(), zipData.size(), uncompressed.data())) {
+                        copyPartialCube(reinterpret_cast<const uint64_t *>(uncompressed.constData()), currentSlot, partialCubeShape, dataset.cubeShape, cubeVxCount);
+                        success = true;
+                    }
                 }
             }
             archive.close();
@@ -835,8 +913,11 @@ void Loader::Worker::broadcastProgress(bool startup) {
 void Loader::Worker::startDownload(const unsigned int loadingNr, const Coordinate &center, const std::size_t layerId, Dataset dataset, const CoordOfCube cubeCoord, DownloadMap &downloads, DecompressionMap &decompressions, FreeSlotList &freeSlots, CubePointerMap &cubeHash, const boost::optional<ShardedChunk> &shardedChunk) {
     auto & opens = slotOpen[layerId];
     const auto c = dataset.cube2global(cubeCoord);
-    const auto b = floatCoordinate(dataset.boundary) * dataset.scales[0].x / datasets[0].scales[0].x;
-    if (c.x < 0 || c.y < 0 || c.z < 0 || c.x >= b.x || c.y >= b.y || c.z >= b.z) {
+    if (c.x < 0 || c.y < 0 || c.z < 0) {
+        return;
+    }
+    const auto [magStart, magEnd] = dataset.chunkMagCoordRange(cubeCoord);
+    if (magStart.x >= magEnd.x || magStart.y >= magEnd.y || magStart.z >= magEnd.z) {
         return;
     }
     if (dataset.isOverlay()) {
@@ -1191,7 +1272,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     }
 
     for (const auto & [layerId,shard] : shards) {
-        qDebug() << "l" << shard;
+        // qDebug() << "l" << shard;
 
         auto num_minishards = (1u << datasets[layerId].bits[datasets[layerId].magIndex].minishard_bits);
         auto shard_data_offset = num_minishards * 16;
@@ -1201,7 +1282,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
             f.open(QIODevice::ReadOnly);
             auto data = f.read(shard_data_offset);
             if (data.size() > 0) {
-                qDebug() << "foo" << data.size();
+                // qDebug() << "foo" << data.size();
                 const auto minishards = minishards_from_shard(reinterpret_cast<unsigned char const *>(data.data()), num_minishards);
                 // for (std::size_t mi{0}; mi < minishards.size(); ++mi) {
                 for (const auto mi : qAsConst(shard2minishards[{layerId,shard}])) {
@@ -1251,7 +1332,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     return;
                 }
                 auto data = reply->readAll();
-                qDebug() << "foo" << data.size() << reply->rawHeaderPairs();
+                // qDebug() << "foo" << data.size() << reply->rawHeaderPairs();
                 const auto minishards = minishards_from_shard(reinterpret_cast<unsigned char const *>(data.data()), num_minishards);
                 // for (std::size_t mi{0}; mi < minishards.size(); ++mi) {
                 for (auto mi : shard2minishards[{layerId,shard}]) {
@@ -1314,8 +1395,8 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         }
     }
 
-    qDebug() << "foobar" << std::accumulate(std::begin(chunkid2chunk), std::end(chunkid2chunk), 0, [](std::size_t sum, const auto & m){ return sum + m.size(); })
-             << std::accumulate(std::begin(shard2minishards), std::end(shard2minishards), 0, [](std::size_t sum, const auto & m){ return sum + m.size(); }) << shards.size();
+    // qDebug() << "foobar" << std::accumulate(std::begin(chunkid2chunk), std::end(chunkid2chunk), 0, [](std::size_t sum, const auto & m){ return sum + m.size(); })
+    //          << std::accumulate(std::begin(shard2minishards), std::end(shard2minishards), 0, [](std::size_t sum, const auto & m){ return sum + m.size(); }) << shards.size();
 
     // for (std::size_t i{0}; i < allCubes.size(); ++i) {
     //     const auto layerId = allCubes[i].first;
