@@ -58,6 +58,28 @@ static void enforce16BitCubeTypeSupport(Dataset & info) {
     }
 }
 
+static bool parseElementClass(const QString & value, Dataset & info) {// missing value means uint8; false for unsupported values
+    if (value == "uint16") {
+        info.bytesPerVoxel = 2;
+    }
+    return value.isEmpty() || value == "uint8" || value == "uint16";
+}
+
+static Dataset::list_t finalizeLayers(Dataset::list_t && infos, const QUrl & configUrl) {
+    for (auto && info : infos) {
+        if (info.scales.empty()) {
+            return {};
+        }
+        if (info.url.isEmpty()) {
+            info.url = QUrl::fromLocalFile(QFileInfo(configUrl.toLocalFile()).absoluteDir().absolutePath());
+        }
+        if (&info != &infos.front() && !info.renderSettings.visibleSetExplicitly && !info.isOverlay()) {// disable all non-seg layers expect the first TODO multi layer
+            info.allocationEnabled = info.loadingEnabled = info.renderSettings.visible = false;
+        }
+    }
+    return infos;
+}
+
 QString Dataset::compressionString() const {
     switch (type) {
     case Dataset::CubeType::RAW_UNCOMPRESSED: return bytesPerVoxel == 2 ? "16 bit gray" : "8 bit gray";
@@ -134,6 +156,9 @@ Dataset::list_t Dataset::parse(const QUrl & url, const QString & data, bool add_
     }
     if (infos.empty()) {
         throw std::runtime_error(isHeidelbrain(url) ? "Missing [Dataset] header in config." : "The dataset contains no usable layers – see the log for details.");
+    }
+    for (auto && info : infos) {
+        enforce16BitCubeTypeSupport(info);
     }
     if (add_snappy) {
         bool overlayPresent{false};
@@ -287,9 +312,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
             infos.back().renderSettings.visibleSetExplicitly = true;
             infos.back().allocationEnabled = infos.back().loadingEnabled = info.renderSettings.visible = QVariant{value}.toBool();
         } else if (token == "_ElementClass") {// KNOSSOS extension, not part of the PyKnossos format
-            if (value == "uint16") {
-                info.bytesPerVoxel = 2;
-            } else if (value != "uint8") {
+            if (!parseElementClass(value, info)) {
                 qWarning() << "unsupported _ElementClass" << value << "– assuming uint8";
             }
         } else if (token == "_Description") {
@@ -299,19 +322,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         }
     }
 
-    for (auto && info : infos) {
-        if (info.scales.empty()) {
-            return {};
-        }
-        enforce16BitCubeTypeSupport(info);
-        if (info.url.isEmpty()) {
-            info.url = QUrl::fromLocalFile(QFileInfo(configUrl.toLocalFile()).absoluteDir().absolutePath());
-        }
-        if (&info != &infos.front() && !info.renderSettings.visibleSetExplicitly && !info.isOverlay()) {// disable all non-seg layers expect the first TODO multi layer
-            info.allocationEnabled = info.loadingEnabled = info.renderSettings.visible = false;
-        }
-    }
-    return infos;
+    return finalizeLayers(std::move(infos), configUrl);
 }
 
 #include <QTemporaryFile>
@@ -368,9 +379,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                 const auto dataType = jmap["data_type"].toString();
                 if (jmap["type"].toString() == "segmentation") {
                     // segmentation ids of any width are handled by cube type, not bytesPerVoxel
-                } else if (dataType == "uint16") {
-                    info.bytesPerVoxel = 2;
-                } else if (!dataType.isEmpty() && dataType != "uint8") {
+                } else if (!parseElementClass(dataType, info)) {
                     qWarning() << "unsupported data_type" << dataType << "in" << info.url << "– assuming uint8";
                 }
                 info.gpuCubeShape = {};
@@ -450,9 +459,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         info.token = QString::fromStdString(toml::find_or(vit, "AdditionalQuery", std::string{}));
 
         const auto elementClass = QString::fromStdString(toml::find_or(vit, "ElementClass", std::string{"uint8"}));
-        if (elementClass == "uint16") {
-            info.bytesPerVoxel = 2;
-        } else if (elementClass != "uint8") {
+        if (!parseElementClass(elementClass, info)) {
             qWarning() << "Layer" << info.experimentname << "has unsupported ElementClass" << elementClass << "– assuming uint8";
         }
 
@@ -462,19 +469,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
             infos.emplace_back(info);
         }
     }
-    for (auto && info : infos) {
-        if (info.scales.empty()) {
-            return {};
-        }
-        enforce16BitCubeTypeSupport(info);
-        if (info.url.isEmpty()) {
-            info.url = QUrl::fromLocalFile(QFileInfo(configUrl.toLocalFile()).absoluteDir().absolutePath());
-        }
-        if (&info != &infos.front() && !info.renderSettings.visibleSetExplicitly && !info.isOverlay()) {// disable all non-seg layers expect the first TODO multi layer
-            info.allocationEnabled = info.loadingEnabled = info.renderSettings.visible = false;
-        }
-    }
-    return infos;
+    return finalizeLayers(std::move(infos), configUrl);
 }
 
 Dataset::list_t Dataset::parseWebKnossosJson(const QUrl &, const QString & json_raw) {
@@ -492,9 +487,7 @@ Dataset::list_t Dataset::parseWebKnossosJson(const QUrl &, const QString & json_
         const auto elementClass = layer["elementClass"].toString("uint8");
         if (category == "color") {
             info.type = CubeType::RAW_UNCOMPRESSED;
-            if (elementClass == "uint16") {
-                info.bytesPerVoxel = 2;
-            } else if (elementClass != "uint8") {
+            if (!parseElementClass(elementClass, info)) {
                 qWarning() << "skipping color layer" << layerString << "with unsupported elementClass" << elementClass;
                 continue;
             }
