@@ -720,93 +720,109 @@ Loader::DecompressionResult decompressCube(void * currentSlot, QIODevice & reply
         const auto image = QImage::fromData(data);
         const auto numChannels = std::max(1, dataset.numChannels);
         const auto channelIndex = dataset.channelIndex;
-        if (dataset.bytesPerVoxel == 2 && numChannels > 1) {
-            qCritical() << layerId << cubeCoord << "16-bit multichannel images are unsupported → no fill";
-        } else if (dataset.bytesPerVoxel == 2) {
-            const bool has16BitChannels = image.format() == QImage::Format_Grayscale16 || image.format() == QImage::Format_RGBX64 || image.format() == QImage::Format_RGBA64 || image.format() == QImage::Format_RGBA64_Premultiplied;
-            const auto grayscale = has16BitChannels ? image.convertToFormat(QImage::Format_Grayscale16) : image;
-            if (grayscale.format() != QImage::Format_Grayscale16) {
-                qCritical() << layerId << cubeCoord << "image decoded to format" << image.format() << "instead of" << QImage::Format_Grayscale16 << "→ no fill";
-            } else if (static_cast<std::size_t>(grayscale.width()) * static_cast<std::size_t>(grayscale.height()) >= static_cast<std::size_t>(partialCubeVxCount)) {
-                const auto imageVxCount = static_cast<std::size_t>(grayscale.width()) * static_cast<std::size_t>(grayscale.height());
-                std::vector<uint16_t> voxels(imageVxCount);
-                auto * out = reinterpret_cast<uint8_t *>(voxels.data());
-                const auto lineBytes = static_cast<std::size_t>(grayscale.width()) * dataset.bytesPerVoxel;
-                for (int y = 0; y < grayscale.height(); ++y) {
-                    std::copy(grayscale.constScanLine(y), grayscale.constScanLine(y) + lineBytes, out);
-                    out += lineBytes;
-                }
-                if (imageVxCount >= static_cast<std::size_t>(cubeVxCount)) {
-                    using range = boost::multi_array_types::index_range;
-                    boost::const_multi_array_ref<uint16_t, 3> dataRef(voxels.data(), boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x]);
-                    boost::multi_array_ref<uint16_t, 3> slotRef(reinterpret_cast<uint16_t *>(currentSlot), boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x]);
-                    std::fill(reinterpret_cast<uint16_t *>(currentSlot), reinterpret_cast<uint16_t *>(currentSlot) + cubeVxCount, 0);
-                    slotRef[boost::indices[range(0, partialCubeShape.z)][range(0, partialCubeShape.y)][range(0, partialCubeShape.x)]] =
-                        dataRef[boost::indices[range(0, partialCubeShape.z)][range(0, partialCubeShape.y)][range(0, partialCubeShape.x)]];
-                } else {
-                    copyPartialCube(voxels.data(), currentSlot, partialCubeShape, dataset.cubeShape, cubeVxCount);
-                }
-                success = true;
-            }
-        } else if (channelIndex >= 0 && channelIndex < numChannels && image.width() * image.height() >= partialCubeVxCount) {
+        if (channelIndex >= 0 && channelIndex < numChannels && image.width() * image.height() >= partialCubeVxCount) {
+            const bool is16 = dataset.bytesPerVoxel == 2;
+            // RGBX64 is Qt's 16-bit-per-channel RGB (no RGB48); keep 4 stored channels for stride/extraction.
+            const int workChannels = numChannels == 1 ? 1 : (is16 ? 4 : 3);
+            // if (dataset.bytesPerVoxel == 2 && numChannels > 1) {
+            //     qCritical() << layerId << cubeCoord << "16-bit multichannel images are unsupported → no fill";
+            // } else if (dataset.bytesPerVoxel == 2) {
+            //     const bool has16BitChannels = image.format() == QImage::Format_Grayscale16 || image.format() == QImage::Format_RGBX64 || image.format() == QImage::Format_RGBA64 || image.format() == QImage::Format_RGBA64_Premultiplied;
+            //     const auto grayscale = has16BitChannels ? image.convertToFormat(QImage::Format_Grayscale16) : image;
+            //     if (grayscale.format() != QImage::Format_Grayscale16) {
+            //         qCritical() << layerId << cubeCoord << "image decoded to format" << image.format() << "instead of" << QImage::Format_Grayscale16 << "→ no fill";
+            //     } else if (static_cast<std::size_t>(grayscale.width()) * static_cast<std::size_t>(grayscale.height()) >= static_cast<std::size_t>(partialCubeVxCount)) {
+            //         const auto imageVxCount = static_cast<std::size_t>(grayscale.width()) * static_cast<std::size_t>(grayscale.height());
+            //         std::vector<uint16_t> voxels(imageVxCount);
+            //         auto * out = reinterpret_cast<uint8_t *>(voxels.data());
+            //         const auto lineBytes = static_cast<std::size_t>(grayscale.width()) * dataset.bytesPerVoxel;
+            //         for (int y = 0; y < grayscale.height(); ++y) {
+            //             std::copy(grayscale.constScanLine(y), grayscale.constScanLine(y) + lineBytes, out);
+            //             out += lineBytes;
+            //         }
+            //         if (imageVxCount >= static_cast<std::size_t>(cubeVxCount)) {
+            //             using range = boost::multi_array_types::index_range;
+            //             boost::const_multi_array_ref<uint16_t, 3> dataRef(voxels.data(), boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x]);
+            //             boost::multi_array_ref<uint16_t, 3> slotRef(reinterpret_cast<uint16_t *>(currentSlot), boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x]);
+            //             std::fill(reinterpret_cast<uint16_t *>(currentSlot), reinterpret_cast<uint16_t *>(currentSlot) + cubeVxCount, 0);
+            //             slotRef[boost::indices[range(0, partialCubeShape.z)][range(0, partialCubeShape.y)][range(0, partialCubeShape.x)]] =
+            //                 dataRef[boost::indices[range(0, partialCubeShape.z)][range(0, partialCubeShape.y)][range(0, partialCubeShape.x)]];
+            //         } else {
+            //             copyPartialCube(voxels.data(), currentSlot, partialCubeShape, dataset.cubeShape, cubeVxCount);
+            //         }
+            //         success = true;
+            //     }
+            // } else if (channelIndex >= 0 && channelIndex < numChannels && image.width() * image.height() >= partialCubeVxCount) {
             if (numChannels == 1 && partialCubeShape == dataset.cubeShape) {
-                const auto grayscale = image.convertToFormat(QImage::Format_Grayscale8);
-                if (grayscale.sizeInBytes() == static_cast<qint64>(cubeVxCount)) {
-                    std::copy(grayscale.constBits(), grayscale.constBits() + cubeVxCount, reinterpret_cast<std::uint8_t *>(currentSlot));
+                const auto grayscale = image.convertToFormat(is16 ? QImage::Format_Grayscale16 : QImage::Format_Grayscale8);
+                const auto expectedBytes = static_cast<qint64>(cubeVxCount) * dataset.bytesPerVoxel;
+                if (static_cast<std::size_t>(grayscale.sizeInBytes()) == expectedBytes) {
+                    std::copy(grayscale.constBits(), grayscale.constBits() + expectedBytes, reinterpret_cast<std::uint8_t *>(currentSlot));
                     success = true;
                 }
             }
             if (!success) {
                 using range = boost::multi_array_types::index_range;
-                const QImage work = numChannels == 1 ? image.convertToFormat(QImage::Format_Grayscale8) : image.convertToFormat(QImage::Format_RGB888);
+                const QImage work = numChannels == 1
+                    ? image.convertToFormat(is16 ? QImage::Format_Grayscale16 : QImage::Format_Grayscale8)
+                    : image.convertToFormat(is16 ? QImage::Format_RGBX64 : QImage::Format_RGB888);
                 const auto nx = partialCubeShape.x;
                 const auto ny = partialCubeShape.y;
                 const auto nz = partialCubeShape.z;
                 const int imageHeight = work.height();
                 const int imageWidth = work.width();
                 const int imageBytesPerLine = work.bytesPerLine();
+                const int samplesPerLine = imageBytesPerLine / (workChannels * dataset.bytesPerVoxel);
 
-                boost::multi_array<uint8_t, 2> channelPlaneStorage;
-                const uint8_t * planeBits;
-                if (numChannels == 1) {
-                    planeBits = work.constBits();
-                } else {
-                    const auto fullImageWidth = imageBytesPerLine / numChannels;
-                    channelPlaneStorage.resize(boost::extents[imageHeight][fullImageWidth]);
-                    if (imageBytesPerLine % 3 == 0) {
-                        boost::const_multi_array_ref<uint8_t, 3> rgbRef(work.constBits(), boost::extents[imageHeight][fullImageWidth][3]);
-                        channelPlaneStorage[boost::indices[range(0, imageHeight)][range(0, fullImageWidth)]] =
-                            rgbRef[boost::indices[range(0, imageHeight)][range(0, fullImageWidth)][channelIndex]];
+                auto decodePlane = [&](auto voxelTag) {
+                    using VoxelT = decltype(voxelTag);
+                    boost::multi_array<VoxelT, 2> channelPlaneStorage;
+                    const VoxelT * planeBits;
+                    if (numChannels == 1) {
+                        planeBits = reinterpret_cast<const VoxelT *>(work.constBits());
                     } else {
-                        boost::const_multi_array_ref<uint8_t, 2> byteRef(work.constBits(), boost::extents[imageHeight][imageBytesPerLine]);
-                        for (int h = 0; h < imageHeight; ++h) {
-                            boost::const_multi_array_ref<uint8_t, 2> rgbRow(&byteRef[h][0], boost::extents[fullImageWidth][3]);
-                            channelPlaneStorage[h] = rgbRow[boost::indices[range(0, fullImageWidth)][channelIndex]];
+                        channelPlaneStorage.resize(boost::extents[imageHeight][samplesPerLine]);
+                        if (imageBytesPerLine % (workChannels * static_cast<int>(sizeof(VoxelT))) == 0) {
+                            boost::const_multi_array_ref<VoxelT, 3> rgbRef(reinterpret_cast<const VoxelT *>(work.constBits()), boost::extents[imageHeight][samplesPerLine][workChannels]);
+                            channelPlaneStorage[boost::indices[range(0, imageHeight)][range(0, samplesPerLine)]] =
+                                rgbRef[boost::indices[range(0, imageHeight)][range(0, samplesPerLine)][channelIndex]];
+                        } else {
+                            boost::const_multi_array_ref<std::uint8_t, 2> byteRef(work.constBits(), boost::extents[imageHeight][imageBytesPerLine]);
+                            for (int h = 0; h < imageHeight; ++h) {
+                                boost::const_multi_array_ref<VoxelT, 2> rgbRow(reinterpret_cast<const VoxelT *>(&byteRef[h][0]), boost::extents[samplesPerLine][workChannels]);
+                                channelPlaneStorage[h] = rgbRow[boost::indices[range(0, samplesPerLine)][channelIndex]];
+                            }
                         }
+                        planeBits = channelPlaneStorage.data();
                     }
-                    planeBits = channelPlaneStorage.data();
-                }
 
-                const bool needsAttention = (partialCubeShape.x > 1 && (partialCubeShape.x % 2 != 0 || partialCubeShape.y % 2 != 0)) ||
-                                            (partialCubeShape.x > 1 && (partialCubeShape.x != imageWidth || partialCubeShape.x != imageBytesPerLine/numChannels)) ||
-                                            (imageHeight != imageWidth && partialCubeShape.x == imageHeight && partialCubeShape.y == imageWidth);
-                boost::multi_array_ref<uint8_t, 3> slotRef(reinterpret_cast<uint8_t *>(currentSlot), boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x]);
-                std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeVxCount, 0);
-                auto slotSlice = slotRef[boost::indices[range(0, nz)][range(0, ny)][range(0, nx)]];
-                const auto extents = partialCubeShape.z == 1 || needsAttention ? boost::extents[1][imageHeight][imageBytesPerLine/numChannels] :
-                                         (cubeVxCount == imageHeight * imageBytesPerLine) ? boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x] : boost::extents[nz][ny][nx];
-                boost::const_multi_array_ref<uint8_t, 3> dataRef(planeBits, extents);
-                if (partialCubeShape.z == 1 || needsAttention) {
-                    boost::multi_array<uint8_t, 3> d = dataRef[boost::indices[range(0, 1)][range(0, imageHeight)][range(0, imageWidth)]];
-                    if (dataset.api == Dataset::API::Precomputed || dataset.api == Dataset::API::Sharded) {
-                        d.reshape(boost::array<decltype(d)::index, 3>{nz, ny, nx});
-                        slotSlice = d;
+                    const bool needsAttention = (partialCubeShape.x > 1 && (partialCubeShape.x % 2 != 0 || partialCubeShape.y % 2 != 0)) ||
+                                                (partialCubeShape.x > 1 && (partialCubeShape.x != imageWidth || partialCubeShape.x != samplesPerLine)) ||
+                                                (imageHeight != imageWidth && partialCubeShape.x == imageHeight && partialCubeShape.y == imageWidth);
+                    boost::multi_array_ref<VoxelT, 3> slotRef(reinterpret_cast<VoxelT *>(currentSlot), boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x]);
+                    std::fill(reinterpret_cast<VoxelT *>(currentSlot), reinterpret_cast<VoxelT *>(currentSlot) + cubeVxCount, 0);
+                    auto slotSlice = slotRef[boost::indices[range(0, nz)][range(0, ny)][range(0, nx)]];
+                    const auto imageByteCount = static_cast<std::size_t>(imageHeight) * static_cast<std::size_t>(imageBytesPerLine);
+                    const auto extents = partialCubeShape.z == 1 || needsAttention ? boost::extents[1][imageHeight][samplesPerLine] :
+                                             (cubeVxCount * sizeof(VoxelT) == imageByteCount) ? boost::extents[dataset.cubeShape.z][dataset.cubeShape.y][dataset.cubeShape.x] : boost::extents[nz][ny][nx];
+                    boost::const_multi_array_ref<VoxelT, 3> dataRef(planeBits, extents);
+                    if (partialCubeShape.z == 1 || needsAttention) {
+                        boost::multi_array<VoxelT, 3> d = dataRef[boost::indices[range(0, 1)][range(0, imageHeight)][range(0, imageWidth)]];
+                        if (dataset.api == Dataset::API::Precomputed || dataset.api == Dataset::API::Sharded) {
+                            d.reshape(boost::array<typename decltype(d)::index, 3>{nz, ny, nx});
+                            slotSlice = d;
+                        } else {
+                            d.reshape(boost::array<typename decltype(d)::index, 3>{dataset.cubeShape.z, dataset.cubeShape.y, dataset.cubeShape.x});
+                            slotSlice = d[boost::indices[range(0, nz)][range(0, ny)][range(0, nx)]];
+                        }
                     } else {
-                        d.reshape(boost::array<decltype(d)::index, 3>{dataset.cubeShape.z,dataset.cubeShape.y,dataset.cubeShape.x});
-                        slotSlice = d[boost::indices[range(0, nz)][range(0, ny)][range(0, nx)]];
+                        slotSlice = dataRef[boost::indices[range(0, nz)][range(0, ny)][range(0, nx)]];
                     }
+                };
+                if (is16) {
+                    decodePlane(std::uint16_t{});
                 } else {
-                    slotSlice = dataRef[boost::indices[range(0, nz)][range(0, ny)][range(0, nx)]];
+                    decodePlane(std::uint8_t{});
                 }
                 success = true;
             }
