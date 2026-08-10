@@ -440,7 +440,7 @@ bool DatasetLoadWidget::loadDataset(const boost::optional<bool> loadOverlay, QUr
             // we retry with a dataset knossos has already opened
             auto targetPath = path.path();
             auto targetConfig = targetPath.mid(1 + targetPath.lastIndexOf('/'));
-            for (auto path : datasetModel.datasets) {
+            for (auto &path : datasetModel.datasets) {
                 if (path.mid(1 + path.lastIndexOf('/')) == targetConfig){
                     qDebug() << "trying a recently opened dataset that matches: " << path;
                     resp = Network::singleton().refresh(path);

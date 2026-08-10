@@ -384,9 +384,10 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         }
 
         boost::container::small_vector<floatCoordinate, 4> tomlScales;
+        Coordinate tomlBoundary = {};
         if (vit.contains("Extent_px")) {
             const auto extent = toml::find(vit, "Extent_px").as_array();
-            info.boundary = Coordinate(extent.at(0).as_integer(), extent.at(1).as_integer(), extent.at(2).as_integer());
+            tomlBoundary = Coordinate(extent.at(0).as_integer(), extent.at(1).as_integer(), extent.at(2).as_integer());
         }
         if (vit.contains("CubeShape_px")) {
             const auto cube_shape = toml::find(vit, "CubeShape_px").as_array();
@@ -405,7 +406,8 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
             }
         }
         std::vector<QString> fileExtensions;
-        for (const auto & ext : toml::find(vit, "FileExtension").as_array()) {
+        const auto fileExt = toml::find(vit, "FileExtension").as_array();
+        for (const auto & ext : fileExt) {
             fileExtensions.emplace_back(QString::fromStdString(ext.as_string()));
         }
 
@@ -436,6 +438,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
             }
             const auto download = Network::singleton().refresh(info.url);
             if (download.first) {
+                info.boundary = {};
                 info.cubeShape = {};
                 info.gpuCubeShape = {};
                 info.scales.clear();
@@ -514,6 +517,10 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                     }
                 }
 
+                if (tomlBoundary.x > info.boundary.x || tomlBoundary.y > info.boundary.y || tomlBoundary.z > info.boundary.z) {
+                    info.boundary = tomlBoundary;
+                }
+
                 // --- combine values from TOML file and INFO file ---
                 floatCoordinate refScale = tomlScales.empty() ? floatCoordinate{1, 1, 1} : tomlScales[0];
                 Coordinate refSize  = info.boundary; // Extent_px aus TOML
@@ -590,6 +597,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
             }
         } else {
             info.scales = tomlScales;
+            info.boundary = tomlBoundary;
         }
 
         info.experimentname = QString::fromStdString(toml::find(vit, "Name").as_string());
