@@ -986,7 +986,7 @@ void Loader::Worker::startDownload(const unsigned int loadingNr, const Coordinat
             if (!freeSlots.empty()) {
                 auto * currentSlot = freeSlots.front();
                 freeSlots.pop_front();
-                const std::size_t cubeBytes = dataset.cubeShape.prod() * dataset.cubeElementBytes();
+                const std::size_t cubeBytes = dataset.cubeShape.prod() * dataset.cubeDataTypeBytes();
                 std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeBytes, 0);
                 state->protectCube2Pointer.lock();
                 cubeHash[cubeCoord] = currentSlot;
@@ -1059,7 +1059,7 @@ void Loader::Worker::startDownload(const unsigned int loadingNr, const Coordinat
                 if ((maybeReply != nullptr && maybeReply->error() == QNetworkReply::ContentNotFoundError) || (maybeReply == nullptr && !exists)) {//404 → fill
                     auto * currentSlot = freeSlots.front();
                     freeSlots.pop_front();
-                    const std::size_t cubeBytes = dataset.cubeShape.prod() * dataset.cubeElementBytes();
+                    const std::size_t cubeBytes = dataset.cubeShape.prod() * dataset.cubeDataTypeBytes();
                     std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeBytes, 0);
                     state->protectCube2Pointer.lock();
                     cubeHash[cubeCoord] = currentSlot;
@@ -1211,7 +1211,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         if (!changedDatasets[layerId].allocationEnabled) {
             continue;
         }
-        const auto cubeBytes = changedDatasets[layerId].cubeShape.prod() * changedDatasets[layerId].cubeElementBytes();
+        const auto cubeBytes = changedDatasets[layerId].cubeShape.prod() * changedDatasets[layerId].cubeDataTypeBytes();
         const auto cubeSetElements = std::pow(state->M, 3);
         const auto cubeSetBytes = cubeSetElements * cubeBytes;
         qDebug() << layerId << "Allocating" << cubeSetBytes / 1024. / 1024. << "MiB for cubes.";

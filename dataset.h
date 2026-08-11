@@ -95,7 +95,7 @@ struct Dataset {
     std::size_t bytesPerVoxel{1};
     // the only place the cube slot element size may be derived from – loader allocation,
     // decompression and zero-fill sizes must all agree or slot reuse overruns the heap
-    std::size_t cubeElementBytes() const {
+    std::size_t cubeDataTypeBytes() const {
         return isOverlay() ? sizeof(std::uint64_t) : bytesPerVoxel;
     }
     // Edge length of the current data set in data pixels.
