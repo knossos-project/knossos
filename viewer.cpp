@@ -282,10 +282,11 @@ static void texChecksumHook(const QString & tag, const std::vector<std::uint8_t>
 }
 
 const Viewer::AdjustmentTable & Viewer::adjustmentTable(const std::size_t layerId) {
-    adjustmentTableCaches.resize(Dataset::datasets.size());
+    auto datasets = Dataset::datasets;
+    adjustmentTableCaches.resize(datasets.size());
     auto & cache = adjustmentTableCaches[layerId];
-    const auto & renderSettings = Dataset::datasets[layerId].renderSettings;
-    const std::size_t levels = Dataset::datasets[layerId].bytesPerVoxel == 2 ? 65536 : 256;
+    const auto & renderSettings = datasets[layerId].renderSettings;
+    const std::size_t levels = datasets[layerId].bytesPerVoxel == 2 ? 65536 : 256;
     const bool lutOn = state->viewerState->datasetColortableOn;
     if (cache.table.empty() || cache.bias != renderSettings.bias || cache.rangeDelta != renderSettings.rangeDelta || cache.lutOn != lutOn || cache.levels != levels
             || (lutOn && cache.colortable != state->viewerState->datasetColortable)) {

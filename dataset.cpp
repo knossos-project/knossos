@@ -445,7 +445,9 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                 const auto jmap = QJsonDocument::fromJson(download.second.data()).object();
 
                 const auto dataTypeInfo = jmap["data_type"].toString();
-                if (!dataType.isEmpty() && dataTypeInfo != dataType) {
+                if (dataType.isEmpty()) {
+                    dataType = dataTypeInfo;
+                } else if (dataTypeInfo != dataType) {
                     QMessageBox warning{QApplication::activeWindow()};
                     warning.setIcon(QMessageBox::Warning);
                     warning.setText("Missmatch in data type");
@@ -613,7 +615,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         if(dataType.isEmpty()) {
             qWarning() << "dataType not defined - assuming uint8";
             dataType = "uint8";
-        } else if (dataType != "uint8" || dataType != "uint16" || dataType != "uint64") {
+        } else if (!(dataType == "uint8" || dataType == "uint16" || dataType == "uint64")) {
             qWarning() << "unsupported data_type" << dataType << "in" << info.url;
             return {};
         }
