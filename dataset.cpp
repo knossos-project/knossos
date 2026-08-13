@@ -475,7 +475,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                         if (!fileMissMatch) {
                             QMessageBox warning{QApplication::activeWindow()};
                             warning.setIcon(QMessageBox::Warning);
-                            warning.setText("Missmatch in file extensions");
+                            warning.setText("Mismatch in file extensions");
                             warning.setInformativeText("Expected " + info.fileextension + " from info file. Got " + fileExtensions[0] + " from toml. Continue using format from info file!");
                             warning.exec();
                         }

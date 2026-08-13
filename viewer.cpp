@@ -254,8 +254,9 @@ const auto datasetAdjustment = [](auto layerId, auto index){
         return state->viewerState->datasetColortable[index];
     } else {
         const auto MAX_COLORVAL{std::numeric_limits<uint8_t>::max()};
-        auto bias = Dataset::datasets[layerId].renderSettings.bias;
-        const auto range = Dataset::datasets[layerId].renderSettings.rangeDelta;
+        const auto & ds = Dataset::datasets[layerId];
+        const auto bias = ds.renderSettings.bias;
+        const auto range = ds.renderSettings.rangeDelta;
         const bool invert = range < 0;
         int dynIndex = (index - bias * 255) / std::abs(range);
         dynIndex = invert ? 255 - dynIndex : dynIndex;
