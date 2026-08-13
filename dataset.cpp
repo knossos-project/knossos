@@ -450,14 +450,14 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                 } else if (dataTypeInfo != dataType) {
                     QMessageBox warning{QApplication::activeWindow()};
                     warning.setIcon(QMessageBox::Warning);
-                    warning.setText("Missmatch in data type");
+                    warning.setText("Mismatch in data type");
                     warning.setInformativeText("Expected " + dataTypeInfo + " from info file. Got " + dataType + " from toml. Continue using data type from info file!");
                     warning.exec();
                     dataType = dataTypeInfo;
                 }
 
                 info.numChannels = jmap["num_channels"].toInt();
-                bool fileMissMatch = false;
+                bool fileMisMatch = false;
                 for (auto && scaleRef : jmap["scales"].toArray()) {
                     const auto scaleRef2 = scaleRef.toObject();
 
@@ -504,14 +504,14 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                     else
                         info.fileextension = "." + encoding;
                     if (info.fileextension != fileExtensions[0]) {
-                        if (!fileMissMatch) {
+                        if (!fileMisMatch) {
                             QMessageBox warning{QApplication::activeWindow()};
                             warning.setIcon(QMessageBox::Warning);
-                            warning.setText("Missmatch in file extensions");
+                            warning.setText("Mismatch in file extensions");
                             warning.setInformativeText("Expected " + info.fileextension + " from info file. Got " + fileExtensions[0] + " from toml. Continue using format from info file!");
                             warning.exec();
                         }
-                        fileMissMatch = true;
+                        fileMisMatch = true;
                         if (info.fileextension == ".seg.sz.zip") {
                             qWarning() << "Can not open precomputed segmentation with raw layer toml config!";
                             return {};
