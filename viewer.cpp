@@ -282,7 +282,7 @@ static void texChecksumHook(const QString & tag, const std::vector<std::uint8_t>
 }
 
 const Viewer::AdjustmentTable & Viewer::adjustmentTable(const std::size_t layerId) {
-    auto datasets = Dataset::datasets;
+    const auto datasets = Dataset::datasets;
     adjustmentTableCaches.resize(datasets.size());
     auto & cache = adjustmentTableCaches[layerId];
     const auto & renderSettings = datasets[layerId].renderSettings;
@@ -638,8 +638,8 @@ void Viewer::arbCubes(ViewportArb & vp, const Dataset & dset, TextureLayer & tex
     const floatCoordinate xAxis = {1, 0, 0}; const floatCoordinate yAxis = {0, 1, 0}; const floatCoordinate zAxis = {0, 0, 1};
     const auto normal = vp.n;// the normal vector direction is not important here because it doesn’t change the plane
 
-    for (int i = 0; i < Dataset::datasets.size(); ++i) {
-        auto & layer = Dataset::datasets[i];
+    for (size_t i = 0; i < Dataset::datasets.size(); ++i) {
+        // auto & layer = Dataset::datasets[i];
         textureLayer.pendingArbCubes.clear();
         for (auto & pair : textureLayer.textures) {
             pair.second->vertices.clear();
@@ -803,7 +803,7 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
 void Viewer::calcLeftUpperTexAbsPx() {
     window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
         for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
-            auto & layer = Dataset::datasets[i];
+            const auto & layer = Dataset::datasets[i];
             auto & texture = orthoVP.textures[i];
             const auto fov = texture.usedSizeInCubePixels;
             const auto xy = orthoVP.viewportType == VIEWPORT_XY;
@@ -824,7 +824,7 @@ void Viewer::calcLeftUpperTexAbsPx() {
 void Viewer::calcDisplayedEdgeLength() {
     window->forEachOrthoVPDo([](ViewportOrtho & vpOrtho){
         for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
-            auto & layer = Dataset::datasets[i];
+            const auto & layer = Dataset::datasets[i];
             auto & texture = vpOrtho.textures[i];
             const auto voxelV1X = layer.scale.componentMul(vpOrtho.v1).length() / layer.scale.x;
             const auto voxelV2X = std::abs(layer.scale.componentMul(vpOrtho.v2).length()) / layer.scale.x;
@@ -885,7 +885,7 @@ void Viewer::zoom(const float newScreenPxXPerDataPx) {
         return;
     }
     for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
-        auto & layer = Dataset::datasets[i];
+        const auto & layer = Dataset::datasets[i];
         const auto updateFOV = [this](const auto i, const float newFOV) {
             window->forEachOrthoVPDo([i, newFOV](ViewportOrtho & orthoVP) {
                 orthoVP.textures[i].FOV = newFOV;
