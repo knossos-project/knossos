@@ -38,6 +38,7 @@
 #include <QQuaternion>
 #include <QTimer>
 
+#include <array>
 #include <vector>
 
 enum TreeDisplay {
@@ -188,8 +189,22 @@ private:
 
     void vpGenerateTexture(ViewportArb & vp, const std::size_t layerId);
 
-    void dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId, const boost::optional<decltype(Dataset::LayerRenderSettings::combineSlicesType)> combineType);
-    void dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxInDc_float, std::uint8_t * slice, int s, int *t, const floatCoordinate & v2, const std::size_t layerId, float usedSizeInCubePixels);
+    // precomputed voxel value → RGB mapping (windowing, then optional LUT), 256 or 65536 entries by layer bit depth
+    using AdjustmentTable = std::vector<std::array<std::uint8_t, 3>>;
+    AdjustmentTable buildAdjustmentTable(const std::size_t layerId) const;
+    struct AdjustmentTableCache {
+        double bias{}, rangeDelta{};
+        bool lutOn{};
+        std::size_t levels{};
+        decltype(ViewerState::datasetColortable) colortable;
+        AdjustmentTable table;
+    };
+    std::vector<AdjustmentTableCache> adjustmentTableCaches;
+    const AdjustmentTable & adjustmentTable(const std::size_t layerId);
+    template<typename T>
+    void dcSliceExtract(T * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId, const AdjustmentTable & adjustment, const boost::optional<decltype(Dataset::LayerRenderSettings::combineSlicesType)> combineType);
+    template<typename T>
+    void dcSliceExtract(T * datacube, floatCoordinate *currentPxInDc_float, std::uint8_t * slice, int s, int *t, const floatCoordinate & v2, const std::size_t layerId, const AdjustmentTable & adjustment, float usedSizeInCubePixels);
 
     void ocSliceExtract(std::uint64_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId);
 

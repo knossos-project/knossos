@@ -121,6 +121,9 @@ void ViewportOrtho::resetTexture(const std::size_t layerCount) {
         if (state->gpuSlicer && viewportType == ViewportType::VIEWPORT_XY) {
             state->viewer->layers.clear();
             for (const auto & dset : Dataset::datasets) {
+                if (!dset.isOverlay() && dset.bytesPerVoxel != 1) {
+                    qWarning() << "GPU slicing doesn’t support 16 bit layers – layer" << state->viewer->layers.size() << "won’t be rendered";
+                }
                 state->viewer->layers.emplace_back(*context());
                 state->viewer->layers.back().isOverlayData = dset.isOverlay();
                 state->viewer->layers.back().createBogusCube(dset.cubeShape, dset.gpuCubeShape);

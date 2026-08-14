@@ -84,13 +84,35 @@ static boost::bimap<QString, Dataset::CubeType> typeMap = boost::assign::list_of
         (".seg.sz.zip", Dataset::CubeType::SEGMENTATION_SZ_ZIP)
         (".seg", Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64);
 
+static void enforce16BitCubeTypeSupport(Dataset & info) {
+    if (info.bytesPerVoxel == 2 && info.type != Dataset::CubeType::RAW_UNCOMPRESSED && info.type != Dataset::CubeType::RAW_PNG) {
+        qWarning() << "Layer" << info.experimentname << "combines 16 bit voxels with" << typeMap.right.at(info.type) << "cubes which only ever decode to 8 bit – falling back to 8 bit";
+        info.bytesPerVoxel = 1;
+    }
+}
+
+static Dataset::list_t finalizeLayers(Dataset::list_t && infos, const QUrl & configUrl) {
+    for (auto && info : infos) {
+        if (info.scales.empty()) {
+            return {};
+        }
+        if (info.url.isEmpty()) {
+            info.url = QUrl::fromLocalFile(QFileInfo(configUrl.toLocalFile()).absoluteDir().absolutePath());
+        }
+        if (&info != &infos.front() && !info.renderSettings.visibleSetExplicitly && !info.isOverlay()) {// disable all non-seg layers expect the first TODO multi layer
+            info.allocationEnabled = info.loadingEnabled = info.renderSettings.visible = false;
+        }
+    }
+    return infos;
+}
+
 QString Dataset::compressionString() const {
     switch (type) {
-    case Dataset::CubeType::RAW_UNCOMPRESSED: return "8 bit gray";
+    case Dataset::CubeType::RAW_UNCOMPRESSED: return bytesPerVoxel == 2 ? "16 bit gray" : "8 bit gray";
     case Dataset::CubeType::RAW_JPG: return "jpg";
     case Dataset::CubeType::RAW_J2K: return "j2k";
     case Dataset::CubeType::RAW_JP2_6: return "jp2";
-    case Dataset::CubeType::RAW_PNG: return "png";
+    case Dataset::CubeType::RAW_PNG: return bytesPerVoxel == 2 ? "png 16 bit" : "png";
     case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_16: return "16 bit id";
     case Dataset::CubeType::SEGMENTATION_UNCOMPRESSED_64: return "64 bit id";
     case Dataset::CubeType::SEGMENTATION_SZ_ZIP: return "seg.sz.zip";
@@ -159,7 +181,10 @@ Dataset::list_t Dataset::parse(const QUrl & url, const QString & data, bool add_
         infos = Dataset::fromLegacyConf(url, data);
     }
     if (infos.empty()) {
-        throw std::runtime_error("Missing [Dataset] header in config.");
+        throw std::runtime_error(isHeidelbrain(url) ? "Missing [Dataset] header in config." : "The dataset contains no usable layers – see the log for details.");
+    }
+    for (auto && info : infos) {
+        enforce16BitCubeTypeSupport(info);
     }
     if (add_snappy) {
         bool overlayPresent{false};
@@ -317,18 +342,7 @@ Dataset::list_t Dataset::parsePyKnossosConf(const QUrl & configUrl, QString conf
         }
     }
 
-    for (auto && info : infos) {
-        if (info.scales.empty()) {
-            return {};
-        }
-        if (info.url.isEmpty()) {
-            info.url = QUrl::fromLocalFile(QFileInfo(configUrl.toLocalFile()).absoluteDir().absolutePath());
-        }
-        if (&info != &infos.front() && !info.renderSettings.visibleSetExplicitly && !info.isOverlay()) {// disable all non-seg layers expect the first TODO multi layer
-            info.allocationEnabled = info.loadingEnabled = info.renderSettings.visible = false;
-        }
-    }
-    return infos;
+    return finalizeLayers(std::move(infos), configUrl);
 }
 
 #include <QTemporaryFile>
@@ -370,9 +384,10 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         }
 
         boost::container::small_vector<floatCoordinate, 4> tomlScales;
+        Coordinate tomlBoundary = {};
         if (vit.contains("Extent_px")) {
             const auto extent = toml::find(vit, "Extent_px").as_array();
-            info.boundary = Coordinate(extent.at(0).as_integer(), extent.at(1).as_integer(), extent.at(2).as_integer());
+            tomlBoundary = Coordinate(extent.at(0).as_integer(), extent.at(1).as_integer(), extent.at(2).as_integer());
         }
         if (vit.contains("CubeShape_px")) {
             const auto cube_shape = toml::find(vit, "CubeShape_px").as_array();
@@ -391,9 +406,12 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
             }
         }
         std::vector<QString> fileExtensions;
-        for (const auto & ext : toml::find(vit, "FileExtension").as_array()) {
+        const auto fileExt = toml::find(vit, "FileExtension").as_array();
+        for (const auto & ext : fileExt) {
             fileExtensions.emplace_back(QString::fromStdString(ext.as_string()));
         }
+
+        auto dataType = QString::fromStdString(toml::find_or(vit,"data_type", ""));
 
         // helper for comparing scales
         auto scaleExists = [](const boost::container::small_vector<floatCoordinate, 4>& container, double x, double y, double z) {
@@ -408,7 +426,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         if (url.endsWith("info") or info.api == API::Precomputed) {
             if (fileExtensions.size() > 1) {
                 qWarning() << "Precomputed layers can not have more than 1 file extension!";
-                return infos;
+                return {};
             }
             info.api = API::Precomputed;
             if (!url.endsWith("info") && !url.isEmpty())
@@ -420,12 +438,26 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
             }
             const auto download = Network::singleton().refresh(info.url);
             if (download.first) {
+                info.boundary = {};
                 info.cubeShape = {};
                 info.gpuCubeShape = {};
                 info.scales.clear();
                 const auto jmap = QJsonDocument::fromJson(download.second.data()).object();
+
+                const auto dataTypeInfo = jmap["data_type"].toString();
+                if (dataType.isEmpty()) {
+                    dataType = dataTypeInfo;
+                } else if (dataTypeInfo != dataType) {
+                    QMessageBox warning{QApplication::activeWindow()};
+                    warning.setIcon(QMessageBox::Warning);
+                    warning.setText("Mismatch in data type");
+                    warning.setInformativeText("Expected " + dataTypeInfo + " from info file. Got " + dataType + " from toml. Continue using data type from info file!");
+                    warning.exec();
+                    dataType = dataTypeInfo;
+                }
+
                 info.numChannels = jmap["num_channels"].toInt();
-                bool fileMissMatch = false;
+                bool fileMisMatch = false;
                 for (auto && scaleRef : jmap["scales"].toArray()) {
                     const auto scaleRef2 = scaleRef.toObject();
 
@@ -472,19 +504,23 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
                     else
                         info.fileextension = "." + encoding;
                     if (info.fileextension != fileExtensions[0]) {
-                        if (!fileMissMatch) {
+                        if (!fileMisMatch) {
                             QMessageBox warning{QApplication::activeWindow()};
                             warning.setIcon(QMessageBox::Warning);
-                            warning.setText("Missmatch in file extensions");
+                            warning.setText("Mismatch in file extensions");
                             warning.setInformativeText("Expected " + info.fileextension + " from info file. Got " + fileExtensions[0] + " from toml. Continue using format from info file!");
                             warning.exec();
                         }
-                        fileMissMatch = true;
+                        fileMisMatch = true;
                         if (info.fileextension == ".seg.sz.zip") {
                             qWarning() << "Can not open precomputed segmentation with raw layer toml config!";
-                            return infos;
+                            return {};
                         }
                     }
+                }
+
+                if (tomlBoundary.x > info.boundary.x || tomlBoundary.y > info.boundary.y || tomlBoundary.z > info.boundary.z) {
+                    info.boundary = tomlBoundary;
                 }
 
                 // --- combine values from TOML file and INFO file ---
@@ -563,6 +599,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
             }
         } else {
             info.scales = tomlScales;
+            info.boundary = tomlBoundary;
         }
 
         info.experimentname = QString::fromStdString(toml::find(vit, "Name").as_string());
@@ -575,6 +612,15 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
         info.renderSettings.color = QColor{QString::fromStdString(toml::find_or(vit, "Color", "white"))};
         info.token = QString::fromStdString(toml::find_or(vit, "AdditionalQuery", std::string{}));
 
+        if(dataType.isEmpty()) {
+            qWarning() << "dataType not defined - assuming uint8";
+            dataType = "uint8";
+        } else if (!(dataType == "uint8" || dataType == "uint16" || dataType == "uint64")) {
+            qWarning() << "unsupported data_type" << dataType << "in" << info.url;
+            return {};
+        }
+        info.bytesPerVoxel = dataType == "uint8" ? 1 : dataType == "uint16" ? 2 : sizeof(std::uint64_t);
+      
         for (const auto & ext : fileExtensions) {
             if (info.fileextension.isEmpty())
                 info.fileextension = ext;
@@ -598,18 +644,7 @@ Dataset::list_t Dataset::parseToml(const QUrl & configUrl, QString configData) {
             }
         }
     }
-    for (auto && info : infos) {
-        if (info.scales.empty()) {
-            return {};
-        }
-        if (info.url.isEmpty()) {
-            info.url = QUrl::fromLocalFile(QFileInfo(configUrl.toLocalFile()).absoluteDir().absolutePath());
-        }
-        if (&info != &infos.front() && !info.renderSettings.visibleSetExplicitly && !info.isOverlay()) {// disable all non-seg layers expect the first TODO multi layer
-            info.allocationEnabled = info.loadingEnabled = info.renderSettings.visible = false;
-        }
-    }
-    return infos;
+    return finalizeLayers(std::move(infos), configUrl);
 }
 
 Dataset::list_t Dataset::parseWebKnossosJson(const QUrl &, const QString & json_raw) {
@@ -624,14 +659,14 @@ Dataset::list_t Dataset::parseWebKnossosJson(const QUrl &, const QString & json_
 
         const auto layerString = layer["name"].toString();
         const auto category = layer["category"].toString();
-        const auto download = Network::singleton().refresh(QString("https://demo.webknossos.org/api/userToken/generate"));
-        if (download.first) {
-            info.token = QJsonDocument::fromJson(download.second)["token"].toString();
-        }
         if (category == "color") {
             info.type = CubeType::RAW_UNCOMPRESSED;
         } else {// "segmentation"
             info.type = CubeType::SEGMENTATION_UNCOMPRESSED_16;
+        }
+        const auto download = Network::singleton().refresh(QString("https://demo.webknossos.org/api/userToken/generate"));
+        if (download.first) {
+            info.token = QJsonDocument::fromJson(download.second)["token"].toString();
         }
         const auto boundary_json = layer["boundingBox"];
         info.boundary = {

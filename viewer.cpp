@@ -249,25 +249,57 @@ void Viewer::setMagnificationLock(const bool locked) {
     emit magnificationLockChanged(locked);
 }
 
-const auto datasetAdjustment = [](auto layerId, auto index){
-    if (state->viewerState->datasetColortableOn) {
-        return state->viewerState->datasetColortable[index];
-    } else {
-        const auto MAX_COLORVAL{std::numeric_limits<uint8_t>::max()};
-        auto bias = Dataset::datasets[layerId].renderSettings.bias;
-        const auto range = Dataset::datasets[layerId].renderSettings.rangeDelta;
-        const bool invert = range < 0;
-        int dynIndex = (index - bias * 255) / std::abs(range);
+Viewer::AdjustmentTable Viewer::buildAdjustmentTable(const std::size_t layerId) const {
+    const auto & renderSettings = Dataset::datasets[layerId].renderSettings;
+    const std::size_t levels = Dataset::datasets[layerId].bytesPerVoxel == 2 ? 65536 : 256;
+    const double maxVal = levels - 1;
+    const double scale = 255.0 / maxVal;// 1.0 for 8 bit – keeps the historic formula bit-identical
+    const auto bias = renderSettings.bias;
+    const auto range = renderSettings.rangeDelta;
+    const bool invert = range < 0;
+    const bool lutOn = state->viewerState->datasetColortableOn;
+    const double rangeAbs = std::max(std::abs(range), 1.0 / maxVal);// range 0 degenerates into a threshold at bias instead of dividing by 0
+    AdjustmentTable table(levels);
+    for (std::size_t v = 0; v < levels; ++v) {
+        // window in the native domain, emit 8 bit
+        int dynIndex = (v - bias * maxVal) / rangeAbs * scale;
         dynIndex = invert ? 255 - dynIndex : dynIndex;
-        std::uint8_t val = std::min(static_cast<int>(MAX_COLORVAL), std::max(0, dynIndex));
-        return std::tuple(val, val, val);
+        const std::uint8_t val = std::min(255, std::max(0, dynIndex));
+        if (lutOn) {// windowing first keeps 256-entry LUTs useful on 16 bit data
+            const auto [r, g, b] = state->viewerState->datasetColortable[val];
+            table[v] = {r, g, b};
+        } else {
+            table[v] = {val, val, val};
+        }
     }
-};
+    return table;
+}
 
-void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId, const boost::optional<decltype(Dataset::LayerRenderSettings::combineSlicesType)> combineType) {
+static void texChecksumHook(const QString & tag, const std::vector<std::uint8_t> & texData) {// regression baseline hook
+    if (qEnvironmentVariableIsSet("KNOSSOS_TEXCHECKSUM")) {
+        qDebug().noquote() << "texchecksum" << tag << qChecksum(reinterpret_cast<const char *>(texData.data()), texData.size());
+    }
+}
+
+const Viewer::AdjustmentTable & Viewer::adjustmentTable(const std::size_t layerId) {
+    const auto datasets = Dataset::datasets;
+    adjustmentTableCaches.resize(datasets.size());
+    auto & cache = adjustmentTableCaches[layerId];
+    const auto & renderSettings = datasets[layerId].renderSettings;
+    const std::size_t levels = datasets[layerId].bytesPerVoxel == 2 ? 65536 : 256;
+    const bool lutOn = state->viewerState->datasetColortableOn;
+    if (cache.table.empty() || cache.bias != renderSettings.bias || cache.rangeDelta != renderSettings.rangeDelta || cache.lutOn != lutOn || cache.levels != levels
+            || (lutOn && cache.colortable != state->viewerState->datasetColortable)) {
+        cache = {renderSettings.bias, renderSettings.rangeDelta, lutOn, levels, lutOn ? state->viewerState->datasetColortable : decltype(cache.colortable){}, buildAdjustmentTable(layerId)};
+    }
+    return cache.table;
+}
+
+template<typename T>
+void Viewer::dcSliceExtract(T * datacube, Coordinate cubePosInAbsPx, std::uint8_t * slice, ViewportOrtho & vp, const std::size_t layerId, const AdjustmentTable & adjustment, const boost::optional<decltype(Dataset::LayerRenderSettings::combineSlicesType)> combineType) {
     const auto cubeCoord = Dataset::datasets[layerId].global2cube(cubePosInAbsPx);
     const auto cubeMaxGlobalCoord = Dataset::datasets[layerId].cube2global(cubeCoord + CoordOfCube{1,1,1}) - Coordinate{1,1,1};
-    const auto cubeShape = Dataset::current().cubeShape;
+    const auto cubeShape = Dataset::datasets[layerId].cubeShape;
     const auto partlyOutsideMovementArea = Annotation::singleton().outsideMovementArea(Dataset::datasets[layerId].cube2global(cubeCoord))
             || Annotation::singleton().outsideMovementArea(cubeMaxGlobalCoord);
     // we traverse ZY column first because of better locailty of reference
@@ -277,15 +309,10 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
     const std::size_t texNext = vp.viewportType == VIEWPORT_ZY ? cubeShape.x * 4 : 4;// RGBA per pixel
     const std::ptrdiff_t texNextLine = vp.viewportType == VIEWPORT_ZY ? 4 - 4 * cubeShape.y * cubeShape.x : 0;// don’t rely on unsigned overflow
 
-    const bool isDatasetAdjustment = state->viewerState->datasetColortableOn || Dataset::datasets[layerId].renderSettings.bias > 0.0 || Dataset::datasets[layerId].renderSettings.rangeDelta < 1.0;
     for (int yzz = 0; yzz < (vp.viewportType == VIEWPORT_XY ? cubeShape.y : cubeShape.z); ++yzz) {
         for (int xxy = 0; xxy < (vp.viewportType == VIEWPORT_ZY ? cubeShape.y : cubeShape.x); ++xxy) {
-            uint8_t r, g, b;
-            if (isDatasetAdjustment) {
-                std::tie(r, g, b) = datasetAdjustment(layerId, datacube[0]);
-            } else {
-                r = g = b = datacube[0];
-            }
+            const auto & adjusted = adjustment[datacube[0]];
+            uint8_t r{adjusted[0]}, g{adjusted[1]}, b{adjusted[2]};
             if (partlyOutsideMovementArea) {
                 const auto offsetx = Dataset::datasets[layerId].scaleFactor.componentMul(Coordinate(vp.viewportType == VIEWPORT_XY || vp.viewportType == VIEWPORT_XZ, vp.viewportType == VIEWPORT_ZY, 0) * xxy);
                 const auto offsety = Dataset::datasets[layerId].scaleFactor.componentMul(Coordinate(0, vp.viewportType == VIEWPORT_XY, vp.viewportType == VIEWPORT_XZ || vp.viewportType == VIEWPORT_ZY) * yzz);
@@ -318,12 +345,13 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, Coordinate cubePosInAbsPx, 
     }
 }
 
-void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxInDc_float, std::uint8_t * slice, int s, int *t, const floatCoordinate & v2, const std::size_t layerId, float usedSizeInCubePixels) {
+template<typename T>
+void Viewer::dcSliceExtract(T * datacube, floatCoordinate *currentPxInDc_float, std::uint8_t * slice, int s, int *t, const floatCoordinate & v2, const std::size_t layerId, const AdjustmentTable & adjustment, float usedSizeInCubePixels) {
     Coordinate currentPxInDc = {roundFloat(currentPxInDc_float->x), roundFloat(currentPxInDc_float->y), roundFloat(currentPxInDc_float->z)};
-    const auto cubeShape = Dataset::current().cubeShape;
+    const auto cubeShape = Dataset::datasets[layerId].cubeShape;
     if((currentPxInDc.x < 0) || (currentPxInDc.y < 0) || (currentPxInDc.z < 0) ||
        (currentPxInDc.x >= cubeShape.x) || (currentPxInDc.y >= cubeShape.y) || (currentPxInDc.z >= cubeShape.z)) {
-        const int sliceIndex = 3 * ( s + *t * std::ceil(usedSizeInCubePixels));
+        const int sliceIndex = 4 * ( s + *t * std::ceil(usedSizeInCubePixels));
         slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = 0;
         slice[sliceIndex + 3] = 255;
         (*t)++;
@@ -346,12 +374,10 @@ void Viewer::dcSliceExtract(std::uint8_t * datacube, floatCoordinate *currentPxI
         if(datacube == nullptr) {
             slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = 0;
         } else {
-            if (layerId) {
-                std::tie(slice[sliceIndex + 0], slice[sliceIndex + 1], slice[sliceIndex + 2]) = datasetAdjustment(layerId, datacube[dcIndex]);
-            }
-            else {
-                slice[sliceIndex] = slice[sliceIndex + 1] = slice[sliceIndex + 2] = datacube[dcIndex];
-            }
+            const auto & adjusted = adjustment[datacube[dcIndex]];
+            slice[sliceIndex] = adjusted[0];
+            slice[sliceIndex + 1] = adjusted[1];
+            slice[sliceIndex + 2] = adjusted[2];
         }
         slice[sliceIndex + 3] = 255;
         (*t)++;
@@ -509,9 +535,14 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
         vpGenerateTexture(static_cast<ViewportArb&>(vp), layerId);
         return;
     }
+    if (!vp.resliceNecessary[layerId] && vp.resliceNecessaryCubes[layerId].empty()) {
+        return;// no adjustment table for nothing – this runs every frame
+    }
     const int multiSliceiMax = Dataset::datasets[layerId].renderSettings.combineSlicesEnabled
             * Dataset::datasets[layerId].renderSettings.combineSlices
             * ((vp.viewportType == VIEWPORT_XY) || !Dataset::datasets[layerId].renderSettings.combineSlicesXyOnly);
+    static const AdjustmentTable noAdjustment;// overlays don’t consult the table
+    const auto & adjustment = Dataset::datasets[layerId].isOverlay() ? noAdjustment : adjustmentTable(layerId);
     bool first{true};
     const auto cubeShape = Dataset::datasets[layerId].cubeShape;
     auto for_each_resliced_cube_do = [this, layerId, cubeShape, &vp](const CoordOfCube upperLeftDc, auto func){
@@ -542,12 +573,9 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
 
         // We iterate over the texture with x and y being in a temporary coordinate
         // system local to this texture.
-        if (!vp.resliceNecessary[layerId] && vp.resliceNecessaryCubes[layerId].empty()) {
-            return;
-        }
         const CoordOfCube upperLeftDc = Dataset::datasets[layerId].global2cube(vp.textures[layerId].leftUpperPxInAbsPx) + offsetCube;
         QFutureSynchronizer<void> sync;
-        for_each_resliced_cube_do(upperLeftDc, [this, cubeShape, layerId, &vp, &sync, currentPosition_inside_dc, first](auto, auto, auto currentDc, auto index){
+        for_each_resliced_cube_do(upperLeftDc, [this, cubeShape, layerId, &vp, &sync, &adjustment, currentPosition_inside_dc, first](auto, auto, auto currentDc, auto index){
             int slicePositionWithinCube = vp.n.componentMul(currentPosition_inside_dc.componentMul(Coordinate{1, cubeShape.x, cubeShape.y * cubeShape.x})).length();
             Coordinate offsetCubeGlobal = vp.n.componentMul(vp.n.componentMul(currentPosition_inside_dc));// ensure n is positive by multiplying with itself
 
@@ -559,13 +587,18 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
             Coordinate slicePosInAbsPx = Dataset::datasets[layerId].cube2global(currentDc) + Dataset::datasets[layerId].scaleFactor.componentMul(offsetCubeGlobal);
             // This is used to index into the texture. overlayData[index] is the first
             // byte of the datacube slice at position (x_dc, y_dc) in the texture.
-            sync.addFuture(QtConcurrent::run([this, &vp, cube, first, slicePositionWithinCube, slicePosInAbsPx, index, layerId, cubeShape]()  {
+            sync.addFuture(QtConcurrent::run([this, &vp, cube, first, slicePositionWithinCube, slicePosInAbsPx, index, layerId, cubeShape, &adjustment]()  {
                 if (cube != nullptr) {
                     if (Dataset::datasets[layerId].isOverlay()) {
                         ocSliceExtract(reinterpret_cast<std::uint64_t *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.textures[layerId].texData.data() + index, vp, layerId);
                     } else {
                         const auto combine = boost::make_optional(!first, Dataset::datasets[layerId].renderSettings.combineSlicesType);
-                        dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.textures[layerId].texData.data() + index, vp, layerId, combine);
+                        // dispatch strictly on this layer’s depth – Dataset::current() would be wrong for mixed-depth layer stacks
+                        if (Dataset::datasets[layerId].bytesPerVoxel == 2) {
+                            dcSliceExtract(reinterpret_cast<std::uint16_t *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.textures[layerId].texData.data() + index, vp, layerId, adjustment, combine);
+                        } else {
+                            dcSliceExtract(reinterpret_cast<std::uint8_t  *>(cube) + slicePositionWithinCube, slicePosInAbsPx, vp.textures[layerId].texData.data() + index, vp, layerId, adjustment, combine);
+                        }
                     }
                 } else {
                     std::fill(vp.textures[layerId].texData.data() + index, vp.textures[layerId].texData.data() + index + 4 * cubeShape.y * cubeShape.x, 0);
@@ -582,6 +615,7 @@ void Viewer::vpGenerateTexture(ViewportOrtho & vp, const std::size_t layerId) {
     });
     vp.textures[layerId].texHandle.release();
     glBindTexture(GL_TEXTURE_2D, 0);
+    texChecksumHook(QString{"ortho %1 %2"}.arg(layerId).arg(static_cast<int>(vp.viewportType)), vp.textures[layerId].texData);
     vp.resliceNecessary[layerId] = false;
     vp.resliceNecessaryCubes[layerId].clear();
 }
@@ -604,8 +638,8 @@ void Viewer::arbCubes(ViewportArb & vp, const Dataset & dset, TextureLayer & tex
     const floatCoordinate xAxis = {1, 0, 0}; const floatCoordinate yAxis = {0, 1, 0}; const floatCoordinate zAxis = {0, 0, 1};
     const auto normal = vp.n;// the normal vector direction is not important here because it doesn’t change the plane
 
-    for (int i = 0; i < Dataset::datasets.size(); ++i) {
-        auto & layer = Dataset::datasets[i];
+    for (size_t i = 0; i < Dataset::datasets.size(); ++i) {
+        // auto & layer = Dataset::datasets[i];
         textureLayer.pendingArbCubes.clear();
         for (auto & pair : textureLayer.textures) {
             pair.second->vertices.clear();
@@ -726,6 +760,8 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
     static std::vector<std::uint8_t> texData;// reallocation for every run would be a waste
     texData.resize(4 * std::pow(std::ceil(vp.textures[layerId].usedSizeInCubePixels), 2), 0);
 
+    const auto & adjustment = adjustmentTable(layerId);
+
     int s = 0, t = 0, t_old = 0;
     while(s < vp.textures[layerId].usedSizeInCubePixels) {
         t = 0;
@@ -744,7 +780,12 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
             currentPxInDc_float = currentPx_float - currentDc * Dataset::datasets[layerId].cubeShape.componentMul(vp.v1).length();
             t_old = t;
 
-            dcSliceExtract(reinterpret_cast<std::uint8_t *>(datacube), &currentPxInDc_float, texData.data(), s, &t, vp.v2, layerId, vp.textures[layerId].usedSizeInCubePixels);
+            // dispatch strictly on this layer’s depth – Dataset::current() would be wrong for mixed-depth layer stacks
+            if (Dataset::datasets[layerId].bytesPerVoxel == 2) {
+                dcSliceExtract(reinterpret_cast<std::uint16_t *>(datacube), &currentPxInDc_float, texData.data(), s, &t, vp.v2, layerId, adjustment, vp.textures[layerId].usedSizeInCubePixels);
+            } else {
+                dcSliceExtract(reinterpret_cast<std::uint8_t *>(datacube), &currentPxInDc_float, texData.data(), s, &t, vp.v2, layerId, adjustment, vp.textures[layerId].usedSizeInCubePixels);
+            }
             currentPx_float = currentPx_float - vp.v2 * (t - t_old);
         }
         s++;
@@ -756,12 +797,13 @@ void Viewer::vpGenerateTexture(ViewportArb &vp, const std::size_t layerId) {
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, std::ceil(vp.textures[layerId].usedSizeInCubePixels), std::ceil(vp.textures[layerId].usedSizeInCubePixels), GL_RGBA, GL_UNSIGNED_BYTE, texData.data());
     vp.textures[layerId].texHandle.release();
     glBindTexture(GL_TEXTURE_2D, 0);
+    texChecksumHook(QString{"arb %1"}.arg(layerId), texData);
 }
 
 void Viewer::calcLeftUpperTexAbsPx() {
     window->forEachOrthoVPDo([this](ViewportOrtho & orthoVP) {
         for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
-            auto & layer = Dataset::datasets[i];
+            const auto & layer = Dataset::datasets[i];
             auto & texture = orthoVP.textures[i];
             const auto fov = texture.usedSizeInCubePixels;
             const auto xy = orthoVP.viewportType == VIEWPORT_XY;
@@ -782,7 +824,7 @@ void Viewer::calcLeftUpperTexAbsPx() {
 void Viewer::calcDisplayedEdgeLength() {
     window->forEachOrthoVPDo([](ViewportOrtho & vpOrtho){
         for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
-            auto & layer = Dataset::datasets[i];
+            const auto & layer = Dataset::datasets[i];
             auto & texture = vpOrtho.textures[i];
             const auto voxelV1X = layer.scale.componentMul(vpOrtho.v1).length() / layer.scale.x;
             const auto voxelV2X = std::abs(layer.scale.componentMul(vpOrtho.v2).length()) / layer.scale.x;
@@ -843,7 +885,7 @@ void Viewer::zoom(const float newScreenPxXPerDataPx) {
         return;
     }
     for (std::size_t i = 0; i < Dataset::datasets.size(); ++i) {
-        auto & layer = Dataset::datasets[i];
+        const auto & layer = Dataset::datasets[i];
         const auto updateFOV = [this](const auto i, const float newFOV) {
             window->forEachOrthoVPDo([i, newFOV](ViewportOrtho & orthoVP) {
                 orthoVP.textures[i].FOV = newFOV;
@@ -958,6 +1000,10 @@ void Viewer::run() {
         qDebug() << "loadPendingCubes";
         std::size_t id{};
         for (auto && [dset, textures] : boost::combine(Dataset::datasets, layers)) {
+            if (!dset.isOverlay() && dset.bytesPerVoxel != 1) {// gpu_raw_cube uploads assume 8 bit voxels – warned at texture layer creation
+                ++id;
+                continue;
+            }
             calculateMissingOrthoGPUCubes(dset, textures);
             qDebug() << textures.pendingOrthoCubes.size() << textures.pendingArbCubes.size() << textures.textures.size();
             loadPendingCubes(dset, textures, id, textures.pendingOrthoCubes, timer);
