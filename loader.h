@@ -103,7 +103,7 @@ private:
     std::size_t loaderCacheSize{0};
     void CalcLoadOrderMetric(float halfSc, floatCoordinate currentMetricPos, const UserMoveType userMoveType, const floatCoordinate & direction, float *metrics);
     floatCoordinate find_close_xyz(floatCoordinate direction);
-    std::vector<CoordOfCube> DcoiFromPos(const Coordinate &currentOrigin, const UserMoveType userMoveType, const floatCoordinate & direction);
+    std::vector<CoordOfCube> DcoiFromPos(const Coordinate &currentOrigin, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset & dataset);
     uint loadCubes();
     void snappyCacheBackupRaw(const std::size_t layerId, const CoordOfCube &, const void * cube);
     void snappyCacheClear();

@@ -184,12 +184,12 @@ struct LO_Element {
     float loadOrderMetrics[LL_METRIC_NUM];
 };
 
-std::vector<CoordOfCube> Loader::Worker::DcoiFromPos(const Coordinate & cpos, const UserMoveType userMoveType, const floatCoordinate & direction) {
+std::vector<CoordOfCube> Loader::Worker::DcoiFromPos(const Coordinate & cpos, const UserMoveType userMoveType, const floatCoordinate & direction, const Dataset & dataset) {
     const auto cubeElemCount = std::pow(state->M, 3);
-    const auto centerCube = datasets[0].global2cube(cpos);
-    const auto halfFOV = datasets[0].cube2global({1,1,1}) * (state->M - 1) / 2;
-    const auto tlCubeOffset = datasets[0].global2cube(cpos - halfFOV) - centerCube;
-    const auto brCubeOffset = datasets[0].global2cube(cpos + halfFOV) - centerCube;
+    const auto centerCube = dataset.global2cube(cpos);
+    const auto halfFOV = dataset.cube2global({1,1,1}) * (state->M - 1) / 2;
+    const auto tlCubeOffset = dataset.global2cube(cpos - halfFOV) - centerCube;
+    const auto brCubeOffset = dataset.global2cube(cpos + halfFOV) - centerCube;
 
     int i = 0;
     currentMaxMetric = 0;
@@ -932,11 +932,7 @@ void Loader::Worker::startDownload(const unsigned int loadingNr, const Coordinat
     if (c.x < 0 || c.y < 0 || c.z < 0) {
         return;
     }
-    const auto [magStart, magEnd] = dataset.chunkMagCoordRange(cubeCoord);
-    if (magStart.x >= magEnd.x || magStart.y >= magEnd.y || magStart.z >= magEnd.z) {
-        return;
-    }
-    if (dataset.isOverlay()) {
+    if (dataset.isOverlay() && dataset.magIndex < snappyCache[layerId].size()) {
         QMutexLocker lock{&snappyCacheMutex};
         auto snappyIt = snappyCache[layerId][dataset.magIndex].find(cubeCoord);
         if (snappyIt != std::end(snappyCache[layerId][dataset.magIndex])) {
@@ -982,18 +978,31 @@ void Loader::Worker::startDownload(const unsigned int loadingNr, const Coordinat
     const bool cubeNotDecompressing = decompressions.count(cubeCoord) == 0;
 
     if (cubeNotAlreadyLoaded && cubeNotDownloading && cubeNotDecompressing) {
+        const auto fillEmptyOverlay = [&]() {
+            if (freeSlots.empty()) {
+                qCritical() << layerId << cubeCoord << "no slots for overlay cube" << cubeHash.size() << freeSlots.size();
+                return;
+            }
+            auto * currentSlot = freeSlots.front();
+            freeSlots.pop_front();
+            const std::size_t cubeBytes = dataset.cubeShape.prod() * dataset.cubeDataTypeBytes();
+            std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeBytes, 0);
+            state->protectCube2Pointer.lock();
+            cubeHash[cubeCoord] = currentSlot;
+            state->protectCube2Pointer.unlock();
+            state->viewer->reslice_notify_all(layerId, cubeCoord);
+        };
+
         if (dataset.type == Dataset::CubeType::SNAPPY) {
-            if (!freeSlots.empty()) {
-                auto * currentSlot = freeSlots.front();
-                freeSlots.pop_front();
-                const std::size_t cubeBytes = dataset.cubeShape.prod() * dataset.cubeDataTypeBytes();
-                std::fill(reinterpret_cast<std::uint8_t *>(currentSlot), reinterpret_cast<std::uint8_t *>(currentSlot) + cubeBytes, 0);
-                state->protectCube2Pointer.lock();
-                cubeHash[cubeCoord] = currentSlot;
-                state->protectCube2Pointer.unlock();
-                state->viewer->reslice_notify_all(layerId, cubeCoord);
-            } else {
-                qCritical() << layerId << cubeCoord << "no slots for snappy extract" << cubeHash.size() << freeSlots.size();
+            fillEmptyOverlay();
+            return;
+        }
+
+        // overlay cubes must exist for painting even when there is no raw/seg data at this mag
+        const auto [magStart, magEnd] = dataset.chunkMagCoordRange(cubeCoord);
+        if (magStart.x >= magEnd.x || magStart.y >= magEnd.y || magStart.z >= magEnd.z) {
+            if (dataset.isOverlay()) {
+                fillEmptyOverlay();
             }
             return;
         }
@@ -1001,6 +1010,9 @@ void Loader::Worker::startDownload(const unsigned int loadingNr, const Coordinat
         auto request = dataset.apiSwitch(cubeCoord);
         if (dataset.api == Dataset::API::Sharded) {
             if (!shardedChunk) {
+                if (dataset.isOverlay()) {
+                    fillEmptyOverlay();
+                }
                 return;
             }
             const auto chunk = *shardedChunk;
@@ -1118,8 +1130,11 @@ void Loader::Worker::startDownload(const unsigned int loadingNr, const Coordinat
             localPool.setMaxThreadCount(1024);
             watcher.setFuture(QtConcurrent::run(&localPool, [loadingNr, &io, path, dataset, layerId, cubeCoord, shardedChunk]() -> boost::optional<bool> {
                 // immediately exit unstarted thread from the previous loadSignal
-                if (loadingNr != Loader::Controller::singleton().loadingNr || !QFile{path}.exists()) {
+                if (loadingNr != Loader::Controller::singleton().loadingNr) {
                     return boost::none;
+                }
+                if (!QFile{path}.exists()) {
+                    return false;// missing cube → 404 fill (needed for empty overlay layers)
                 }
                 QFile file(path);
                 file.open(QIODevice::ReadOnly | QIODevice::Unbuffered);
@@ -1254,10 +1269,11 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     //split dcoi into slice planes and rest
     std::vector<std::pair<std::size_t, CoordOfCube>> allCubes;
     {
-        const auto Dcoi = DcoiFromPos(center, userMoveType, direction);//datacubes of interest prioritized around the current position
         QMutexLocker locker(&state->protectCube2Pointer);
-        for (auto && todo : Dcoi) {
-            for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
+        for (std::size_t layerId{0}; layerId < datasets.size(); ++layerId) {
+            // each layer has its own cubeShape/scaleFactor/mag – cube keys must match getRawCube/viewer lookups
+            const auto Dcoi = DcoiFromPos(center, userMoveType, direction, datasets[layerId]);
+            for (auto && todo : Dcoi) {
                 // only queue downloads which are necessary
                 if (cubeQuery(state->cube2Pointer, layerId, datasets[layerId].magIndex, todo) == nullptr) {
                     allCubes.emplace_back(layerId, todo);
@@ -1272,7 +1288,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         const auto layerId = allCubes[i].first;
         const auto & dataset = datasets[layerId];
         const auto cubeCoord = allCubes[i].second;
-        if (dataset.api == Dataset::API::Sharded) {
+        if (dataset.api == Dataset::API::Sharded && !dataset.isOverlay()) {
             if (auto it = chunkid2chunk[layerId].find(dataset.chunkid(cubeCoord)); it != std::end(chunkid2chunk[layerId])) {
                 cube2chunk[layerId].emplace(cubeCoord, it->second);
             } else if(auto shard = dataset.precomputedCubeUrl(cubeCoord, true); !fourohfour[layerId].contains(shard)) {
@@ -1429,7 +1445,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         const auto layerId = allCubes[i].first;
         const auto & dataset = datasets[layerId];
         const auto cubeCoord = allCubes[i].second;
-        if (dataset.api == Dataset::API::Sharded) {
+        if (dataset.api == Dataset::API::Sharded && !dataset.isOverlay()) {
             if (auto it = chunkid2chunk[layerId].find(dataset.chunkid(cubeCoord)); it != std::end(chunkid2chunk[layerId])) {
                 cube2chunk[layerId].emplace(cubeCoord, it->second);
             } else {
@@ -1447,9 +1463,12 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     if (datasets[layerId].api == Dataset::API::Sharded) {
                         auto chunkIt = cube2chunk[layerId].find(cubeCoord);
                         if (chunkIt == std::end(cube2chunk[layerId])) {
-                            continue;
+                            if (!datasets[layerId].isOverlay()) {
+                                continue;
+                            }
+                        } else {
+                            shardedChunk = chunkIt->second;
                         }
-                        shardedChunk = chunkIt->second;
                     }
                     startDownload(loadingNr, center, layerId, datasets[layerId], cubeCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer.at(layerId).at(datasets[layerId].magIndex), shardedChunk);
                 } catch (const std::out_of_range &) {}

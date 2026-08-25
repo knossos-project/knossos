@@ -150,7 +150,7 @@ auto wholeCubes = [](const Coordinate & globalFirst, const Coordinate & globalLa
 template<typename Func, typename Skip>
 CubeCoordSet processRegion(const Coordinate & globalFirst, const Coordinate &  globalLast, Func func, Skip skip) {
     const auto segLayer = Dataset::datasets[Segmentation::singleton().layerId];
-    const auto & cubeShape = Dataset::current().cubeShape;
+    const auto & cubeShape = segLayer.cubeShape;
     const auto cubeBegin = segLayer.global2cube(globalFirst);
     const auto cubeEnd = segLayer.global2cube(globalLast) + 1;
     CubeCoordSet cubeCoords;
