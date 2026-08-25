@@ -304,7 +304,7 @@ void Skeletonizer::saveXmlSkeleton(QXmlStreamWriter & xml, const bool onlySelect
     if (Annotation::singleton().magLock) {
         xml.writeStartElement("brush_lock");
         const auto magLock = Annotation::singleton().magLock.value();
-        xml.writeAttribute("mag", QString::number(Dataset::current().api == Dataset::API::PyKnossos ? magLock + 1 : static_cast<int>(std::pow(2, magLock))));
+        xml.writeAttribute("mag", QString::number(Dataset::current().toMag(magLock)));
         xml.writeEndElement();
     }
 
@@ -530,7 +530,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
                     }
                 } else if(xml.name() == "brush_lock") {
                     const auto mag = attributes.value("mag").toInt();
-                    Annotation::singleton().magLock = Dataset::current().api == Dataset::API::PyKnossos ? mag - 1 : static_cast<int>(std::log2(mag));
+                    Annotation::singleton().magLock = Dataset::current().toMagIndex(mag);
                 } else if(xml.name() == "time") { // in case of a merge the current annotation's time is kept.
                     if (!merge) {
                         const auto ms = attributes.value("ms").toULongLong();
@@ -842,7 +842,10 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     if (!merge) {
         setActiveNode(Skeletonizer::singleton().findNodeByNodeID(activeNodeID));
         if (Annotation::singleton().magLock) {
-            state->viewer->updateDatasetMag(0, std::pow(2, Annotation::singleton().magLock.value()));
+            const auto magIndex = Annotation::singleton().magLock.value();
+            for (std::size_t layerId = 0; layerId < Dataset::datasets.size(); ++layerId) {
+                state->viewer->updateDatasetMag(layerId, magIndex);
+            }
         }
         if (loadedPosition) {
             state->viewer->setPosition(loadedPosition.get());
