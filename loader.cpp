@@ -998,7 +998,7 @@ void Loader::Worker::startDownload(const unsigned int loadingNr, const Coordinat
             return;
         }
 
-        // overlay cubes must exist for painting even when there is no raw/seg data at this mag
+        // overlay cubes must exist for painting when there is no raw/seg data at this mag
         const auto [magStart, magEnd] = dataset.chunkMagCoordRange(cubeCoord);
         if (magStart.x >= magEnd.x || magStart.y >= magEnd.y || magStart.z >= magEnd.z) {
             if (dataset.isOverlay()) {
@@ -1288,7 +1288,7 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
         const auto layerId = allCubes[i].first;
         const auto & dataset = datasets[layerId];
         const auto cubeCoord = allCubes[i].second;
-        if (dataset.api == Dataset::API::Sharded && !dataset.isOverlay()) {
+        if (dataset.api == Dataset::API::Sharded) {
             if (auto it = chunkid2chunk[layerId].find(dataset.chunkid(cubeCoord)); it != std::end(chunkid2chunk[layerId])) {
                 cube2chunk[layerId].emplace(cubeCoord, it->second);
             } else if(auto shard = dataset.precomputedCubeUrl(cubeCoord, true); !fourohfour[layerId].contains(shard)) {
@@ -1355,10 +1355,38 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                     reply->deleteLater();
                     return;
                 }
+                const auto startPending = [this, layerId, shard, center, requestLoadingNr](const quint64 mi) {
+                    if (layerId >= datasets.size() || !datasets[layerId].loadingEnabled) {
+                        return;
+                    }
+                    const auto pendingKey = qMakePair(qMakePair(static_cast<quint64>(layerId), shard), mi);
+                    auto pendingIt = pendingShardedCubes.find(pendingKey);
+                    if (pendingIt == pendingShardedCubes.end()) {
+                        return;
+                    }
+                    auto pendingCubes = std::move(pendingIt.value());
+                    pendingShardedCubes.erase(pendingIt);
+                    for (const auto & cubeCoord : pendingCubes) {
+                        boost::optional<ShardedChunk> shardedChunk;
+                        auto chunkIt = chunkid2chunk[layerId].find(datasets[layerId].chunkid(cubeCoord));
+                        if (chunkIt != std::end(chunkid2chunk[layerId])) {
+                            cube2chunk[layerId][cubeCoord] = chunkIt->second;
+                            shardedChunk = chunkIt->second;
+                        } else if (!datasets[layerId].isOverlay()) {
+                            continue;
+                        }
+                        try {
+                            startDownload(requestLoadingNr, center, layerId, datasets[layerId], cubeCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer.at(layerId).at(datasets[layerId].magIndex), shardedChunk);
+                        } catch (const std::out_of_range &) {}
+                    }
+                };
                 if (reply->error() != QNetworkReply::NoError) {
                     qDebug() << "shard" << reply->request().url() << reply->errorString();
                     if (reply->error() == QNetworkReply::ContentNotFoundError) {
                         fourohfour[layerId].insert(shard);
+                        for (auto mi : shard2minishards[{layerId,shard}]) {
+                            startPending(mi);
+                        }
                     }
                     reply->deleteLater();
                     return;
@@ -1368,59 +1396,41 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
                 const auto minishards = minishards_from_shard(reinterpret_cast<unsigned char const *>(data.data()), num_minishards);
                 // for (std::size_t mi{0}; mi < minishards.size(); ++mi) {
                 for (auto mi : shard2minishards[{layerId,shard}]) {
-                    if (minishards[mi][0] < minishards[mi][1]) {
-                        QNetworkRequest request(shard);
-                        request.setRawHeader("Range", QString("bytes=%1-%2").arg(shard_data_offset + minishards[mi][0]).arg(shard_data_offset + minishards[mi][1] - 1).toUtf8());
-                        auto * reply = qnam.get(request);
-                        QObject::connect(reply, &QNetworkReply::finished, [this, reply, minishards, layerId, shard_data_offset, shard, mi, center,
-                                         requestLoadingNr, requestMagIndex, requestUrl, requestScaleKey](){
-                            const bool staleLoadingNr = requestLoadingNr != Loader::Controller::singleton().loadingNr;
-                            const bool staleDataset = layerId >= datasets.size()
-                                                   || datasets[layerId].url != requestUrl
-                                                   || datasets[layerId].magIndex != requestMagIndex
-                                                   || requestMagIndex >= datasets[layerId].scaleKeys.size()
-                                                   || datasets[layerId].scaleKeys[requestMagIndex] != requestScaleKey;
-                            if (staleDataset) {
-                                reply->deleteLater();
-                                return;
-                            }
-                            if (reply->error() != QNetworkReply::NoError) {
-                                qDebug() << "minishard" << reply->request().url() << reply->errorString();
-                                reply->deleteLater();
-                                return;
-                            }
-                            auto data = reply->readAll();
-                            degzip(data);
-                            // qDebug() << "bar" << data.size() << reply->rawHeaderPairs();
-                            bool wroteChunkMapping = false;
-                            for (auto chunkid : chunks_from_minishards((reinterpret_cast<unsigned char const *>(data.data())), data.size(), shard_data_offset)) {
-                                chunkid2chunk[layerId][chunkid.first] = chunkid.second;
-                                wroteChunkMapping = true;
-                            }
-                            if (wroteChunkMapping && !staleLoadingNr) {
-                                const auto pendingKey = qMakePair(qMakePair(static_cast<quint64>(layerId), shard), mi);
-                                auto pendingIt = pendingShardedCubes.find(pendingKey);
-                                if (pendingIt != pendingShardedCubes.end()) {
-                                    auto pendingCubes = std::move(pendingIt.value());
-                                    pendingShardedCubes.erase(pendingIt);
-                                    for (const auto & cubeCoord : pendingCubes) {
-                                        auto chunkIt = chunkid2chunk[layerId].find(datasets[layerId].chunkid(cubeCoord));
-                                        if (chunkIt == std::end(chunkid2chunk[layerId])) {
-                                            continue;
-                                        }
-                                        cube2chunk[layerId][cubeCoord] = chunkIt->second;
-                                        if (!datasets[layerId].loadingEnabled) {
-                                            continue;
-                                        }
-                                        try {
-                                            startDownload(requestLoadingNr, center, layerId, datasets[layerId], cubeCoord, slotDownload[layerId], slotDecompression[layerId], freeSlots[layerId], state->cube2Pointer.at(layerId).at(datasets[layerId].magIndex), boost::optional<ShardedChunk>{chunkIt->second});
-                                        } catch (const std::out_of_range &) {}
-                                    }
-                                }
+                    if (minishards[mi][0] >= minishards[mi][1]) {
+                        startPending(mi);
+                        continue;
+                    }
+                    QNetworkRequest request(shard);
+                    request.setRawHeader("Range", QString("bytes=%1-%2").arg(shard_data_offset + minishards[mi][0]).arg(shard_data_offset + minishards[mi][1] - 1).toUtf8());
+                    auto * reply = qnam.get(request);
+                    QObject::connect(reply, &QNetworkReply::finished, [this, reply, layerId, shard_data_offset, shard, mi, center,
+                                     requestLoadingNr, requestMagIndex, requestUrl, requestScaleKey, startPending](){
+                        const bool staleDataset = layerId >= datasets.size()
+                                               || datasets[layerId].url != requestUrl
+                                               || datasets[layerId].magIndex != requestMagIndex
+                                               || requestMagIndex >= datasets[layerId].scaleKeys.size()
+                                               || datasets[layerId].scaleKeys[requestMagIndex] != requestScaleKey;
+                        if (staleDataset) {
+                            reply->deleteLater();
+                            return;
+                        }
+                        if (reply->error() != QNetworkReply::NoError) {
+                            qDebug() << "minishard" << reply->request().url() << reply->errorString();
+                            if (reply->error() == QNetworkReply::ContentNotFoundError) {
+                                startPending(mi);
                             }
                             reply->deleteLater();
-                        });
-                    }
+                            return;
+                        }
+                        auto data = reply->readAll();
+                        degzip(data);
+                        // qDebug() << "bar" << data.size() << reply->rawHeaderPairs();
+                        for (auto chunkid : chunks_from_minishards((reinterpret_cast<unsigned char const *>(data.data())), data.size(), shard_data_offset)) {
+                            chunkid2chunk[layerId][chunkid.first] = chunkid.second;
+                        }
+                        startPending(mi);
+                        reply->deleteLater();
+                    });
                 }
                 reply->deleteLater();
             });
@@ -1441,17 +1451,26 @@ void Loader::Worker::downloadAndLoadCubes(const unsigned int loadingNr, const Co
     //     }
     // }
 
-    for (std::size_t i{0}; i < allCubes.size(); ++i) {
+    for (std::size_t i{0}; i < allCubes.size();) {
         const auto layerId = allCubes[i].first;
         const auto & dataset = datasets[layerId];
         const auto cubeCoord = allCubes[i].second;
-        if (dataset.api == Dataset::API::Sharded && !dataset.isOverlay()) {
+        if (dataset.api == Dataset::API::Sharded) {
             if (auto it = chunkid2chunk[layerId].find(dataset.chunkid(cubeCoord)); it != std::end(chunkid2chunk[layerId])) {
                 cube2chunk[layerId].emplace(cubeCoord, it->second);
+                ++i;
             } else {
-                allCubes.erase(std::next(std::begin(allCubes), i));
-                shards.insert({layerId,dataset.precomputedCubeUrl(cubeCoord, true)});
+                const auto shard = dataset.precomputedCubeUrl(cubeCoord, true);
+                // HTTP index still in flight → wait for callback. Overlay empty-fill only when nothing will arrive.
+                const bool indexComplete = fourohfour[layerId].contains(shard) || shard.scheme() == "file";
+                if (dataset.isOverlay() && indexComplete) {
+                    ++i;
+                } else {
+                    allCubes.erase(std::next(std::begin(allCubes), i));
+                }
             }
+        } else {
+            ++i;
         }
     }
 
