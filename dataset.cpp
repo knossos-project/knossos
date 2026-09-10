@@ -38,8 +38,20 @@
 #include <boost/assign.hpp>
 #include <boost/bimap.hpp>
 #include <boost/optional.hpp>
+#include <cmath>
 #include <cstddef>
 
+namespace {
+boost::optional<int> parseMagScaleKey(const QString & key) {
+    static const QRegularExpression re{R"(^mag(\d+)$)"};
+    const auto match = re.match(key);
+    if (!match.hasMatch()) {
+        return boost::none;
+    }
+    return match.captured(1).toInt();
+}
+
+}
 
 Dataset::list_t Dataset::datasets;
 
@@ -936,9 +948,27 @@ bool Dataset::isOverlay() const {
 }
 
 std::size_t Dataset::toMagIndex(const int mag) const {
-    return api == API::Heidelbrain ? std::log2(mag) : mag - 1;
+    if (api == API::Heidelbrain) {
+        return std::log2(mag);
+    }
+    for (std::size_t i{0}; i < scaleKeys.size(); ++i) {
+        if (const auto parsedMag = parseMagScaleKey(scaleKeys[i])) {
+            if (*parsedMag == mag) {
+                return i;
+            }
+        }
+    }
+    return mag - 1;
 }
 
 int Dataset::toMag(const std::size_t magIndex) const {
-    return api == API::Heidelbrain ? std::pow(2, magIndex) : magIndex + 1;
+    if (api == API::Heidelbrain) {
+        return std::pow(2, magIndex);
+    }
+    if (magIndex < scaleKeys.size()) {
+        if (const auto parsedMag = parseMagScaleKey(scaleKeys[magIndex])) {
+            return *parsedMag;
+        }
+    }
+    return magIndex + 1;
 }
