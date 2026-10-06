@@ -467,7 +467,7 @@ std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<tre
     std::unordered_map<decltype(nodeListElement::nodeID), std::reference_wrapper<nodeListElement>> nodeMap;
     std::unordered_map<decltype(treeListElement::treeID), std::reference_wrapper<treeListElement>> treeMap;
 
-    const QSet<QString> knownElements({"offset", "skeletonDisplayMode", "experiment", "dataset", "guiMode", "MovementArea"});
+    const QSet<QString> knownElements({"offset", "skeletonDisplayMode", "experiment", "dataset", "guiMode", "MovementArea", "vpSettingsZoom"});
     QSet<QString> skippedElements;
 
     QElapsedTimer bench;
